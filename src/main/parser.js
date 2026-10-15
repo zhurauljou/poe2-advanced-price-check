@@ -22,6 +22,7 @@ function headerInfo(h) {
   const kind = h.split(' — ')[0];
   let tag = 'explicit';
   if (/^Implicit/.test(kind)) tag = 'implicit';
+  else if (/^Enhancement/.test(kind)) tag = 'enchant'; // анойнт: «Allocates Dominion»
   else if (/^Crafted/.test(kind)) tag = 'crafted';
   else if (/^Desecrated/.test(kind)) tag = 'desecrated';
   else if (/^Fractured/.test(kind)) tag = 'fractured';
@@ -30,7 +31,8 @@ function headerInfo(h) {
 }
 const TAGGED = /^(.*) \((implicit|enchant|rune|crafted|fractured|desecrated)\)$/;
 // Строки-свойства («Armour: 120 (augmented)», «Requires: Level 40») — это не моды.
-const PROPERTY = /^[A-Za-z][A-Za-z ']*: /;
+const PROPERTY = /^[A-Za-z][A-Za-z '()]*: /; // и «Quality (Minion Modifiers): +40%»
+const NOT_MODS = new Set(['Corrupted', 'Mirrored', 'Unidentified', 'Fractured Item', 'Desecrated Item', 'Sanctified']);
 
 function num(s) {
   return Number(String(s).replace(/[,\s]/g, ''));
@@ -110,6 +112,8 @@ function parseItem(text) {
   }
 
   const modRarities = ['Normal', 'Magic', 'Rare', 'Unique'];
+  // В расширенном формате у каждого мода есть заголовок { … } — строки без него (флейвор) не моды.
+  const advanced = lines.some((l) => MOD_HEADER.test(l));
   if (modRarities.includes(item.rarity) && !item.unidentified) {
     for (const sec of sections.slice(1)) {
       // Секция свойств/требований: почти все строки вида «Ключ: значение».
@@ -117,11 +121,12 @@ function parseItem(text) {
       if (props === sec.length) continue;
       let head = null; // заголовок { … } действует до следующего заголовка или конца секции
       for (const raw of sec) {
-        if (raw === 'Corrupted' || raw === 'Mirrored' || raw === 'Unidentified') continue;
+        if (NOT_MODS.has(raw)) continue;
         const h = raw.match(MOD_HEADER);
         if (h) { head = headerInfo(h[1]); continue; }
-        const l = raw.replace(RANGE, '$1');
+        const l = raw.replace(RANGE, '$1').replace(/ — Unscalable Value$/, '');
         const t = l.match(TAGGED);
+        if (advanced && !head && !t) continue;
         const tier = head ? head.tier : null;
         item.modLines.push(t ? { text: t[1], tag: t[2], tier } : { text: l, tag: head ? head.tag : 'explicit', tier });
       }

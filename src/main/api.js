@@ -11,36 +11,66 @@ const NINJA = 'https://poe.ninja/poe2/api';
 // ---------- лимиты трейда ----------
 // Сервер присылает правила вида «5:10:60» (5 запросов за 10 с, иначе бан на 60 с) отдельно для
 // поиска и для выдачи лотов. Помним свои запросы и ждём, пока не будет места во всех окнах.
+// Сервер дополнительно присылает текущий счёт в каждом окне (X-Rate-Limit-Ip-State) — он учитывает и запросы
+// других копий программы / сайта трейда с этого IP. Если до предела остался один запрос — выжидаем окно целиком.
 const limits = {
-  search: { rules: [[5, 10]], hits: [] },
-  fetch: { rules: [[12, 4]], hits: [] },
+  search: { rules: [[5, 10]], hits: [], blockedUntil: 0 },
+  fetch: { rules: [[12, 4]], hits: [], blockedUntil: 0 },
 };
-let bannedUntil = 0;
+// Дольше этого ждать молча не будем — сразу скажем пользователю.
+const MAX_SILENT_WAIT = 15000;
 
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
+
+// Бан переживает перезапуск: иначе новая копия сразу стучится снова и продлевает его.
+const banFile = () => path.join(app.getPath('userData'), 'trade-ban.json');
+let bannedUntil = null;
+function getBan() {
+  if (bannedUntil == null) {
+    try { bannedUntil = JSON.parse(fs.readFileSync(banFile(), 'utf8')).until || 0; } catch { bannedUntil = 0; }
+  }
+  return bannedUntil;
+}
+function setBan(seconds) {
+  bannedUntil = Math.max(getBan(), Date.now() + seconds * 1000);
+  try { fs.writeFileSync(banFile(), JSON.stringify({ until: bannedUntil })); } catch {}
+}
+
+function waitText(ms) {
+  const s = Math.ceil(ms / 1000);
+  return s >= 120 ? `${Math.ceil(s / 60)} мин` : `${s} с`;
+}
 
 async function waitSlot(kind) {
   const L = limits[kind];
   for (;;) {
     const now = Date.now();
-    if (bannedUntil > now) throw new Error(`Трейд временно ограничил запросы, подождите ${Math.ceil((bannedUntil - now) / 1000)} с`);
-    let wait = 0;
+    if (getBan() > now) throw new Error(`Трейд временно ограничил запросы — подождите ${waitText(getBan() - now)}`);
+    let wait = Math.max(0, L.blockedUntil - now);
     for (const [hits, period] of L.rules) {
       const inWin = L.hits.filter((t) => now - t < period * 1000);
       if (inWin.length >= hits) wait = Math.max(wait, inWin[0] + period * 1000 - now + 50);
     }
     if (!wait) break;
+    if (wait > MAX_SILENT_WAIT) throw new Error(`Почти исчерпан лимит запросов трейда — подождите ${waitText(wait)}`);
     await sleep(wait);
   }
   L.hits.push(Date.now());
   if (L.hits.length > 100) L.hits.splice(0, L.hits.length - 100);
 }
 
+const parseRules = (h) => (h ? h.split(',').map((r) => r.split(':').map(Number)) : []);
+
 function learnRules(kind, res) {
-  const h = res.headers.get('x-rate-limit-ip');
-  if (!h) return;
-  const rules = h.split(',').map((r) => r.split(':').map(Number)).map(([n, p]) => [Math.max(1, n - 1), p]);
-  if (rules.length) limits[kind].rules = rules;
+  const L = limits[kind];
+  const rules = parseRules(res.headers.get('x-rate-limit-ip'));
+  const state = parseRules(res.headers.get('x-rate-limit-ip-state'));
+  if (rules.length) L.rules = rules.map(([n, p]) => [Math.max(1, n - 1), p]);
+  for (const [count, period, ban] of state) {
+    if (ban > 0) setBan(ban);
+    const rule = rules.find((r) => r[1] === period);
+    if (rule && count >= rule[0] - 1) L.blockedUntil = Math.max(L.blockedUntil, Date.now() + period * 1000);
+  }
 }
 
 async function tradeRequest(kind, url, body) {
@@ -53,8 +83,8 @@ async function tradeRequest(kind, url, body) {
   learnRules(kind, res);
   if (res.status === 429) {
     const ra = Number(res.headers.get('retry-after') || 60);
-    bannedUntil = Date.now() + ra * 1000;
-    throw new Error(`Трейд ограничил запросы на ${ra} с`);
+    setBan(ra);
+    throw new Error(`Трейд временно ограничил запросы — подождите ${waitText(ra * 1000)}`);
   }
   const data = await res.json().catch(() => null);
   if (!res.ok) throw new Error((data && data.error && data.error.message) || `Трейд ответил ${res.status}`);

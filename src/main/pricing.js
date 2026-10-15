@@ -118,6 +118,8 @@ function prepare(item) {
   const covered = props.filter((p) => p.enabled).map((p) => LOCAL_COVERED[p.covers]).filter(Boolean);
   const mods = item.mods.map((m) => {
     const w = weight(item.itemClass, m.template, m.tier);
+    // Мод-вариант (Legacy of … у Mageblood) у уника и есть то, за что платят, — ищем по нему сразу.
+    const option = !!m.statId && m.statId.includes('|');
     return {
       statId: m.statId,
       text: m.text,
@@ -127,9 +129,11 @@ function prepare(item) {
       value: m.value,
       template: m.template,
       weight: w,
-      enabled: !!m.statId && searchMods && ['explicit', 'fractured', 'desecrated', 'crafted'].includes(m.tag)
-        && w !== 'weak' && !covered.some((re) => re.test(m.template)),
-      min: minOf(m.value),
+      enabled: (option && m.tag === 'explicit') || (!!m.statId && searchMods
+        && ['explicit', 'fractured', 'desecrated', 'crafted'].includes(m.tag)
+        && w !== 'weak' && !covered.some((re) => re.test(m.template))),
+      option,
+      min: option ? null : minOf(m.value),
     };
   });
   const pseudo = searchMods ? pseudoFilters(mods) : [];
@@ -161,9 +165,11 @@ function buildQuery(item, f) {
 
   for (const m of f.mods) {
     if (!m.enabled || !m.statId) continue;
+    const [id, option] = m.statId.split('|');
     const v = {};
-    if (m.min != null && m.min !== '') v.min = Number(m.min);
-    query.stats[0].filters.push({ id: m.statId, value: v });
+    if (option != null) v.option = /^\d+$/.test(option) ? Number(option) : option;
+    else if (m.min != null && m.min !== '') v.min = Number(m.min);
+    query.stats[0].filters.push({ id, value: v });
   }
   const equip = {};
   for (const p of f.props || []) if (p.enabled && p.min !== '' && p.min != null) equip[p.key] = { min: Number(p.min) };
@@ -183,12 +189,13 @@ function toDivine(amount, currency) {
 
 // Сколько лотов нужно, чтобы цене можно было верить. Меньше — автоослабление снимает самый слабый фильтр.
 const MIN_RESULTS = 5;
-const MAX_RELAX = 3;
+const MAX_RELAX = 2; // каждый шаг — отдельный поиск, а их у трейда мало (≈30 за 5 минут)
 
 // Чем меньше — тем раньше снимаем. Ключевые моды не снимаем вовсе.
 function strength(f) {
   if (f.kind === 'prop') return 60;
   if (f.weight === 'key') return Infinity;
+  if (f.option) return 50;
   if (f.tag === 'pseudo') return 40;
   return 20 - (f.tier || 3);
 }
@@ -208,14 +215,23 @@ async function search(league, item, filters, relax = false) {
   const f = JSON.parse(JSON.stringify(filters));
   const L = encodeURIComponent(league);
   const dropped = [];
-  let s;
+  let s = null;
+  let last = null; // фильтр, снятый перед текущей попыткой
   for (let attempt = 0; ; attempt++) {
-    s = await api.tradeRequest('search', `${api.TRADE}/api/trade2/search/poe2/${L}`, buildQuery(item, f));
+    try {
+      s = await api.tradeRequest('search', `${api.TRADE}/api/trade2/search/poe2/${L}`, buildQuery(item, f));
+    } catch (e) {
+      if (!s) throw e;
+      // Лимит кончился посреди ослабления — показываем то, что уже нашли, со старыми фильтрами.
+      last.enabled = true;
+      dropped.pop();
+      break;
+    }
     if (!relax || s.total >= MIN_RESULTS || attempt >= MAX_RELAX) break;
-    const w = weakest(f);
-    if (!w) break;
-    w.enabled = false;
-    dropped.push(w.kind === 'prop' ? `${w.label} ≥ ${w.min}` : w.text.split('\n')[0]);
+    last = weakest(f);
+    if (!last) break;
+    last.enabled = false;
+    dropped.push(last.kind === 'prop' ? `${last.label} ≥ ${last.min}` : last.text.split('\n')[0]);
   }
   const url = `${api.TRADE}/trade2/search/poe2/${L}/${s.id}`;
   const ids = (s.result || []).slice(0, 10);

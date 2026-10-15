@@ -1,0 +1,33 @@
+Item Class: Amulets
+Rarity: Rare
+Miracle Rosary
+Portent Amulet
+--------
+Quality (Minion Modifiers): +40% (augmented)
+--------
+Requires: Level 60
+--------
+Item Level: 80
+--------
+{ Enhancement }
+Allocates Dominion — Unscalable Value
+--------
+{ Implicit Modifier }
+-1 Suffix Modifier allowed
+--------
+Grants Skill: Level 16 Wolf Pack (Max Level 17)
+--------
+{ Fractured Prefix Modifier "Countess'" (Tier: 1) }
++50(47-50) to Spirit
+{ Prefix Modifier "Blazing" (Tier: 4) — Energy Shield }
++61(52-61) to maximum Energy Shield
+{ Crafted Prefix Modifier "Essences" }
+25(20-30)% increased Global Armour, Evasion and Energy Shield
+{ Suffix Modifier "of the Overseer" (Tier: 1) — Minion, Gem — 40% Increased }
++3 to Level of all Minion Skills
+{ Desecrated Suffix Modifier "of Kurgal" (Tier: 1) — Minion — 40% Increased }
+Minions have 19(12-20)% increased Cooldown Recovery Rate
+--------
+We reach for the promises lost...
+--------
+Fractured Item

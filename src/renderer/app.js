@@ -125,7 +125,7 @@ function renderFilters() {
       <div class="mod${m.enabled ? '' : ' off'}" data-i="${i}">
         <label><input type="checkbox" data-k="enabled"${m.enabled ? ' checked' : ''}>
           ${m.weight === 'key' ? '<span class="key" title="Ключевой мод для этого слота — сильно влияет на цену">★</span>' : ''}${m.tier ? `<span class="tag tier${m.tier <= 2 ? ' top' : ''}">T${m.tier}</span>` : ''}${m.tag !== 'explicit' ? `<span class="tag ${esc(m.tag)}">${esc(TAG_LABEL[m.tag] || m.tag)}</span>` : ''}<span>${esc(m.text)}${m.merged ? `<span class="sum-v"> = ${fmt(m.value)}</span>` : ''}</span></label>
-        <input type="number" data-k="min" step="any" placeholder="мин" value="${m.min == null ? '' : m.min}">
+        ${m.option ? '' : `<input type="number" data-k="min" step="any" placeholder="мин" value="${m.min == null ? '' : m.min}">`}
       </div>`).join('')
     : '';
 

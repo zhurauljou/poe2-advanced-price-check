@@ -1,0 +1,25 @@
+Item Class: Belts
+Rarity: Unique
+Mageblood
+Utility Belt
+--------
+Requires: Level 55
+--------
+Item Level: 80
+--------
+Has 2 Charm Slots (implicit)
+20% of Flask Recovery applied Instantly (implicit)
+--------
+{ Unique Modifier }
+Legacy of Stibnite
+{ Unique Modifier }
+Legacy of Quicksilver
+{ Unique Modifier }
+Legacy of Bismuth
+{ Unique Modifier }
+Legacy of Gold
+{ Unique Modifier }
+All Mage's Legacies have 29(20-30)% increased effect per duplicate Mage's Legacy you have
+--------
+Rivers of power coursed through their veins.
+Now, that power is yours, for good or ill.
