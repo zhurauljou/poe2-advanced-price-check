@@ -12,6 +12,22 @@
 // +39 to maximum Life
 
 const SEP = '--------';
+// Расширенный формат (настройка игры «расширенные описания модов» или Ctrl+Alt+C):
+// { Desecrated Prefix Modifier "Unassailable" (Tier: 2) — Energy Shield }
+// 93(92-100)% increased Energy Shield
+const MOD_HEADER = /^\{ (.*) \}$/;
+const RANGE = /(-?\d+(?:\.\d+)?)\(-?\d+(?:\.\d+)?--?\d+(?:\.\d+)?\)/g;
+
+function headerInfo(h) {
+  const kind = h.split(' — ')[0];
+  let tag = 'explicit';
+  if (/^Implicit/.test(kind)) tag = 'implicit';
+  else if (/^Crafted/.test(kind)) tag = 'crafted';
+  else if (/^Desecrated/.test(kind)) tag = 'desecrated';
+  else if (/^Fractured/.test(kind)) tag = 'fractured';
+  const t = kind.match(/\((?:Tier|Rank): (\d+)\)/);
+  return { tag, tier: t ? +t[1] : null };
+}
 const TAGGED = /^(.*) \((implicit|enchant|rune|crafted|fractured|desecrated)\)$/;
 // Строки-свойства («Armour: 120 (augmented)», «Requires: Level 40») — это не моды.
 const PROPERTY = /^[A-Za-z][A-Za-z ']*: /;
@@ -50,6 +66,7 @@ function parseItem(text) {
     corrupted: false,
     unidentified: false,
     mirrored: false,
+    props: {}, // ar / ev / es / spirit, у оружия pdps / edps / dps
     modLines: [], // { text, tag } — сырые строки, сопоставление со статами трейда делает stats.js
     raw: text,
   };
@@ -65,16 +82,31 @@ function parseItem(text) {
     item.baseType = (names[names.length - 1] || '').replace(/^Superior /, '');
   }
 
+  const dmg = {}; // тип урона -> средний урон за удар
+  let aps = null;
   for (const sec of sections.slice(1)) {
     for (const l of sec) {
       let m;
-      if ((m = l.match(/^Item Level: (\d+)/))) item.ilvl = +m[1];
+      if ((m = l.match(/^(Armour|Evasion Rating|Energy Shield|Spirit): (\d+)/))) {
+        item.props[{ Armour: 'ar', 'Evasion Rating': 'ev', 'Energy Shield': 'es', Spirit: 'spirit' }[m[1]]] = +m[2];
+      } else if ((m = l.match(/^(Physical|Fire|Cold|Lightning|Chaos|Elemental) Damage: (.+)$/))) {
+        const hits = [...m[2].matchAll(/(\d+)-(\d+)/g)].map((x) => (+x[1] + +x[2]) / 2);
+        dmg[m[1]] = (dmg[m[1]] || 0) + hits.reduce((s, v) => s + v, 0);
+      } else if ((m = l.match(/^Attacks per Second: ([\d.]+)/))) aps = +m[1];
+      else if ((m = l.match(/^Item Level: (\d+)/))) item.ilvl = +m[1];
       else if ((m = l.match(/^Quality: \+?(\d+)%/))) item.quality = +m[1];
       else if ((m = l.match(/^Stack Size: ([\d,.\s]+)\/([\d,.\s]+)/))) item.stack = { size: num(m[1]), max: num(m[2]) };
       else if (item.rarity === 'Gem' && (m = l.match(/^Level: (\d+)/))) item.gemLevel = +m[1];
       else if (l === 'Corrupted') item.corrupted = true;
       else if (l === 'Mirrored') item.mirrored = true;
     }
+  }
+  if (aps) {
+    const ele = (dmg.Fire || 0) + (dmg.Cold || 0) + (dmg.Lightning || 0) + (dmg.Elemental || 0);
+    const r1 = (v) => Math.round(v * 10) / 10;
+    item.props.pdps = r1((dmg.Physical || 0) * aps);
+    item.props.edps = r1(ele * aps);
+    item.props.dps = r1(((dmg.Physical || 0) + ele + (dmg.Chaos || 0)) * aps);
   }
 
   const modRarities = ['Normal', 'Magic', 'Rare', 'Unique'];
@@ -83,10 +115,15 @@ function parseItem(text) {
       // Секция свойств/требований: почти все строки вида «Ключ: значение».
       const props = sec.filter((l) => PROPERTY.test(l) && !TAGGED.test(l)).length;
       if (props === sec.length) continue;
-      for (const l of sec) {
-        if (l === 'Corrupted' || l === 'Mirrored' || l === 'Unidentified') continue;
+      let head = null; // заголовок { … } действует до следующего заголовка или конца секции
+      for (const raw of sec) {
+        if (raw === 'Corrupted' || raw === 'Mirrored' || raw === 'Unidentified') continue;
+        const h = raw.match(MOD_HEADER);
+        if (h) { head = headerInfo(h[1]); continue; }
+        const l = raw.replace(RANGE, '$1');
         const t = l.match(TAGGED);
-        item.modLines.push(t ? { text: t[1], tag: t[2] } : { text: l, tag: 'explicit' });
+        const tier = head ? head.tier : null;
+        item.modLines.push(t ? { text: t[1], tag: t[2], tier } : { text: l, tag: head ? head.tag : 'explicit', tier });
       }
     }
   }

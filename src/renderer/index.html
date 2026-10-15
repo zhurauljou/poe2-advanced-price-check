@@ -3,8 +3,9 @@
 <head>
   <meta charset="utf-8">
   <meta http-equiv="Content-Security-Policy"
-        content="default-src 'self'; img-src 'self' https://web.poecdn.com data:; style-src 'self'; script-src 'self'">
+        content="default-src 'self'; img-src 'self' https://web.poecdn.com data:; font-src data:; style-src 'self'; script-src 'self'">
   <title>PoE 2 Price Checker</title>
+  <link rel="stylesheet" href="fonts/fonts.css">
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
@@ -20,16 +21,18 @@
     <div id="status" class="muted" hidden></div>
     <section id="exchange" hidden></section>
     <section id="filters" hidden>
+      <div id="props"></div>
       <div id="mods"></div>
       <div id="misc" class="misc"></div>
       <div class="actions">
-        <button id="search">Искать</button>
-        <button id="open" class="ghost" hidden>Открыть на трейде ↗</button>
+        <button id="search" class="primary">Искать</button>
+        <button id="open" class="ghost" hidden>На трейде ↗</button>
       </div>
     </section>
+    <div id="sep" class="ornament" hidden></div>
     <section id="results" hidden></section>
   </main>
-  <footer class="muted">Esc — закрыть · клик по лоту — скопировать шёпот</footer>
+  <footer>Esc — закрыть · Enter — искать · клик по лоту — шёпот</footer>
   <script src="app.js"></script>
 </body>
 </html>

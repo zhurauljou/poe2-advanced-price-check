@@ -1,79 +1,120 @@
-/* Палитра и элементы — как во флиппере (poe2-flip). */
+/* Тема GGG из poe2-flip (в стиле pathofexile2.com): тёмно-синий фон, бронза и золото, капитель. */
 :root {
   color-scheme: dark;
-  --bg: #14110e; --panel: #1e1a16; --panel2: #262019; --line: #3a3128; --line2: #2a231c; --hover: #1f1a15;
-  --text: #e8dcc8; --muted: #9a8c78; --gold: #d8a24a; --good: #6fcf7a; --bad: #e0675a; --warn: #e0b35a;
-  --btn: #3b2c17; --btn-hover: #4a3720; --btn-line: #6b4f24; --btn-text: #f3d9a6;
+  --bg: #0b1017; --panel: #0e131b; --panel2: #131a24; --line: #4a3f2c; --line2: #1c222c; --hover: #161d28;
+  --text: #b6b6b6; --muted: #8c8c8c; --gold: #dac18e; --cream: #f1e4c2; --bronze: #837053; --label: #a99a7c;
+  --good: #6fcf7a; --bad: #e0675a; --warn: #e0b35a;
+  --input: #07090d; --input-line: #2c2f35; --chip: #2e2416; --chip-line: #7d6a46;
   --r-normal: #c8c8c8; --r-magic: #8888ff; --r-rare: #ffff77; --r-unique: #af6025; --r-gem: #1ba29b; --r-currency: #aa9e82;
+  --body: "Alegreya Sans", "Segoe UI", sans-serif;
+  --sc: "Cormorant SC", "Alegreya Sans SC", Georgia, serif;
+  --title: Cinzel, "Cormorant SC", Georgia, serif;
+  --ornament: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='200' height='14' viewBox='0 0 200 14'%3E%3Cpath d='M10 7H86M114 7H190' stroke='%234a3a22'/%3E%3Cpath d='M100 1l6 6-6 6-6-6z' fill='%23b08a45'/%3E%3Cpath d='M89 7l3-3 3 3-3 3zM105 7l3-3 3 3-3 3z' fill='%236b5228'/%3E%3C/svg%3E");
 }
 
 * { box-sizing: border-box; }
-html, body { margin: 0; background: var(--bg); color: var(--text); overflow: hidden; }
-body { font: 13px/1.45 "Segoe UI", Roboto, sans-serif; border: 1px solid var(--btn-line); }
+html, body { margin: 0; overflow: hidden; }
+body { background: radial-gradient(ellipse 600px 260px at 50% -120px, #1d2836, transparent 70%) no-repeat, var(--bg);
+       color: var(--text); font: 15px/1.45 var(--body); border: 1px solid #5a4d36; }
 .muted { color: var(--muted); }
 [hidden] { display: none !important; }
+::-webkit-scrollbar { width: 8px; }
+::-webkit-scrollbar-thumb { background: #3d3a33; }
 
-header { display: flex; gap: 8px; align-items: center; padding: 8px 10px; background: var(--panel);
-         border-bottom: 1px solid var(--line); -webkit-app-region: drag; }
+/* ---- шапка ---- */
+header { display: flex; gap: 8px; align-items: center; padding: 8px 10px; -webkit-app-region: drag;
+         background: linear-gradient(#202226, #121316 55%, #0c0d0f); border-bottom: 1px solid #5a4d36;
+         box-shadow: 0 3px 0 #0c0d0f, 0 4px 0 #2f2a22; margin-bottom: 4px; }
 header .title { flex: 1; min-width: 0; }
-.name { font-size: 15px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.base { font-size: 12px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.name { font: 700 19px/1.2 var(--sc); letter-spacing: .3px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+        text-shadow: 0 2px 0 #000; }
+.base { font-size: 14px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .name.Normal { color: var(--r-normal); } .name.Magic { color: var(--r-magic); } .name.Rare { color: var(--r-rare); }
 .name.Unique { color: var(--r-unique); } .name.Gem { color: var(--r-gem); } .name.Currency { color: var(--r-currency); }
 header select, header button { -webkit-app-region: no-drag; }
 
-input, select, button { font: inherit; color: var(--text); background: var(--panel2); border: 1px solid var(--line);
-                        border-radius: 6px; padding: 4px 8px; }
-select { max-width: 150px; }
-button { cursor: pointer; background: var(--btn); border-color: var(--btn-line); color: var(--btn-text); font-weight: 600; }
-button:hover { background: var(--btn-hover); }
+/* ---- поля и кнопки ---- */
+input, select, button { font: inherit; font-size: 15px; color: var(--cream); background: var(--input); border: 1px solid var(--input-line);
+                        border-radius: 2px; padding: 4px 8px; }
+select { max-width: 160px; font-family: var(--sc); font-weight: 700; color: var(--gold); appearance: none; padding-right: 26px;
+         background: var(--input) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 12 8'%3E%3Cpath d='M1 1.5l5 5 5-5' fill='none' stroke='%23dac18e' stroke-width='1.6'/%3E%3C/svg%3E") no-repeat right 8px center / 10px 7px; }
+input:focus, select:focus { outline: none; border-color: #b08a45; }
+button { cursor: pointer; background: linear-gradient(#2b2013, #17110a); border-color: #6b5228; color: #e6dcc4; font-weight: 700;
+         box-shadow: inset 0 1px 0 rgba(255, 224, 138, .12); }
+button:hover { background: linear-gradient(#3a2a14, #20170b); border-color: #b08a45; color: #fff4b4; }
 button:disabled { opacity: .5; cursor: default; }
-button.ghost { background: transparent; border-color: var(--line); color: var(--muted); font-weight: 500; }
-button.ghost:hover { color: var(--text); background: var(--hover); }
-button.icon { width: 28px; height: 28px; padding: 0; background: transparent; border-color: var(--line); color: var(--muted); }
-button.icon:hover { color: var(--text); background: var(--hover); }
+button.ghost { background: transparent; border-color: var(--input-line); color: var(--bronze); box-shadow: none; }
+button.ghost:hover { color: var(--cream); border-color: #b08a45; background: var(--hover); }
+button.icon { width: 30px; height: 30px; padding: 0; background: linear-gradient(#2b2013, #17110a); border-color: #6b5228; color: #e6dcc4; }
 input[type=checkbox] { accent-color: var(--gold); margin: 0; }
 
-main { padding: 10px; display: flex; flex-direction: column; gap: 10px; }
-footer { padding: 6px 10px; font-size: 11px; border-top: 1px solid var(--line2); }
+/* Главная кнопка — красный шестигранник, как «Обновить» во флиппере. */
+button.primary { position: relative; isolation: isolate; border: 0; box-shadow: none; background: none; height: 40px; padding: 0 28px;
+                 color: #f2d594; font: 700 17px var(--title); letter-spacing: .8px; text-shadow: 0 1px 0 #2a0503;
+                 filter: drop-shadow(0 0 1px #c9a45c) drop-shadow(0 0 1px #c9a45c) drop-shadow(0 3px 6px rgba(0, 0, 0, .6)); }
+button.primary::before { content: ""; position: absolute; inset: 0; z-index: -1;
+                         clip-path: polygon(14px 0, calc(100% - 14px) 0, 100% 50%, calc(100% - 14px) 100%, 14px 100%, 0 50%);
+                         background: radial-gradient(ellipse at 50% 0%, rgba(255, 120, 90, .35), transparent 60%), linear-gradient(#a0201a, #5c0c09 60%, #3c0605); }
+button.primary:hover { background: none; color: #fff4b4; }
+button.primary:hover::before { background: radial-gradient(ellipse at 50% 0%, rgba(255, 140, 100, .5), transparent 60%), linear-gradient(#b8261f, #6a0e0a 60%, #3c0605); }
+
+main { padding: 8px 12px 10px; display: flex; flex-direction: column; gap: 10px; }
+footer { padding: 6px 12px; font-size: 13px; color: var(--bronze); border-top: 1px solid var(--line2); }
+.ornament { height: 14px; background: var(--ornament) center / 200px 14px no-repeat; }
+#status { font-size: 14px; }
 #status.error { color: var(--bad); }
 
 /* ---- биржевой предмет ---- */
-.card { padding: 10px 12px; border: 1px solid var(--line); border-radius: 10px; background: var(--panel); }
-.ex-top { display: flex; gap: 10px; align-items: center; }
-.ex-top img { width: 40px; height: 40px; }
-.big { font-size: 22px; font-weight: 700; color: var(--gold); font-variant-numeric: tabular-nums; }
+.card { padding: 12px 14px; border: 1px solid #2c2a25; border-radius: 4px; background: linear-gradient(#13161b, #0c0e12); }
+.ex-top { display: flex; gap: 12px; align-items: center; }
+.ex-top img { width: 44px; height: 44px; filter: drop-shadow(0 0 8px rgba(255, 200, 90, .25)); }
+.big { font: 700 26px/1.1 var(--title); color: var(--gold); font-variant-numeric: tabular-nums; text-shadow: 0 0 14px rgba(255, 190, 80, .3), 0 2px 0 #000; }
 .ex-row { display: flex; justify-content: space-between; gap: 8px; margin-top: 8px; padding-top: 8px;
           border-top: 1px solid var(--line2); font-variant-numeric: tabular-nums; }
+.ex-row b { color: var(--cream); }
 .up { color: var(--good); } .down { color: var(--bad); }
 .spark { overflow: visible; }
 .spark polyline { fill: none; stroke: currentColor; stroke-width: 1.5; stroke-linejoin: round; }
 
 /* ---- фильтры ---- */
-.mod { display: flex; gap: 8px; align-items: center; padding: 4px 6px; border-radius: 6px; }
+.mod { display: flex; gap: 8px; align-items: center; padding: 3px 6px; border-radius: 2px; }
 .mod:hover { background: var(--hover); }
-.mod label { flex: 1; display: flex; gap: 8px; align-items: center; cursor: pointer; min-width: 0; white-space: pre-line; }
+.mod label { flex: 1; display: flex; gap: 8px; align-items: center; cursor: pointer; min-width: 0; white-space: pre-line; color: var(--cream); }
 .mod.off label { color: var(--muted); }
-.mod input[type=number] { width: 64px; text-align: right; padding: 2px 6px; }
-.tag { font-size: 10px; text-transform: uppercase; letter-spacing: .4px; color: var(--muted); border: 1px solid var(--line);
-       border-radius: 4px; padding: 0 4px; flex: none; }
-.misc { display: flex; flex-wrap: wrap; gap: 6px 14px; margin-top: 6px; padding: 6px; border-top: 1px solid var(--line2); }
-.misc label { display: flex; gap: 6px; align-items: center; color: var(--muted); }
-.misc input[type=number] { width: 52px; padding: 2px 6px; }
-.actions { display: flex; gap: 8px; margin-top: 8px; }
+.mod input[type=number] { width: 66px; text-align: right; padding: 2px 6px; }
+.tag { font: 700 11px/1.5 var(--body); text-transform: uppercase; letter-spacing: .4px; color: var(--bronze); border: 1px solid #2c2a25;
+       border-radius: 2px; padding: 0 5px; flex: none; }
+.tag.tier { min-width: 24px; text-align: center; }
+.tag.tier.top { color: var(--gold); border-color: #6b5a3a; }
+.tag.pseudo { color: var(--gold); border-color: #6b5a3a; }
+.sum-v { color: var(--gold); font-weight: 700; }
+#props:not(:empty) { padding-bottom: 4px; margin-bottom: 4px; border-bottom: 1px solid var(--line2); }
+.misc { display: flex; flex-wrap: wrap; gap: 6px 16px; margin-top: 6px; padding: 8px 6px 0; border-top: 1px solid var(--line2); }
+.misc label { display: flex; gap: 6px; align-items: center; color: var(--label); }
+.misc input[type=number] { width: 54px; padding: 2px 6px; }
+.actions { display: flex; gap: 10px; align-items: center; margin-top: 10px; }
 .actions #search { flex: 1; }
+.actions #open { height: 34px; }
 .empty { padding: 10px; text-align: center; }
 
 /* ---- результаты ---- */
-.sum { display: flex; justify-content: space-between; gap: 8px; margin-bottom: 6px; }
-table { width: 100%; border-collapse: collapse; }
-td { padding: 5px 6px; border-bottom: 1px solid var(--line2); vertical-align: middle; }
+.sum { display: flex; justify-content: space-between; align-items: baseline; gap: 8px; margin-bottom: 6px;
+       font: 700 15px var(--sc); color: #9e8f6c; letter-spacing: .3px; }
+.sum b { color: var(--gold); font-family: var(--body); }
+table { width: 100%; border-collapse: collapse; background: rgba(10, 13, 18, .92); outline: 1px solid #3d3a33; }
+td { padding: 6px 8px; border-bottom: 1px solid var(--line2); vertical-align: middle; }
 tr.lot { cursor: pointer; }
 tr.lot:hover { background: var(--hover); }
-tr.lot.copied { box-shadow: inset 3px 0 var(--gold); }
-.price { display: inline-flex; gap: 4px; align-items: center; font-weight: 600; font-variant-numeric: tabular-nums; white-space: nowrap; }
-.price img { width: 20px; height: 20px; }
+tr.lot.copied { background: linear-gradient(90deg, rgba(218, 193, 142, .12), rgba(218, 193, 142, .02)); box-shadow: inset 3px 0 var(--gold); }
+
+/* Цена — шестигранная плашка, как валюты в путях флиппера. */
+.price { position: relative; isolation: isolate; display: inline-flex; gap: 5px; align-items: center; height: 28px; padding: 0 12px 0 8px;
+         color: var(--cream); font-weight: 700; font-variant-numeric: tabular-nums; white-space: nowrap;
+         clip-path: polygon(8px 0, calc(100% - 8px) 0, 100% 50%, calc(100% - 8px) 100%, 8px 100%, 0 50%); background: var(--chip-line); }
+.price::before { content: ""; position: absolute; inset: 1px; z-index: -1; background: linear-gradient(#2a2418, #15110a);
+                 clip-path: polygon(7.5px 0, calc(100% - 7.5px) 0, 100% 50%, calc(100% - 7.5px) 100%, 7.5px 100%, 0 50%); }
+.price img { width: 22px; height: 22px; }
 .num { text-align: right; font-variant-numeric: tabular-nums; white-space: nowrap; }
-.seller { max-width: 120px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.dot { display: inline-block; width: 6px; height: 6px; border-radius: 50%; background: var(--muted); margin-right: 5px; }
-.dot.on { background: var(--good); }
+.seller { max-width: 130px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: var(--text); }
+.dot { display: inline-block; width: 6px; height: 6px; border-radius: 50%; background: var(--muted); margin-right: 6px; }
+.dot.on { background: var(--good); box-shadow: 0 0 4px var(--good); }

@@ -9,7 +9,7 @@ const api = require('./api');
 const pricing = require('./pricing');
 const { parseItem } = require('./parser');
 
-const WIDTH = 460;
+const WIDTH = 480;
 const ICON = path.join(__dirname, '../../assets/icon.png');
 
 let win = null;
@@ -18,6 +18,9 @@ let interacted = false; // окно получало фокус (кликнул�
 let leagues = [];
 let ready = null; // промис загрузки справочников
 
+const DEMO = process.argv.some((a) => a.startsWith('--demo='));
+// Демо-прогон живёт в своей папке данных, чтобы работать рядом с запущенной копией из трея.
+if (DEMO) app.setPath('userData', app.getPath('userData') + '-demo');
 if (!app.requestSingleInstanceLock()) app.quit();
 
 // Ошибка в фоне не должна всплывать системным окном поверх игры — пишем в лог и работаем дальше.
@@ -87,6 +90,8 @@ async function priceCheck(sample) {
   const text = sample || await copyItem();
   const item = parseItem(text);
   if (!item) return; // курсор не над предметом
+  // Текст последнего предмета — для разбора ошибок парсера.
+  try { require('fs').writeFileSync(path.join(app.getPath('userData'), 'last-item.txt'), text); } catch {}
   try {
     await ready;
   } catch (e) {
@@ -148,7 +153,7 @@ app.whenReady().then(() => {
   ready.catch((e) => console.error('init failed', e));
 
   const hk = settings.get().hotkey;
-  if (!globalShortcut.register(hk, () => { priceCheck().catch((e) => console.error(e)); })) {
+  if (!DEMO && !globalShortcut.register(hk, () => { priceCheck().catch((e) => console.error(e)); })) {
     console.error('Не удалось занять горячую клавишу', hk);
   }
 

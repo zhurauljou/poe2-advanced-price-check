@@ -56,7 +56,7 @@ function renderHeader() {
   if (item.name !== item.baseType && item.baseType) bits.push(item.baseType);
   if (item.ilvl) bits.push(`ilvl ${item.ilvl}`);
   if (item.gemLevel) bits.push(`ур. ${item.gemLevel}`);
-  if (item.quality) bits.push(`${item.quality}%`);
+  if (item.quality) bits.push(`кач. ${item.quality}%`);
   if (item.corrupted) bits.push('осквернён');
   if (item.unidentified) bits.push('не опознан');
   $('base').textContent = bits.join(' · ');
@@ -103,19 +103,32 @@ function renderExchange() {
     </div>`;
 }
 
+const TAG_LABEL = { pseudo: 'сумма', rune: 'руна', implicit: 'имплицит', crafted: 'крафт', desecrated: 'desecrated',
+  fractured: 'fractured', enchant: 'энчант' };
+
 function renderFilters() {
   const box = $('filters');
   box.hidden = !state.searchable;
   if (!state.searchable) return;
   const f = state.filters;
   $('mods').innerHTML = f.mods.length
-    ? f.mods.map((m, i) => `
+    ? f.mods.map((m, i) => !m.statId ? `
+      <div class="mod off" title="Этот мод не найден в фильтрах трейда">
+        <label><span class="tag">?</span><span>${esc(m.text)}</span></label>
+      </div>` : `
       <div class="mod${m.enabled ? '' : ' off'}" data-i="${i}">
         <label><input type="checkbox" data-k="enabled"${m.enabled ? ' checked' : ''}>
-          ${m.tag !== 'explicit' ? `<span class="tag">${esc(m.tag)}</span>` : ''}<span>${esc(m.text)}</span></label>
+          ${m.tier ? `<span class="tag tier${m.tier <= 2 ? ' top' : ''}">T${m.tier}</span>` : ''}${m.tag !== 'explicit' ? `<span class="tag ${esc(m.tag)}">${esc(TAG_LABEL[m.tag] || m.tag)}</span>` : ''}<span>${esc(m.text)}${m.merged ? `<span class="sum-v"> = ${fmt(m.value)}</span>` : ''}</span></label>
         <input type="number" data-k="min" step="any" placeholder="мин" value="${m.min == null ? '' : m.min}">
       </div>`).join('')
     : '';
+
+  $('props').innerHTML = (f.props || []).map((p, i) => `
+    <div class="mod${p.enabled ? '' : ' off'}" data-p="${i}">
+      <label><input type="checkbox" data-k="enabled"${p.enabled ? ' checked' : ''}>
+        <span class="tag">свойство</span><span>${esc(p.label)}: ${fmt(p.value)}</span></label>
+      <input type="number" data-k="min" step="any" placeholder="мин" value="${p.min}">
+    </div>`).join('');
 
   const misc = [];
   if (f.ilvl) misc.push(`<label><input type="checkbox" data-m="ilvl"${f.ilvl.enabled ? ' checked' : ''}>ilvl ≥ <input type="number" data-mv="ilvl" value="${f.ilvl.min}"></label>`);
@@ -132,6 +145,7 @@ function sameUnit(l, r) {
 function renderResults(r) {
   const box = $('results');
   box.hidden = false;
+  $('sep').hidden = false;
   if (!r.listings.length) {
     box.innerHTML = `<div class="empty muted">Ничего не найдено. Снимите часть модов или понизьте минимумы.</div>`;
     return;
@@ -186,6 +200,7 @@ window.pc.onItem((data) => {
   searchSeq++;
   setStatus('');
   $('results').hidden = true;
+  $('sep').hidden = true;
   $('open').hidden = true;
   renderHeader();
   renderExchange();
@@ -207,6 +222,18 @@ $('mods').addEventListener('input', (e) => {
     row.classList.toggle('off', !m.enabled);
   } else if (e.target.dataset.k === 'min') {
     m.min = e.target.value === '' ? null : Number(e.target.value);
+  }
+});
+
+$('props').addEventListener('input', (e) => {
+  const row = e.target.closest('.mod');
+  if (!row) return;
+  const p = state.filters.props[+row.dataset.p];
+  if (e.target.dataset.k === 'enabled') {
+    p.enabled = e.target.checked;
+    row.classList.toggle('off', !p.enabled);
+  } else {
+    p.min = e.target.value === '' ? null : Number(e.target.value);
   }
 });
 

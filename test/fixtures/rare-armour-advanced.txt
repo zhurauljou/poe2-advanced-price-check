@@ -1,0 +1,31 @@
+Item Class: Body Armours
+Rarity: Rare
+Brimstone Salvation
+Vile Robe
+--------
+Quality: +27% (augmented)
+Energy Shield: 1038 (augmented)
+--------
+Requires: Level 65, 78 (augmented) Int
+--------
+Sockets: S S S 
+--------
+Item Level: 81
+--------
+60% increased Armour, Evasion and Energy Shield (rune)
+--------
+{ Prefix Modifier "Divine" (Tier: 1) — Energy Shield }
++30(26-30) to maximum Energy Shield
+41(39-42)% increased Energy Shield
+{ Prefix Modifier "Scintillating" (Tier: 3) — Energy Shield }
++77(74-80) to maximum Energy Shield
+{ Desecrated Prefix Modifier "Unassailable" (Tier: 2) — Energy Shield }
+93(92-100)% increased Energy Shield
+{ Suffix Modifier "of Magma" (Tier: 2) — Elemental, Fire, Resistance }
++39(36-40)% to Fire Resistance
+{ Suffix Modifier "of the Proficient" (Tier: 1) }
+35% reduced Attribute Requirements
+{ Crafted Suffix Modifier "of the Polar Bear" (Tier: 3) — Elemental, Cold, Resistance }
++34(31-35)% to Cold Resistance
+--------
+Corrupted

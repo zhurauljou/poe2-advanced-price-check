@@ -58,8 +58,8 @@ function pick(cands, tag, localItem) {
   return (pref.length ? pref : pool)[0];
 }
 
-// Превращает item.modLines в item.mods: [{ text, tag, statId, value }]. Несопоставленные строки (флейвор
-// уников, описания) отбрасываются; многострочные моды склеиваются.
+// Превращает item.modLines в item.mods: [{ text, tag, statId, value }]. У несопоставленных строк statId = null;
+// многострочные моды склеиваются.
 function matchMods(item) {
   if (!index) return [];
   const localItem = LOCAL_CLASSES.has(item.itemClass);
@@ -72,16 +72,39 @@ function matchMods(item) {
       if (joined) {
         const c = pick(joined.cands, l.tag, localItem);
         if (c) {
-          out.push({ text: l.text + '\n' + ls[i + 1].text, tag: l.tag, statId: c.id, value: joined.value });
+          out.push({ text: l.text + '\n' + ls[i + 1].text, tag: l.tag, tier: l.tier, statId: c.id, template: c.text,
+            value: joined.value });
           i++;
           continue;
         }
       }
     }
     const m = lookup(l.text);
-    if (!m) continue;
-    const c = pick(m.cands, l.tag, localItem);
-    if (c) out.push({ text: l.text, tag: l.tag, statId: c.id, value: m.value });
+    const c = m && pick(m.cands, l.tag, localItem);
+    // Несопоставленное показываем серым, без галочки: видно, что мод есть, но искать по нему нельзя.
+    out.push(c ? { text: l.text, tag: l.tag, tier: l.tier, statId: c.id, template: c.text, value: m.value }
+      : { text: l.text, tag: l.tag, tier: l.tier, statId: null });
+  }
+  return mergeSame(out);
+}
+
+// Трейд хранит одинаковые статы одной суммой: «+30 to maximum ES» и «+77 to maximum ES» с разных
+// модов ищутся как 107. Склеиваем их в один фильтр.
+function mergeSame(mods) {
+  const out = [];
+  const byId = new Map();
+  for (const m of mods) {
+    const prev = m.statId && byId.get(m.statId);
+    if (!prev) {
+      out.push(m);
+      if (m.statId) byId.set(m.statId, m);
+      continue;
+    }
+    prev.parts = prev.parts || [prev.text];
+    prev.parts.push(m.text);
+    prev.text = prev.parts.join('\n');
+    if (m.value != null) prev.value = (prev.value || 0) + m.value;
+    if (m.tier != null && (prev.tier == null || m.tier < prev.tier)) prev.tier = m.tier;
   }
   return out;
 }
