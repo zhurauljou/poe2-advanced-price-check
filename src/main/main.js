@@ -20,6 +20,10 @@ let ready = null; // промис загрузки справочников
 
 if (!app.requestSingleInstanceLock()) app.quit();
 
+// Ошибка в фоне не должна всплывать системным окном поверх игры — пишем в лог и работаем дальше.
+process.on('uncaughtException', (e) => console.error('uncaught', e));
+process.on('unhandledRejection', (e) => console.error('unhandled', e));
+
 function createOverlay() {
   win = new BrowserWindow({
     width: WIDTH,
@@ -69,7 +73,13 @@ async function copyItem() {
     await new Promise((r) => setTimeout(r, 20));
     text = clipboard.readText();
   }
-  if (prev) setTimeout(() => clipboard.writeText(prev), 50);
+  // Возвращаем пользователю прежний буфер. Строку с «битыми» символами (половинка эмодзи и т.п.)
+  // Electron записать не может — тогда просто оставляем буфер как есть.
+  if (prev) {
+    setTimeout(() => {
+      try { clipboard.writeText(prev.toWellFormed ? prev.toWellFormed() : prev); } catch {}
+    }, 50);
+  }
   return text;
 }
 
