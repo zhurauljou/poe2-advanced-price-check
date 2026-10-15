@@ -9,9 +9,9 @@ function esc(s) {
 function fmt(n) {
   if (n == null || !isFinite(n)) return '—';
   const a = Math.abs(n);
-  if (a > 0 && a < 1) return (+n.toPrecision(3)).toLocaleString('ru-RU', { maximumSignificantDigits: 3 });
+  if (a > 0 && a < 1) return (+n.toPrecision(3)).toLocaleString('en-US', { maximumSignificantDigits: 3 });
   const d = a >= 100 ? 0 : a >= 10 ? 1 : 2;
-  return (+n.toFixed(d)).toLocaleString('ru-RU');
+  return (+n.toFixed(d)).toLocaleString('en-US');
 }
 
 // Цена в дивайнах → понятная строка: до 1 div показываем в exalted.
@@ -23,9 +23,9 @@ function money(div, exPerDiv) {
 
 function ago(iso) {
   const s = (Date.now() - new Date(iso).getTime()) / 1000;
-  if (s < 3600) return `${Math.max(1, Math.round(s / 60))} мин`;
-  if (s < 86400) return `${Math.round(s / 3600)} ч`;
-  return `${Math.round(s / 86400)} д`;
+  if (s < 3600) return `${Math.max(1, Math.round(s / 60))}m`;
+  if (s < 86400) return `${Math.round(s / 3600)}h`;
+  return `${Math.round(s / 86400)}d`;
 }
 
 function spark(data) {
@@ -61,10 +61,10 @@ function renderHeader() {
   const bits = [];
   if (item.name !== item.baseType && item.baseType) bits.push(item.baseType);
   if (item.ilvl) bits.push(`ilvl ${item.ilvl}`);
-  if (item.gemLevel) bits.push(`ур. ${item.gemLevel}`);
-  if (item.quality) bits.push(`кач. ${item.quality}%`);
-  if (item.corrupted) bits.push('осквернён');
-  if (item.unidentified) bits.push('не опознан');
+  if (item.gemLevel) bits.push(`lvl ${item.gemLevel}`);
+  if (item.quality) bits.push(`quality ${item.quality}%`);
+  if (item.corrupted) bits.push('corrupted');
+  if (item.unidentified) bits.push('unidentified');
   $('base').textContent = bits.join(' · ');
 
   const sel = $('league');
@@ -97,20 +97,20 @@ function renderExchange() {
         ${x.image ? `<img src="${esc(x.image)}" alt="">` : ''}
         <div>
           <div class="big">${money(x.divine, x.exaltedPerDivine)}</div>
-          <div class="muted">за 1 шт. · ${alt(x)}</div>
+          <div class="muted">per unit · ${alt(x)}</div>
         </div>
       </div>
-      ${stack ? `<div class="ex-row"><span class="muted">Стак ×${stack}</span><b>${money(x.divine * stack, x.exaltedPerDivine)}</b></div>` : ''}
+      ${stack ? `<div class="ex-row"><span class="muted">Stack ×${stack}</span><b>${money(x.divine * stack, x.exaltedPerDivine)}</b></div>` : ''}
       <div class="ex-row">
-        <span class="muted">За 7 дней ${ch}</span>
+        <span class="muted">7 days ${ch}</span>
         <span class="${dir}">${spark(x.spark)}</span>
       </div>
-      <div class="ex-row"><span class="muted">Объём за сутки</span><span>${fmt(x.volume)} div</span></div>
+      <div class="ex-row"><span class="muted">24h volume</span><span>${fmt(x.volume)} div</span></div>
     </div>`;
 }
 
-const TAG_LABEL = { pseudo: 'сумма', rune: 'руна', implicit: 'имплицит', crafted: 'крафт', desecrated: 'desecrated',
-  fractured: 'fractured', enchant: 'энчант' };
+const TAG_LABEL = { pseudo: 'total', rune: 'rune', implicit: 'implicit', crafted: 'crafted', desecrated: 'desecrated',
+  fractured: 'fractured', enchant: 'enchant' };
 
 function renderFilters() {
   const box = $('filters');
@@ -119,27 +119,27 @@ function renderFilters() {
   const f = state.filters;
   $('mods').innerHTML = f.mods.length
     ? f.mods.map((m, i) => !m.statId ? `
-      <div class="mod off" title="Этот мод не найден в фильтрах трейда">
+      <div class="mod off" title="This modifier has no trade site filter">
         <label><span class="tag">?</span><span>${esc(m.text)}</span></label>
       </div>` : `
       <div class="mod${m.enabled ? '' : ' off'}" data-i="${i}">
         <label><input type="checkbox" data-k="enabled"${m.enabled ? ' checked' : ''}>
-          ${m.weight === 'key' ? '<span class="key" title="Ключевой мод для этого слота — сильно влияет на цену">★</span>' : ''}${m.tier ? `<span class="tag tier${m.tier <= 2 ? ' top' : ''}">T${m.tier}</span>` : ''}${m.tag !== 'explicit' ? `<span class="tag ${esc(m.tag)}">${esc(TAG_LABEL[m.tag] || m.tag)}</span>` : ''}<span>${esc(m.text)}${m.merged ? `<span class="sum-v"> = ${fmt(m.value)}</span>` : ''}</span></label>
-        ${m.option ? '' : `<input type="number" data-k="min" step="any" placeholder="мин" value="${m.min == null ? '' : m.min}">`}
+          ${m.weight === 'key' ? '<span class="key" title="Key modifier for this slot — drives the price">★</span>' : ''}${m.tier ? `<span class="tag tier${m.tier <= 2 ? ' top' : ''}">T${m.tier}</span>` : ''}${m.tag !== 'explicit' ? `<span class="tag ${esc(m.tag)}">${esc(TAG_LABEL[m.tag] || m.tag)}</span>` : ''}<span>${esc(m.text)}${m.merged ? `<span class="sum-v"> = ${fmt(m.value)}</span>` : ''}</span></label>
+        ${m.option ? '' : `<input type="number" data-k="min" step="any" placeholder="min" value="${m.min == null ? '' : m.min}">`}
       </div>`).join('')
     : '';
 
   $('props').innerHTML = (f.props || []).map((p, i) => `
     <div class="mod${p.enabled ? '' : ' off'}" data-p="${i}">
       <label><input type="checkbox" data-k="enabled"${p.enabled ? ' checked' : ''}>
-        <span class="tag">свойство</span><span>${esc(p.label)}: ${fmt(p.value)}</span></label>
-      <input type="number" data-k="min" step="any" placeholder="мин" value="${p.min}">
+        <span class="tag">property</span><span>${esc(p.label)}: ${fmt(p.value)}</span></label>
+      <input type="number" data-k="min" step="any" placeholder="min" value="${p.min}">
     </div>`).join('');
 
   const misc = [];
   if (f.ilvl) misc.push(`<label><input type="checkbox" data-m="ilvl"${f.ilvl.enabled ? ' checked' : ''}>ilvl ≥ <input type="number" data-mv="ilvl" value="${f.ilvl.min}"></label>`);
-  if (f.gemLevel) misc.push(`<label><input type="checkbox" data-m="gemLevel"${f.gemLevel.enabled ? ' checked' : ''}>уровень ≥ <input type="number" data-mv="gemLevel" value="${f.gemLevel.min}"></label>`);
-  misc.push(`<label><input type="checkbox" data-o="online"${f.online ? ' checked' : ''}>только онлайн</label>`);
+  if (f.gemLevel) misc.push(`<label><input type="checkbox" data-m="gemLevel"${f.gemLevel.enabled ? ' checked' : ''}>level ≥ <input type="number" data-mv="gemLevel" value="${f.gemLevel.min}"></label>`);
+  misc.push(`<label><input type="checkbox" data-o="online"${f.online ? ' checked' : ''}>online only</label>`);
   $('misc').innerHTML = misc.join('');
 }
 
@@ -153,18 +153,18 @@ function renderResults(r) {
   box.hidden = false;
   $('sep').hidden = false;
   if (!r.listings.length) {
-    box.innerHTML = `<div class="empty muted">Ничего не найдено. Снимите часть модов или понизьте минимумы.</div>`;
+    box.innerHTML = `<div class="empty muted">Nothing found. Uncheck some modifiers or lower the minimums.</div>`;
     return;
   }
   const divs = r.listings.map((l) => l.divine).filter((v) => v != null).sort((a, b) => a - b);
   const median = divs.length ? divs[Math.floor((divs.length - 1) / 2)] : null;
   box.innerHTML = `
     <div class="sum">
-      <span>Найдено: <b>${r.total}</b></span>
-      <span class="muted">мин <b>${money(divs[0], r.exaltedPerDivine)}</b> · медиана ${money(median, r.exaltedPerDivine)}</span>
+      <span>Found: <b>${r.total}</b></span>
+      <span class="muted">min <b>${money(divs[0], r.exaltedPerDivine)}</b> · median ${money(median, r.exaltedPerDivine)}</span>
     </div>
     <table>${r.listings.map((l, i) => `
-      <tr class="lot" data-i="${i}" title="Скопировать шёпот продавцу">
+      <tr class="lot" data-i="${i}" title="Copy whisper to seller">
         <td><span class="price">${l.currencyImage ? `<img src="${esc(l.currencyImage)}" alt="">` : ''}${fmt(l.amount)}${l.currencyImage ? '' : ' ' + esc(l.currencyName)}</span></td>
         <td class="num muted">${l.divine != null && !sameUnit(l, r) ? '≈ ' + money(l.divine, r.exaltedPerDivine) : ''}</td>
         <td class="seller"><span class="dot${l.online ? ' on' : ''}"></span>${esc(l.seller)}</td>
@@ -175,7 +175,7 @@ function renderResults(r) {
     window.pc.copy(r.listings[+tr.dataset.i].whisper);
     box.querySelectorAll('tr.copied').forEach((x) => x.classList.remove('copied'));
     tr.classList.add('copied');
-    setStatus('Шёпот скопирован — вставьте в чат игры (Enter, Ctrl+V)');
+    setStatus('Whisper copied — paste it into game chat (Enter, Ctrl+V)');
     fit();
   }));
 }
@@ -183,7 +183,7 @@ function renderResults(r) {
 async function runSearch(relax = false) {
   const seq = ++searchSeq;
   $('search').disabled = true;
-  setStatus('Ищу на трейде…');
+  setStatus('Searching the trade site…');
   fit();
   try {
     const r = await window.pc.search(state.item, state.filters, relax);
@@ -192,7 +192,7 @@ async function runSearch(relax = false) {
     if (r.dropped && r.dropped.length) {
       state.filters = r.filters;
       renderFilters();
-      setNote(`Было мало лотов — снял: ${r.dropped.join(' · ')}`);
+      setNote(`Too few listings — relaxed: ${r.dropped.join(' · ')}`);
     }
     state.tradeUrl = r.url;
     $('open').hidden = false;
@@ -217,7 +217,7 @@ window.pc.onItem((data) => {
   renderHeader();
   renderExchange();
   renderFilters();
-  if (!state.exchange && !state.searchable) setStatus('Нет данных о цене для этого предмета');
+  if (!state.exchange && !state.searchable) setStatus('No price data for this item');
   fit();
   if (state.searchable) runSearch(true);
 });

@@ -49,13 +49,13 @@ const LOCAL_COVERED = {
 };
 
 const PROPS = [
-  { key: 'ar', label: 'Броня', covers: 'defence' },
-  { key: 'ev', label: 'Уклонение', covers: 'defence' },
-  { key: 'es', label: 'Энерг. щит', covers: 'defence' },
-  { key: 'spirit', label: 'Дух', covers: 'spirit' },
+  { key: 'ar', label: 'Armour', covers: 'defence' },
+  { key: 'ev', label: 'Evasion', covers: 'defence' },
+  { key: 'es', label: 'Energy Shield', covers: 'defence' },
+  { key: 'spirit', label: 'Spirit', covers: 'spirit' },
   { key: 'dps', label: 'DPS', covers: 'damage' },
-  { key: 'pdps', label: 'Физ. DPS', covers: 'damage' },
-  { key: 'edps', label: 'Элем. DPS', covers: 'damage' },
+  { key: 'pdps', label: 'Physical DPS', covers: 'damage' },
+  { key: 'edps', label: 'Elemental DPS', covers: 'damage' },
 ];
 
 function propFilters(item) {
@@ -97,9 +97,9 @@ function pseudoFilters(mods) {
     out.push({ statId: id, text, tag: 'pseudo', value, enabled: true, min: minOf(value) });
   };
   const eleSum = ele.Fire + ele.Cold + ele.Lightning;
-  add('pseudo.pseudo_total_elemental_resistance', `Σ +${eleSum}% к элементальным сопротивлениям`, eleSum, used.ele);
-  add('pseudo.pseudo_total_chaos_resistance', `Σ +${chaos}% к сопротивлению хаосу`, chaos, used.chaos);
-  add('pseudo.pseudo_total_life', `Σ +${life} к максимуму здоровья`, life, used.life);
+  add('pseudo.pseudo_total_elemental_resistance', `Σ +${eleSum}% total Elemental Resistance`, eleSum, used.ele);
+  add('pseudo.pseudo_total_chaos_resistance', `Σ +${chaos}% total Chaos Resistance`, chaos, used.chaos);
+  add('pseudo.pseudo_total_life', `Σ +${life} total maximum Life`, life, used.life);
   return out;
 }
 

@@ -23,7 +23,8 @@ const MAX_SILENT_WAIT = 15000;
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 
 // Бан переживает перезапуск: иначе новая копия сразу стучится снова и продлевает его.
-const banFile = () => path.join(app.getPath('userData'), 'trade-ban.json');
+// Бан — на IP, поэтому файл общий и для демо-профиля (userData-demo).
+const banFile = () => path.join(app.getPath('userData').replace(/-demo$/, ''), 'trade-ban.json');
 let bannedUntil = null;
 function getBan() {
   if (bannedUntil == null) {
@@ -38,21 +39,21 @@ function setBan(seconds) {
 
 function waitText(ms) {
   const s = Math.ceil(ms / 1000);
-  return s >= 120 ? `${Math.ceil(s / 60)} мин` : `${s} с`;
+  return s >= 120 ? `${Math.ceil(s / 60)} min` : `${s} s`;
 }
 
 async function waitSlot(kind) {
   const L = limits[kind];
   for (;;) {
     const now = Date.now();
-    if (getBan() > now) throw new Error(`Трейд временно ограничил запросы — подождите ${waitText(getBan() - now)}`);
+    if (getBan() > now) throw new Error(`Trade site rate limit hit — wait ${waitText(getBan() - now)}`);
     let wait = Math.max(0, L.blockedUntil - now);
     for (const [hits, period] of L.rules) {
       const inWin = L.hits.filter((t) => now - t < period * 1000);
       if (inWin.length >= hits) wait = Math.max(wait, inWin[0] + period * 1000 - now + 50);
     }
     if (!wait) break;
-    if (wait > MAX_SILENT_WAIT) throw new Error(`Почти исчерпан лимит запросов трейда — подождите ${waitText(wait)}`);
+    if (wait > MAX_SILENT_WAIT) throw new Error(`Trade request limit almost used up — wait ${waitText(wait)}`);
     await sleep(wait);
   }
   L.hits.push(Date.now());
@@ -84,10 +85,10 @@ async function tradeRequest(kind, url, body) {
   if (res.status === 429) {
     const ra = Number(res.headers.get('retry-after') || 60);
     setBan(ra);
-    throw new Error(`Трейд временно ограничил запросы — подождите ${waitText(ra * 1000)}`);
+    throw new Error(`Trade site rate limit hit — wait ${waitText(ra * 1000)}`);
   }
   const data = await res.json().catch(() => null);
-  if (!res.ok) throw new Error((data && data.error && data.error.message) || `Трейд ответил ${res.status}`);
+  if (!res.ok) throw new Error((data && data.error && data.error.message) || `Trade site responded ${res.status}`);
   return data;
 }
 
@@ -167,7 +168,7 @@ async function fetchNinja(league) {
       byId.set(ln.id, row);
     }
   });
-  if (!byName.size) throw new Error('poe.ninja не вернул цены для лиги ' + league);
+  if (!byName.size) throw new Error('poe.ninja returned no prices for league ' + league);
   Object.assign(ninja, {
     league, at: Date.now(), byName, byId,
     exaltedPerDivine: rates && rates.exalted, chaosPerDivine: rates && rates.chaos,

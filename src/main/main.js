@@ -93,7 +93,7 @@ async function copyItem() {
       await sleep(20);
       text = clipboard.readText();
     }
-    if (!text) log(`copy: буфер пуст после попытки ${attempt + 1}`);
+    if (!text) log(`copy: clipboard empty after attempt ${attempt + 1}`);
   }
   // Возвращаем пользователю прежний буфер. Строку с «битыми» символами (половинка эмодзи и т.п.)
   // Electron записать не может — тогда просто оставляем буфер как есть.
@@ -130,7 +130,7 @@ async function onHotkey() {
 async function priceCheck(text) {
   const item = parseItem(text);
   if (!item) {
-    log('не предмет:', text.slice(0, 80));
+    log('not an item:', text.slice(0, 80));
     return; // курсор не над предметом
   }
   // Текст последнего предмета — для разбора ошибок парсера.
@@ -138,7 +138,7 @@ async function priceCheck(text) {
   try {
     await ready;
   } catch (e) {
-    send('status', { error: 'Не удалось загрузить данные: ' + e.message });
+    send('status', { error: 'Failed to load data: ' + e.message });
   }
   const league = settings.get().league;
   // Цены этой лиги уже есть — показываем сразу, свежие докачаются в фоне. Нет — ждём (иначе нечего показать).
@@ -166,22 +166,22 @@ async function initData() {
 
 function buildTray() {
   tray = new Tray(nativeImage.createFromPath(ICON).resize({ width: 16, height: 16 }));
-  tray.setToolTip('PoE 2 Price Checker — Ctrl+D над предметом');
+  tray.setToolTip('PoE 2 Price Checker — Ctrl+D over an item');
   const refresh = () => {
     const cur = settings.get().league;
     tray.setContextMenu(Menu.buildFromTemplate([
       { label: 'PoE 2 Price Checker', enabled: false },
-      { label: 'Ctrl+D — оценить предмет под курсором', enabled: false },
+      { label: 'Ctrl+D — price check the item under cursor', enabled: false },
       { type: 'separator' },
       {
-        label: 'Лига: ' + (cur || '…'),
+        label: 'League: ' + (cur || '…'),
         submenu: leagues.map((l) => ({
           label: l, type: 'radio', checked: l === cur,
           click: () => { settings.set({ league: l }); api.loadNinja(l).catch(() => {}); refresh(); },
         })),
       },
       { type: 'separator' },
-      { label: 'Выход', click: () => app.quit() },
+      { label: 'Quit', click: () => app.quit() },
     ]));
   };
   refresh();
@@ -196,7 +196,7 @@ app.whenReady().then(() => {
 
   const hk = settings.get().hotkey;
   if (!DEMO && !globalShortcut.register(hk, () => { log('hotkey'); onHotkey(); })) {
-    log('Не удалось занять горячую клавишу', hk);
+    log('Failed to register hotkey', hk);
   }
 
   // npm start -- --demo=<файл с текстом предмета> [--shot=<png>] — проверка оверлея без игры.
