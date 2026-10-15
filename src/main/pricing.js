@@ -1,6 +1,7 @@
 // Оценка предмета: биржевые предметы — по poe.ninja, остальное — поиском на трейде.
 const api = require('./api');
 const stats = require('./stats');
+const { weight } = require('./weights');
 
 let types = null; // Set базовых типов с трейда — чтобы вытащить базу из имени магического предмета
 let currencyInfo = null; // id валюты трейда -> { text, image }
@@ -30,14 +31,13 @@ function resolveBase(item) {
   return best;
 }
 
-// 80% от значения на предмете: дробь оставляем только для мелких чисел (0.5% регена и т.п.).
+// 80% от значения на предмете. Небольшие целые (+2 к уровню навыков, +1 снаряд) ищем точно,
+// дробь оставляем только для мелких дробных чисел (0.5% регена и т.п.).
 function minOf(v) {
   if (v == null || v <= 0) return null;
+  if (Number.isInteger(v) && v <= 5) return v;
   return v >= 5 ? Math.floor(v * 0.8) : Math.floor(v * 8) / 10;
 }
-
-// Моды, которые почти не влияют на цену — по умолчанию не ищем по ним.
-const LOW_VALUE = /Attribute Requirements|Light Radius|Stun Threshold|Thorns/;
 
 // Моды, которые уже учтены в итоговой защите/уроне предмета. Фильтр по свойству есть только у брони/оружия,
 // а там эти моды всегда локальные — даже если трейд не пометил их «(Local)» (у % ES, например, не пометил).
@@ -116,18 +116,22 @@ function prepare(item) {
   const searchMods = item.rarity === 'Rare' || item.rarity === 'Magic';
   const props = propFilters(item);
   const covered = props.filter((p) => p.enabled).map((p) => LOCAL_COVERED[p.covers]).filter(Boolean);
-  const mods = item.mods.map((m) => ({
-    statId: m.statId,
-    text: m.text,
-    tag: m.tag,
-    tier: m.tier,
-    merged: !!m.parts,
-    value: m.value,
-    template: m.template,
-    enabled: !!m.statId && searchMods && ['explicit', 'fractured', 'desecrated', 'crafted'].includes(m.tag)
-      && !LOW_VALUE.test(m.template) && !covered.some((re) => re.test(m.template)),
-    min: minOf(m.value),
-  }));
+  const mods = item.mods.map((m) => {
+    const w = weight(item.itemClass, m.template, m.tier);
+    return {
+      statId: m.statId,
+      text: m.text,
+      tag: m.tag,
+      tier: m.tier,
+      merged: !!m.parts,
+      value: m.value,
+      template: m.template,
+      weight: w,
+      enabled: !!m.statId && searchMods && ['explicit', 'fractured', 'desecrated', 'crafted'].includes(m.tag)
+        && w !== 'weak' && !covered.some((re) => re.test(m.template)),
+      min: minOf(m.value),
+    };
+  });
   const pseudo = searchMods ? pseudoFilters(mods) : [];
   const filters = {
     mods: [...pseudo, ...mods],
@@ -177,10 +181,42 @@ function toDivine(amount, currency) {
   return row ? amount * row.divine : null;
 }
 
-async function search(league, item, filters) {
-  const body = buildQuery(item, filters);
+// Сколько лотов нужно, чтобы цене можно было верить. Меньше — автоослабление снимает самый слабый фильтр.
+const MIN_RESULTS = 5;
+const MAX_RELAX = 3;
+
+// Чем меньше — тем раньше снимаем. Ключевые моды не снимаем вовсе.
+function strength(f) {
+  if (f.kind === 'prop') return 60;
+  if (f.weight === 'key') return Infinity;
+  if (f.tag === 'pseudo') return 40;
+  return 20 - (f.tier || 3);
+}
+
+function weakest(filters) {
+  const all = [
+    ...filters.mods.filter((m) => m.enabled && m.statId),
+    ...(filters.props || []).filter((p) => p.enabled).map((p) => Object.assign(p, { kind: 'prop' })),
+  ];
+  const cands = all.filter((f) => strength(f) !== Infinity).sort((a, b) => strength(a) - strength(b));
+  return cands[0] || null;
+}
+
+// relax — автоматический первый поиск: если лотов мало, по одному снимаем самые слабые фильтры.
+// Ручной поиск (пользователь сам настроил галочки) ничего не трогает.
+async function search(league, item, filters, relax = false) {
+  const f = JSON.parse(JSON.stringify(filters));
   const L = encodeURIComponent(league);
-  const s = await api.tradeRequest('search', `${api.TRADE}/api/trade2/search/poe2/${L}`, body);
+  const dropped = [];
+  let s;
+  for (let attempt = 0; ; attempt++) {
+    s = await api.tradeRequest('search', `${api.TRADE}/api/trade2/search/poe2/${L}`, buildQuery(item, f));
+    if (!relax || s.total >= MIN_RESULTS || attempt >= MAX_RELAX) break;
+    const w = weakest(f);
+    if (!w) break;
+    w.enabled = false;
+    dropped.push(w.kind === 'prop' ? `${w.label} ≥ ${w.min}` : w.text.split('\n')[0]);
+  }
   const url = `${api.TRADE}/trade2/search/poe2/${L}/${s.id}`;
   const ids = (s.result || []).slice(0, 10);
   let listings = [];
@@ -204,7 +240,7 @@ async function search(league, item, filters) {
       };
     });
   }
-  return { total: s.total, url, listings, exaltedPerDivine: api.ninja.exaltedPerDivine };
+  return { total: s.total, url, listings, exaltedPerDivine: api.ninja.exaltedPerDivine, filters: f, dropped };
 }
 
 module.exports = { init, prepare, search };

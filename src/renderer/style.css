@@ -87,7 +87,9 @@ footer { padding: 6px 12px; font-size: 13px; color: var(--bronze); border-top: 1
 .tag.tier { min-width: 24px; text-align: center; }
 .tag.tier.top { color: var(--gold); border-color: #6b5a3a; }
 .tag.pseudo { color: var(--gold); border-color: #6b5a3a; }
-.sum-v { color: var(--gold); font-weight: 700; }
+.key { color: var(--gold); font-size: 14px; text-shadow: 0 0 8px rgba(255, 190, 80, .5); flex: none; }
+.note { padding: 6px 10px; border-left: 2px solid #b08a45; background: rgba(218, 193, 142, .06); color: var(--label); font-size: 14px; }
+.sum-v {color: var(--gold); font-weight: 700; }
 #props:not(:empty) { padding-bottom: 4px; margin-bottom: 4px; border-bottom: 1px solid var(--line2); }
 .misc { display: flex; flex-wrap: wrap; gap: 6px 16px; margin-top: 6px; padding: 8px 6px 0; border-top: 1px solid var(--line2); }
 .misc label { display: flex; gap: 6px; align-items: center; color: var(--label); }

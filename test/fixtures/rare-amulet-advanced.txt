@@ -1,0 +1,21 @@
+Item Class: Amulets
+Rarity: Rare
+Doom Collar
+Lapis Amulet
+--------
+Requires: Level 52
+--------
+Item Level: 79
+--------
++22(20-30) to Intelligence (implicit)
+--------
+{ Prefix Modifier "of Sorcery" (Tier: 1) }
++2 to Level of all Spell Skills
+{ Prefix Modifier "Fecund" (Tier: 6) — Life }
++44(40-49) to maximum Life
+{ Suffix Modifier "of the Apt" (Tier: 4) }
+10% reduced Attribute Requirements
+{ Suffix Modifier "of Allure" (Tier: 7) }
+6(5-8)% increased Rarity of Items found
+{ Suffix Modifier "of Haast" (Tier: 4) — Elemental, Cold, Resistance }
++22(21-25)% to Cold Resistance

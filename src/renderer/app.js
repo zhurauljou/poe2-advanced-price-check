@@ -47,6 +47,12 @@ function setStatus(text, error) {
   s.classList.toggle('error', !!error);
 }
 
+function setNote(text) {
+  const n = $('note');
+  n.hidden = !text;
+  n.textContent = text || '';
+}
+
 function renderHeader() {
   const { item } = state;
   const n = $('name');
@@ -118,7 +124,7 @@ function renderFilters() {
       </div>` : `
       <div class="mod${m.enabled ? '' : ' off'}" data-i="${i}">
         <label><input type="checkbox" data-k="enabled"${m.enabled ? ' checked' : ''}>
-          ${m.tier ? `<span class="tag tier${m.tier <= 2 ? ' top' : ''}">T${m.tier}</span>` : ''}${m.tag !== 'explicit' ? `<span class="tag ${esc(m.tag)}">${esc(TAG_LABEL[m.tag] || m.tag)}</span>` : ''}<span>${esc(m.text)}${m.merged ? `<span class="sum-v"> = ${fmt(m.value)}</span>` : ''}</span></label>
+          ${m.weight === 'key' ? '<span class="key" title="Ключевой мод для этого слота — сильно влияет на цену">★</span>' : ''}${m.tier ? `<span class="tag tier${m.tier <= 2 ? ' top' : ''}">T${m.tier}</span>` : ''}${m.tag !== 'explicit' ? `<span class="tag ${esc(m.tag)}">${esc(TAG_LABEL[m.tag] || m.tag)}</span>` : ''}<span>${esc(m.text)}${m.merged ? `<span class="sum-v"> = ${fmt(m.value)}</span>` : ''}</span></label>
         <input type="number" data-k="min" step="any" placeholder="мин" value="${m.min == null ? '' : m.min}">
       </div>`).join('')
     : '';
@@ -174,15 +180,20 @@ function renderResults(r) {
   }));
 }
 
-async function runSearch() {
+async function runSearch(relax = false) {
   const seq = ++searchSeq;
   $('search').disabled = true;
   setStatus('Ищу на трейде…');
   fit();
   try {
-    const r = await window.pc.search(state.item, state.filters);
+    const r = await window.pc.search(state.item, state.filters, relax);
     if (seq !== searchSeq) return;
     setStatus('');
+    if (r.dropped && r.dropped.length) {
+      state.filters = r.filters;
+      renderFilters();
+      setNote(`Было мало лотов — снял: ${r.dropped.join(' · ')}`);
+    }
     state.tradeUrl = r.url;
     $('open').hidden = false;
     renderResults(r);
@@ -199,6 +210,7 @@ window.pc.onItem((data) => {
   state = data;
   searchSeq++;
   setStatus('');
+  setNote('');
   $('results').hidden = true;
   $('sep').hidden = true;
   $('open').hidden = true;
@@ -207,7 +219,7 @@ window.pc.onItem((data) => {
   renderFilters();
   if (!state.exchange && !state.searchable) setStatus('Нет данных о цене для этого предмета');
   fit();
-  if (state.searchable) runSearch();
+  if (state.searchable) runSearch(true);
 });
 
 window.pc.onStatus((s) => { setStatus(s.error || s.text, !!s.error); fit(); });
@@ -245,9 +257,9 @@ $('misc').addEventListener('input', (e) => {
   if (t.dataset.o) f[t.dataset.o] = t.checked;
 });
 
-$('search').addEventListener('click', runSearch);
+$('search').addEventListener('click', () => { setNote(''); runSearch(); });
 document.addEventListener('keydown', (e) => {
-  if (e.key === 'Enter' && state && state.searchable) runSearch();
+  if (e.key === 'Enter' && state && state.searchable) { setNote(''); runSearch(); }
   if (e.key === 'Escape') window.pc.hide();
 });
 $('open').addEventListener('click', () => state.tradeUrl && window.pc.openUrl(state.tradeUrl));

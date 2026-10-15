@@ -171,7 +171,7 @@ app.whenReady().then(() => {
     });
   }
 
-  ipcMain.handle('search',(_e, item, filters) => pricing.search(settings.get().league, item, filters));
+  ipcMain.handle('search', (_e, item, filters, relax) => pricing.search(settings.get().league, item, filters, relax));
   ipcMain.handle('leagues', () => ({ leagues, current: settings.get().league }));
   ipcMain.handle('set-league', async (_e, l) => {
     settings.set({ league: l });
