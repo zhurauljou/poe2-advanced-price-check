@@ -1,0 +1,79 @@
+/* Палитра и элементы — как во флиппере (poe2-flip). */
+:root {
+  color-scheme: dark;
+  --bg: #14110e; --panel: #1e1a16; --panel2: #262019; --line: #3a3128; --line2: #2a231c; --hover: #1f1a15;
+  --text: #e8dcc8; --muted: #9a8c78; --gold: #d8a24a; --good: #6fcf7a; --bad: #e0675a; --warn: #e0b35a;
+  --btn: #3b2c17; --btn-hover: #4a3720; --btn-line: #6b4f24; --btn-text: #f3d9a6;
+  --r-normal: #c8c8c8; --r-magic: #8888ff; --r-rare: #ffff77; --r-unique: #af6025; --r-gem: #1ba29b; --r-currency: #aa9e82;
+}
+
+* { box-sizing: border-box; }
+html, body { margin: 0; background: var(--bg); color: var(--text); overflow: hidden; }
+body { font: 13px/1.45 "Segoe UI", Roboto, sans-serif; border: 1px solid var(--btn-line); }
+.muted { color: var(--muted); }
+[hidden] { display: none !important; }
+
+header { display: flex; gap: 8px; align-items: center; padding: 8px 10px; background: var(--panel);
+         border-bottom: 1px solid var(--line); -webkit-app-region: drag; }
+header .title { flex: 1; min-width: 0; }
+.name { font-size: 15px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.base { font-size: 12px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.name.Normal { color: var(--r-normal); } .name.Magic { color: var(--r-magic); } .name.Rare { color: var(--r-rare); }
+.name.Unique { color: var(--r-unique); } .name.Gem { color: var(--r-gem); } .name.Currency { color: var(--r-currency); }
+header select, header button { -webkit-app-region: no-drag; }
+
+input, select, button { font: inherit; color: var(--text); background: var(--panel2); border: 1px solid var(--line);
+                        border-radius: 6px; padding: 4px 8px; }
+select { max-width: 150px; }
+button { cursor: pointer; background: var(--btn); border-color: var(--btn-line); color: var(--btn-text); font-weight: 600; }
+button:hover { background: var(--btn-hover); }
+button:disabled { opacity: .5; cursor: default; }
+button.ghost { background: transparent; border-color: var(--line); color: var(--muted); font-weight: 500; }
+button.ghost:hover { color: var(--text); background: var(--hover); }
+button.icon { width: 28px; height: 28px; padding: 0; background: transparent; border-color: var(--line); color: var(--muted); }
+button.icon:hover { color: var(--text); background: var(--hover); }
+input[type=checkbox] { accent-color: var(--gold); margin: 0; }
+
+main { padding: 10px; display: flex; flex-direction: column; gap: 10px; }
+footer { padding: 6px 10px; font-size: 11px; border-top: 1px solid var(--line2); }
+#status.error { color: var(--bad); }
+
+/* ---- биржевой предмет ---- */
+.card { padding: 10px 12px; border: 1px solid var(--line); border-radius: 10px; background: var(--panel); }
+.ex-top { display: flex; gap: 10px; align-items: center; }
+.ex-top img { width: 40px; height: 40px; }
+.big { font-size: 22px; font-weight: 700; color: var(--gold); font-variant-numeric: tabular-nums; }
+.ex-row { display: flex; justify-content: space-between; gap: 8px; margin-top: 8px; padding-top: 8px;
+          border-top: 1px solid var(--line2); font-variant-numeric: tabular-nums; }
+.up { color: var(--good); } .down { color: var(--bad); }
+.spark { overflow: visible; }
+.spark polyline { fill: none; stroke: currentColor; stroke-width: 1.5; stroke-linejoin: round; }
+
+/* ---- фильтры ---- */
+.mod { display: flex; gap: 8px; align-items: center; padding: 4px 6px; border-radius: 6px; }
+.mod:hover { background: var(--hover); }
+.mod label { flex: 1; display: flex; gap: 8px; align-items: center; cursor: pointer; min-width: 0; white-space: pre-line; }
+.mod.off label { color: var(--muted); }
+.mod input[type=number] { width: 64px; text-align: right; padding: 2px 6px; }
+.tag { font-size: 10px; text-transform: uppercase; letter-spacing: .4px; color: var(--muted); border: 1px solid var(--line);
+       border-radius: 4px; padding: 0 4px; flex: none; }
+.misc { display: flex; flex-wrap: wrap; gap: 6px 14px; margin-top: 6px; padding: 6px; border-top: 1px solid var(--line2); }
+.misc label { display: flex; gap: 6px; align-items: center; color: var(--muted); }
+.misc input[type=number] { width: 52px; padding: 2px 6px; }
+.actions { display: flex; gap: 8px; margin-top: 8px; }
+.actions #search { flex: 1; }
+.empty { padding: 10px; text-align: center; }
+
+/* ---- результаты ---- */
+.sum { display: flex; justify-content: space-between; gap: 8px; margin-bottom: 6px; }
+table { width: 100%; border-collapse: collapse; }
+td { padding: 5px 6px; border-bottom: 1px solid var(--line2); vertical-align: middle; }
+tr.lot { cursor: pointer; }
+tr.lot:hover { background: var(--hover); }
+tr.lot.copied { box-shadow: inset 3px 0 var(--gold); }
+.price { display: inline-flex; gap: 4px; align-items: center; font-weight: 600; font-variant-numeric: tabular-nums; white-space: nowrap; }
+.price img { width: 20px; height: 20px; }
+.num { text-align: right; font-variant-numeric: tabular-nums; white-space: nowrap; }
+.seller { max-width: 120px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.dot { display: inline-block; width: 6px; height: 6px; border-radius: 50%; background: var(--muted); margin-right: 5px; }
+.dot.on { background: var(--good); }

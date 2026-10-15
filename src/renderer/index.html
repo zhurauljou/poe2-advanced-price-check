@@ -1,0 +1,35 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8">
+  <meta http-equiv="Content-Security-Policy"
+        content="default-src 'self'; img-src 'self' https://web.poecdn.com data:; style-src 'self'; script-src 'self'">
+  <title>PoE 2 Price Checker</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <header id="head">
+    <div class="title">
+      <div id="name" class="name"></div>
+      <div id="base" class="base muted"></div>
+    </div>
+    <select id="league" title="Лига"></select>
+    <button id="close" class="icon" title="Закрыть (Esc)">✕</button>
+  </header>
+  <main id="body">
+    <div id="status" class="muted" hidden></div>
+    <section id="exchange" hidden></section>
+    <section id="filters" hidden>
+      <div id="mods"></div>
+      <div id="misc" class="misc"></div>
+      <div class="actions">
+        <button id="search">Искать</button>
+        <button id="open" class="ghost" hidden>Открыть на трейде ↗</button>
+      </div>
+    </section>
+    <section id="results" hidden></section>
+  </main>
+  <footer class="muted">Esc — закрыть · клик по лоту — скопировать шёпот</footer>
+  <script src="app.js"></script>
+</body>
+</html>
