@@ -7,6 +7,7 @@ const { uIOhook, UiohookKey } = require('uiohook-napi');
 const settings = require('./settings');
 const api = require('./api');
 const pricing = require('./pricing');
+const { log } = require('./log');
 const { parseItem } = require('./parser');
 
 const WIDTH = 480;
@@ -24,8 +25,8 @@ if (DEMO) app.setPath('userData', app.getPath('userData') + '-demo');
 if (!app.requestSingleInstanceLock()) app.quit();
 
 // Ошибка в фоне не должна всплывать системным окном поверх игры — пишем в лог и работаем дальше.
-process.on('uncaughtException', (e) => console.error('uncaught', e));
-process.on('unhandledRejection', (e) => console.error('unhandled', e));
+process.on('uncaughtException', (e) => log('uncaught', e));
+process.on('unhandledRejection', (e) => log('unhandled', e));
 
 function createOverlay() {
   win = new BrowserWindow({
@@ -66,15 +67,33 @@ function hide() {
   if (win && win.isVisible()) win.hide();
 }
 
+const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
+
+// Ctrl+C «по-человечески»: игра опрашивает клавиатуру раз в кадр и мгновенное нажатие (keyTap) может
+// пропустить — держим C нажатой ~30 мс.
+async function pressCopy() {
+  uIOhook.keyToggle(UiohookKey.Ctrl, 'down');
+  await sleep(15);
+  uIOhook.keyToggle(UiohookKey.C, 'down');
+  await sleep(30);
+  uIOhook.keyToggle(UiohookKey.C, 'up');
+  await sleep(10);
+  uIOhook.keyToggle(UiohookKey.Ctrl, 'up');
+}
+
 // Нажимаем Ctrl+C за пользователя и ждём, пока игра положит текст предмета в буфер.
+// Не ответила за 400 мс — пробуем ещё раз.
 async function copyItem() {
   const prev = clipboard.readText();
   clipboard.writeText('');
-  uIOhook.keyTap(UiohookKey.C, [UiohookKey.Ctrl]);
   let text = '';
-  for (let i = 0; i < 25 && !text; i++) {
-    await new Promise((r) => setTimeout(r, 20));
-    text = clipboard.readText();
+  for (let attempt = 0; attempt < 2 && !text; attempt++) {
+    await pressCopy();
+    for (let i = 0; i < 20 && !text; i++) {
+      await sleep(20);
+      text = clipboard.readText();
+    }
+    if (!text) log(`copy: буфер пуст после попытки ${attempt + 1}`);
   }
   // Возвращаем пользователю прежний буфер. Строку с «битыми» символами (половинка эмодзи и т.п.)
   // Electron записать не может — тогда просто оставляем буфер как есть.
@@ -86,10 +105,34 @@ async function copyItem() {
   return text;
 }
 
-async function priceCheck(sample) {
-  const text = sample || await copyItem();
+let copying = false;
+
+async function onHotkey() {
+  // Удержание Ctrl+D шлёт хоткей повторно — параллельные копирования портят друг другу буфер.
+  if (copying) return;
+  copying = true;
+  try {
+    // Фокус у нашего окна (кликнули в него) — Ctrl+C ушёл бы ему, а не игре. Прячем, Windows вернёт фокус игре.
+    if (win.isVisible() && win.isFocused()) {
+      hide();
+      await sleep(80);
+    }
+    const text = await copyItem();
+    if (!text) return;
+    await priceCheck(text);
+  } catch (e) {
+    log('priceCheck', e);
+  } finally {
+    copying = false;
+  }
+}
+
+async function priceCheck(text) {
   const item = parseItem(text);
-  if (!item) return; // курсор не над предметом
+  if (!item) {
+    log('не предмет:', text.slice(0, 80));
+    return; // курсор не над предметом
+  }
   // Текст последнего предмета — для разбора ошибок парсера.
   try { require('fs').writeFileSync(path.join(app.getPath('userData'), 'last-item.txt'), text); } catch {}
   try {
@@ -98,11 +141,10 @@ async function priceCheck(sample) {
     send('status', { error: 'Не удалось загрузить данные: ' + e.message });
   }
   const league = settings.get().league;
-  try {
-    await api.loadNinja(league);
-  } catch (e) {
-    // нет цен poe.ninja для этой лиги — трейд всё равно работает
-  }
+  // Цены этой лиги уже есть — показываем сразу, свежие докачаются в фоне. Нет — ждём (иначе нечего показать).
+  // Ошибку глотаем: нет цен poe.ninja для лиги — трейд всё равно работает.
+  const ninja = api.loadNinja(league).catch((e) => log('ninja', e.message));
+  if (api.ninja.league !== league) await ninja;
   send('item', { ...pricing.prepare(item), league, leagues });
   show();
 }
@@ -150,11 +192,11 @@ app.whenReady().then(() => {
   createOverlay();
   const refreshTray = buildTray();
   ready = initData().then(refreshTray);
-  ready.catch((e) => console.error('init failed', e));
+  ready.catch((e) => log('init failed', e));
 
   const hk = settings.get().hotkey;
-  if (!DEMO && !globalShortcut.register(hk, () => { priceCheck().catch((e) => console.error(e)); })) {
-    console.error('Не удалось занять горячую клавишу', hk);
+  if (!DEMO && !globalShortcut.register(hk, () => { log('hotkey'); onHotkey(); })) {
+    log('Не удалось занять горячую клавишу', hk);
   }
 
   // npm start -- --demo=<файл с текстом предмета> [--shot=<png>] — проверка оверлея без игры.

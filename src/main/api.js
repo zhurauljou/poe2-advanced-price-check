@@ -131,8 +131,17 @@ const NINJA_TYPES = [
 
 const ninja = { league: null, at: 0, byName: new Map(), byId: new Map(), exaltedPerDivine: null, chaosPerDivine: null };
 
-async function loadNinja(league, force = false) {
-  if (!force && ninja.league === league && Date.now() - ninja.at < 15 * 60e3) return ninja;
+let ninjaLoading = null; // { league, promise } — не качаем одно и то же параллельно
+
+function loadNinja(league, force = false) {
+  if (!force && ninja.league === league && Date.now() - ninja.at < 15 * 60e3) return Promise.resolve(ninja);
+  if (ninjaLoading && ninjaLoading.league === league) return ninjaLoading.promise;
+  const promise = fetchNinja(league).finally(() => { ninjaLoading = null; });
+  ninjaLoading = { league, promise };
+  return promise;
+}
+
+async function fetchNinja(league) {
   const q = encodeURIComponent(league);
   const results = await Promise.all(NINJA_TYPES.map((t) =>
     getJson(`${NINJA}/economy/exchange/current/overview?league=${q}&type=${t}`).catch(() => null)));
