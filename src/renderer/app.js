@@ -704,7 +704,7 @@ function rollInfo(m) {
   if (!m.range || m.roll == null) return '';
   // Пометка max — только у максимального ролла лучшего тира (T1): на других тирах она мало что значит.
   const max = m.tier === 1 && m.roll >= 0.9 ? '<span class="maxroll" title="Near max roll of the top tier — usually worth more">max</span>' : '';
-  return ` <span class="rng" title="Tier range · roll ${Math.round(m.roll * 100)}%">${fmt(m.range.lo)}–${fmt(m.range.hi)}</span>${max}`;
+  return ` <span class="rng" title="Tier range · roll ${Math.round(m.roll * 100)}%">${fmt(m.range.lo)}${m.range.lo < 0 ? ' to ' : '–'}${fmt(m.range.hi)}</span>${max}`;
 }
 
 // Какие суммы раскрыты (сбрасывается на новом предмете).

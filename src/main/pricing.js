@@ -63,7 +63,8 @@ function rollQuality(v, r) {
 // Без диапазона — прежние 80% от значения.
 function minFor(v, range, importance) {
   const q = rollQuality(v, range);
-  if (q == null || v <= 0) return minOf(v);
+  // С диапазоном считаем и отрицательные («-11(-20--5)% to all Elemental Resistances»: лучше — ближе к -5).
+  if (q == null) return minOf(v);
   let share = importance >= 2.4 ? 0.75 : importance >= 1.2 ? 0.5 : 0.25;
   if (q >= 0.75) share = Math.max(share, 0.8);
   const m = range.lo + (v - range.lo) * share;

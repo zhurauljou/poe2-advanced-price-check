@@ -85,3 +85,10 @@ test('оружие: крит и скорость атаки — свойства
   assert.equal(it.props.aps, 1.01);
   assert.ok(it.props.pdps > 0 && it.props.edps > 0);
 });
+
+test('текстовый диапазон варианта «Massive Ring(Very Small-Massive Ring)» убирается', () => {
+  const it = fixture('unique-controlled-metamorphosis.txt');
+  assert.deepEqual(texts(it).slice(0, 2), ['Only affects Passives in Massive Ring',
+    'Passives in Radius can be Allocated without being connected to your tree']);
+  assert.deepEqual(it.modLines[2].range, { lo: -20, hi: -5 });
+});

@@ -190,7 +190,7 @@ function parseItem(text) {
           if (head.side) item.affixes.push({ side: head.side, name: head.name, tag: head.tag, tier: head.tier });
           continue;
         }
-        const l = boostLine(raw.replace(RANGE, '$1').replace(/ — Unscalable Value$/, '').replace(/\(\)$/, ''), head ? head.boost : 0);
+        const l = boostLine(raw.replace(RANGE, '$1').replace(/ — Unscalable Value$/, '').replace(/(\S)\([^()]*\)$/, '$1') /* «()» и текстовый диапазон «Massive Ring(Very Small-Massive Ring)» */, head ? head.boost : 0);
         const t = l.match(TAGGED);
         if (advanced && !head && !t) continue;
         const tier = head ? head.tier : null;
