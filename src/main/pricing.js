@@ -131,7 +131,8 @@ function pseudoFilters(mods) {
   };
   const add = (id, text, value, group, perMod = () => 1) => {
     if (!group.length) return;
-    group.forEach((m) => { m.enabled = false; });
+    // Части суммы выключаем (их заменяет сумма) и помечаем — в окне они прячутся под «▸ N mods» у суммы.
+    group.forEach((m) => { m.enabled = false; m.inSum = id; });
     const range = group.every((m) => m.range)
       ? group.reduce((s, m) => ({ lo: s.lo + m.range.lo * perMod(m), hi: s.hi + m.range.hi * perMod(m) }), { lo: 0, hi: 0 })
       : null;

@@ -305,6 +305,9 @@ body.cmp-page { background: #0a0d12; }
 .imp.i1 i:nth-child(-n+1), .imp.i2 i:nth-child(-n+2), .imp.i3 i { background: var(--bronze); }
 .imp.key.i1 i:nth-child(-n+1), .imp.key.i2 i:nth-child(-n+2), .imp.key.i3 i { background: var(--gold); box-shadow: 0 0 4px rgba(255, 190, 80, .4); }
 .sum-v { color: var(--gold); }
+.sum-toggle { margin: -2px 0 2px 58px; font-size: 12.5px; color: var(--bronze); cursor: pointer; user-select: none; }
+.sum-toggle:hover { color: var(--cream); }
+.sum-parts { margin-left: 18px; padding-left: 6px; border-left: 1px solid #2c2a25; }
 .misc { display: flex; flex-wrap: wrap; justify-content: center; gap: 6px 16px; margin: 6px 0 4px; padding-top: 8px; border-top: 1px solid var(--line2); }
 .misc .opt { display: flex; gap: 6px; align-items: center; color: var(--cream); cursor: pointer; }
 .misc .opt.off { color: var(--muted); }

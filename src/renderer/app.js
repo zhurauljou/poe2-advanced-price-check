@@ -488,6 +488,9 @@ function rollInfo(m) {
   return ` <span class="rng" title="Tier range · roll ${Math.round(m.roll * 100)}%">${fmt(m.range.lo)}–${fmt(m.range.hi)}</span>${max}`;
 }
 
+// Какие суммы раскрыты (сбрасывается на новом предмете).
+const openSums = new Set();
+
 function modRow(m, i) {
   if (!m.statId) {
     return `<div class="mod nomatch" title="This modifier has no trade site filter">
@@ -516,7 +519,19 @@ function renderFilters() {
   box.hidden = !state.searchable;
   if (!state.searchable) return;
   const f = state.filters;
-  $('mods').innerHTML = f.mods.map(modRow).join('');
+  // Части сумм (Σ сопротивлений, Σ жизни) — под своей суммой, свёрнуты под «▸ N mods»; включённая часть раскрывает.
+  const rows = [];
+  f.mods.forEach((m, i) => {
+    if (m.inSum) return;
+    rows.push(modRow(m, i));
+    if (m.tag !== 'pseudo') return;
+    const parts = f.mods.map((p, j) => [p, j]).filter(([p]) => p.inSum === m.statId);
+    if (!parts.length) return;
+    const open = openSums.has(m.statId) || parts.some(([p]) => p.enabled);
+    rows.push(`<div class="sum-toggle" data-sum="${esc(m.statId)}">${open ? '▾' : '▸'} ${parts.length} mod${parts.length > 1 ? 's' : ''} in this total</div>`);
+    if (open) rows.push(`<div class="sum-parts">${parts.map(([p, j]) => modRow(p, j)).join('')}</div>`);
+  });
+  $('mods').innerHTML = rows.join('');
   // Защита/DPS, уровни и гнёзда выбираются прямо в подсказке под шапкой — здесь валюта цены и «онлайн».
   $('misc').innerHTML = `
     <div class="seg" title="Which currency listings to search">${CURRENCIES.map(([id, label]) =>
@@ -680,6 +695,7 @@ async function runSearch(relax = false) {
 window.pc.onItem((data) => {
   state = data;
   rates = data.rates || {};
+  openSums.clear();
   hideCompare();
   if (state.filters) state.filters.priceCurrency = data.priceCurrency || 'any';
   searchSeq++;
@@ -726,6 +742,15 @@ $('tab-demand').addEventListener('click', (e) => {
 window.pc.onStatus((s) => { setStatus(s.error || s.text, !!s.error); fit(); });
 
 // ---- изменения фильтров ----
+$('mods').addEventListener('click', (e) => {
+  const t = e.target.closest('.sum-toggle');
+  if (!t) return;
+  const id = t.dataset.sum;
+  if (openSums.has(id)) openSums.delete(id); else openSums.add(id);
+  renderFilters();
+  fit();
+});
+
 $('mods').addEventListener('input', (e) => {
   const row = e.target.closest('.mod');
   if (!row) return;
