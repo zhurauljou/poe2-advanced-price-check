@@ -69,6 +69,9 @@ function parseItem(text) {
     unidentified: false,
     mirrored: false,
     props: {}, // ar / ev / es / spirit, у оружия pdps / edps / dps
+    properties: [], // строки свойств для показа, как в игре: { k: 'Energy Shield', v: '1038', aug: true }
+    requires: null, // «Level 65, 78 Int»
+    sockets: 0,
     modLines: [], // { text, tag } — сырые строки, сопоставление со статами трейда делает stats.js
     raw: text,
   };
@@ -101,6 +104,22 @@ function parseItem(text) {
       else if (item.rarity === 'Gem' && (m = l.match(/^Level: (\d+)/))) item.gemLevel = +m[1];
       else if (l === 'Corrupted') item.corrupted = true;
       else if (l === 'Mirrored') item.mirrored = true;
+    }
+  }
+  // Свойства — из секций, где все строки «Ключ: значение» (у камней первая строка — теги, её пропускаем).
+  const SKIP_PROPS = new Set(['Item Level', 'Requires', 'Stack Size', 'Sockets']);
+  for (const sec of sections.slice(1)) {
+    for (const l of sec) {
+      let m;
+      if ((m = l.match(/^Requires: (.+)$/))) item.requires = m[1].replace(/ \((augmented|unmet)\)/g, '');
+      else if ((m = l.match(/^Sockets: (.+)$/))) item.sockets = (m[1].match(/S/g) || []).length;
+    }
+    if (!sec.every((l) => PROPERTY.test(l) && !TAGGED.test(l))) continue;
+    for (const l of sec) {
+      const m = l.match(/^([^:]+): (.+)$/);
+      if (!m || SKIP_PROPS.has(m[1])) continue;
+      const aug = / \(augmented\)/.test(m[2]);
+      item.properties.push({ k: m[1], v: m[2].replace(/ \(augmented\)/g, ''), aug });
     }
   }
   if (aps) {

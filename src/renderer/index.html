@@ -3,37 +3,40 @@
 <head>
   <meta charset="utf-8">
   <meta http-equiv="Content-Security-Policy"
-        content="default-src 'self'; img-src 'self' https://web.poecdn.com data:; font-src data:; style-src 'self'; script-src 'self'">
+        content="default-src 'self'; img-src 'self' https://web.poecdn.com data:; font-src 'self' data:; style-src 'self'; script-src 'self'">
   <title>PoE 2 Price Checker</title>
   <link rel="stylesheet" href="fonts/fonts.css">
   <link rel="stylesheet" href="style.css">
+  <link rel="stylesheet" href="button.css">
 </head>
 <body>
-  <header id="head">
-    <div class="title">
-      <div id="name" class="name"></div>
-      <div id="base" class="base muted"></div>
-    </div>
+  <div class="topbar">
     <select id="league" title="League"></select>
+    <div class="grow"></div>
     <button id="close" class="icon" title="Close (Esc)">✕</button>
-  </header>
-  <main id="body">
-    <div id="status" class="muted" hidden></div>
-    <section id="exchange" hidden></section>
+  </div>
+  <div id="banner" class="banner">
+    <div id="name" class="bn-name"></div>
+    <div id="base" class="bn-base"></div>
+  </div>
+  <main>
+    <div id="status" hidden></div>
+    <section id="tooltip" class="tt"></section>
+    <section id="hero" class="hero" hidden></section>
     <section id="filters" hidden>
+      <div class="sect"><span>Search filters</span></div>
       <div id="props"></div>
       <div id="mods"></div>
       <div id="misc" class="misc"></div>
-      <div class="actions">
-        <button id="search" class="primary">Search</button>
-        <button id="open" class="ghost" hidden>Trade site ↗</button>
-      </div>
+      <button id="search" class="primary">Search</button>
     </section>
-    <div id="sep" class="ornament" hidden></div>
     <div id="note" class="note" hidden></div>
     <section id="results" hidden></section>
   </main>
-  <footer>Esc — close · Enter — search · click a listing — copy whisper</footer>
+  <footer>
+    <span>Esc — close · Enter — search · click a listing — copy whisper</span>
+    <button id="open" class="link" hidden>Trade site ↗</button>
+  </footer>
   <script src="app.js"></script>
 </body>
 </html>

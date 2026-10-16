@@ -30,7 +30,7 @@ function ago(iso) {
 
 function spark(data) {
   if (!data || data.length < 2) return '';
-  const w = 70, h = 20;
+  const w = 56, h = 16;
   const min = Math.min(...data), max = Math.max(...data), span = max - min || 1;
   const pts = data.map((v, i) => `${(i / (data.length - 1)) * w},${h - ((v - min) / span) * h}`).join(' ');
   return `<svg class="spark" width="${w}" height="${h}"><polyline points="${pts}"/></svg>`;
@@ -53,84 +53,124 @@ function setNote(text) {
   n.textContent = text || '';
 }
 
-function renderHeader() {
+// ---- шапка и подсказка, как в игре ----
+function renderBanner() {
   const { item } = state;
-  const n = $('name');
-  n.className = 'name ' + item.rarity;
-  n.textContent = item.name || item.baseType;
-  const bits = [];
-  if (item.name !== item.baseType && item.baseType) bits.push(item.baseType);
-  if (item.ilvl) bits.push(`ilvl ${item.ilvl}`);
-  if (item.gemLevel) bits.push(`lvl ${item.gemLevel}`);
-  if (item.quality) bits.push(`quality ${item.quality}%`);
-  if (item.corrupted) bits.push('corrupted');
-  if (item.unidentified) bits.push('unidentified');
-  $('base').textContent = bits.join(' · ');
-
-  const sel = $('league');
-  sel.innerHTML = state.leagues.map((l) => `<option${l === state.league ? ' selected' : ''}>${esc(l)}</option>`).join('');
+  const b = $('banner');
+  const two = item.name && item.baseType && item.name !== item.baseType;
+  b.className = `banner ${item.rarity}${two ? '' : ' single'}`;
+  $('name').textContent = item.name || item.baseType;
+  $('base').textContent = two ? item.baseType : '';
+  $('league').innerHTML = state.leagues.map((l) => `<option${l === state.league ? ' selected' : ''}>${esc(l)}</option>`).join('');
 }
 
+function renderTooltip() {
+  const { item } = state;
+  const lines = [];
+  if (!state.exchange) {
+    const props = item.properties.map((p) => `${esc(p.k)}: <b class="${p.aug ? 'aug' : ''}">${esc(p.v)}</b>`);
+    if (props.length) lines.push(props.join('<br>'));
+    const meta = [];
+    if (item.requires) meta.push(`Requires: <b>${esc(item.requires)}</b>`);
+    if (item.ilvl) meta.push(`Item Level: <b>${item.ilvl}</b>`);
+    if (item.gemLevel) meta.push(`Level: <b>${item.gemLevel}</b>`);
+    if (item.sockets) meta.push(`Sockets: <b>${'◆ '.repeat(item.sockets).trim()}</b>`);
+    if (meta.length) lines.push(meta.join(' · '));
+  }
+  const flags = [];
+  if (item.unidentified) flags.push('<span class="corrupt">Unidentified</span>');
+  if (item.corrupted) flags.push('<span class="corrupt">Corrupted</span>');
+  if (item.mirrored) flags.push('<span class="cls">Mirrored</span>');
+  if (flags.length) lines.push(flags.join(' · '));
+  $('tooltip').innerHTML = lines.join('<div class="sep"></div>');
+}
+
+// ---- блок цены ----
 // Та же цена в других валютах — без той, что уже крупно наверху.
-function alt(x) {
-  const main = money(x.divine, x.exaltedPerDivine).split(' ')[1];
+function alt(div, x) {
+  const main = money(div, x.exaltedPerDivine).split(' ')[1];
   const out = [];
-  if (main !== 'div') out.push(`${fmt(x.divine)} div`);
-  if (main !== 'ex' && x.exaltedPerDivine && x.id !== 'exalted') out.push(`${fmt(x.divine * x.exaltedPerDivine)} ex`);
-  if (x.chaosPerDivine && x.id !== 'chaos') out.push(`${fmt(x.divine * x.chaosPerDivine)} chaos`);
+  if (main !== 'div') out.push(`${fmt(div)} div`);
+  if (main !== 'ex' && x.exaltedPerDivine && x.id !== 'exalted') out.push(`${fmt(div * x.exaltedPerDivine)} ex`);
+  if (x.chaosPerDivine && x.id !== 'chaos') out.push(`${fmt(div * x.chaosPerDivine)} chaos`);
   return out.join(' · ');
 }
 
-function renderExchange() {
-  const box = $('exchange');
+function renderExchangeHero() {
   const x = state.exchange;
-  box.hidden = !x;
-  if (!x) return;
   // Сам Exalted Orb в ex оценивать бессмысленно — показываем в div.
   if (x.id === 'exalted') x.exaltedPerDivine = null;
   const stack = state.item.stack && state.item.stack.size > 1 ? state.item.stack.size : 0;
-  const ch = x.change == null ? '' : `<span class="${x.change >= 0 ? 'up' : 'down'}">${x.change >= 0 ? '+' : ''}${fmt(x.change)}%</span>`;
   const dir = x.change == null ? '' : x.change >= 0 ? 'up' : 'down';
-  box.innerHTML = `
-    <div class="card">
-      <div class="ex-top">
-        ${x.image ? `<img src="${esc(x.image)}" alt="">` : ''}
-        <div>
-          <div class="big">${money(x.divine, x.exaltedPerDivine)}</div>
-          <div class="muted">per unit · ${alt(x)}</div>
-        </div>
-      </div>
-      ${stack ? `<div class="ex-row"><span class="muted">Stack ×${stack}</span><b>${money(x.divine * stack, x.exaltedPerDivine)}</b></div>` : ''}
-      <div class="ex-row">
-        <span class="muted">7 days ${ch}</span>
-        <span class="${dir}">${spark(x.spark)}</span>
-      </div>
-      <div class="ex-row"><span class="muted">24h volume</span><span>${fmt(x.volume)} div</span></div>
+  $('hero').hidden = false;
+  $('hero').innerHTML = `
+    <div class="k">Price per unit</div>
+    <div class="big">${x.image ? `<img src="${esc(x.image)}" alt="">` : ''}${money(x.divine, x.exaltedPerDivine)}</div>
+    <div class="alt">${alt(x.divine, x)}</div>
+    <div class="grid">
+      <div><span class="k">${stack ? `Stack ×${stack}` : 'Stack'}</span><span class="v">${stack ? money(x.divine * stack, x.exaltedPerDivine) : '—'}</span></div>
+      <div><span class="k">7 days</span><span class="v ${dir}">${x.change == null ? '—' : `${x.change >= 0 ? '+' : ''}${fmt(x.change)}%`} ${spark(x.spark)}</span></div>
+      <div><span class="k">24h volume</span><span class="v">${fmt(x.volume)} div</span></div>
     </div>`;
 }
 
+function renderSearchingHero() {
+  $('hero').hidden = false;
+  $('hero').innerHTML = `<div class="k">Estimated price</div><div class="big wait">…</div><div class="alt">Searching the trade site</div>`;
+}
+
+// Оценка — медиана самых дешёвых (до 5) лотов: один демпингующий продавец её не уронит.
+function renderTradeHero(r) {
+  const divs = r.listings.map((l) => l.divine).filter((v) => v != null).sort((a, b) => a - b);
+  if (!divs.length) {
+    $('hero').innerHTML = `<div class="k">Estimated price</div><div class="big wait" style="animation:none">—</div>
+      <div class="alt">Nothing found — uncheck some filters or lower the minimums</div>`;
+    return;
+  }
+  const head = divs.slice(0, 5);
+  const est = head[Math.floor((head.length - 1) / 2)];
+  const median = divs[Math.floor((divs.length - 1) / 2)];
+  const x = { exaltedPerDivine: r.exaltedPerDivine };
+  $('hero').innerHTML = `
+    <div class="k">Estimated price</div>
+    <div class="big">${money(est, r.exaltedPerDivine)}</div>
+    <div class="alt">${alt(est, x)}</div>
+    <div class="grid">
+      <div><span class="k">Cheapest</span><span class="v">${money(divs[0], r.exaltedPerDivine)}</span></div>
+      <div><span class="k">Median of ${divs.length}</span><span class="v">${money(median, r.exaltedPerDivine)}</span></div>
+      <div><span class="k">Listings</span><span class="v">${r.total.toLocaleString('en-US')}</span></div>
+    </div>`;
+}
+
+// ---- фильтры ----
 const TAG_LABEL = { pseudo: 'total', rune: 'rune', implicit: 'implicit', crafted: 'crafted', desecrated: 'desecrated',
   fractured: 'fractured', enchant: 'enchant' };
+
+function modRow(m, i) {
+  if (!m.statId) {
+    return `<div class="mod nomatch" title="This modifier has no trade site filter">
+      <label><span class="tag">?</span><span>${esc(m.text)}</span></label></div>`;
+  }
+  const tags = [
+    m.weight === 'key' ? '<span class="key" title="Key modifier for this slot — drives the price">★</span>' : '',
+    m.tier ? `<span class="tag tier${m.tier <= 2 ? ' top' : ''}">T${m.tier}</span>` : '',
+    m.tag !== 'explicit' ? `<span class="tag ${esc(m.tag)}">${esc(TAG_LABEL[m.tag] || m.tag)}</span>` : '',
+  ].join('');
+  return `<div class="mod t-${esc(m.tag)}${m.enabled ? '' : ' off'}" data-i="${i}">
+      <label><input type="checkbox" data-k="enabled"${m.enabled ? ' checked' : ''}>${tags}
+        <span>${esc(m.text)}${m.merged ? `<span class="sum-v"> = ${fmt(m.value)}</span>` : ''}</span></label>
+      ${m.option ? '' : `<input type="number" data-k="min" step="any" placeholder="min" value="${m.min == null ? '' : m.min}">`}
+    </div>`;
+}
 
 function renderFilters() {
   const box = $('filters');
   box.hidden = !state.searchable;
   if (!state.searchable) return;
   const f = state.filters;
-  $('mods').innerHTML = f.mods.length
-    ? f.mods.map((m, i) => !m.statId ? `
-      <div class="mod off" title="This modifier has no trade site filter">
-        <label><span class="tag">?</span><span>${esc(m.text)}</span></label>
-      </div>` : `
-      <div class="mod${m.enabled ? '' : ' off'}" data-i="${i}">
-        <label><input type="checkbox" data-k="enabled"${m.enabled ? ' checked' : ''}>
-          ${m.weight === 'key' ? '<span class="key" title="Key modifier for this slot — drives the price">★</span>' : ''}${m.tier ? `<span class="tag tier${m.tier <= 2 ? ' top' : ''}">T${m.tier}</span>` : ''}${m.tag !== 'explicit' ? `<span class="tag ${esc(m.tag)}">${esc(TAG_LABEL[m.tag] || m.tag)}</span>` : ''}<span>${esc(m.text)}${m.merged ? `<span class="sum-v"> = ${fmt(m.value)}</span>` : ''}</span></label>
-        ${m.option ? '' : `<input type="number" data-k="min" step="any" placeholder="min" value="${m.min == null ? '' : m.min}">`}
-      </div>`).join('')
-    : '';
-
+  $('mods').innerHTML = f.mods.map(modRow).join('');
   $('props').innerHTML = (f.props || []).map((p, i) => `
-    <div class="mod${p.enabled ? '' : ' off'}" data-p="${i}">
+    <div class="mod t-prop${p.enabled ? '' : ' off'}" data-p="${i}">
       <label><input type="checkbox" data-k="enabled"${p.enabled ? ' checked' : ''}>
         <span class="tag">property</span><span>${esc(p.label)}: ${fmt(p.value)}</span></label>
       <input type="number" data-k="min" step="any" placeholder="min" value="${p.min}">
@@ -143,6 +183,7 @@ function renderFilters() {
   $('misc').innerHTML = misc.join('');
 }
 
+// ---- лоты ----
 function sameUnit(l, r) {
   const unit = money(l.divine, r.exaltedPerDivine).split(' ')[1];
   return (unit === 'ex' && l.currency === 'exalted') || (unit === 'div' && l.currency === 'divine');
@@ -150,31 +191,22 @@ function sameUnit(l, r) {
 
 function renderResults(r) {
   const box = $('results');
-  box.hidden = false;
-  $('sep').hidden = false;
-  if (!r.listings.length) {
-    box.innerHTML = `<div class="empty muted">Nothing found. Uncheck some modifiers or lower the minimums.</div>`;
-    return;
-  }
-  const divs = r.listings.map((l) => l.divine).filter((v) => v != null).sort((a, b) => a - b);
-  const median = divs.length ? divs[Math.floor((divs.length - 1) / 2)] : null;
+  box.hidden = !r.listings.length;
+  if (!r.listings.length) return;
   box.innerHTML = `
-    <div class="sum">
-      <span>Found: <b>${r.total}</b></span>
-      <span class="muted">min <b>${money(divs[0], r.exaltedPerDivine)}</b> · median ${money(median, r.exaltedPerDivine)}</span>
-    </div>
-    <table>${r.listings.map((l, i) => `
-      <tr class="lot" data-i="${i}" title="Copy whisper to seller">
-        <td><span class="price">${l.currencyImage ? `<img src="${esc(l.currencyImage)}" alt="">` : ''}${fmt(l.amount)}${l.currencyImage ? '' : ' ' + esc(l.currencyName)}</span></td>
-        <td class="num muted">${l.divine != null && !sameUnit(l, r) ? '≈ ' + money(l.divine, r.exaltedPerDivine) : ''}</td>
-        <td class="seller"><span class="dot${l.online ? ' on' : ''}"></span>${esc(l.seller)}</td>
-        <td class="num muted">${l.indexed ? ago(l.indexed) : ''}</td>
-      </tr>`).join('')}
-    </table>`;
-  box.querySelectorAll('tr.lot').forEach((tr) => tr.addEventListener('click', () => {
-    window.pc.copy(r.listings[+tr.dataset.i].whisper);
-    box.querySelectorAll('tr.copied').forEach((x) => x.classList.remove('copied'));
-    tr.classList.add('copied');
+    <div class="sect"><span>Cheapest listings</span></div>
+    <div class="lots">${r.listings.map((l, i) => `
+      <div class="lot" data-i="${i}" title="Copy whisper to seller">
+        <span class="chip">${l.currencyImage ? `<img src="${esc(l.currencyImage)}" alt="">` : ''}${fmt(l.amount)}${l.currencyImage ? '' : ' ' + esc(l.currencyName)}</span>
+        <span class="eq">${l.divine != null && !sameUnit(l, r) ? '≈ ' + money(l.divine, r.exaltedPerDivine) : ''}</span>
+        <span class="seller"><span class="dot${l.online ? ' on' : ''}"></span>${esc(l.seller)}</span>
+        <span class="age">${l.indexed ? ago(l.indexed) : ''}</span>
+      </div>`).join('')}
+    </div>`;
+  box.querySelectorAll('.lot').forEach((row) => row.addEventListener('click', () => {
+    window.pc.copy(r.listings[+row.dataset.i].whisper);
+    box.querySelectorAll('.lot.copied').forEach((x) => x.classList.remove('copied'));
+    row.classList.add('copied');
     setStatus('Whisper copied — paste it into game chat (Enter, Ctrl+V)');
     fit();
   }));
@@ -183,12 +215,12 @@ function renderResults(r) {
 async function runSearch(relax = false) {
   const seq = ++searchSeq;
   $('search').disabled = true;
-  setStatus('Searching the trade site…');
+  setStatus('');
+  renderSearchingHero();
   fit();
   try {
     const r = await window.pc.search(state.item, state.filters, relax);
     if (seq !== searchSeq) return;
-    setStatus('');
     if (r.dropped && r.dropped.length) {
       state.filters = r.filters;
       renderFilters();
@@ -196,9 +228,11 @@ async function runSearch(relax = false) {
     }
     state.tradeUrl = r.url;
     $('open').hidden = false;
+    renderTradeHero(r);
     renderResults(r);
   } catch (e) {
     if (seq !== searchSeq) return;
+    $('hero').hidden = true;
     setStatus(String(e.message || e).replace(/^Error invoking remote method '\w+': (Error: )?/, ''), true);
   } finally {
     if (seq === searchSeq) $('search').disabled = false;
@@ -212,10 +246,11 @@ window.pc.onItem((data) => {
   setStatus('');
   setNote('');
   $('results').hidden = true;
-  $('sep').hidden = true;
+  $('hero').hidden = true;
   $('open').hidden = true;
-  renderHeader();
-  renderExchange();
+  renderBanner();
+  renderTooltip();
+  if (state.exchange) renderExchangeHero();
   renderFilters();
   if (!state.exchange && !state.searchable) setStatus('No price data for this item');
   fit();

@@ -149,6 +149,18 @@ async function priceCheck(text) {
   show();
 }
 
+// --demo … --mock-trade: проверка вёрстки результатов без запросов к трейду (у него жёсткие лимиты).
+function mockSearch() {
+  const lot = (amount, currency, divine, seller, h) => ({
+    amount, currency, currencyName: currency, currencyImage: null, divine, seller, online: true,
+    indexed: new Date(Date.now() - h * 3600e3).toISOString(), whisper: `@${seller} hi`,
+  });
+  const listings = [lot(12, 'exalted', 0.03, 'Stadder', 3), lot(1, 'chaos', 0.16, 'Frozenc', 20), lot(1, 'divine', 1, 'Qhaelo', 13),
+    lot(2, 'divine', 2, 'DonDoddd', 50), lot(5, 'divine', 5, 'GrabThatMercAndTwist', 96)];
+  return { total: 37, url: 'https://www.pathofexile.com/trade2', listings, exaltedPerDivine: api.ninja.exaltedPerDivine,
+    filters: null, dropped: [] };
+}
+
 function send(ch, data) {
   if (win) win.webContents.send(ch, data);
 }
@@ -213,7 +225,8 @@ app.whenReady().then(() => {
     });
   }
 
-  ipcMain.handle('search', (_e, item, filters, relax) => pricing.search(settings.get().league, item, filters, relax));
+  ipcMain.handle('search', (_e, item, filters, relax) => (DEMO && process.argv.includes('--mock-trade')
+    ? mockSearch() : pricing.search(settings.get().league, item, filters, relax)));
   ipcMain.handle('leagues', () => ({ leagues, current: settings.get().league }));
   ipcMain.handle('set-league', async (_e, l) => {
     settings.set({ league: l });
