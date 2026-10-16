@@ -18,7 +18,9 @@
 
 * { box-sizing: border-box; }
 html, body { margin: 0; overflow: hidden; }
-body { background: radial-gradient(ellipse 600px 260px at 50% -120px, #1d2836, transparent 70%) no-repeat, var(--bg);
+/* Сверху — лёгкое затемнение (под всем содержимым, тексты не трогает), под ним — прежнее синее свечение. */
+body { background: linear-gradient(rgba(0, 0, 0, .45), rgba(0, 0, 0, .18) 70px, transparent 140px) no-repeat,
+                   radial-gradient(ellipse 600px 260px at 50% -120px, #1d2836, transparent 70%) no-repeat, var(--bg);
        color: var(--text); font: 15px/1.45 var(--body); border: 1px solid #5a4d36; user-select: none; }
 [hidden] { display: none !important; }
 ::-webkit-scrollbar { width: 8px; }
@@ -44,6 +46,12 @@ body { background: radial-gradient(ellipse 600px 260px at 50% -120px, #1d2836, t
                               url(img/header-right.png) right center / auto 100% no-repeat,
                               url(img/header-middle.png) center / auto 100% repeat-x;
                   filter: var(--hdr-filter, none); }
+/* Шапка слегка «утопает» в фон: от левого и правого верхних углов и сверху — тень цвета фона. Слой между
+   картинкой шапки (::before) и текстом, поэтому название не затемняется. */
+.banner::after { content: ""; position: absolute; inset: -1px; z-index: -1; pointer-events: none;
+                 background: radial-gradient(ellipse 22% 140% at 0% 0%, rgba(11, 16, 23, .7), transparent 75%),
+                             radial-gradient(ellipse 22% 140% at 100% 0%, rgba(11, 16, 23, .7), transparent 75%),
+                             linear-gradient(rgba(11, 16, 23, .35), transparent 55%); }
 .banner.single { height: 48px; }
 .bn-name, .bn-base { font: 19px/1.15 var(--game); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 100%;
                      text-shadow: 0 1px 2px #000; }
