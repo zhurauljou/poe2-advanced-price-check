@@ -136,6 +136,20 @@ async function advise(item, demandMods, cached) {
     }).filter(Boolean).sort((a, b) => b.pct - a.pct);
   };
 
+  // Ключевой мод со слабым тиром: его носят многие билды, но тир низкий — ценен тир повыше, а не другой мод.
+  const tierUps = mine.filter((a) => a.mod && a.tag !== 'fractured' && a.tier >= 3).map((a) => {
+    const pct = Math.max(0, ...a.mod.lines.map((l) => want.get(l) || 0));
+    if (pct < KEY_PCT) return null;
+    const tiers = onBase.filter((m) => m.type === a.mod.type && m.domain === a.mod.domain).sort((x, y) => y.required_level - x.required_level);
+    const bestIdx = tiers.findIndex((m) => m.required_level <= ilvl);
+    if (bestIdx < 0 || bestIdx + 1 >= a.tier) return null;
+    const how = [t('Divine Orb — rerolls the value, but only within T{tier}', { tier: a.tier })];
+    how.push(a.tag === 'desecrated'
+      ? t('Orb of Annulment + Omen of Light removes it; desecrating again gives a random desecrated modifier — not necessarily this one')
+      : t('A higher tier means removing it and rolling it again — the same modifier is not guaranteed'));
+    return { text: a.mod.lines.join(' / '), tier: a.tier, best: bestIdx + 1, range: range(tiers[bestIdx].text), pct, how };
+  }).filter(Boolean);
+
   const normal = candidates('item');
   for (const c of normal) c.essence = essenceFor(c.text, item.itemClass);
   const sections = [];
@@ -170,12 +184,13 @@ async function advise(item, demandMods, cached) {
   // 2. Всё занято — заменить самый слабый мод: тир хуже всех и не востребован. Fractured не снять.
   if (!open.prefix && !open.suffix) {
     // Хорошие тиры (T1–T2) не меняем никогда: даже невостребованный T1 дороже лотереи с Annulment.
+    // Востребованные моды (≥ KEY_PCT% билдов) тоже не меняем на другие — даже со слабым тиром: им нужен тир повыше (блок ниже).
     const scored = mine.filter((a) => a.mod && a.tag !== 'fractured' && !(a.tier && a.tier <= 2)).map((a) => {
       const pct = Math.max(0, ...a.mod.lines.map((l) => want.get(l) || 0));
       return { ...a, pct, score: pct / 100 * 3 - (a.tier || 3) / 3 };
-    }).sort((a, b) => a.score - b.score);
+    }).filter((a) => a.pct < KEY_PCT).sort((a, b) => a.score - b.score);
     const weak = scored[0];
-    if (!weak) sections.push({ kind: 'keep' });
+    if (!weak) { if (!tierUps.length) sections.push({ kind: 'keep' }); }
     else {
       const sameSide = mine.filter((a) => a.side === weak.side && a.tag !== 'fractured').length;
       // Whittling смотрит на ВСЕ моды вещи (кроме fractured), а не только на кандидатов в замену.
@@ -196,6 +211,8 @@ async function advise(item, demandMods, cached) {
       });
     }
   }
+
+  if (tierUps.length) sections.push({ kind: 'tierup', mods: tierUps });
 
   // 3. Desecration — свой пул desecrated-модов, одна на вещь.
   if (!item.desecratedItem && !mine.some((a) => a.tag === 'desecrated')) {
@@ -233,6 +250,7 @@ async function advise(item, demandMods, cached) {
 // ценность = спрос (% билдов) × качество тира; кандидату засчитываем средний тир (что выпадет — неизвестно).
 // Fractured снять нельзя — остаются всегда. Возвращает { keep, remove, add } или null, если улучшать нечего.
 const TIER_VALUE = [0, 1, 0.85, 0.7, 0.6];
+const KEY_PCT = 30; // мод, который носит столько % билдов, на другой не меняем
 const KEEP_BONUS = 1.5;
 function planGoal(mine, candidates, max, want, magic) {
   const value = (pct, tier) => pct * (TIER_VALUE[tier] || 0.5);
@@ -242,13 +260,14 @@ function planGoal(mine, candidates, max, want, magic) {
       const pct = a.mod ? Math.max(0, ...a.mod.lines.map((l) => want.get(l) || 0)) : 0;
       // Fractured и хорошие тиры (T1–T2) не трогаем: даже не самый ходовой T1 дороже лотереи Annulment + Exalted.
       // Остальные держим, пока кандидат не ценнее в полтора раза — замена случайна и стоит валюты.
-      const locked = a.tag === 'fractured' || !a.mod || (a.tier && a.tier <= 2);
+      const locked = a.tag === 'fractured' || !a.mod || (a.tier && a.tier <= 2) || pct >= KEY_PCT;
       return { kind: 'cur', a, pct, v: locked ? Infinity : value(pct, a.tier) * KEEP_BONUS };
     });
     const cand = candidates.filter((c) => c.side === side).map((c) => ({ kind: 'add', c, pct: c.pct, v: value(c.pct, 2) }));
     const chosen = [...cur, ...cand].sort((x, y) => y.v - x.v).slice(0, max[side]);
     for (const x of cur) {
-      const info = { side, text: x.a.mod ? x.a.mod.lines.join(' / ') : x.a.name, templates: x.a.mod ? x.a.mod.lines : [], tier: x.a.tier, pct: x.pct };
+      const info = { side, text: x.a.mod ? x.a.mod.lines.join(' / ') : x.a.name, templates: x.a.mod ? x.a.mod.lines : [], tier: x.a.tier, pct: x.pct,
+        up: x.pct >= KEY_PCT && x.a.tier >= 3 }; // ключевой, но слабый тир — «↑ тир»
       (chosen.includes(x) ? keep : remove).push(info);
     }
     for (const x of cand) if (chosen.includes(x)) add.push({ ...x.c, side });
