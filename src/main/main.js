@@ -221,7 +221,15 @@ async function priceCheck(text) {
   // Ошибку глотаем: нет цен poe.ninja для лиги — трейд всё равно работает.
   const ninja = api.loadNinja(league).catch((e) => log('ninja', e.message));
   if (api.ninja.league !== league) await ninja;
-  send('item', { ...pricing.prepare(item), league, leagues, priceCurrency: settings.get().priceCurrency || 'any' });
+  // Спрос по классу вещей (poe.ninja) — влияет на то, какие моды включены и насколько строго. Кэшируется,
+  // поэтому ждём только в первый раз и не дольше 1.5 с; не успели — работаем без него.
+  let demand = null;
+  if (['Rare', 'Magic', 'Normal'].includes(item.rarity)) {
+    const q = categoryDemand({ league, itemClass: item.itemClass, rarity: item.rarity === 'Normal' ? 'Rare' : item.rarity, limit: 80 },
+      api.fetchBuffer).catch((e) => { log('demand', e.message); return null; });
+    demand = await Promise.race([q, new Promise((r) => setTimeout(() => r(null), 1500))]);
+  }
+  send('item', { ...pricing.prepare(item, demand), league, leagues, priceCurrency: settings.get().priceCurrency || 'any' });
   show();
 }
 

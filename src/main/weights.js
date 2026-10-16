@@ -47,13 +47,27 @@ function tierFactor(tier) {
   return tier < TIER_FACTOR.length ? TIER_FACTOR[tier] : 0.15;
 }
 
+// Спрос (poe.ninja): какая доля билдов носит этот мод на вещах этого класса. Массовый мод важен для цены
+// даже слабого тира — поднимаем основу и смягчаем штраф за тир.
+const DEMAND_KEY = 60; // % — мод «как ключевой»
+const DEMAND_HIGH = 30;
+
 // → { importance: 0…3, key: ключевой ли мод для слота (без учёта тира) }
-function weight(itemClass, template, tier) {
+function weight(itemClass, template, tier, demandPct) {
   if (!template) return { importance: 0, key: false };
   const t = template.replace(/ \(Local\)$/, '');
-  const key = ANY_KEY.some((re) => re.test(t)) || slotKey(itemClass).some((re) => re.test(t));
-  const base = key ? 3 : WEAK.test(t) ? 0.5 : 2;
-  return { importance: Math.round(base * tierFactor(tier) * 100) / 100, key };
+  let key = ANY_KEY.some((re) => re.test(t)) || slotKey(itemClass).some((re) => re.test(t));
+  let base = key ? 3 : WEAK.test(t) ? 0.5 : 2;
+  let factor = tierFactor(tier);
+  if (demandPct >= DEMAND_KEY) {
+    key = true;
+    base = 3;
+    factor = Math.max(factor, 0.6);
+  } else if (demandPct >= DEMAND_HIGH) {
+    base = Math.max(base, 2.5);
+    factor = Math.max(factor, 0.5);
+  }
+  return { importance: Math.round(base * factor * 100) / 100, key };
 }
 
 module.exports = { weight, ENABLE_FROM, KEEP_FROM };

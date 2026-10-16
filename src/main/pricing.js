@@ -154,7 +154,10 @@ function grantedSkill(item) {
 }
 
 // Что показать в оверлее сразу после копирования: разобранный предмет и фильтры по умолчанию.
-function prepare(item) {
+// demand — спрос по классу вещей с poe.ninja ({ mods: [{ name: '#% increased Spirit', pct }] }) или null.
+function prepare(item, demand) {
+  const demandPct = new Map((demand && demand.mods || []).map((r) => [r.name.toLowerCase(), r.pct]));
+  const demandOf = (tpl) => (tpl ? demandPct.get(tpl.replace(/ \(Local\)$/, '').toLowerCase()) : undefined);
   item.baseType = resolveBase(item);
   item.mods = stats.matchMods(item);
   // У уников несопоставленные строки — это флейвор-текст, его не показываем.
@@ -166,7 +169,8 @@ function prepare(item) {
   const props = propFilters(item);
   const covered = props.filter((p) => p.enabled).map((p) => LOCAL_COVERED[p.covers]).filter(Boolean);
   const mods = item.mods.map((m) => {
-    const w = weight(item.itemClass, m.template, m.tier);
+    const dp = demandOf(m.template);
+    const w = weight(item.itemClass, m.template, m.tier, dp);
     // Мод-вариант (Legacy of … у Mageblood) у уника и есть то, за что платят, — ищем по нему сразу.
     const option = !!m.statId && m.statId.includes('|');
     return {
@@ -179,6 +183,7 @@ function prepare(item) {
       value: m.value,
       template: m.template,
       importance: w.importance,
+      demand: dp != null ? dp : null, // % билдов с этим модом на вещах этого класса
       key: w.key,
       enabled: (option && m.tag === 'explicit') || (!!m.statId && searchMods
         && ['explicit', 'fractured', 'desecrated', 'crafted'].includes(m.tag)
