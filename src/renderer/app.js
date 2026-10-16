@@ -147,6 +147,9 @@ function pick(ref, label, valueHtml, filter, op, field) {
   return `<span class="tp${filter.enabled ? ' on' : ''}" data-ref="${ref}" title="${filter.enabled ? 'Searching by this — click to ignore' : 'Click to search by this'}">${label}: ${valueHtml}${bound}</span>`;
 }
 
+// Строка подсказки: значения рядом, переносятся целиком (без «·» в конце строки).
+const row = (items) => `<div class="row">${items.map((x) => `<span>${x}</span>`).join('')}</div>`;
+
 function renderTooltip() {
   const { item } = state;
   const f = state.filters || {};
@@ -164,8 +167,8 @@ function renderTooltip() {
     // DPS в игровой подсказке нет — показываем отдельной строкой, чтобы по нему тоже можно было искать.
     const dps = ['dps', 'pdps', 'edps'].map(propIdx).filter((i) => i >= 0)
       .map((i) => pick(`p:${i}`, props[i].label, `<b>${fmt(props[i].value)}</b>`, props[i], '≥', 'min'));
-    if (dps.length) plines.push(dps.join(' · '));
-    if (plines.length) lines.push(plines.join('<br>'));
+    plines.push(...dps);
+    if (plines.length) lines.push(row(plines));
 
     const meta = [];
     if (item.requires) {
@@ -177,7 +180,7 @@ function renderTooltip() {
     if (item.ilvl) meta.push(pick('m:ilvl', 'Item Level', `<b>${item.ilvl}</b>`, f.ilvl, '≥', 'min'));
     if (item.gemLevel) meta.push(pick('m:gemLevel', 'Level', `<b>${item.gemLevel}</b>`, f.gemLevel, '≥', 'min'));
     if (item.sockets) meta.push(pick('m:sockets', 'Sockets', `<b>${'◆ '.repeat(item.sockets).trim()}</b>`, f.sockets, '≥', 'min'));
-    if (meta.length) lines.push(meta.join(' · '));
+    if (meta.length) lines.push(row(meta));
   }
   const flags = [];
   if (item.unidentified) flags.push('<span class="corrupt">Unidentified</span>');
@@ -188,7 +191,7 @@ function renderTooltip() {
     if (item.corrupted) flags.push('<span class="corrupt">Corrupted</span>');
     if (item.mirrored) flags.push('<span class="cls">Mirrored</span>');
   }
-  if (flags.length) lines.push(flags.join(' · '));
+  if (flags.length) lines.push(row(flags));
   $('tooltip').innerHTML = lines.join('<div class="sep"></div>');
 }
 
@@ -250,9 +253,34 @@ function renderExchangeHero() {
     </div>`;
 }
 
+// Пустое состояние: значок, что случилось, пояснение (HTML) и кнопки действий [[data-act, подпись]].
+function voidState(icon, title, html, actions = []) {
+  return `<div class="void"><div class="vi">${icon}</div><div class="vt">${esc(title)}</div>${html ? `<div class="vd">${html}</div>` : ''}
+    ${actions.length ? `<div class="va">${actions.map(([act, label]) => `<button data-act="${act}">${esc(label)}</button>`).join('')}</div>` : ''}</div>`;
+}
+
+// Кнопки пустых состояний — общие для всех вкладок.
+document.addEventListener('click', (e) => {
+  const b = e.target.closest('[data-act]');
+  if (!b || !state) return;
+  const act = b.dataset.act;
+  if (act === 'retry') { setNote(''); runSearch(); }
+  if (act === 'relax') { setNote(''); runSearch(true); }
+  if (act === 'trade' && state.tradeUrl) window.pc.openUrl(state.tradeUrl);
+  if (act === 'price') setTab('price');
+  if (act === 'ninja') window.pc.openUrl(b.dataset.url || 'https://poe.ninja/poe2/builds');
+});
+
+// Пока ищем — заглушки той же формы, что и результат: окно не прыгает, когда приходят цены.
 function renderSearchingHero() {
   $('hero').hidden = false;
-  $('hero').innerHTML = `<div class="k">Estimated price</div><div class="big wait">…</div><div class="alt">Searching the trade site</div>`;
+  $('hero').innerHTML = `<div class="k">Estimated price</div><span class="sk big"></span>
+    <div class="alt">Searching the trade site…</div><span class="sk line"></span>
+    <div class="grid">${'<div><span class="sk" data-w="60%"></span><br><span class="sk" data-w="80%"></span></div>'.repeat(3)}</div>`;
+  $('results').hidden = false;
+  $('results').innerHTML = `<div class="sect"><span>Cheapest listings</span></div><div class="lots">${[70, 55, 62, 48, 66].map((w) => `
+    <div class="lot sk-row"><span class="sk" data-w="58px"></span><span></span>
+      <span class="sk" data-w="${w}%"></span><span class="sk" data-w="24px"></span></div>`).join('')}</div>`;
 }
 
 // Оценка — медиана самых дешёвых (до 5) лотов: один демпингующий продавец её не уронит.
@@ -297,8 +325,9 @@ function ageSummary(priced, usedFresh) {
 function renderTradeHero(r) {
   const divs = r.listings.map((l) => l.divine).filter((v) => v != null).sort((a, b) => a - b);
   if (!divs.length) {
-    $('hero').innerHTML = `<div class="k">Estimated price</div><div class="big wait" style="animation:none">—</div>
-      <div class="alt">No similar items listed right now — it may be a rare high-end item.<br>Uncheck filters or lower the minimums to widen the search.</div>`;
+    $('hero').innerHTML = voidState('∅', 'No similar items listed right now',
+      'It may be a rare high-end item. Uncheck filters or lower the minimums to widen the search.',
+      [['relax', 'Relax filters'], ['trade', 'Open trade site']]);
     return;
   }
   // Возраст лотов: залежавшийся дешёвый лот (неделю+ не купили) завышает картину — за эту цену не берут.
@@ -397,7 +426,7 @@ const ninjaTemplate = (t) => (t || '').replace(/ \(Local\)$/, '').toLowerCase();
 function renderDemand(d) {
   const { item, filters: f } = state;
   if (!d.category || !d.total) {
-    $('demand').innerHTML = `<div class="sect"><span>Demand</span></div><div class="muted center">No data on poe.ninja for this item class</div>`;
+    $('demand').innerHTML = `<div class="sect"><span>Demand</span></div>${voidState('◇', 'No poe.ninja data', 'poe.ninja has no build stats for this item class.')}`;
     return;
   }
   const mine = new Set(f.mods.filter((m) => m.template).map((m) => ninjaTemplate(m.template)));
@@ -409,15 +438,21 @@ function renderDemand(d) {
     <div class="sect"><span>Demand · ${esc(d.category)}</span></div>
     <div class="bshare">Worn by <b>${fmt(d.total / d.allTotal * 100)}%</b> of builds</div>
     <div class="bwhat muted">Your item: ${baseRank >= 0 ? `base #${baseRank + 1}` : 'base not in top 10'} · ${hits} of top ${modRows.length} modifiers</div>
-    <div class="dcol"><div class="k">Most worn bases</div>${demandRows(baseRows)}</div>
-    <div class="dcol"><div class="k">Most common modifiers</div>${demandRows(modRows)}</div>
+    ${demandList('bases', 'Most worn bases', baseRows)}
+    ${demandList('mods', 'Most common modifiers', modRows)}
     <button class="link bopen" data-url="${esc(d.page)}">poe.ninja ↗</button>`;
 }
 
-function demandRows(rows) {
-  return rows.map((r) => `
-    <div class="brow ${heat(r.pct)}${r.mine ? ' mine' : ''}"${r.mine ? ' title="Your item has this"' : ''}><span class="bname">${r.mine ? '✓ ' : ''}${esc(r.name)}</span><span class="bpct">${hot(r.pct)}${fmt(r.pct)}%</span>
-      <span class="bbar"><i style="width:${Math.min(100, r.pct)}%"></i></span></div>`).join('');
+// Список спроса: сразу 5 строк + всё, что есть на вашей вещи; остальное — по «Show all».
+const DEMAND_SHOWN = 5;
+const openDemand = new Set();
+function demandList(key, title, rows) {
+  const hidden = rows.filter((r, i) => i >= DEMAND_SHOWN && !r.mine).length;
+  const open = openDemand.has(key);
+  return `<div class="dcol${open ? ' all' : ''}"><div class="k">${title}</div>${rows.map((r, i) => `
+    <div class="brow ${heat(r.pct)}${r.mine ? ' mine' : ''}${i >= DEMAND_SHOWN && !r.mine ? ' more' : ''}"${r.mine ? ' title="Your item has this"' : ''}><span class="bname">${r.mine ? '✓ ' : ''}${esc(r.name)}</span><span class="bpct">${hot(r.pct)}${fmt(r.pct)}%</span>
+      <span class="bbar"><i data-w="${Math.min(100, r.pct)}%"></i></span></div>`).join('')}
+    ${hidden ? `<button class="link bmore" data-dmore="${key}">${open ? 'Show fewer' : `Show all ${rows.length}`}</button>` : ''}</div>`;
 }
 
 function setTab(name) {
@@ -441,7 +476,7 @@ async function loadCraft() {
     const r = await window.pc.craft();
     if (craftFor === state) renderCraft(r);
   } catch (e) {
-    box.innerHTML = `<div class="sect"><span>Craft</span></div><div class="muted center">${esc(errText(e))}</div>`;
+    box.innerHTML = `<div class="sect"><span>Craft</span></div>${voidState('⚠', 'Mod pool not loaded', esc(errText(e)))}`;
   }
   fit();
 }
@@ -450,13 +485,17 @@ const SIDE = { prefix: 'prefix', suffix: 'suffix' };
 function craftRows(list) {
   return list.map((c) => `
     <div class="brow ${heat(c.pct)}"><span class="bname">${esc(c.text)}<span class="craft-tier">T${c.tier}/${c.tiers}${c.range ? ` · ${esc(c.range)}` : ''}</span></span>
-      <span class="bpct">${hot(c.pct)}${fmt(c.pct)}%</span><span class="bbar"><i style="width:${Math.min(100, c.pct)}%"></i></span></div>`).join('');
+      <span class="bpct">${hot(c.pct)}${fmt(c.pct)}%</span><span class="bbar"><i data-w="${Math.min(100, c.pct)}%"></i></span></div>`).join('');
 }
 
 function renderCraft(r) {
   const head = '<div class="sect"><span>Craft</span></div>';
-  if (r.blocked) { $('craft').innerHTML = `${head}<div class="muted center">${esc(r.blocked)} items can't be modified.</div>`; return; }
-  if (r.note) { $('craft').innerHTML = `${head}<div class="muted center">${esc(r.note)}</div>`; return; }
+  if (r.blocked) {
+    $('craft').innerHTML = head + voidState('⛓', `${r.blocked} — can't be modified`,
+      'Its modifiers are locked. The Price tab shows what it is worth as is.', [['price', 'See price']]);
+    return;
+  }
+  if (r.note) { $('craft').innerHTML = head + voidState('◇', 'No craft tips', esc(r.note)); return; }
   const how = (list) => list.map((h) => `<div class="craft-how">${esc(h)}</div>`).join('');
   const parts = [`<div class="craft-slots">Prefixes <b>${r.max.prefix - r.open.prefix}/${r.max.prefix}</b> · Suffixes <b>${r.max.suffix - r.open.suffix}/${r.max.suffix}</b></div>`];
   for (const s of r.sections) {
@@ -489,7 +528,7 @@ const hot = (pct) => (pct >= 60 ? '<span class="flame" title="Most builds use th
 function buildRows(rows) {
   return rows.map((r) => `
     <div class="brow ${heat(r.pct)}"><span class="bname">${esc(r.name)}</span><span class="bpct">${hot(r.pct)}${fmt(r.pct)}%</span>
-      <span class="bbar"><i style="width:${Math.min(100, r.pct)}%"></i></span></div>`).join('');
+      <span class="bbar"><i data-w="${Math.min(100, r.pct)}%"></i></span></div>`).join('');
 }
 
 function renderBuilds(b) {
@@ -512,7 +551,7 @@ function renderBuilds(b) {
     ${b.total ? `<div class="bcols">
       <div><div class="k">Ascendancy</div>${buildRows(b.classes.slice(0, 4))}</div>
       <div><div class="k">Main skill</div>${buildRows(b.skills.slice(0, 4))}</div>
-    </div>` : '<div class="muted center">No characters on poe.ninja use this</div>'}
+    </div>` : voidState('◇', 'No builds use this', 'No characters on poe.ninja wear this combination.')}
     ${b.ignored && b.ignored.length ? `<div class="muted small">Not on poe.ninja: ${esc(b.ignored.map((x) => Object.values(x)[0]).join(' · '))}</div>` : ''}
     <button class="link bopen" data-url="${esc(b.page)}">poe.ninja ↗</button>`;
 }
@@ -776,8 +815,8 @@ async function runSearch(relax = false) {
     renderResults(r);
   } catch (e) {
     if (seq !== searchSeq) return;
-    $('hero').hidden = true;
-    setStatus(errText(e), true);
+    $('results').hidden = true;
+    $('hero').innerHTML = voidState('⚠', 'Search failed', esc(errText(e)), [['retry', 'Try again']]);
   } finally {
     if (seq === searchSeq) $('search').disabled = false;
     fit();
@@ -788,6 +827,7 @@ window.pc.onItem((data) => {
   state = data;
   rates = data.rates || {};
   openSums.clear();
+  openDemand.clear();
   showAllLots = false;
   hideCompare();
   if (state.filters) state.filters.priceCurrency = data.priceCurrency || 'any';
@@ -829,6 +869,16 @@ $('tabs').addEventListener('click', (e) => {
 });
 
 $('tab-demand').addEventListener('click', (e) => {
+  const more = e.target.closest('[data-dmore]');
+  if (more) {
+    const col = more.closest('.dcol');
+    const key = more.dataset.dmore;
+    if (openDemand.has(key)) openDemand.delete(key); else openDemand.add(key);
+    col.classList.toggle('all', openDemand.has(key));
+    more.textContent = openDemand.has(key) ? 'Show fewer' : `Show all ${col.querySelectorAll('.brow').length}`;
+    fit();
+    return;
+  }
   const b = e.target.closest('.bopen');
   if (b) window.pc.openUrl(b.dataset.url);
 });
@@ -940,3 +990,8 @@ $('leagueMenu').addEventListener('click', async (e) => {
 });
 // Клик мимо — закрыть список.
 document.addEventListener('click', (e) => { if (!e.target.closest('#ldrop')) toggleLeagueMenu(false); });
+
+// CSP окна запрещает инлайн-стили (style="…"), поэтому ширину полос и заглушек задаём через data-w после вставки.
+new MutationObserver(() => {
+  document.querySelectorAll('[data-w]').forEach((el) => { el.style.width = el.dataset.w; el.removeAttribute('data-w'); });
+}).observe(document.body, { childList: true, subtree: true });
