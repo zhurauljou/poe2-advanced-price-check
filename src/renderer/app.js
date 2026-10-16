@@ -340,6 +340,11 @@ function buildRows(rows) {
 }
 
 function renderBuilds(b) {
+  // Бейдж на вкладке Demand — чтобы фичу замечали, не открывая вкладку.
+  const pct = b.allTotal ? b.total / b.allTotal * 100 : null;
+  const anyHot = [...b.classes, ...b.skills].some((r) => r.pct >= 60);
+  $('demandBadge').textContent = pct != null && b.total ? `${anyHot ? '🔥 ' : ''}${fmt(pct)}%` : '';
+  $('demandBadge').title = pct != null ? `${fmt(pct)}% of builds on poe.ninja use this` : '';
   const share = b.allTotal ? `<b>${fmt(b.total / b.allTotal * 100)}%</b> of builds · ${b.total.toLocaleString('en-US')} characters`
     : `${b.total.toLocaleString('en-US')} characters`;
   const what = b.filters.map(([, v]) => v).join(' + ');
@@ -568,6 +573,7 @@ window.pc.onItem((data) => {
   $('hero').hidden = true;
   $('builds').hidden = true;
   $('open').hidden = true;
+  $('demandBadge').textContent = '';
   renderLeagues();
   renderBanner();
   renderTooltip();
