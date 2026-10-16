@@ -1,8 +1,10 @@
 // Оценка весов модов PoE 2 по трейду (в файлах игры весов нет — только «может / не может выпасть»).
 //
-// Метод: по каждому классу вещей берём самые дешёвые редкие непорченые вещи (ilvl 75+) — это в основном случайный
-// «хлам», моды на нём такие, как выпали. У каждого мода в ответе трейда есть имя аффикса, тир и уровень — по ним
-// находим семейство мода в RePoE и считаем, на скольких вещах оно встретилось и с каким тиром.
+// Метод: по каждому классу вещей берём редкие непорченые вещи (ilvl 75+) ценой до 2 ex, в порядке выставления (не «самые
+// дешёвые»: внутри дешёвого диапазона это почти случайный срез) — моды на них в основном такие, как выпали. У каждого мода
+// в ответе трейда есть имя аффикса, тир и уровень — по ним находим семейство мода в RePoE.
+// Сохраняем моды каждой вещи (raw): программа сама выкидывает «причину продажи» — самый востребованный мод вещи
+// (по свежему спросу poe.ninja), остальные моды той же вещи выпали случайно.
 // Crafted / desecrated / fractured / руны не считаем — только естественные моды.
 //
 // Запуск (раз за патч, долго — лимиты трейда): npm run collect-weights -- [--league "Forbidden Rites"] [--classes Boots,Helmets]
@@ -29,8 +31,10 @@ const CLASSES = {
   Claws: 'weapon.claw', 'One Hand Swords': 'weapon.onesword', 'Two Hand Swords': 'weapon.twosword',
   'One Hand Axes': 'weapon.oneaxe', 'Two Hand Axes': 'weapon.twoaxe',
 };
-// Выборки по классу: разные окна ilvl — разные лоты (по 100 самых дешёвых в каждом).
-const WINDOWS = [{ min: 75, max: 80 }, { min: 81 }];
+// Выборки по классу: разные окна ilvl — разные лоты (до 100 в каждом).
+const WINDOWS = [{ min: 75, max: 78 }, { min: 79, max: 81 }, { min: 82, max: 84 }, { min: 85 }];
+const PRICE_MAX = 2; // ex (Exalted Orb Equivalent — по умолчанию у трейда)
+const VERSION = 2; // формат: classes[cls] = { items, types: [семейства], raw: [[[индекс семейства, тир], …], …] }
 
 const arg = (k, d) => { const i = process.argv.indexOf(`--${k}`); return i > 0 ? process.argv[i + 1] : d; };
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
@@ -100,20 +104,23 @@ async function main() {
 
   let data = { meta: {}, classes: {} };
   try { data = JSON.parse(fs.readFileSync(PARTIAL, 'utf8')); } catch {}
-  if (data.meta.league && data.meta.league !== league) data = { meta: {}, classes: {} };
-  data.meta = { league, collected: new Date().toISOString().slice(0, 10), method: 'cheapest rare uncorrupted listings, ilvl 75+',
+  if ((data.meta.league && data.meta.league !== league) || data.meta.version !== VERSION) data = { meta: {}, classes: {} };
+  data.meta = { version: VERSION, league, collected: new Date().toISOString().slice(0, 10),
+    method: `rare uncorrupted listings up to ${PRICE_MAX} ex, newest first, ilvl 75+`,
     note: 'Estimated from trade listings — not game data. Rare modifiers are underestimated.' };
 
   for (const [cls, category] of Object.entries(CLASSES)) {
     if (only && !only.includes(cls)) continue;
     if (data.classes[cls] && data.classes[cls].done) { say(`${cls}: done earlier (${data.classes[cls].items} items)`); continue; }
-    const c = { items: 0, unmatched: 0, families: {} };
+    const c = { items: 0, unmatched: 0, types: [], raw: [] };
+    const typeIdx = new Map();
     const seen = new Set();
     for (const w of WINDOWS) {
       const query = { query: { status: { option: 'available' }, filters: {
         type_filters: { filters: { category: { option: category }, rarity: { option: 'rare' }, ilvl: w } },
         misc_filters: { filters: { corrupted: { option: 'false' } } },
-      } }, sort: { price: 'asc' } };
+        trade_filters: { filters: { price: { max: PRICE_MAX } } },
+      } }, sort: { indexed: 'desc' } };
       const s = await call('search', `${TRADE}/api/trade2/search/poe2/${L}`, query);
       const ids = (s.result || []).filter((id) => !seen.has(id));
       for (let i = 0; i < ids.length; i += 10) {
@@ -133,13 +140,14 @@ async function main() {
               affixes.set(`${m.name}|${m.tier}`, { name: m.name, side, tier: +String(m.tier).slice(1), level: m.level });
             }
           }
+          const row = [];
           for (const a of affixes.values()) {
             const type = byAffix.get(`${a.name}|${a.side}|${a.level}`) || byAffix.get(`${a.name}|${a.side}`);
             if (!type) { c.unmatched++; continue; }
-            const f = c.families[type] || (c.families[type] = { side: a.side, n: 0, tiers: {} });
-            f.n++;
-            f.tiers[a.tier] = (f.tiers[a.tier] || 0) + 1;
+            if (!typeIdx.has(type)) { typeIdx.set(type, c.types.length); c.types.push(type); }
+            row.push([typeIdx.get(type), a.tier]);
           }
+          c.raw.push(row);
         }
         say(`${cls}: ${c.items} items…`);
       }
@@ -148,7 +156,7 @@ async function main() {
     data.classes[cls] = c;
     fs.mkdirSync(path.dirname(PARTIAL), { recursive: true });
     fs.writeFileSync(PARTIAL, JSON.stringify(data));
-    say(`${cls}: ${c.items} items,${Object.keys(c.families).length} modifier families, ${c.unmatched} unmatched affixes`);
+    say(`${cls}: ${c.items} items, ${c.types.length} modifier families, ${c.unmatched} unmatched affixes`);
   }
   fs.writeFileSync(OUT, JSON.stringify(data, null, 1));
   say(`Saved ${OUT}`);

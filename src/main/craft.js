@@ -35,7 +35,10 @@ async function load(cached) {
     .filter(([, m]) => (m.domain === 'item' || m.domain === 'misc' || m.domain === 'desecrated')
       && (m.generation_type === 'prefix' || m.generation_type === 'suffix'))
     .map(([id, m]) => ({ id, ...m, domain: m.domain === 'misc' ? 'item' : m.domain, lines: templates(m.text) }));
-  data = { bases: byName, pool };
+  // Строки модов по семейству — чтобы знать спрос семейства (для «причины продажи» в оценке шансов).
+  const typeLines = new Map();
+  for (const m of pool) if (!typeLines.has(m.type)) typeLines.set(m.type, m.lines);
+  data = { bases: byName, pool, typeLines };
   return data;
 }
 
@@ -169,10 +172,11 @@ async function advise(item, demandMods, cached) {
   let chanceMeta = null;
   if (wc && wc.items >= 50) {
     chanceMeta = { items: wc.items, collected: W.meta.collected };
+    const counts = familyCounts(wc, (type) => Math.max(0, ...(d.typeLines.get(type) || []).map((l) => want.get(l) || 0)));
     for (const side of ['prefix', 'suffix']) {
       const types = new Set(onBase.filter((m) => m.domain === 'item' && m.generation_type === side && !m.is_essence_only
         && m.required_level <= ilvl && !(m.groups || []).some((g) => present.has(g))).map((m) => m.type));
-      const n = (type) => (wc.families[type] ? wc.families[type].n : 0.5);
+      const n = (type) => (counts[type] || 0) + SMOOTH;
       const total = [...types].reduce((s, type) => s + n(type), 0);
       for (const c of normal.filter((x) => x.side === side)) if (total && types.has(c.type)) c.chance = n(c.type) / total;
     }
@@ -270,6 +274,22 @@ async function advise(item, demandMods, cached) {
 
   const goal = planGoal(mine, normal, max, want, magic);
   return { open, max, sections, goal, chanceMeta, source: 'RePoE (game files) · demand: poe.ninja' };
+}
+
+// Частоты семейств модов для оценки шансов.
+// Новый формат (raw — моды каждой вещи): на каждой вещи не считаем «причину продажи» — самый востребованный мод, если его
+// носят ≥ SALE_REASON% билдов: вещь выставили ради него, а остальные её моды выпали случайно. Старый — готовые счётчики.
+const SALE_REASON = 30;
+const SMOOTH = 1; // +1 к каждому семейству: единичные находки не раздуваются, ненайденные не уходят в ноль
+function familyCounts(wc, pctOf) {
+  if (!wc.raw) return Object.fromEntries(Object.entries(wc.families || {}).map(([type, x]) => [type, x.n]));
+  const counts = {};
+  for (const row of wc.raw) {
+    let drop = -1, best = SALE_REASON - 1;
+    row.forEach(([ti], k) => { const p = pctOf(wc.types[ti]); if (p > best) { best = p; drop = k; } });
+    row.forEach(([ti], k) => { if (k !== drop) counts[wc.types[ti]] = (counts[wc.types[ti]] || 0) + 1; });
+  }
+  return counts;
 }
 
 // Цель крафта: какой была бы лучшая вещь из этой базы. На каждой стороне — самые ценные моды из текущих и возможных:
