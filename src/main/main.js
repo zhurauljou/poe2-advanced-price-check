@@ -287,6 +287,9 @@ function syncHotkey() {
   }
 }
 
+// Ручная проверка из трея — её результат показываем уведомлением: подпись пункта меню без открытия меню не видна.
+let manualCheck = false;
+
 // Пункт меню про обновление — по состоянию updater.status.
 function updateItem(refresh) {
   const s = updater.status;
@@ -296,7 +299,7 @@ function updateItem(refresh) {
   if (s.state === 'downloading') return { label: `Downloading v${s.version}…`, enabled: false };
   if (s.state === 'checking') return { label: 'Checking for updates…', enabled: false };
   const note = s.state === 'latest' ? ' — up to date' : s.state === 'error' ? ' — check failed' : '';
-  return { label: `Check for updates (${v}${note})`, click: () => { updater.check(); refresh(); } };
+  return { label: `Check for updates (${v}${note})`, click: () => { manualCheck = true; updater.check(); refresh(); } };
 }
 
 function buildTray() {
@@ -352,8 +355,18 @@ app.whenReady().then(() => {
   refreshTray = buildTray();
   updater.init((s) => {
     refreshTray();
+    const say = (content) => tray.displayBalloon({ title: 'PoE 2 Price Checker', content });
     if (s.state === 'ready') {
-      tray.displayBalloon({ title: 'PoE 2 Price Checker', content: `Update v${s.version} is ready — restart from the tray menu, or it installs on quit.` });
+      say(`Update v${s.version} is ready — restart from the tray menu, or it installs on quit.`);
+      manualCheck = false;
+    } else if (manualCheck && s.state === 'latest') {
+      say(`You have the latest version (v${app.getVersion()}).`);
+      manualCheck = false;
+    } else if (manualCheck && s.state === 'downloading') {
+      say(`Downloading update v${s.version}… You'll get a notice when it's ready.`);
+    } else if (manualCheck && s.state === 'error') {
+      say(`Update check failed: ${s.error || 'unknown error'}`);
+      manualCheck = false;
     }
   });
   api.onWait = (ms) => send('status', { text: `Waiting for the trade site rate limit… ${Math.ceil(ms / 1000)} s` });
