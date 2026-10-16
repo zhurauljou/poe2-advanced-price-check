@@ -130,7 +130,8 @@ const NINJA_TYPES = [
   'SoulCores', 'UncutGems', 'LineageSupportGems', 'Idols', 'Verisium',
 ];
 
-const ninja = { league: null, at: 0, byName: new Map(), byId: new Map(), exaltedPerDivine: null, chaosPerDivine: null };
+// rates: сколько chaos / exalted в 1 div и сколько div в 1 mirror — для показа цен в окне.
+const ninja = { league: null, at: 0, byName: new Map(), byId: new Map(), rates: {} };
 
 let ninjaLoading = null; // { league, promise } — не качаем одно и то же параллельно
 
@@ -171,9 +172,19 @@ async function fetchNinja(league) {
   if (!byName.size) throw new Error('poe.ninja returned no prices for league ' + league);
   Object.assign(ninja, {
     league, at: Date.now(), byName, byId,
-    exaltedPerDivine: rates && rates.exalted, chaosPerDivine: rates && rates.chaos,
+    rates: ratesFrom(byId, rates),
   });
   return ninja;
+}
+
+// Курсы из самих строк биржи (core.rates — запасной вариант).
+function ratesFrom(byId, core) {
+  const per = (id) => (byId.get(id) && byId.get(id).divine ? 1 / byId.get(id).divine : null);
+  return {
+    chaos: per('chaos') || (core && core.chaos) || null,
+    exalted: per('exalted') || (core && core.exalted) || null,
+    mirror: byId.get('mirror') ? byId.get('mirror').divine : null,
+  };
 }
 
 async function ninjaLeagues() {

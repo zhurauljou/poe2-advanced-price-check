@@ -123,8 +123,7 @@ function prepare(item) {
   // У уников несопоставленные строки — это флейвор-текст, его не показываем.
   if (item.rarity === 'Unique') item.mods = item.mods.filter((m) => m.statId);
   const ninjaRow = api.ninja.byName.get(item.name) || (item.rarity === 'Currency' && api.ninja.byName.get(item.baseType));
-  const exchange = ninjaRow ? { ...ninjaRow, exaltedPerDivine: api.ninja.exaltedPerDivine,
-    chaosPerDivine: api.ninja.chaosPerDivine } : null;
+  const exchange = ninjaRow ? { ...ninjaRow } : null;
 
   const searchMods = item.rarity === 'Rare' || item.rarity === 'Magic';
   const props = propFilters(item);
@@ -160,12 +159,12 @@ function prepare(item) {
     // ilvl важен для баз под крафт (обычные/магические) — там включён сразу; у остальных — по желанию.
     ilvl: item.ilvl ? { enabled: item.rarity === 'Normal' || item.rarity === 'Magic', min: item.ilvl } : null,
     reqLevel: item.reqLevel ? { enabled: false, max: item.reqLevel } : null,
-    sockets: item.sockets ? { enabled: false, min: item.sockets } : null,
+    sockets: item.sockets ? { enabled: true, min: item.sockets } : null, // гнёзда сильно влияют на цену — сразу
     gemLevel: item.gemLevel ? { enabled: true, min: item.gemLevel } : null,
     corrupted: item.corrupted,
     online: true,
   };
-  return { item, exchange, filters, searchable: !exchange };
+  return { item, exchange, filters, searchable: !exchange, rates: api.ninja.rates };
 }
 
 function buildQuery(item, f) {
@@ -199,6 +198,10 @@ function buildQuery(item, f) {
     const v = {};
     if (m.min != null && m.min !== '') v.min = Number(m.min);
     query.stats[0].filters.push({ id: m.statId, value: v });
+  }
+  // Валюта цены: 'any' — любая в пересчёте (по умолчанию у трейда), иначе только лоты в этой валюте.
+  if (f.priceCurrency && f.priceCurrency !== 'any') {
+    query.filters.trade_filters = { filters: { price: { option: f.priceCurrency } } };
   }
   const equip = {};
   for (const p of f.props || []) if (p.enabled && p.min !== '' && p.min != null) equip[p.key] = { min: Number(p.min) };
@@ -288,7 +291,7 @@ async function search(league, item, filters, relax = false) {
       };
     });
   }
-  return { total: s.total, url, listings, exaltedPerDivine: api.ninja.exaltedPerDivine, filters: f, dropped,
+  return { total: s.total, url, listings, rates: api.ninja.rates, filters: f, dropped,
     relaxStopped };
 }
 

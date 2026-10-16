@@ -191,7 +191,7 @@ async function priceCheck(text) {
   // Ошибку глотаем: нет цен poe.ninja для лиги — трейд всё равно работает.
   const ninja = api.loadNinja(league).catch((e) => log('ninja', e.message));
   if (api.ninja.league !== league) await ninja;
-  send('item', { ...pricing.prepare(item), league, leagues });
+  send('item', { ...pricing.prepare(item), league, leagues, priceCurrency: settings.get().priceCurrency || 'any' });
   show();
 }
 
@@ -203,7 +203,7 @@ function mockSearch() {
   });
   const listings = [lot(12, 'exalted', 0.03, 'Stadder', 3), lot(1, 'chaos', 0.16, 'Frozenc', 20), lot(1, 'divine', 1, 'Qhaelo', 13),
     lot(2, 'divine', 2, 'DonDoddd', 50), lot(5, 'divine', 5, 'GrabThatMercAndTwist', 96)];
-  return { total: 37, url: 'https://www.pathofexile.com/trade2', listings, exaltedPerDivine: api.ninja.exaltedPerDivine,
+  return { total: 37, url: 'https://www.pathofexile.com/trade2', listings, rates: api.ninja.rates,
     filters: null, dropped: [] };
 }
 
@@ -289,6 +289,7 @@ app.whenReady().then(() => {
     await api.loadNinja(l).catch(() => {});
     return true;
   });
+  ipcMain.handle('set-price-currency', (_e, c) => { settings.set({ priceCurrency: c }); });
   ipcMain.handle('copy', (_e, t) => clipboard.writeText(t));
   ipcMain.handle('open-url', (_e, u) => { if (/^https:\/\/(www\.)?pathofexile\.com\//.test(u)) shell.openExternal(u); });
   ipcMain.handle('hide', () => hide());

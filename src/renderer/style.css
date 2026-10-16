@@ -74,7 +74,9 @@ button:disabled { opacity: .5; cursor: default; }
 button.link { background: none; border: 0; box-shadow: none; padding: 0; color: var(--gold); font: 700 13px var(--body); }
 button.link:hover { background: none; color: #fff4b4; text-decoration: underline; }
 input[type=checkbox] { accent-color: var(--gold); margin: 0; }
-input[type=number] { font-variant-numeric: tabular-nums; }
+input[type=number] { font-variant-numeric: tabular-nums; text-align: center; appearance: textfield; }
+/* Без стрелок-счётчиков: они съедают место по-разному, и цифры «гуляют». */
+input[type=number]::-webkit-inner-spin-button, input[type=number]::-webkit-outer-spin-button { -webkit-appearance: none; margin: 0; }
 
 main { padding: 8px 14px 12px; display: flex; flex-direction: column; gap: 10px; }
 footer { display: flex; justify-content: space-between; gap: 8px; padding: 6px 12px; font-size: 13px; color: var(--bronze);
@@ -98,7 +100,7 @@ footer { display: flex; justify-content: space-between; gap: 8px; padding: 6px 1
 .tp:hover { border-color: #3d3a33; background: rgba(255, 255, 255, .03); }
 .tp.on { border-color: #6b5a3a; background: rgba(218, 193, 142, .08); box-shadow: 0 0 8px rgba(218, 193, 142, .12); }
 .tp-op { color: var(--gold); }
-.tp-in { width: 54px; height: 22px; margin-left: 2px; padding: 0 5px; font: 700 14px var(--body); text-align: right; vertical-align: 1px; }
+.tp-in { width: 54px; height: 22px; margin-left: 2px; padding: 0 4px; font: 700 14px var(--body); vertical-align: 1px; }
 .tt .sep { height: 9px; margin: 3px auto; width: 70%;
            background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='200' height='9' viewBox='0 0 200 9'%3E%3Cpath d='M0 4.5H92M108 4.5H200' stroke='%23584a30'/%3E%3Cpath d='M100 .5l4 4-4 4-4-4z' fill='%239a7a3e'/%3E%3C/svg%3E") center / 100% 9px no-repeat; }
 
@@ -135,7 +137,7 @@ footer { display: flex; justify-content: space-between; gap: 8px; padding: 6px 1
 .mod.t-pseudo label, .mod.t-prop label { color: var(--cream); }
 .mod.off label { color: #5d5d6a; }
 .mod.nomatch label { color: #4f4f58; cursor: default; }
-.mod input[type=number] { width: 64px; text-align: right; padding: 2px 6px; }
+.mod input[type=number] { width: 60px; padding: 2px 4px; }
 .tag { font: 700 10.5px/1.5 var(--body); text-transform: uppercase; letter-spacing: .4px; color: var(--bronze); border: 1px solid #2c2a25;
        border-radius: 2px; padding: 0 4px; flex: none; }
 .tag.tier { min-width: 23px; text-align: center; }
@@ -152,7 +154,14 @@ footer { display: flex; justify-content: space-between; gap: 8px; padding: 6px 1
 .misc { display: flex; flex-wrap: wrap; justify-content: center; gap: 6px 16px; margin: 6px 0 4px; padding-top: 8px; border-top: 1px solid var(--line2); }
 .misc .opt { display: flex; gap: 6px; align-items: center; color: var(--cream); cursor: pointer; }
 .misc .opt.off { color: var(--muted); }
-.misc input[type=number] { width: 52px; padding: 2px 6px; text-align: right; }
+/* Переключатель валюты — сегменты, как «Safe / Fast / Profit» во флиппере. */
+.seg { display: inline-flex; }
+.seg button { padding: 2px 10px; font: 700 13.5px var(--sc); letter-spacing: .3px; color: var(--muted); background: var(--input);
+              border-color: var(--input-line); box-shadow: none; border-radius: 0; margin-left: -1px; }
+.seg button:first-child { border-radius: 2px 0 0 2px; margin-left: 0; }
+.seg button:last-child { border-radius: 0 2px 2px 0; }
+.seg button:hover { color: var(--cream); background: var(--hover); }
+.seg button.on { position: relative; color: var(--cream); background: linear-gradient(#2a2620, #17150f); border-color: #6b5a3a; }
 #search { width: 100%; height: 36px; margin: 8px 0 0; font: 700 17px var(--sc); letter-spacing: .6px; color: var(--gold); }
 .note { white-space: pre-line; padding: 6px 10px; border-left: 2px solid #b08a45; background: rgba(218, 193, 142, .06); color: var(--label); font-size: 14px; }
 .empty { padding: 6px; text-align: center; color: var(--muted); }

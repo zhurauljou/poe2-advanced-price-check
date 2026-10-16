@@ -1,5 +1,6 @@
 const $ = (id) => document.getElementById(id);
-let state = null; // { item, exchange, filters, searchable, league, leagues }
+let state = null; // { item, exchange, filters, searchable, league, leagues, rates, priceCurrency }
+let rates = {}; // { chaos, exalted } за 1 div, mirror — div за 1 зеркало
 let searchSeq = 0;
 
 function esc(s) {
@@ -14,10 +15,10 @@ function fmt(n) {
   return (+n.toFixed(d)).toLocaleString('en-US');
 }
 
-// Цена в дивайнах → понятная строка: до 1 div показываем в exalted.
-function money(div, exPerDiv) {
+// Цена в дивайнах → понятная строка: от 1 div — в div, дешевле — в chaos.
+function money(div) {
   if (div == null) return '—';
-  if (exPerDiv && div < 1) return `${fmt(div * exPerDiv)} ex`;
+  if (div < 1 && rates.chaos) return `${fmt(div * rates.chaos)} chaos`;
   return `${fmt(div)} div`;
 }
 
@@ -138,29 +139,32 @@ function renderTooltip() {
 }
 
 // ---- блок цены ----
-// Та же цена в других валютах — без той, что уже крупно наверху.
-function alt(div, x) {
-  const main = money(div, x.exaltedPerDivine).split(' ')[1];
+// Та же цена в других валютах под крупной цифрой. Дорогое (от полу-зеркала) — ещё и в зеркалах.
+function alt(div, selfId) {
+  if (div == null) return '';
   const out = [];
-  if (main !== 'div') out.push(`${fmt(div)} div`);
-  if (main !== 'ex' && x.exaltedPerDivine && x.id !== 'exalted') out.push(`${fmt(div * x.exaltedPerDivine)} ex`);
-  if (x.chaosPerDivine && x.id !== 'chaos') out.push(`${fmt(div * x.chaosPerDivine)} chaos`);
+  if (div >= 1) {
+    if (rates.mirror && div >= rates.mirror / 2) out.push(`${fmt(div / rates.mirror)} mirror`);
+  } else {
+    out.push(`${fmt(div)} div`);
+    if (rates.exalted && selfId !== 'exalted') out.push(`${fmt(div * rates.exalted)} ex`);
+    // Дешевле chaos — понятнее «сколько штук за 1 chaos», чем «0.0148 chaos».
+    if (rates.chaos && div * rates.chaos < 0.5) out.push(`${fmt(1 / (div * rates.chaos))} per chaos`);
+  }
   return out.join(' · ');
 }
 
 function renderExchangeHero() {
   const x = state.exchange;
-  // Сам Exalted Orb в ex оценивать бессмысленно — показываем в div.
-  if (x.id === 'exalted') x.exaltedPerDivine = null;
   const stack = state.item.stack && state.item.stack.size > 1 ? state.item.stack.size : 0;
   const dir = x.change == null ? '' : x.change >= 0 ? 'up' : 'down';
   $('hero').hidden = false;
   $('hero').innerHTML = `
     <div class="k">Price per unit</div>
-    <div class="big">${x.image ? `<img src="${esc(x.image)}" alt="">` : ''}${money(x.divine, x.exaltedPerDivine)}</div>
-    <div class="alt">${alt(x.divine, x)}</div>
+    <div class="big">${x.image ? `<img src="${esc(x.image)}" alt="">` : ''}${money(x.divine)}</div>
+    <div class="alt">${alt(x.divine, x.id)}</div>
     <div class="grid">
-      <div><span class="k">${stack ? `Stack ×${stack}` : 'Stack'}</span><span class="v">${stack ? money(x.divine * stack, x.exaltedPerDivine) : '—'}</span></div>
+      <div><span class="k">${stack ? `Stack ×${stack}` : 'Stack'}</span><span class="v">${stack ? money(x.divine * stack) : '—'}</span></div>
       <div><span class="k">7 days</span><span class="v ${dir}">${x.change == null ? '—' : `${x.change >= 0 ? '+' : ''}${fmt(x.change)}%`} ${spark(x.spark)}</span></div>
       <div><span class="k">24h volume</span><span class="v">${fmt(x.volume)} div</span></div>
     </div>`;
@@ -182,14 +186,13 @@ function renderTradeHero(r) {
   const head = divs.slice(0, 5);
   const est = head[Math.floor((head.length - 1) / 2)];
   const median = divs[Math.floor((divs.length - 1) / 2)];
-  const x = { exaltedPerDivine: r.exaltedPerDivine };
   $('hero').innerHTML = `
     <div class="k">Estimated price</div>
-    <div class="big">${money(est, r.exaltedPerDivine)}</div>
-    <div class="alt">${alt(est, x)}</div>
+    <div class="big">${money(est)}</div>
+    <div class="alt">${alt(est)}</div>
     <div class="grid">
-      <div><span class="k">Cheapest</span><span class="v">${money(divs[0], r.exaltedPerDivine)}</span></div>
-      <div><span class="k">Median of ${divs.length}</span><span class="v">${money(median, r.exaltedPerDivine)}</span></div>
+      <div><span class="k">Cheapest</span><span class="v">${money(divs[0])}</span></div>
+      <div><span class="k">Median of ${divs.length}</span><span class="v">${money(median)}</span></div>
       <div><span class="k">Listings</span><span class="v">${r.total.toLocaleString('en-US')}</span></div>
     </div>`;
 }
@@ -215,20 +218,27 @@ function modRow(m, i) {
     </div>`;
 }
 
+// Валюта цены на трейде: любая в пересчёте или только лоты в конкретной валюте.
+const CURRENCIES = [['any', 'Any'], ['divine', 'Divine'], ['chaos', 'Chaos'], ['exalted', 'Exalted']];
+
 function renderFilters() {
   const box = $('filters');
   box.hidden = !state.searchable;
   if (!state.searchable) return;
   const f = state.filters;
   $('mods').innerHTML = f.mods.map(modRow).join('');
-  // Защита/DPS, уровни и гнёзда выбираются прямо в подсказке под шапкой — здесь только «онлайн».
-  $('misc').innerHTML = `<label class="opt${f.online ? '' : ' off'}"><input type="checkbox" data-o="online"${f.online ? ' checked' : ''}>Online only</label>`;
+  // Защита/DPS, уровни и гнёзда выбираются прямо в подсказке под шапкой — здесь валюта цены и «онлайн».
+  $('misc').innerHTML = `
+    <div class="seg" title="Which currency listings to search">${CURRENCIES.map(([id, label]) =>
+      `<button data-cur="${id}"${f.priceCurrency === id ? ' class="on"' : ''}>${label}</button>`).join('')}</div>
+    <label class="opt${f.online ? '' : ' off'}"><input type="checkbox" data-o="online"${f.online ? ' checked' : ''}>Online only</label>`;
 }
 
 // ---- лоты ----
-function sameUnit(l, r) {
-  const unit = money(l.divine, r.exaltedPerDivine).split(' ')[1];
-  return (unit === 'ex' && l.currency === 'exalted') || (unit === 'div' && l.currency === 'divine');
+// Лот и так в той валюте, в которой мы показываем, — «≈» не нужен.
+function sameUnit(l) {
+  const unit = money(l.divine).split(' ')[1];
+  return (unit === 'chaos' && l.currency === 'chaos') || (unit === 'div' && l.currency === 'divine');
 }
 
 function renderResults(r) {
@@ -240,7 +250,7 @@ function renderResults(r) {
     <div class="lots">${r.listings.map((l, i) => `
       <div class="lot" data-i="${i}" title="Copy whisper to seller">
         <span class="chip">${l.currencyImage ? `<img src="${esc(l.currencyImage)}" alt="">` : ''}${fmt(l.amount)}${l.currencyImage ? '' : ' ' + esc(l.currencyName)}</span>
-        <span class="eq">${l.divine != null && !sameUnit(l, r) ? '≈ ' + money(l.divine, r.exaltedPerDivine) : ''}</span>
+        <span class="eq">${l.divine != null && !sameUnit(l) ? '≈ ' + money(l.divine) : ''}</span>
         <span class="seller"><span class="dot${l.online ? ' on' : ''}"></span>${esc(l.seller)}</span>
         <span class="age">${l.indexed ? ago(l.indexed) : ''}</span>
       </div>`).join('')}
@@ -272,6 +282,7 @@ async function runSearch(relax = false) {
     }
     if (r.relaxStopped) notes.push(`Couldn't relax filters further: ${r.relaxStopped}`);
     setNote(notes.join('\n'));
+    rates = r.rates || rates;
     state.tradeUrl = r.url;
     $('open').hidden = false;
     renderTradeHero(r);
@@ -288,6 +299,8 @@ async function runSearch(relax = false) {
 
 window.pc.onItem((data) => {
   state = data;
+  rates = data.rates || {};
+  if (state.filters) state.filters.priceCurrency = data.priceCurrency || 'any';
   searchSeq++;
   setStatus('');
   setNote('');
@@ -343,6 +356,14 @@ $('tooltip').addEventListener('input', (e) => {
   const t = e.target;
   if (!t.classList.contains('tp-in')) return;
   filterByRef(t.dataset.ref)[t.dataset.f] = t.value === '' ? null : Number(t.value);
+});
+
+$('misc').addEventListener('click', (e) => {
+  const b = e.target.closest('[data-cur]');
+  if (!b) return;
+  state.filters.priceCurrency = b.dataset.cur;
+  window.pc.setPriceCurrency(b.dataset.cur);
+  renderFilters();
 });
 
 $('misc').addEventListener('input', (e) => {

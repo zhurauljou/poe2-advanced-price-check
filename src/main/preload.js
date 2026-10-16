@@ -6,6 +6,7 @@ contextBridge.exposeInMainWorld('pc', {
   search: (item, filters, relax) => ipcRenderer.invoke('search', item, filters, relax),
   leagues: () => ipcRenderer.invoke('leagues'),
   setLeague: (league) => ipcRenderer.invoke('set-league', league),
+  setPriceCurrency: (c) => ipcRenderer.invoke('set-price-currency', c),
   copy: (text) => ipcRenderer.invoke('copy', text),
   openUrl: (url) => ipcRenderer.invoke('open-url', url),
   hide: () => ipcRenderer.invoke('hide'),
