@@ -78,3 +78,10 @@ test('Megalomaniac: «{ Enhancement }» у самоцвета — его мод�
     [['Allocates Forces of Nature', 'explicit'], ['Allocates Licking Wounds', 'explicit']]);
   assert.ok(!it.properties.some((p) => p.k === 'Note'));
 });
+
+test('оружие: крит и скорость атаки — свойства для фильтров', () => {
+  const it = fixture('rare-mace-weapon.txt');
+  assert.equal(it.props.crit, 8);
+  assert.equal(it.props.aps, 1.01);
+  assert.ok(it.props.pdps > 0 && it.props.edps > 0);
+});

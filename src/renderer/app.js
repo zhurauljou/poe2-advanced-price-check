@@ -135,7 +135,11 @@ function toggleLeagueMenu(open) {
 }
 
 // Свойство подсказки → фильтр защиты (state.filters.props по key).
-const PROP_KEY = { Armour: 'ar', 'Evasion Rating': 'ev', 'Energy Shield': 'es', Spirit: 'spirit' };
+// Строка свойства → фильтр трейда. Урон по типам ищется как DPS: физический — pDPS, стихийный — eDPS.
+const PROP_KEY = { Armour: 'ar', 'Evasion Rating': 'ev', 'Energy Shield': 'es', Spirit: 'spirit',
+  'Physical Damage': 'pdps', 'Fire Damage': 'edps', 'Cold Damage': 'edps', 'Lightning Damage': 'edps',
+  'Critical Hit Chance': 'crit', 'Attacks per Second': 'aps' };
+const PROP_OP = { pdps: 'pDPS ≥', edps: 'eDPS ≥' };
 
 // Значение в подсказке, по которому можно искать: клик включает, рядом — граница поиска.
 // ref: 'p:<i>' — фильтр защиты/DPS, 'm:<key>' — уровень/ilvl/гнёзда.
@@ -162,10 +166,10 @@ function renderTooltip() {
       if (p.k === 'Quality') return pick('m:quality', 'Quality', v, f.quality, '≥', 'min');
       if (p.k === 'Grants Skill') return pick('m:skill', 'Grants Skill', v, f.skill, 'level ≥', 'min');
       const i = propIdx(PROP_KEY[p.k]);
-      return i < 0 ? `${esc(p.k)}: ${v}` : pick(`p:${i}`, esc(p.k), v, props[i], '≥', 'min');
+      return i < 0 ? `${esc(p.k)}: ${v}` : pick(`p:${i}`, esc(p.k), v, props[i], PROP_OP[props[i].key] || '≥', 'min');
     });
     // DPS в игровой подсказке нет — показываем отдельной строкой, чтобы по нему тоже можно было искать.
-    const dps = ['dps', 'pdps', 'edps'].map(propIdx).filter((i) => i >= 0)
+    const dps = ['dps'].map(propIdx).filter((i) => i >= 0)
       .map((i) => pick(`p:${i}`, props[i].label, `<b>${fmt(props[i].value)}</b>`, props[i], '≥', 'min'));
     plines.push(...dps);
     if (plines.length) lines.push(row(plines));

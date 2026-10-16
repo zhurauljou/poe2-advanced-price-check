@@ -87,10 +87,15 @@ const PROPS = [
   { key: 'dps', label: 'DPS', covers: 'damage' },
   { key: 'pdps', label: 'Physical DPS', covers: 'damage' },
   { key: 'edps', label: 'Elemental DPS', covers: 'damage' },
+  { key: 'crit', label: 'Critical Chance', covers: null },
+  { key: 'aps', label: 'Attacks per Second', covers: null },
 ];
 
 const PROP_MIN = 0.97;
 const PROP_LOOSE = 0.85;
+
+// Порог от значения: дробные (крит 8.00%, 1.01 атаки в секунду) — с точностью до сотых, а не до целых.
+const propMin = (v, k) => (v < 20 ? Math.floor(v * k * 100) / 100 : Math.floor(v * k));
 
 function propFilters(item) {
   if (!['Rare', 'Magic', 'Normal'].includes(item.rarity)) return [];
@@ -98,9 +103,9 @@ function propFilters(item) {
     ...p,
     value: item.props[p.key],
     // Защита/DPS — главное в цене брони и оружия: ищем почти такие же (−3%); при нехватке лотов ослабление опустит до −15%.
-    min: Math.floor(item.props[p.key] * PROP_MIN),
+    min: propMin(item.props[p.key], PROP_MIN),
     // У оружия ищем по общему DPS, физ/элем — по желанию.
-    enabled: p.key !== 'pdps' && p.key !== 'edps' && p.key !== 'spirit',
+    enabled: !['pdps', 'edps', 'spirit', 'crit', 'aps'].includes(p.key),
   }));
 }
 
@@ -179,6 +184,9 @@ function prepare(item, demand) {
     // Мод-вариант (Legacy of … у Mageblood) у уника и есть то, за что платят, — ищем по нему сразу.
     const option = !!m.statId && m.statId.includes('|');
     // У уника цену делают роллы: мод с разбросом значений («(60-80)%») — сразу в поиске, иначе ищем просто по названию.
+    // Горячий implicit (≥ 60% билдов: Spirit на скипетре) — тоже сразу, с любым роллом: при точной базе он и так есть у всех,
+    // а когда ослабление снимет базу и ищет по категории — не потеряется.
+    const hotImplicit = m.tag === 'implicit' && !!m.statId && dp >= 60 && searchMods;
     const rolls = item.rarity === 'Unique' && m.tag === 'explicit' && !!m.statId && !option && !!m.range && m.range.hi > m.range.lo;
     return {
       statId: m.statId,
@@ -192,13 +200,13 @@ function prepare(item, demand) {
       importance: w.importance,
       demand: dp != null ? dp : null, // % билдов с этим модом на вещах этого класса
       key: w.key,
-      enabled: (option && m.tag === 'explicit') || rolls || (!!m.statId && searchMods
+      enabled: (option && m.tag === 'explicit') || rolls || hotImplicit || (!!m.statId && searchMods
         && ['explicit', 'fractured', 'desecrated', 'crafted'].includes(m.tag)
         && w.importance >= ENABLE_FROM && !covered.some((re) => re.test(m.template))),
       option,
       range: m.range || null,
       roll: rollQuality(m.value, m.range),
-      min: option ? null : minFor(m.value, m.range, rolls ? Math.max(w.importance, 1.2) : w.importance),
+      min: option ? null : hotImplicit ? (m.range ? Math.ceil(m.range.lo) : minOf(m.value)) : minFor(m.value, m.range, rolls ? Math.max(w.importance, 1.2) : w.importance),
     };
   });
   const pseudo = searchMods ? pseudoFilters(mods) : [];
@@ -381,11 +389,11 @@ function weakest(filters) {
     } });
   }
   // Защита/DPS: сперва опускаем порог до −15%, снимать фильтр — только потом.
-  const strict = (filters.props || []).filter((p) => p.enabled && p.min > Math.floor(p.value * PROP_LOOSE));
+  const strict = (filters.props || []).filter((p) => p.enabled && p.min > propMin(p.value, PROP_LOOSE));
   if (strict.length && !filters.propsLoosened) {
     const saved = strict.map((p) => p.min);
     all.push({ kind: 'proploose', label: strict.map((p) => p.label).join(', '), set enabled(v) {
-      strict.forEach((p, i) => { p.min = v ? saved[i] : Math.floor(p.value * PROP_LOOSE); });
+      strict.forEach((p, i) => { p.min = v ? saved[i] : propMin(p.value, PROP_LOOSE); });
       filters.propsLoosened = !v;
     } });
   }

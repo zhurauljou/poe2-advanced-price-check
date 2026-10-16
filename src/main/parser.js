@@ -131,6 +131,7 @@ function parseItem(text) {
         const hits = [...m[2].matchAll(/(\d+)-(\d+)/g)].map((x) => (+x[1] + +x[2]) / 2);
         dmg[m[1]] = (dmg[m[1]] || 0) + hits.reduce((s, v) => s + v, 0);
       } else if ((m = l.match(/^Attacks per Second: ([\d.]+)/))) aps = +m[1];
+      else if ((m = l.match(/^Critical Hit Chance: ([\d.]+)%/))) item.props.crit = +m[1];
       else if ((m = l.match(/^Item Level: (\d+)/))) item.ilvl = +m[1];
       else if ((m = l.match(/^Quality: \+?(\d+)%/))) item.quality = +m[1];
       else if ((m = l.match(/^Stack Size: ([\d,.\s]+)\/([\d,.\s]+)/))) item.stack = { size: num(m[1]), max: num(m[2]) };
@@ -168,6 +169,7 @@ function parseItem(text) {
     item.props.pdps = r1((dmg.Physical || 0) * aps);
     item.props.edps = r1(ele * aps);
     item.props.dps = r1(((dmg.Physical || 0) + ele + (dmg.Chaos || 0)) * aps);
+    item.props.aps = aps;
   }
 
   const modRarities = ['Normal', 'Magic', 'Rare', 'Unique'];
