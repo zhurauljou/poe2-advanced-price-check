@@ -14,6 +14,7 @@ function load() {
     if (!data.hotkeyV2) {
       if (data.hotkey === 'CommandOrControl+D') data.hotkey = DEFAULTS.hotkey;
       data.hotkeyV2 = true;
+      try { fs.writeFileSync(file(), JSON.stringify(data, null, 2)); } catch {}
     }
   } catch {
     data = { ...DEFAULTS };
