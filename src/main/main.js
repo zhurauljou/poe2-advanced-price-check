@@ -251,10 +251,23 @@ async function initData() {
   api.loadNinja(settings.get().league).catch(() => {});
 }
 
-// Ctrl+D занимаем, только пока активна игра (или наше окно): в остальных программах он остаётся их.
+// Горячую клавишу занимаем, только пока активна игра (или наше окно): в остальных программах она остаётся их.
 // Без koffi (не смогли спросить активное окно) — держим всегда, как раньше.
 const GAME_TITLE = /^Path of Exile( 2)?$/;
 let hotkeyOn = false;
+let hotkeyBound = null; // какая комбинация сейчас занята — чтобы снять её при смене
+
+// Варианты в меню трея. Игра читает клавиатуру напрямую и видит вторую клавишу комбинации, поэтому
+// она не должна ничего делать в игре: D — шаг вправо (уводит от сундука), E по умолчанию свободнее.
+const HOTKEYS = [['CommandOrControl+E', 'Ctrl+E'], ['CommandOrControl+D', 'Ctrl+D'], ['CommandOrControl+Shift+E', 'Ctrl+Shift+E']];
+const hotkeyLabel = () => (HOTKEYS.find(([k]) => k === settings.get().hotkey) || [0, settings.get().hotkey])[1];
+
+function setHotkey(hk) {
+  if (hotkeyOn && hotkeyBound) globalShortcut.unregister(hotkeyBound);
+  hotkeyOn = false;
+  settings.set({ hotkey: hk });
+  syncHotkey();
+}
 
 function syncHotkey() {
   const hk = settings.get().hotkey;
@@ -265,21 +278,22 @@ function syncHotkey() {
   }
   if (want && !hotkeyOn) {
     hotkeyOn = globalShortcut.register(hk, () => { log('hotkey in', JSON.stringify(winapi.title(winapi.foreground()))); onHotkey(); });
+    hotkeyBound = hotkeyOn ? hk : null;
     if (!hotkeyOn) log('Failed to register hotkey', hk);
   } else if (!want && hotkeyOn) {
-    globalShortcut.unregister(hk);
+    globalShortcut.unregister(hotkeyBound || hk);
     hotkeyOn = false;
   }
 }
 
 function buildTray() {
   tray = new Tray(nativeImage.createFromPath(ICON).resize({ width: 16, height: 16 }));
-  tray.setToolTip('PoE 2 Price Checker — Ctrl+D over an item');
   const refresh = () => {
     const cur = settings.get().league;
+    tray.setToolTip(`PoE 2 Price Checker — ${hotkeyLabel()} over an item`);
     tray.setContextMenu(Menu.buildFromTemplate([
       { label: 'PoE 2 Price Checker', enabled: false },
-      { label: 'Ctrl+D — price check the item under cursor', enabled: false },
+      { label: `${hotkeyLabel()} — price check the item under cursor`, enabled: false },
       { type: 'separator' },
       {
         label: 'League: ' + (cur || '…'),
@@ -290,7 +304,14 @@ function buildTray() {
       },
       { type: 'separator' },
       {
-        label: 'Ctrl+D only in Path of Exile', type: 'checkbox', checked: settings.get().hotkeyGameOnly,
+        label: 'Hotkey',
+        submenu: HOTKEYS.map(([k, label]) => ({
+          label, type: 'radio', checked: settings.get().hotkey === k,
+          click: () => { setHotkey(k); refresh(); },
+        })),
+      },
+      {
+        label: 'Hotkey only in Path of Exile', type: 'checkbox', checked: settings.get().hotkeyGameOnly,
         click: (mi) => { settings.set({ hotkeyGameOnly: mi.checked }); syncHotkey(); },
       },
       {
