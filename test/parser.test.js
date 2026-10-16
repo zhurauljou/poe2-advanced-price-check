@@ -46,3 +46,11 @@ test('валюта: стак', () => {
 test('не предмет — null', () => {
   assert.equal(parseItem('просто текст'), null);
 });
+
+test('качество катализатора усиливает моды, как в игре (+3 → +4 при 40%)', () => {
+  const it = fixture('amulet-fractured-advanced.txt');
+  const t = texts(it);
+  assert.ok(t.includes('+4 to Level of all Minion Skills'));
+  assert.ok(t.includes('Minions have 26% increased Cooldown Recovery Rate'));
+  assert.equal(it.modLines.find((m) => m.text === '+50 to Spirit').tier, 1);
+});

@@ -29,7 +29,19 @@ function headerInfo(h) {
   else if (/^Desecrated/.test(kind)) tag = 'desecrated';
   else if (/^Fractured/.test(kind)) tag = 'fractured';
   const t = kind.match(/\((?:Tier|Rank): (\d+)\)/);
-  return { tag, tier: t ? +t[1] : null };
+  // «… — Minion, Gem — 40% Increased»: мод усилен качеством катализатора. В тексте игра пишет базовые
+  // числа (+3), а показывает и индексирует на трейде усиленные (+4).
+  const b = h.match(/— (\d+)% Increased$/);
+  return { tag, tier: t ? +t[1] : null, boost: b ? +b[1] : 0 };
+}
+
+// Усиление качеством, с округлением вниз — как в игре: 3 × 1.4 = 4.2 → 4, 19 × 1.4 = 26.6 → 26.
+function boostLine(line, pct) {
+  if (!pct) return line;
+  return line.replace(/\d+(?:\.\d+)?/g, (n) => {
+    const v = Number(n) * (1 + pct / 100);
+    return String(n.includes('.') ? Math.floor(v * 100) / 100 : Math.floor(v));
+  });
 }
 const TAGGED = /^(.*) \((implicit|enchant|rune|crafted|fractured|desecrated)\)$/;
 // Строки-свойства («Armour: 120 (augmented)», «Requires: Level 40») — это не моды.
@@ -150,7 +162,7 @@ function parseItem(text) {
         if (NOT_MODS.has(raw)) continue;
         const h = raw.match(MOD_HEADER);
         if (h) { head = headerInfo(h[1]); continue; }
-        const l = raw.replace(RANGE, '$1').replace(/ — Unscalable Value$/, '');
+        const l = boostLine(raw.replace(RANGE, '$1').replace(/ — Unscalable Value$/, ''), head ? head.boost : 0);
         const t = l.match(TAGGED);
         if (advanced && !head && !t) continue;
         const tier = head ? head.tier : null;
