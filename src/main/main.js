@@ -19,6 +19,7 @@ let tray = null;
 let interacted = false; // окно получало фокус (кликнули в него) — тогда клик обратно в игру его прячет
 let leagues = [];
 let ready = null; // промис загрузки справочников
+let refreshTray = () => {};
 
 const DEMO = process.argv.some((a) => a.startsWith('--demo='));
 // Демо-прогон живёт в своей папке данных, чтобы работать рядом с запущенной копией из трея.
@@ -48,16 +49,52 @@ function createOverlay() {
   win.loadFile(path.join(__dirname, '../renderer/index.html'));
   win.on('focus', () => { interacted = true; });
   win.on('blur', () => { if (interacted) hide(); });
+  // Пользователь перетащил окно — запоминаем место, дальше открываемся там же.
+  win.on('moved', () => {
+    if (positioning || !win.isVisible()) return;
+    const [x, y] = win.getPosition();
+    anchorY = y;
+    settings.set({ windowPos: { x, y } });
+    refreshTray();
+  });
+}
+
+// Свои перемещения (show, подгонка высоты) не должны записываться как «пользователь перетащил».
+let positioning = false;
+let anchorY = 0; // верх окна, который хотим держать; сдвигаем вверх, только если окно не влезает по высоте
+
+function place(bounds) {
+  positioning = true;
+  win.setBounds(bounds);
+  setTimeout(() => { positioning = false; }, 150);
+}
+
+// Запомненное место — если оно ещё на каком-то мониторе (монитор могли отключить).
+function savedPos() {
+  const p = settings.get().windowPos;
+  if (!p) return null;
+  const area = screen.getDisplayNearestPoint({ x: p.x + 40, y: p.y + 20 }).workArea;
+  const inside = p.x + 40 >= area.x && p.x + 40 <= area.x + area.width && p.y >= area.y && p.y < area.y + area.height - 40;
+  return inside ? p : null;
 }
 
 function show() {
-  const cur = screen.getCursorScreenPoint();
-  const area = screen.getDisplayNearestPoint(cur).workArea;
   const [, h] = win.getSize();
-  let x = cur.x + 24;
-  if (x + WIDTH > area.x + area.width) x = cur.x - WIDTH - 24;
-  const y = Math.min(Math.max(area.y, cur.y - 120), area.y + area.height - h);
-  win.setPosition(Math.round(x), Math.round(y));
+  let x, y;
+  const saved = savedPos();
+  if (saved) {
+    ({ x, y } = saved);
+  } else {
+    // Не двигали ни разу — рядом с курсором: справа, а если не влезает — слева.
+    const cur = screen.getCursorScreenPoint();
+    const area = screen.getDisplayNearestPoint(cur).workArea;
+    x = cur.x + 24;
+    if (x + WIDTH > area.x + area.width) x = cur.x - WIDTH - 24;
+    y = Math.max(area.y, cur.y - 120);
+  }
+  anchorY = Math.round(y);
+  const area = screen.getDisplayNearestPoint({ x, y }).workArea;
+  place({ x: Math.round(x), y: Math.min(anchorY, area.y + area.height - h), width: WIDTH, height: h });
   interacted = false;
   win.showInactive(); // не забираем фокус у игры
   globalShortcut.register('Escape', hide);
@@ -202,6 +239,11 @@ function buildTray() {
         })),
       },
       { type: 'separator' },
+      {
+        label: 'Reset window position', enabled: !!settings.get().windowPos,
+        click: () => { settings.set({ windowPos: null }); refresh(); },
+      },
+      { type: 'separator' },
       { label: 'Quit', click: () => app.quit() },
     ]));
   };
@@ -211,7 +253,7 @@ function buildTray() {
 
 app.whenReady().then(() => {
   createOverlay();
-  const refreshTray = buildTray();
+  refreshTray = buildTray();
   ready = initData().then(refreshTray);
   ready.catch((e) => log('init failed', e));
 
@@ -250,8 +292,9 @@ app.whenReady().then(() => {
     const area = screen.getDisplayMatching(win.getBounds()).workArea;
     const height = Math.min(Math.ceil(h), area.height - 20);
     const b = win.getBounds();
-    const y = Math.min(b.y, area.y + area.height - height);
-    win.setBounds({ x: b.x, y, width: WIDTH, height });
+    // Держим верх на месте; вверх сдвигаем, только пока окно не влезает, и возвращаем, когда снова влезает.
+    const y = Math.max(area.y, Math.min(anchorY, area.y + area.height - height));
+    place({ x: b.x, y, width: WIDTH, height });
   });
 });
 
