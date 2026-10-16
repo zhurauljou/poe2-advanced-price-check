@@ -185,6 +185,14 @@ function modRow(m, i) {
     </div>`;
 }
 
+// Дополнительные фильтры под модами: поле в state.filters, подпись и какая граница.
+const MISC = [
+  { key: 'ilvl', label: 'Item level', op: '≥', field: 'min' },
+  { key: 'reqLevel', label: 'Required level', op: '≤', field: 'max' },
+  { key: 'sockets', label: 'Sockets', op: '≥', field: 'min' },
+  { key: 'gemLevel', label: 'Gem level', op: '≥', field: 'min' },
+];
+
 function renderFilters() {
   const box = $('filters');
   box.hidden = !state.searchable;
@@ -198,10 +206,10 @@ function renderFilters() {
       <input type="number" data-k="min" step="any" placeholder="min" value="${p.min}">
     </div>`).join('');
 
-  const misc = [];
-  if (f.ilvl) misc.push(`<label><input type="checkbox" data-m="ilvl"${f.ilvl.enabled ? ' checked' : ''}>ilvl ≥ <input type="number" data-mv="ilvl" value="${f.ilvl.min}"></label>`);
-  if (f.gemLevel) misc.push(`<label><input type="checkbox" data-m="gemLevel"${f.gemLevel.enabled ? ' checked' : ''}>level ≥ <input type="number" data-mv="gemLevel" value="${f.gemLevel.min}"></label>`);
-  misc.push(`<label><input type="checkbox" data-o="online"${f.online ? ' checked' : ''}>online only</label>`);
+  const misc = MISC.filter((d) => f[d.key]).map((d) => `
+    <label class="opt${f[d.key].enabled ? '' : ' off'}"><input type="checkbox" data-m="${d.key}"${f[d.key].enabled ? ' checked' : ''}>
+      ${d.label} ${d.op} <input type="number" data-mv="${d.key}" data-f="${d.field}" value="${f[d.key][d.field]}"></label>`);
+  misc.push(`<label class="opt${f.online ? '' : ' off'}"><input type="checkbox" data-o="online"${f.online ? ' checked' : ''}>Online only</label>`);
   $('misc').innerHTML = misc.join('');
 }
 
@@ -311,8 +319,9 @@ $('misc').addEventListener('input', (e) => {
   const f = state.filters;
   const t = e.target;
   if (t.dataset.m) f[t.dataset.m].enabled = t.checked;
-  if (t.dataset.mv) f[t.dataset.mv].min = Number(t.value);
+  if (t.dataset.mv) f[t.dataset.mv][t.dataset.f] = Number(t.value);
   if (t.dataset.o) f[t.dataset.o] = t.checked;
+  if (t.type === 'checkbox') t.closest('.opt').classList.toggle('off', !t.checked);
 });
 
 $('banner').addEventListener('click', (e) => {

@@ -72,6 +72,7 @@ function parseItem(text) {
     props: {}, // ar / ev / es / spirit, у оружия pdps / edps / dps
     properties: [], // строки свойств для показа, как в игре: { k: 'Energy Shield', v: '1038', aug: true }
     requires: null, // «Level 65, 78 Int»
+    reqLevel: null,
     sockets: 0,
     modLines: [], // { text, tag } — сырые строки, сопоставление со статами трейда делает stats.js
     raw: text,
@@ -112,7 +113,11 @@ function parseItem(text) {
   for (const sec of sections.slice(1)) {
     for (const l of sec) {
       let m;
-      if ((m = l.match(/^Requires: (.+)$/))) item.requires = m[1].replace(/ \((augmented|unmet)\)/g, '');
+      if ((m = l.match(/^Requires: (.+)$/))) {
+        item.requires = m[1].replace(/ \((augmented|unmet)\)/g, '');
+        const lv = item.requires.match(/Level (\d+)/);
+        if (lv) item.reqLevel = +lv[1];
+      }
       else if ((m = l.match(/^Sockets: (.+)$/))) item.sockets = (m[1].match(/S/g) || []).length;
     }
     if (!sec.every((l) => PROPERTY.test(l) && !TAGGED.test(l))) continue;

@@ -156,7 +156,10 @@ function prepare(item) {
     category: CATEGORY[item.itemClass] || null,
     mods: [...pseudo, ...mods],
     props,
-    ilvl: item.ilvl && (item.rarity === 'Normal' || item.rarity === 'Magic') ? { enabled: true, min: item.ilvl } : null,
+    // ilvl важен для баз под крафт (обычные/магические) — там включён сразу; у остальных — по желанию.
+    ilvl: item.ilvl ? { enabled: item.rarity === 'Normal' || item.rarity === 'Magic', min: item.ilvl } : null,
+    reqLevel: item.reqLevel ? { enabled: false, max: item.reqLevel } : null,
+    sockets: item.sockets ? { enabled: false, min: item.sockets } : null,
     gemLevel: item.gemLevel ? { enabled: true, min: item.gemLevel } : null,
     corrupted: item.corrupted,
     online: true,
@@ -181,6 +184,8 @@ function buildQuery(item, f) {
   }
   const rarity = { Normal: 'normal', Magic: 'magic', Rare: 'nonunique', Unique: 'unique' }[item.rarity];
   if (rarity) type.rarity = { option: rarity };
+  if (f.ilvl && f.ilvl.enabled) type.ilvl = { min: Number(f.ilvl.min) };
+  if (f.reqLevel && f.reqLevel.enabled) query.filters.req_filters = { filters: { lvl: { max: Number(f.reqLevel.max) } } };
   if (Object.keys(type).length) query.filters.type_filters = { filters: type };
 
   for (const m of f.mods) {
@@ -193,9 +198,9 @@ function buildQuery(item, f) {
   }
   const equip = {};
   for (const p of f.props || []) if (p.enabled && p.min !== '' && p.min != null) equip[p.key] = { min: Number(p.min) };
+  if (f.sockets && f.sockets.enabled) equip.rune_sockets = { min: Number(f.sockets.min) };
   if (Object.keys(equip).length) query.filters.equipment_filters = { filters: equip };
   const misc = {};
-  if (f.ilvl && f.ilvl.enabled) misc.ilvl = { min: Number(f.ilvl.min) };
   if (f.gemLevel && f.gemLevel.enabled) misc.gem_level = { min: Number(f.gemLevel.min) };
   if (Object.keys(misc).length) query.filters.misc_filters = { filters: misc };
   return { query, sort: { price: 'asc' } };
