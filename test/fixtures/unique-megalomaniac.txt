@@ -1,0 +1,22 @@
+Item Class: Jewels
+Rarity: Unique
+Megalomaniac
+Diamond
+--------
+Limited to: 1
+--------
+Item Level: 81
+--------
+{ Enhancement }
+Allocates Forces of Nature() — Unscalable Value
+{ Enhancement }
+Allocates Licking Wounds() — Unscalable Value
+--------
+If you're going to act like you're better
+than everyone else, make sure you are.
+--------
+Place into an allocated Jewel Socket on the Passive Skill Tree. Right click to remove from the Socket.
+--------
+Corrupted
+--------
+Note: ~b/o 2 chaos

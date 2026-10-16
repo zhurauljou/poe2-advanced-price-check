@@ -143,7 +143,7 @@ function parseItem(text) {
     }
   }
   // Свойства — из секций, где все строки «Ключ: значение» (у камней первая строка — теги, её пропускаем).
-  const SKIP_PROPS = new Set(['Item Level', 'Requires', 'Stack Size', 'Sockets']);
+  const SKIP_PROPS = new Set(['Item Level', 'Requires', 'Stack Size', 'Sockets', 'Note']); // Note — заметка продавца (~b/o 2 chaos), не свойство вещи
   for (const sec of sections.slice(1)) {
     for (const l of sec) {
       let m;
@@ -188,12 +188,14 @@ function parseItem(text) {
           if (head.side) item.affixes.push({ side: head.side, name: head.name, tag: head.tag, tier: head.tier });
           continue;
         }
-        const l = boostLine(raw.replace(RANGE, '$1').replace(/ — Unscalable Value$/, ''), head ? head.boost : 0);
+        const l = boostLine(raw.replace(RANGE, '$1').replace(/ — Unscalable Value$/, '').replace(/\(\)$/, ''), head ? head.boost : 0);
         const t = l.match(TAGGED);
         if (advanced && !head && !t) continue;
         const tier = head ? head.tier : null;
         const range = tierRange(raw, head ? head.boost : 0);
-        item.modLines.push(t ? { text: t[1], tag: t[2], tier, range } : { text: l, tag: head ? head.tag : 'explicit', tier, range });
+        // У самоцветов «{ Enhancement }» — их собственные моды («Allocates …» у Megalomaniac), а не анойнт: самоцветы не анойнтят.
+        const tag = head ? (head.tag === 'enchant' && item.itemClass === 'Jewels' ? 'explicit' : head.tag) : 'explicit';
+        item.modLines.push(t ? { text: t[1], tag: t[2], tier, range } : { text: l, tag, tier, range });
       }
     }
   }

@@ -71,3 +71,10 @@ test('аффиксы для крафта: по заголовкам, гибри�
   assert.deepEqual(robe.affixes[0], { side: 'prefix', name: 'Divine', tag: 'explicit', tier: 1 });
   assert.equal(robe.affixes.find((a) => a.name === 'Unassailable').tag, 'desecrated');
 });
+
+test('Megalomaniac: «{ Enhancement }» у самоцвета — его моды, без «()», заметка продавца не свойство', () => {
+  const it = fixture('unique-megalomaniac.txt');
+  assert.deepEqual(it.modLines.map((m) => [m.text, m.tag]),
+    [['Allocates Forces of Nature', 'explicit'], ['Allocates Licking Wounds', 'explicit']]);
+  assert.ok(!it.properties.some((p) => p.k === 'Note'));
+});
