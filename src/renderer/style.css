@@ -413,12 +413,13 @@ body.upd-page { height: auto; }
 .void .va { display: flex; gap: 8px; margin-top: 6px; }
 .void .va button { padding: 3px 12px; font-size: 13.5px; }
 
-/* Цена для выставления: три кнопки, клик копирует «~price N currency» */
-.sell { display: flex; justify-content: center; align-items: center; gap: 6px; margin-top: 10px; padding-top: 10px; border-top: 1px solid var(--line2); }
-.sell-k { margin-right: 4px; font: 700 13px var(--body); color: var(--label); }
-.sellb { display: flex; flex-direction: column; align-items: center; min-width: 78px; padding: 3px 10px; line-height: 1.2;
-         font-variant-numeric: tabular-nums; }
-.sellb small { font: 500 11.5px var(--body); color: var(--muted); }
+/* Цены для выставления — в сетке под оценкой; цифра кликабельна (копирует «~price N currency»), без рамок */
+.grid.sell .v.copy { cursor: pointer; width: fit-content; text-decoration: underline dotted #6b5a3a; text-underline-offset: 3px; }
+.grid.sell .v.copy:hover { color: #fff4b4; text-decoration-color: var(--gold); }
+.grid.sell .v.copy::after { content: "⧉"; font-size: 11px; color: var(--bronze); opacity: 0; transition: opacity .12s; }
+.grid.sell .v.copy:hover::after { opacity: 1; }
+.sect .cnt { margin-left: 6px; padding: 0 6px; border: 1px solid #3d3a33; border-radius: 8px; font: 700 11.5px/1.5 var(--body);
+             letter-spacing: 0; color: var(--cream); vertical-align: 1px; }
 .drive-btn { display: block; margin: 10px auto 0; }
 /* Вклад мода в цену — после поиска без него */
 .drive { margin-left: 6px; padding: 0 5px; border: 1px solid #6b5a3a; border-radius: 2px; font: 700 11px/1.5 var(--body);

@@ -363,12 +363,7 @@ function renderTradeHero(r) {
     ${confidence(r.total, head, priced.slice(0, 5))}
     ${floorHtml}
     ${ageHtml}
-    <div class="grid">
-      <div><span class="k">Cheapest</span><span class="v">${money(divs[0])}</span></div>
-      <div><span class="k">Median of ${divs.length}</span><span class="v">${money(median)}</span></div>
-      <div><span class="k">Listings</span><span class="v">${r.total.toLocaleString('en-US')}</span></div>
-    </div>
-    ${sellHtml(priced, est)}
+    ${sellHtml(priced, est, divs[0], median, divs.length)}
     ${drivable ? '<button class="link drive-btn" data-act="impact" title="Searches again without each key modifier (a few trade requests)">What drives the price?</button>' : ''}`;
 }
 
@@ -398,20 +393,22 @@ function listPrice(div) {
 
 // Три цены для продажи: быстро (чуть ниже самого дешёвого живого лота), по рынку (оценка), подождать (выше рынка,
 // не дороже следующих по цене лотов). Клик копирует «~price N currency» для заметки в стеше.
-function sellHtml(priced, est) {
+function sellHtml(priced, est, cheapest, median, n) {
   if (!est || !priced.length) return '';
   const active = priced.filter((l) => l.age < 7);
   // Один демпингующий лот не должен утянуть «быструю» цену вниз: не дешевле 60% рынка.
   const quick = Math.min(est * 0.95, Math.max(est * 0.6, (active[0] || priced[0]).div * 0.95));
   const next = priced[Math.min(4, priced.length - 1)].div;
   const patient = Math.min(est * 2, Math.max(est * 1.2, next));
-  const opts = [['Quick sale', quick, 'Just under the cheapest active listing — sells fastest'],
-    ['Market', est, 'The estimate above'], ['Patient', patient, 'Above the market — wait for a buyer']]
+  // Вместо «Cheapest / Median / Listings» — цены для выставления: те же цифры, но сразу как действие.
+  // Самый дешёвый лот и медиана — в подсказках, число лотов — в заголовке списка.
+  const opts = [['Quick sale', quick, `Just under the cheapest active listing — sells fastest. Cheapest listed: ${money(cheapest)}`],
+    ['Market', est, 'The estimate above'], ['Patient', patient, `Above the market — wait for a buyer. Median of ${n}: ${money(median)}`]]
     .map(([k, div, title]) => ({ k, title, ...listPrice(div) }))
     .filter((o, i, a) => !a.slice(0, i).some((p) => p.label === o.label));
-  return `<div class="sell"><span class="sell-k">List it</span>${opts.map((o) => `
-    <button class="sellb" data-note="~price ${o.amount} ${o.cur}" title="${o.title} · click to copy the stash price note">
-      <small>${o.k}</small>${o.label}</button>`).join('')}</div>`;
+  return `<div class="grid sell">${opts.map((o) => `
+    <div><span class="k">${o.k}</span><span class="v copy" data-note="~price ${o.amount} ${o.cur}" title="${o.title}
+Click to copy the price note">${o.label}</span></div>`).join('')}</div>`;
 }
 
 // Вклад модов в цену: по очереди ищем без каждого из главных модов (до 4) — насколько падает цена.
@@ -781,7 +778,7 @@ function renderResults(r) {
   box.hidden = !r.listings.length;
   if (!r.listings.length) return;
   box.innerHTML = `
-    <div class="sect"><span>Cheapest listings</span></div>
+    <div class="sect"><span>Cheapest listings <b class="cnt">${r.total.toLocaleString('en-US')}</b></span></div>
     <div class="lots${showAllLots ? ' all' : ''}">${r.listings.map((l, i) => `
       <div class="lot${i >= LOTS_SHOWN ? ' more' : ''}${ageClass(l.indexed)}" data-i="${i}" title="Copy whisper to seller">
         <span class="chip">${l.currencyImage ? `<img src="${esc(l.currencyImage)}" alt="">` : ''}${fmt(l.amount)}${l.currencyImage ? '' : ' ' + esc(l.currencyName)}</span>
