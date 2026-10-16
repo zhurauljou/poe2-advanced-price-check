@@ -4,3 +4,5 @@ node_modules/
 out/
 PoE 2 Price Checker/
 dist.zip
+data/*.partial.json
+data/weights.log

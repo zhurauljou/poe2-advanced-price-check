@@ -4,6 +4,17 @@
 // показываем, какие ВОСТРЕБОВАННЫЕ (по poe.ninja) моды могут встать и каким способом.
 
 const stats = require('./stats');
+const fsW = require('fs');
+const pathW = require('path');
+
+// Оценка весов модов (scripts/collect-weights.js — по дешёвым лотам трейда, не данные игры). Нет файла — без шансов.
+let weightsData;
+function weights() {
+  if (weightsData === undefined) {
+    try { weightsData = JSON.parse(fsW.readFileSync(pathW.join(__dirname, '..', '..', 'data', 'weights.json'), 'utf8')); } catch { weightsData = null; }
+  }
+  return weightsData;
+}
 const { essenceFor, perfectFor } = require('./essences');
 const { t } = require('../shared/i18n');
 
@@ -132,7 +143,7 @@ async function advise(item, demandMods, cached) {
       if (bestIdx < 0) return null;
       const best = tiers[bestIdx];
       return { side: c.side, pct: c.pct, text: best.lines.join(' / '), tier: bestIdx + 1, tiers: tiers.length,
-        range: range(best.text), level: best.required_level, stats: tradeStats(best, domain, item.itemClass) };
+        range: range(best.text), level: best.required_level, stats: tradeStats(best, domain, item.itemClass), type: best.type };
     }).filter(Boolean).sort((a, b) => b.pct - a.pct);
   };
 
@@ -151,6 +162,21 @@ async function advise(item, demandMods, cached) {
   }).filter(Boolean);
 
   const normal = candidates('item');
+  // Примерный шанс, что следующий мод на этой стороне (Exalted + омен стороны) — именно этот: частота семейства среди всех,
+  // что могут встать сюда (без уже занятых групп), по собранной статистике. Семейства без данных считаем как самые редкие.
+  const W = weights();
+  const wc = W && W.classes[item.itemClass];
+  let chanceMeta = null;
+  if (wc && wc.items >= 50) {
+    chanceMeta = { items: wc.items, collected: W.meta.collected };
+    for (const side of ['prefix', 'suffix']) {
+      const types = new Set(onBase.filter((m) => m.domain === 'item' && m.generation_type === side && !m.is_essence_only
+        && m.required_level <= ilvl && !(m.groups || []).some((g) => present.has(g))).map((m) => m.type));
+      const n = (type) => (wc.families[type] ? wc.families[type].n : 0.5);
+      const total = [...types].reduce((s, type) => s + n(type), 0);
+      for (const c of normal.filter((x) => x.side === side)) if (total && types.has(c.type)) c.chance = n(c.type) / total;
+    }
+  }
   for (const c of normal) c.essence = essenceFor(c.text, item.itemClass);
   const sections = [];
 
@@ -243,7 +269,7 @@ async function advise(item, demandMods, cached) {
   if (cheap.length) sections.push({ kind: 'cheap', how: cheap });
 
   const goal = planGoal(mine, normal, max, want, magic);
-  return { open, max, sections, goal, source: 'RePoE (game files) · demand: poe.ninja' };
+  return { open, max, sections, goal, chanceMeta, source: 'RePoE (game files) · demand: poe.ninja' };
 }
 
 // Цель крафта: какой была бы лучшая вещь из этой базы. На каждой стороне — самые ценные моды из текущих и возможных:
@@ -290,7 +316,7 @@ function planGoal(mine, candidates, max, want, magic) {
     if (out.length) steps.push(t('Remove {mods}: Orb of Annulment + Omen of {S} Annulment (random {side}), or Chaos Orb + Omen of Whittling if it is the lowest-level modifier', { mods: out.map((r) => r.text).join(', '), S, side: t(side) }));
     steps.push(t('Add {mods}: Exalted Orb + Omen of {S} Exaltation', { mods: into.map((c) => c.text).join(', '), S }) + (into.length > 1 ? t(' (Omen of Greater Exaltation adds two)') : ''));
   }
-  return { keep, remove, add: add.map(({ side, text, pct, tier, tiers, range, stats, essence }) => ({ side, text, pct, tier, tiers, range, stats, essence })), steps };
+  return { keep, remove, add: add.map(({ side, text, pct, tier, tiers, range, stats, essence, chance }) => ({ side, text, pct, tier, tiers, range, stats, essence, chance })), steps };
 }
 
 // Может ли мод (шаблон poe.ninja: «# to Level of all Spell Skills») встать на эту базу. null — пул модов ещё не загружен.

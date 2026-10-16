@@ -628,7 +628,7 @@ function craftRows(list) {
     craftCands.set(key, c);
     const btn = c.stats ? `<button class="link cprice" data-ck="${key}" title="${t('Search for your item with this modifier added (lowest roll of the tier)')}">${t('price?')}</button>` : '';
     return `
-    <div class="brow ${heat(c.pct)}"><span class="bname">${esc(c.text)}<span class="craft-tier">T${c.tier}/${c.tiers}${c.range ? ` · ${esc(c.range)}` : ''}</span>${c.essence ? `<span class="ess" title="${esc(t('{essence} makes a magic item rare with this modifier: {tiers}', { essence: c.essence.name, tiers: c.essence.tiers.join(' · ') }))}">◈ ${esc(c.essence.short)}</span>` : ''}${btn}</span>
+    <div class="brow ${heat(c.pct)}"><span class="bname">${esc(c.text)}<span class="craft-tier">T${c.tier}/${c.tiers}${c.range ? ` · ${esc(c.range)}` : ''}</span>${chanceTag(c.chance)}${c.essence ? `<span class="ess" title="${esc(t('{essence} makes a magic item rare with this modifier: {tiers}', { essence: c.essence.name, tiers: c.essence.tiers.join(' · ') }))}">◈ ${esc(c.essence.short)}</span>` : ''}${btn}</span>
       <span class="bpct">${hot(c.pct)}${fmt(c.pct)}%</span><span class="bbar"><i data-w="${Math.min(100, c.pct)}%"></i></span></div>`;
   }).join('');
 }
@@ -675,7 +675,7 @@ function goalHtml(g) {
   return `<div class="craft-sec goal"><div class="k" title="${esc(t('The best item this base can become — most wanted modifiers for its slots'))}">${esc(t('Goal'))}</div>
     ${g.keep.map((x) => row('keep', '✓', x, x.up ? ` <span class="tierup" title="${esc(t('Key modifier with a weak tier — a higher tier is worth more'))}">↑ ${esc(t('tier'))}</span>` : '')).join('')}
     ${g.remove.map((x) => row('remove', '✗', x)).join('')}
-    ${g.add.map((x) => row('add', '+', x, ` <span class="dem${x.pct >= 60 ? ' hot' : ''}">${x.pct >= 60 ? '🔥 ' : ''}${esc(t('{pct}% builds', { pct: fmt(x.pct) }))}</span>${x.essence ? ` <span class="ess">◈ ${esc(x.essence.short)}</span>` : ''}`)).join('')}
+    ${g.add.map((x) => row('add', '+', x, ` <span class="dem${x.pct >= 60 ? ' hot' : ''}">${x.pct >= 60 ? '🔥 ' : ''}${esc(t('{pct}% builds', { pct: fmt(x.pct) }))}</span>${chanceTag(x.chance)}${x.essence ? ` <span class="ess">◈ ${esc(x.essence.short)}</span>` : ''}`)).join('')}
     <div class="craft-sub">${esc(t('Steps'))}:</div><ol class="goal-steps">${g.steps.map((s) => `<li>${esc(s)}</li>`).join('')}</ol>
     <button class="link" data-goal>${esc(t('Price the goal'))}</button> <span class="goal-price"></span></div>`;
 }
@@ -720,6 +720,14 @@ async function priceGoal(b) {
   fit();
 }
 
+// Примерный шанс мода при Exalted с оменом его стороны: метка «частый / средний / редкий» и «≈ 1 из N».
+function chanceTag(p) {
+  if (p == null) return '';
+  const cls = p >= 0.12 ? 'common' : p >= 0.04 ? 'uncommon' : 'rare';
+  const label = { common: t('common'), uncommon: t('uncommon'), rare: t('rare') }[cls];
+  return ` <span class="chance ${cls}" title="${esc(t('Rough estimate: Exalted Orb + omen of its side gives this modifier about 1 in {n} times', { n: Math.max(1, Math.round(1 / p)) }))}">${esc(label)} · ≈1/${Math.max(1, Math.round(1 / p))}</span>`;
+}
+
 function renderCraft(r) {
   craftGoal = r.goal || null;
   craftCands.clear();
@@ -761,7 +769,8 @@ function renderCraft(r) {
   if (r.theme && r.theme.length) {
     parts.splice(1, 0, `<div class="craft-theme" title="${t('Demand % below is among {n} builds that wear this item class with these modifiers', { n: r.themeBuilds })}">${t('Demand among builds using')} <b>${r.theme.map(esc).join('</b> + <b>')}</b></div>`);
   }
-  parts.push(`<div class="craft-foot">${t("Mod pool: game files (RePoE). Roll chances aren't shown — PoE 2 files have no modifier weights.")}<br>${t('% = share of those builds using the modifier (poe.ninja). «price?» — what your item would cost with it.')}</div>`);
+  if (r.chanceMeta) parts.push(`<div class="craft-warn">⚠ ${esc(t('Chances are rough estimates from {n} cheap trade listings ({date}) — PoE 2 game files have no modifier weights. Treat them as "common / rare", not exact odds.', { n: r.chanceMeta.items, date: r.chanceMeta.collected }))}</div>`);
+  parts.push(`<div class="craft-foot">${t(r.chanceMeta ? 'Mod pool: game files (RePoE).' : "Mod pool: game files (RePoE). Roll chances aren't shown — PoE 2 files have no modifier weights.")}<br>${t('% = share of those builds using the modifier (poe.ninja). «price?» — what your item would cost with it.')}</div>`);
   $('craft').innerHTML = head + parts.join('');
 }
 

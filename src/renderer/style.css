@@ -472,3 +472,8 @@ body.upd-page { height: auto; }
 .goal-steps li { margin: 2px 0; }
 .goal .goal-price { font-size: 13.5px; }
 .goal .tierup { margin-left: 4px; font: 700 11.5px var(--body); color: var(--warn); }
+/* Примерный шанс мода (оценка по трейду) и предупреждение о точности */
+.chance { margin-left: 6px; font: 700 11px var(--body); white-space: nowrap; letter-spacing: 0; }
+.chance.common { color: var(--good); } .chance.uncommon { color: var(--warn); } .chance.rare { color: var(--bad); }
+.craft-warn { margin-top: 8px; padding: 5px 8px; border-left: 2px solid var(--warn); background: rgba(224, 179, 90, .06);
+              font-size: 12.5px; color: #e6c98a; }

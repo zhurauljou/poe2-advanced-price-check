@@ -1,7 +1,7 @@
 {
   "name": "poe2-price-checker",
   "productName": "PoE 2 Price Checker",
-  "version": "0.3.28",
+  "version": "0.3.29",
   "description": "Оверлей для оценки предметов Path of Exile 2 по горячей клавише",
   "main": "src/main/main.js",
   "private": true,
@@ -9,7 +9,8 @@
     "start": "electron .",
     "test": "node --test test/*.test.js",
     "dist": "electron-builder --win nsis",
-    "release": "node scripts/release.js"
+    "release": "node scripts/release.js",
+    "collect-weights": "node scripts/collect-weights.js"
   },
   "devDependencies": {
     "electron": "^44.7.2",
@@ -30,7 +31,9 @@
     "files": [
       "src/**/*",
       "assets/**/*",
-      "package.json"
+      "package.json",
+      "data/**/*",
+      "!data/*.partial.json"
     ],
     "win": {
       "target": "nsis",

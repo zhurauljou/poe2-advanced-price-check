@@ -1,0 +1,1522 @@
+{
+ "meta": {
+  "league": "Forbidden Rites",
+  "collected": "2026-10-16",
+  "method": "cheapest rare uncorrupted listings, ilvl 75+",
+  "note": "Estimated from trade listings — not game data. Rare modifiers are underestimated."
+ },
+ "classes": {
+  "Boots": {
+   "items": 200,
+   "unmatched": 0,
+   "families": {
+    "LocalArmourAndEnergyShield": {
+     "side": "prefix",
+     "n": 10,
+     "tiers": {
+      "1": 5,
+      "2": 1,
+      "3": 1,
+      "4": 1,
+      "5": 2
+     }
+    },
+    "IncreasedLife": {
+     "side": "prefix",
+     "n": 80,
+     "tiers": {
+      "1": 13,
+      "2": 11,
+      "3": 14,
+      "4": 10,
+      "5": 14,
+      "6": 7,
+      "7": 5,
+      "8": 3,
+      "9": 3
+     }
+    },
+    "LocalAttributeRequirements": {
+     "side": "suffix",
+     "n": 36,
+     "tiers": {
+      "1": 10,
+      "2": 13,
+      "3": 8,
+      "4": 2,
+      "5": 3
+     }
+    },
+    "ColdResistance": {
+     "side": "suffix",
+     "n": 66,
+     "tiers": {
+      "1": 2,
+      "2": 15,
+      "3": 12,
+      "4": 11,
+      "5": 10,
+      "6": 4,
+      "7": 5,
+      "8": 7
+     }
+    },
+    "ReducedShockDuration": {
+     "side": "suffix",
+     "n": 19,
+     "tiers": {
+      "1": 2,
+      "2": 8,
+      "3": 4,
+      "4": 4,
+      "5": 1
+     }
+    },
+    "LocalEvasionRating": {
+     "side": "prefix",
+     "n": 11,
+     "tiers": {
+      "1": 1,
+      "2": 2,
+      "3": 5,
+      "4": 3
+     }
+    },
+    "LocalEvasionRatingIncreasePercent": {
+     "side": "prefix",
+     "n": 9,
+     "tiers": {
+      "1": 2,
+      "2": 2,
+      "3": 3,
+      "4": 1,
+      "7": 1
+     }
+    },
+    "EvasionAppliesToDeflection": {
+     "side": "suffix",
+     "n": 17,
+     "tiers": {
+      "1": 4,
+      "2": 5,
+      "3": 5,
+      "4": 1,
+      "5": 2
+     }
+    },
+    "LocalPhysicalDamageReductionRating": {
+     "side": "prefix",
+     "n": 10,
+     "tiers": {
+      "1": 4,
+      "2": 2,
+      "5": 2,
+      "6": 2
+     }
+    },
+    "LocalPhysicalDamageReductionRatingPercent": {
+     "side": "prefix",
+     "n": 10,
+     "tiers": {
+      "1": 1,
+      "2": 3,
+      "3": 3,
+      "4": 2,
+      "5": 1
+     }
+    },
+    "FireResistance": {
+     "side": "suffix",
+     "n": 50,
+     "tiers": {
+      "2": 12,
+      "3": 9,
+      "4": 10,
+      "5": 9,
+      "6": 5,
+      "7": 3,
+      "8": 2
+     }
+    },
+    "ReducedFreezeDuration": {
+     "side": "suffix",
+     "n": 28,
+     "tiers": {
+      "1": 9,
+      "2": 8,
+      "3": 7,
+      "4": 2,
+      "5": 2
+     }
+    },
+    "LocalArmourAndEvasion": {
+     "side": "prefix",
+     "n": 13,
+     "tiers": {
+      "1": 4,
+      "2": 3,
+      "4": 2,
+      "5": 3,
+      "7": 1
+     }
+    },
+    "Strength": {
+     "side": "suffix",
+     "n": 14,
+     "tiers": {
+      "2": 2,
+      "3": 2,
+      "4": 5,
+      "5": 1,
+      "8": 4
+     }
+    },
+    "StunThreshold": {
+     "side": "suffix",
+     "n": 73,
+     "tiers": {
+      "1": 6,
+      "2": 6,
+      "3": 11,
+      "4": 11,
+      "5": 7,
+      "6": 11,
+      "7": 10,
+      "8": 1,
+      "9": 4,
+      "10": 2,
+      "11": 4
+     }
+    },
+    "LocalEnergyShield": {
+     "side": "prefix",
+     "n": 1,
+     "tiers": {
+      "3": 1
+     }
+    },
+    "LocalEnergyShieldPercent": {
+     "side": "prefix",
+     "n": 7,
+     "tiers": {
+      "1": 2,
+      "2": 3,
+      "5": 1,
+      "6": 1
+     }
+    },
+    "Intelligence": {
+     "side": "suffix",
+     "n": 14,
+     "tiers": {
+      "1": 2,
+      "2": 4,
+      "3": 1,
+      "4": 2,
+      "5": 3,
+      "6": 2
+     }
+    },
+    "IncreasedMana": {
+     "side": "prefix",
+     "n": 66,
+     "tiers": {
+      "1": 10,
+      "2": 13,
+      "3": 9,
+      "4": 10,
+      "5": 10,
+      "6": 8,
+      "7": 3,
+      "8": 3
+     }
+    },
+    "ItemFoundRarityIncrease": {
+     "side": "suffix",
+     "n": 18,
+     "tiers": {
+      "1": 11,
+      "2": 1,
+      "3": 6
+     }
+    },
+    "LightningResistance": {
+     "side": "suffix",
+     "n": 50,
+     "tiers": {
+      "1": 1,
+      "2": 9,
+      "3": 11,
+      "4": 7,
+      "5": 8,
+      "6": 7,
+      "7": 2,
+      "8": 5
+     }
+    },
+    "AlliesInPresenceLifeRegeneration": {
+     "side": "suffix",
+     "n": 50,
+     "tiers": {
+      "1": 12,
+      "2": 8,
+      "3": 8,
+      "4": 7,
+      "5": 3,
+      "6": 5,
+      "7": 7
+     }
+    },
+    "MovementVelocity": {
+     "side": "prefix",
+     "n": 69,
+     "tiers": {
+      "2": 25,
+      "3": 19,
+      "4": 16,
+      "5": 6,
+      "6": 3
+     }
+    },
+    "LocalArmourAndEnergyShieldAndStunThreshold": {
+     "side": "prefix",
+     "n": 8,
+     "tiers": {
+      "1": 2,
+      "2": 2,
+      "3": 3,
+      "5": 1
+     }
+    },
+    "LocalArmourAndEvasionAndEnergyShield": {
+     "side": "prefix",
+     "n": 7,
+     "tiers": {
+      "2": 3,
+      "3": 3,
+      "5": 1
+     }
+    },
+    "LocalArmourAndEvasionAndStunThreshold": {
+     "side": "prefix",
+     "n": 18,
+     "tiers": {
+      "1": 4,
+      "2": 6,
+      "3": 3,
+      "4": 4,
+      "5": 1
+     }
+    },
+    "Dexterity": {
+     "side": "suffix",
+     "n": 17,
+     "tiers": {
+      "1": 2,
+      "2": 2,
+      "3": 3,
+      "4": 1,
+      "5": 2,
+      "6": 2,
+      "7": 3,
+      "8": 2
+     }
+    },
+    "LocalEvasionAndStunThreshold": {
+     "side": "prefix",
+     "n": 14,
+     "tiers": {
+      "1": 4,
+      "2": 3,
+      "3": 2,
+      "4": 2,
+      "5": 2,
+      "6": 1
+     }
+    },
+    "ReducedChillDuration": {
+     "side": "suffix",
+     "n": 16,
+     "tiers": {
+      "1": 5,
+      "2": 5,
+      "3": 4,
+      "4": 2
+     }
+    },
+    "LocalBaseArmourAndEvasionRating": {
+     "side": "prefix",
+     "n": 8,
+     "tiers": {
+      "1": 6,
+      "2": 1,
+      "3": 1
+     }
+    },
+    "LocalEvasionAndEnergyShieldAndStunThreshold": {
+     "side": "prefix",
+     "n": 9,
+     "tiers": {
+      "1": 2,
+      "2": 2,
+      "3": 3,
+      "4": 2
+     }
+    },
+    "EnergyShieldRegeneration": {
+     "side": "suffix",
+     "n": 5,
+     "tiers": {
+      "1": 5
+     }
+    },
+    "LocalEnergyShieldAndStunThreshold": {
+     "side": "prefix",
+     "n": 5,
+     "tiers": {
+      "1": 3,
+      "2": 1,
+      "4": 1
+     }
+    },
+    "ArmourAppliesToElementalDamage": {
+     "side": "suffix",
+     "n": 12,
+     "tiers": {
+      "1": 4,
+      "2": 4,
+      "3": 4
+     }
+    },
+    "ChaosResistance": {
+     "side": "suffix",
+     "n": 12,
+     "tiers": {
+      "1": 1,
+      "2": 4,
+      "3": 3,
+      "4": 1,
+      "5": 2,
+      "6": 1
+     }
+    },
+    "LocalBaseEvasionRatingAndEnergyShield": {
+     "side": "prefix",
+     "n": 5,
+     "tiers": {
+      "1": 3,
+      "3": 1,
+      "4": 1
+     }
+    },
+    "LocalArmourAndStunThreshold": {
+     "side": "prefix",
+     "n": 9,
+     "tiers": {
+      "1": 1,
+      "3": 4,
+      "4": 1,
+      "5": 2,
+      "6": 1
+     }
+    },
+    "LifeRegeneration": {
+     "side": "suffix",
+     "n": 2,
+     "tiers": {
+      "8": 2
+     }
+    },
+    "LocalEvasionAndEnergyShield": {
+     "side": "prefix",
+     "n": 2,
+     "tiers": {
+      "1": 2
+     }
+    },
+    "LocalBaseArmourAndEnergyShield": {
+     "side": "prefix",
+     "n": 2,
+     "tiers": {
+      "2": 1,
+      "4": 1
+     }
+    },
+    "EnergyShield": {
+     "side": "prefix",
+     "n": 1,
+     "tiers": {
+      "7": 1
+     }
+    },
+    "EvasionRating": {
+     "side": "prefix",
+     "n": 1,
+     "tiers": {
+      "7": 1
+     }
+    }
+   },
+   "done": true
+  },
+  "Body Armours": {
+   "items": 200,
+   "unmatched": 0,
+   "families": {
+    "LocalBaseArmourAndEnergyShield": {
+     "side": "prefix",
+     "n": 12,
+     "tiers": {
+      "1": 2,
+      "2": 1,
+      "3": 2,
+      "4": 2,
+      "5": 2,
+      "6": 3
+     }
+    },
+    "IncreasedLife": {
+     "side": "prefix",
+     "n": 113,
+     "tiers": {
+      "1": 7,
+      "2": 13,
+      "3": 8,
+      "4": 11,
+      "5": 17,
+      "6": 12,
+      "7": 10,
+      "8": 11,
+      "9": 4,
+      "10": 7,
+      "11": 6,
+      "12": 4,
+      "13": 3
+     }
+    },
+    "ChaosResistance": {
+     "side": "suffix",
+     "n": 15,
+     "tiers": {
+      "1": 4,
+      "2": 4,
+      "3": 2,
+      "4": 4,
+      "5": 1
+     }
+    },
+    "ReducedBleedDuration": {
+     "side": "suffix",
+     "n": 22,
+     "tiers": {
+      "1": 5,
+      "2": 5,
+      "3": 3,
+      "4": 6,
+      "5": 3
+     }
+    },
+    "LocalIncreasedEvasionAndEnergyShieldAndLife": {
+     "side": "prefix",
+     "n": 6,
+     "tiers": {
+      "1": 1,
+      "2": 1,
+      "3": 2,
+      "4": 1,
+      "6": 1
+     }
+    },
+    "AlliesInPresenceLifeRegeneration": {
+     "side": "suffix",
+     "n": 61,
+     "tiers": {
+      "2": 10,
+      "3": 13,
+      "4": 9,
+      "5": 4,
+      "6": 6,
+      "7": 9,
+      "8": 3,
+      "9": 4,
+      "10": 3
+     }
+    },
+    "ReducedPoisonDuration": {
+     "side": "suffix",
+     "n": 25,
+     "tiers": {
+      "1": 5,
+      "2": 7,
+      "3": 9,
+      "4": 3,
+      "5": 1
+     }
+    },
+    "EvasionAppliesToDeflection": {
+     "side": "suffix",
+     "n": 17,
+     "tiers": {
+      "1": 5,
+      "2": 3,
+      "3": 3,
+      "4": 2,
+      "5": 2,
+      "6": 2
+     }
+    },
+    "StunThreshold": {
+     "side": "suffix",
+     "n": 56,
+     "tiers": {
+      "1": 4,
+      "2": 8,
+      "3": 17,
+      "4": 6,
+      "5": 3,
+      "6": 8,
+      "7": 1,
+      "8": 4,
+      "9": 3,
+      "10": 2
+     }
+    },
+    "LocalIncreasedEvasionAndEnergyShieldAndBase": {
+     "side": "prefix",
+     "n": 4,
+     "tiers": {
+      "1": 1,
+      "2": 1,
+      "4": 1,
+      "5": 1
+     }
+    },
+    "MonsterProximalTangibility": {
+     "side": "prefix",
+     "n": 1,
+     "tiers": {
+      "7": 1
+     }
+    },
+    "LocalPhysicalDamageReductionRatingPercent": {
+     "side": "prefix",
+     "n": 9,
+     "tiers": {
+      "2": 1,
+      "4": 2,
+      "5": 3,
+      "6": 1,
+      "7": 1,
+      "8": 1
+     }
+    },
+    "LocalArmourAndEvasion": {
+     "side": "prefix",
+     "n": 19,
+     "tiers": {
+      "1": 1,
+      "3": 3,
+      "4": 5,
+      "5": 3,
+      "6": 2,
+      "8": 5
+     }
+    },
+    "FireResistance": {
+     "side": "suffix",
+     "n": 45,
+     "tiers": {
+      "1": 1,
+      "2": 7,
+      "3": 9,
+      "4": 8,
+      "5": 7,
+      "6": 3,
+      "7": 3,
+      "8": 7
+     }
+    },
+    "LifeRegeneration": {
+     "side": "suffix",
+     "n": 12,
+     "tiers": {
+      "1": 8,
+      "11": 4
+     }
+    },
+    "Strength": {
+     "side": "suffix",
+     "n": 23,
+     "tiers": {
+      "1": 4,
+      "2": 1,
+      "3": 6,
+      "4": 4,
+      "5": 2,
+      "6": 1,
+      "7": 3,
+      "8": 2
+     }
+    },
+    "ColdResistance": {
+     "side": "suffix",
+     "n": 53,
+     "tiers": {
+      "1": 2,
+      "2": 9,
+      "3": 8,
+      "4": 16,
+      "5": 3,
+      "6": 9,
+      "7": 3,
+      "8": 3
+     }
+    },
+    "ThornsPhysicalDamage": {
+     "side": "prefix",
+     "n": 45,
+     "tiers": {
+      "1": 8,
+      "2": 9,
+      "3": 14,
+      "4": 8,
+      "6": 4,
+      "7": 2
+     }
+    },
+    "LocalIncreasedArmourAndEvasionAndBase": {
+     "side": "prefix",
+     "n": 8,
+     "tiers": {
+      "1": 1,
+      "2": 1,
+      "3": 2,
+      "4": 4
+     }
+    },
+    "Dexterity": {
+     "side": "suffix",
+     "n": 20,
+     "tiers": {
+      "1": 4,
+      "2": 1,
+      "3": 3,
+      "4": 3,
+      "5": 3,
+      "6": 2,
+      "7": 2,
+      "8": 2
+     }
+    },
+    "LocalIncreasedArmourAndEnergyShieldAndLife": {
+     "side": "prefix",
+     "n": 10,
+     "tiers": {
+      "1": 1,
+      "2": 4,
+      "3": 2,
+      "4": 2,
+      "6": 1
+     }
+    },
+    "LocalAttributeRequirements": {
+     "side": "suffix",
+     "n": 32,
+     "tiers": {
+      "1": 8,
+      "2": 12,
+      "3": 7,
+      "4": 3,
+      "5": 2
+     }
+    },
+    "Intelligence": {
+     "side": "suffix",
+     "n": 14,
+     "tiers": {
+      "2": 4,
+      "3": 1,
+      "4": 1,
+      "5": 3,
+      "7": 1,
+      "8": 4
+     }
+    },
+    "ReducedBurnDuration": {
+     "side": "suffix",
+     "n": 18,
+     "tiers": {
+      "1": 7,
+      "2": 1,
+      "3": 7,
+      "4": 2,
+      "5": 1
+     }
+    },
+    "LightningResistance": {
+     "side": "suffix",
+     "n": 45,
+     "tiers": {
+      "2": 7,
+      "3": 9,
+      "4": 10,
+      "5": 9,
+      "6": 6,
+      "7": 1,
+      "8": 3
+     }
+    },
+    "LocalEvasionRating": {
+     "side": "prefix",
+     "n": 14,
+     "tiers": {
+      "1": 2,
+      "2": 1,
+      "3": 4,
+      "4": 2,
+      "5": 1,
+      "6": 2,
+      "7": 1,
+      "8": 1
+     }
+    },
+    "LocalEvasionRatingIncreasePercent": {
+     "side": "prefix",
+     "n": 10,
+     "tiers": {
+      "1": 1,
+      "2": 2,
+      "5": 1,
+      "6": 3,
+      "7": 2,
+      "8": 1
+     }
+    },
+    "LocalEnergyShieldPercent": {
+     "side": "prefix",
+     "n": 5,
+     "tiers": {
+      "2": 1,
+      "4": 2,
+      "8": 2
+     }
+    },
+    "LocalArmourAndEvasionAndEnergyShield": {
+     "side": "prefix",
+     "n": 5,
+     "tiers": {
+      "3": 2,
+      "4": 1,
+      "6": 1,
+      "8": 1
+     }
+    },
+    "LocalIncreasedArmourAndEvasionAndLife": {
+     "side": "prefix",
+     "n": 14,
+     "tiers": {
+      "1": 5,
+      "2": 6,
+      "4": 2,
+      "5": 1
+     }
+    },
+    "PhysicalDamageReductionRating": {
+     "side": "prefix",
+     "n": 1,
+     "tiers": {
+      "11": 1
+     }
+    },
+    "LocalIncreasedArmourAndBase": {
+     "side": "prefix",
+     "n": 9,
+     "tiers": {
+      "1": 2,
+      "2": 4,
+      "3": 1,
+      "5": 1,
+      "6": 1
+     }
+    },
+    "LocalPhysicalDamageReductionRating": {
+     "side": "prefix",
+     "n": 12,
+     "tiers": {
+      "1": 1,
+      "2": 1,
+      "3": 2,
+      "4": 1,
+      "5": 4,
+      "7": 2,
+      "8": 1
+     }
+    },
+    "ArmourAppliesToElementalDamage": {
+     "side": "suffix",
+     "n": 14,
+     "tiers": {
+      "1": 3,
+      "2": 3,
+      "3": 1,
+      "4": 2,
+      "5": 4,
+      "6": 1
+     }
+    },
+    "LocalIncreasedArmourAndEnergyShieldAndBase": {
+     "side": "prefix",
+     "n": 8,
+     "tiers": {
+      "1": 1,
+      "2": 2,
+      "3": 3,
+      "5": 1,
+      "6": 1
+     }
+    },
+    "LocalArmourAndEnergyShield": {
+     "side": "prefix",
+     "n": 15,
+     "tiers": {
+      "1": 4,
+      "2": 1,
+      "3": 1,
+      "4": 4,
+      "5": 3,
+      "6": 2
+     }
+    },
+    "LocalIncreasedArmourAndLife": {
+     "side": "prefix",
+     "n": 7,
+     "tiers": {
+      "1": 2,
+      "2": 1,
+      "3": 2,
+      "4": 1,
+      "6": 1
+     }
+    },
+    "LocalBaseEvasionRatingAndEnergyShield": {
+     "side": "prefix",
+     "n": 9,
+     "tiers": {
+      "1": 2,
+      "2": 2,
+      "4": 3,
+      "5": 1,
+      "7": 1
+     }
+    },
+    "LocalIncreasedEnergyShieldAndLife": {
+     "side": "prefix",
+     "n": 3,
+     "tiers": {
+      "3": 2,
+      "6": 1
+     }
+    },
+    "LocalIncreasedEvasionAndBase": {
+     "side": "prefix",
+     "n": 11,
+     "tiers": {
+      "2": 3,
+      "3": 5,
+      "4": 2,
+      "5": 1
+     }
+    },
+    "LocalIncreasedEvasionAndLife": {
+     "side": "prefix",
+     "n": 9,
+     "tiers": {
+      "1": 2,
+      "2": 3,
+      "3": 2,
+      "4": 1,
+      "6": 1
+     }
+    },
+    "LocalBaseArmourAndEvasionRating": {
+     "side": "prefix",
+     "n": 16,
+     "tiers": {
+      "1": 3,
+      "2": 4,
+      "3": 4,
+      "4": 1,
+      "5": 2,
+      "6": 2
+     }
+    },
+    "EnergyShieldRegeneration": {
+     "side": "suffix",
+     "n": 6,
+     "tiers": {
+      "1": 2,
+      "2": 1,
+      "3": 3
+     }
+    },
+    "EvasionRating": {
+     "side": "prefix",
+     "n": 2,
+     "tiers": {
+      "11": 2
+     }
+    },
+    "BaseSpirit": {
+     "side": "prefix",
+     "n": 22,
+     "tiers": {
+      "3": 3,
+      "4": 8,
+      "5": 2,
+      "6": 4,
+      "7": 4,
+      "8": 1
+     }
+    },
+    "LocalEnergyShield": {
+     "side": "prefix",
+     "n": 5,
+     "tiers": {
+      "1": 1,
+      "5": 3,
+      "6": 1
+     }
+    },
+    "LocalEvasionAndEnergyShield": {
+     "side": "prefix",
+     "n": 2,
+     "tiers": {
+      "1": 2
+     }
+    },
+    "LocalIncreasedEnergyShieldAndBase": {
+     "side": "prefix",
+     "n": 1,
+     "tiers": {
+      "6": 1
+     }
+    }
+   },
+   "done": true
+  },
+  "Helmets": {
+   "items": 200,
+   "unmatched": 0,
+   "families": {
+    "LocalIncreasedArmourAndEvasionAndLife": {
+     "side": "prefix",
+     "n": 10,
+     "tiers": {
+      "1": 2,
+      "2": 4,
+      "3": 1,
+      "4": 1,
+      "5": 1,
+      "6": 1
+     }
+    },
+    "IncreasedAccuracy": {
+     "side": "prefix",
+     "n": 4,
+     "tiers": {
+      "9": 4
+     }
+    },
+    "AttackCriticalStrikeChance": {
+     "side": "suffix",
+     "n": 19,
+     "tiers": {
+      "2": 5,
+      "3": 8,
+      "4": 2,
+      "5": 4
+     }
+    },
+    "ArmourAppliesToElementalDamage": {
+     "side": "suffix",
+     "n": 16,
+     "tiers": {
+      "1": 4,
+      "2": 5,
+      "3": 3,
+      "4": 2,
+      "5": 2
+     }
+    },
+    "AlliesInPresenceLifeRegeneration": {
+     "side": "suffix",
+     "n": 40,
+     "tiers": {
+      "1": 8,
+      "2": 9,
+      "3": 5,
+      "4": 8,
+      "5": 2,
+      "6": 4,
+      "7": 4
+     }
+    },
+    "IncreasedMana": {
+     "side": "prefix",
+     "n": 77,
+     "tiers": {
+      "1": 10,
+      "2": 12,
+      "3": 9,
+      "4": 11,
+      "5": 10,
+      "6": 5,
+      "7": 6,
+      "8": 4,
+      "9": 4,
+      "10": 6
+     }
+    },
+    "ItemFoundRarityIncreasePrefix": {
+     "side": "prefix",
+     "n": 30,
+     "tiers": {
+      "1": 14,
+      "2": 15,
+      "3": 1
+     }
+    },
+    "LocalAttributeRequirements": {
+     "side": "suffix",
+     "n": 29,
+     "tiers": {
+      "1": 4,
+      "2": 9,
+      "3": 8,
+      "4": 4,
+      "5": 4
+     }
+    },
+    "ColdResistance": {
+     "side": "suffix",
+     "n": 62,
+     "tiers": {
+      "1": 2,
+      "2": 7,
+      "3": 12,
+      "4": 16,
+      "5": 7,
+      "6": 13,
+      "7": 2,
+      "8": 3
+     }
+    },
+    "LocalArmourAndEnergyShield": {
+     "side": "prefix",
+     "n": 14,
+     "tiers": {
+      "1": 3,
+      "2": 2,
+      "3": 2,
+      "4": 1,
+      "5": 3,
+      "6": 1,
+      "7": 2
+     }
+    },
+    "Intelligence": {
+     "side": "suffix",
+     "n": 60,
+     "tiers": {
+      "1": 5,
+      "2": 12,
+      "3": 7,
+      "4": 10,
+      "5": 10,
+      "6": 8,
+      "7": 3,
+      "8": 3,
+      "9": 2
+     }
+    },
+    "LocalEnergyShield": {
+     "side": "prefix",
+     "n": 3,
+     "tiers": {
+      "1": 1,
+      "2": 1,
+      "4": 1
+     }
+    },
+    "FireResistance": {
+     "side": "suffix",
+     "n": 48,
+     "tiers": {
+      "2": 11,
+      "3": 6,
+      "4": 15,
+      "5": 10,
+      "6": 2,
+      "7": 3,
+      "8": 1
+     }
+    },
+    "IncreasedLife": {
+     "side": "prefix",
+     "n": 66,
+     "tiers": {
+      "1": 4,
+      "2": 12,
+      "3": 13,
+      "4": 12,
+      "5": 9,
+      "6": 9,
+      "7": 3,
+      "8": 1,
+      "9": 3
+     }
+    },
+    "ItemFoundRarityIncrease": {
+     "side": "suffix",
+     "n": 30,
+     "tiers": {
+      "1": 22,
+      "2": 5,
+      "3": 3
+     }
+    },
+    "LocalLightRadiusAndAccuracy": {
+     "side": "suffix",
+     "n": 21,
+     "tiers": {
+      "1": 12,
+      "2": 3,
+      "3": 6
+     }
+    },
+    "Strength": {
+     "side": "suffix",
+     "n": 20,
+     "tiers": {
+      "1": 5,
+      "2": 5,
+      "3": 4,
+      "4": 2,
+      "5": 4
+     }
+    },
+    "LifeRegeneration": {
+     "side": "suffix",
+     "n": 4,
+     "tiers": {
+      "8": 4
+     }
+    },
+    "AlliesInPresenceIncreasedAccuracy": {
+     "side": "prefix",
+     "n": 45,
+     "tiers": {
+      "2": 4,
+      "3": 9,
+      "4": 11,
+      "5": 5,
+      "6": 6,
+      "7": 7,
+      "8": 3
+     }
+    },
+    "LocalPhysicalDamageReductionRating": {
+     "side": "prefix",
+     "n": 12,
+     "tiers": {
+      "2": 1,
+      "3": 2,
+      "4": 5,
+      "6": 2,
+      "7": 2
+     }
+    },
+    "LightningResistance": {
+     "side": "suffix",
+     "n": 61,
+     "tiers": {
+      "1": 2,
+      "2": 11,
+      "3": 12,
+      "4": 8,
+      "5": 5,
+      "6": 12,
+      "7": 5,
+      "8": 6
+     }
+    },
+    "LocalEvasionRating": {
+     "side": "prefix",
+     "n": 10,
+     "tiers": {
+      "1": 1,
+      "2": 2,
+      "3": 1,
+      "4": 1,
+      "5": 4,
+      "7": 1
+     }
+    },
+    "LocalIncreasedEvasionAndMana": {
+     "side": "prefix",
+     "n": 8,
+     "tiers": {
+      "1": 3,
+      "2": 4,
+      "5": 1
+     }
+    },
+    "LocalIncreasedArmourAndEvasionAndMana": {
+     "side": "prefix",
+     "n": 7,
+     "tiers": {
+      "1": 2,
+      "2": 1,
+      "3": 2,
+      "4": 2
+     }
+    },
+    "Dexterity": {
+     "side": "suffix",
+     "n": 24,
+     "tiers": {
+      "1": 5,
+      "2": 5,
+      "3": 3,
+      "4": 7,
+      "5": 2,
+      "7": 1,
+      "8": 1
+     }
+    },
+    "LocalIncreasedEvasionAndEnergyShieldAndMana": {
+     "side": "prefix",
+     "n": 8,
+     "tiers": {
+      "1": 2,
+      "2": 2,
+      "3": 3,
+      "4": 1
+     }
+    },
+    "LocalIncreasedEvasionAndLife": {
+     "side": "prefix",
+     "n": 11,
+     "tiers": {
+      "1": 2,
+      "3": 2,
+      "4": 5,
+      "5": 1,
+      "6": 1
+     }
+    },
+    "LocalIncreasedArmourAndMana": {
+     "side": "prefix",
+     "n": 10,
+     "tiers": {
+      "1": 2,
+      "2": 3,
+      "3": 3,
+      "4": 1,
+      "6": 1
+     }
+    },
+    "LocalPhysicalDamageReductionRatingPercent": {
+     "side": "prefix",
+     "n": 11,
+     "tiers": {
+      "1": 3,
+      "2": 1,
+      "3": 2,
+      "4": 2,
+      "5": 1,
+      "7": 2
+     }
+    },
+    "LocalBaseEvasionRatingAndEnergyShield": {
+     "side": "prefix",
+     "n": 4,
+     "tiers": {
+      "1": 2,
+      "2": 1,
+      "3": 1
+     }
+    },
+    "EvasionAppliesToDeflection": {
+     "side": "suffix",
+     "n": 16,
+     "tiers": {
+      "1": 3,
+      "2": 4,
+      "3": 6,
+      "4": 2,
+      "5": 1
+     }
+    },
+    "LocalEnergyShieldPercent": {
+     "side": "prefix",
+     "n": 6,
+     "tiers": {
+      "4": 2,
+      "5": 1,
+      "6": 3
+     }
+    },
+    "LocalBaseArmourAndEnergyShield": {
+     "side": "prefix",
+     "n": 6,
+     "tiers": {
+      "2": 2,
+      "3": 2,
+      "4": 1,
+      "5": 1
+     }
+    },
+    "LocalArmourAndEvasionAndEnergyShield": {
+     "side": "prefix",
+     "n": 6,
+     "tiers": {
+      "2": 1,
+      "4": 1,
+      "5": 3,
+      "7": 1
+     }
+    },
+    "LocalArmourAndEvasion": {
+     "side": "prefix",
+     "n": 12,
+     "tiers": {
+      "2": 1,
+      "3": 5,
+      "4": 1,
+      "5": 2,
+      "7": 3
+     }
+    },
+    "LocalIncreasedArmourAndEnergyShieldAndMana": {
+     "side": "prefix",
+     "n": 6,
+     "tiers": {
+      "2": 3,
+      "4": 1,
+      "5": 2
+     }
+    },
+    "LocalEvasionRatingIncreasePercent": {
+     "side": "prefix",
+     "n": 18,
+     "tiers": {
+      "1": 4,
+      "2": 2,
+      "3": 4,
+      "4": 3,
+      "5": 3,
+      "6": 2
+     }
+    },
+    "LocalIncreasedArmourAndEnergyShieldAndLife": {
+     "side": "prefix",
+     "n": 10,
+     "tiers": {
+      "1": 1,
+      "2": 2,
+      "4": 5,
+      "6": 2
+     }
+    },
+    "LocalAccuracyRating": {
+     "side": "prefix",
+     "n": 1,
+     "tiers": {
+      "1": 1
+     }
+    },
+    "LocalIncreasedEvasionAndEnergyShieldAndLife": {
+     "side": "prefix",
+     "n": 6,
+     "tiers": {
+      "1": 4,
+      "2": 1,
+      "5": 1
+     }
+    },
+    "LocalBaseArmourAndEvasionRating": {
+     "side": "prefix",
+     "n": 5,
+     "tiers": {
+      "1": 1,
+      "2": 2,
+      "3": 2
+     }
+    },
+    "LocalIncreasedEnergyShieldAndLife": {
+     "side": "prefix",
+     "n": 6,
+     "tiers": {
+      "2": 4,
+      "3": 2
+     }
+    },
+    "ChaosResistance": {
+     "side": "suffix",
+     "n": 12,
+     "tiers": {
+      "1": 1,
+      "2": 4,
+      "3": 3,
+      "4": 1,
+      "5": 2,
+      "6": 1
+     }
+    },
+    "LocalEvasionAndEnergyShield": {
+     "side": "prefix",
+     "n": 1,
+     "tiers": {
+      "1": 1
+     }
+    },
+    "GlobalIncreaseMinionSpellSkillGemLevel": {
+     "side": "suffix",
+     "n": 7,
+     "tiers": {
+      "1": 1,
+      "2": 6
+     }
+    },
+    "LocalIncreasedArmourAndLife": {
+     "side": "prefix",
+     "n": 6,
+     "tiers": {
+      "1": 2,
+      "2": 1,
+      "3": 2,
+      "4": 1
+     }
+    },
+    "LocalIncreasedEnergyShieldAndMana": {
+     "side": "prefix",
+     "n": 5,
+     "tiers": {
+      "2": 3,
+      "4": 1,
+      "6": 1
+     }
+    },
+    "EnergyShieldRegeneration": {
+     "side": "suffix",
+     "n": 1,
+     "tiers": {
+      "1": 1
+     }
+    }
+   },
+   "done": true
+  }
+ }
+}
