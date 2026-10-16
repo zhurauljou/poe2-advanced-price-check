@@ -206,6 +206,7 @@ function prepare(item) {
     skill: grantedSkill(item),
     corrupted: item.corrupted,
     online: true,
+    flex: true, // «Allow 1 minor mod missing»
   };
   return { item, exchange, filters, searchable: !exchange, rates: api.ninja.rates };
 }
@@ -242,12 +243,17 @@ function buildQuery(item, f) {
     const min = Math.min(options.length, f.optionMin || options.length);
     query.stats.push({ type: 'count', value: { min }, filters: options.map((m) => ({ id: m.statId })) });
   }
-  for (const m of f.mods) {
-    if (!m.enabled || !m.statId || m.option) continue;
+  // Второстепенные моды (не важные и не суммы) при трёх и больше — группой «любые N−1 из N»: находятся вещи,
+  // где одного такого мода нет, а остальные не хуже. Взвешенную сумму трейд без входа в аккаунт не принимает.
+  const flt = (m) => {
     const v = {};
     if (m.min != null && m.min !== '') v.min = Number(m.min);
-    query.stats[0].filters.push({ id: m.statId, value: v });
-  }
+    return { id: m.statId, value: v };
+  };
+  const regular = f.mods.filter((m) => m.enabled && m.statId && !m.option);
+  const minor = f.flex ? regular.filter(isMinor) : [];
+  for (const m of regular) if (minor.length < 3 || !minor.includes(m)) query.stats[0].filters.push(flt(m));
+  if (minor.length >= 3) query.stats.push({ type: 'count', value: { min: minor.length - 1 }, filters: minor.map(flt) });
   // Валюта цены: 'any' — любая в пересчёте (по умолчанию у трейда), иначе только лоты в этой валюте.
   if (f.priceCurrency && f.priceCurrency !== 'any') {
     query.filters.trade_filters = { filters: { price: { option: f.priceCurrency } } };
@@ -293,6 +299,11 @@ function itemTip(it) {
       .map((p) => ({ k: clean(p.name), v: clean(p.values[0][0]) })),
     mods,
   };
+}
+
+// Второстепенный мод: не сумма, не вариант и не важный (ключевой хорошего тира держим обязательным).
+function isMinor(m) {
+  return m.tag !== 'pseudo' && !m.option && (m.importance == null || m.importance < 2.4);
 }
 
 function toDivine(amount, currency) {
@@ -408,8 +419,34 @@ async function search(league, item, filters, relax = false) {
       };
     });
   }
+  // Вторая цена — «любой ролл того же тира»: насколько рынок ценит именно ваши роллы. Не нужна, если роллы
+  // уже опущены автоослаблением или их нечего опускать. Ошибка (лимит) — просто без неё.
+  let floor = null;
+  const loose = JSON.parse(JSON.stringify(f));
+  const tight = loose.mods.filter((m) => m.enabled && m.range && m.min != null && m.min > Math.ceil(m.range.lo));
+  if (!f.rollsLoosened && tight.length) {
+    tight.forEach((m) => { m.min = Math.ceil(m.range.lo); });
+    try {
+      floor = await quickPrices(L, item, loose);
+    } catch (e) {
+      log('floor price skipped:', e.message);
+    }
+  }
   return { total: s.total, url, listings, rates: api.ninja.rates, filters: f, dropped,
-    relaxStopped };
+    relaxStopped, floor };
+}
+
+// Короткий поиск ради цены: сколько лотов и цены 5 самых дешёвых (в div).
+async function quickPrices(L, item, f) {
+  const s = await api.tradeRequest('search', `${api.TRADE}/api/trade2/search/poe2/${L}`, buildQuery(item, f));
+  const ids = (s.result || []).slice(0, 5);
+  let divs = [];
+  if (ids.length) {
+    const fr = await api.tradeRequest('fetch', `${api.TRADE}/api/trade2/fetch/${ids.join(',')}?query=${s.id}`);
+    divs = (fr.result || []).filter(Boolean).map((r) => r.listing.price || {})
+      .map((p) => (p.amount != null ? toDivine(p.amount, p.currency) : null)).filter((v) => v != null).sort((a, b) => a - b);
+  }
+  return { total: s.total, divs, url: `${api.TRADE}/trade2/search/poe2/${L}/${s.id}` };
 }
 
 module.exports = { init, prepare, search };

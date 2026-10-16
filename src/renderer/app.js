@@ -246,10 +246,22 @@ function renderTradeHero(r) {
   const head = divs.slice(0, 5);
   const est = head[Math.floor((head.length - 1) / 2)];
   const median = divs[Math.floor((divs.length - 1) / 2)];
+  // Вторая цена: те же моды с любым роллом своего тира — сколько рынок доплачивает за ваши роллы.
+  let floorHtml = '';
+  const fl = r.floor;
+  if (fl && fl.divs.length) {
+    const fh = fl.divs.slice(0, 5);
+    const fest = fh[Math.floor((fh.length - 1) / 2)];
+    const premium = fest > 0 ? Math.round((est / fest - 1) * 100) : 0;
+    floorHtml = `<div class="floor" title="Same modifiers with any roll of the same tier">
+      Any roll in tier: <b>${money(fest)}</b> · ${fl.total.toLocaleString('en-US')} listed
+      ${premium >= 15 ? `<span class="prem">your rolls ≈ +${premium}%</span>` : ''}</div>`;
+  }
   $('hero').innerHTML = `
-    <div class="k">Estimated price</div>
+    <div class="k">${fl ? 'Like yours' : 'Estimated price'}</div>
     <div class="big">${money(est)}</div>
     <div class="alt">${alt(est)}</div>
+    ${floorHtml}
     <div class="grid">
       <div><span class="k">Cheapest</span><span class="v">${money(divs[0])}</span></div>
       <div><span class="k">Median of ${divs.length}</span><span class="v">${money(median)}</span></div>
@@ -430,7 +442,8 @@ function renderFilters() {
   $('misc').innerHTML = `
     <div class="seg" title="Which currency listings to search">${CURRENCIES.map(([id, label]) =>
       `<button data-cur="${id}"${f.priceCurrency === id ? ' class="on"' : ''}>${label}</button>`).join('')}</div>
-    <label class="opt${f.online ? '' : ' off'}"><input type="checkbox" data-o="online"${f.online ? ' checked' : ''}><span title="Instant Buyout or seller online — like the trade site default">Buyable now</span></label>`;
+    <label class="opt${f.online ? '' : ' off'}"><input type="checkbox" data-o="online"${f.online ? ' checked' : ''}><span title="Instant Buyout or seller online — like the trade site default">Buyable now</span></label>
+    <label class="opt${f.flex ? '' : ' off'}"><input type="checkbox" data-o="flex"${f.flex ? ' checked' : ''}><span title="With 3+ minor modifiers checked, find items that have all but one of them (key modifiers stay required)">Allow 1 minor mod missing</span></label>`;
   // Моды-варианты (Legacy у Mageblood) ищутся «любые N из выбранных»: порог можно поменять руками.
   const opts = f.mods.filter((m) => m.enabled && m.option).length;
   if (opts > 1) {
