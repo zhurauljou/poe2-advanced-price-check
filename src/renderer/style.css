@@ -453,3 +453,4 @@ body.upd-page { height: auto; }
 .lot .acts svg { width: 13px; height: 13px; vertical-align: -2px; }
 .lot .ib { margin-right: 5px; font-size: 11px; color: #ffd27a; font-weight: normal; } /* мгновенный выкуп */
 .lvl-row { display: flex; justify-content: center; align-items: center; gap: 8px; margin: 2px 0 4px; } .seg.lvl button { padding: 1px 8px; font-size: 12.5px; }
+.tt .flag small { font-size: 11px; color: var(--muted); }

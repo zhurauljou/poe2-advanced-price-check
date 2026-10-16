@@ -190,7 +190,14 @@ function renderTooltip() {
   if (item.unidentified) flags.push('<span class="corrupt">Unidentified</span>');
   // Состояния (Corrupted, Sanctified, Mirrored…) — переключатели: включённое требует то же у лота.
   const fl = (state.searchable && f.flags) || [];
-  fl.forEach((x, i) => flags.push(`<span class="tp flag ${x.cls}${x.enabled ? ' on' : ''}${x.value ? '' : ' neg'}" data-ref="f:${i}" title="${x.enabled ? 'Searching only such items — click to ignore' : 'Click to search only such items'}">${esc(x.label)}</span>`));
+  // Состояние — три положения по клику: только как у вашей вещи → только противоположное → неважно.
+  fl.forEach((x, i) => {
+    const v = x.enabled ? x.value : x.own;
+    const label = v ? x.name : `Not ${x.name.toLowerCase()}`;
+    const next = !x.enabled ? 'only such items' : x.value === x.own ? `only "${x.value ? `Not ${x.name.toLowerCase()}` : x.name}"` : 'any';
+    flags.push(`<span class="tp flag ${x.key === 'corrupted' && v ? 'corrupt' : 'cls'}${x.enabled ? ' on' : ''}${v ? '' : ' neg'}" data-ref="f:${i}"
+      title="${x.enabled ? `Searching only: ${label}` : 'Ignored — any'} · click: ${next}">${esc(label)}${x.enabled ? '' : ' <small>· any</small>'}</span>`);
+  });
   if (!fl.length) {
     if (item.corrupted) flags.push('<span class="corrupt">Corrupted</span>');
     if (item.mirrored) flags.push('<span class="cls">Mirrored</span>');
@@ -1148,7 +1155,10 @@ $('tooltip').addEventListener('click', (e) => {
   if (!el) return;
   markDirty();
   const flt = filterByRef(el.dataset.ref);
-  flt.enabled = !flt.enabled;
+  if (el.dataset.ref.startsWith('f:')) {
+    // Состояние: выкл → как у вещи → противоположное → выкл.
+    if (!flt.enabled) { flt.enabled = true; flt.value = flt.own; } else if (flt.value === flt.own) flt.value = !flt.own; else flt.enabled = false;
+  } else flt.enabled = !flt.enabled;
   renderTooltip();
   fit();
   if (flt.enabled) {

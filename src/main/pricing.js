@@ -338,16 +338,18 @@ function itemTip(it) {
 // Состояния предмета и их фильтры трейда (misc_filters).
 function flagFilters(item) {
   const out = [];
-  const add = (key, label, value, cls) => out.push({ key, label, value, cls, enabled: false });
+  // name — само состояние («Corrupted»), own — есть ли оно у вещи; value — что требовать, когда включено
+  // (переключатель в окне: own → противоположное → неважно).
+  const add = (key, name, own) => out.push({ key, name, own, value: own, enabled: false });
   // Непорченый уник — ищем непорченые: испорченные копии (часто «кирпичи») иначе занижают цену.
   const pinClean = item.rarity === 'Unique' && !item.corrupted;
   if (item.rarity === 'Currency') return out;
-  if (item.corrupted) add('corrupted', 'Corrupted', true, 'corrupt');
-  else { add('corrupted', 'Not corrupted', false, 'cls'); if (pinClean) out[out.length - 1].enabled = true; }
-  if (item.sanctified) add('sanctified', 'Sanctified', true, 'cls');
-  if (item.mirrored) add('mirrored', 'Mirrored', true, 'cls');
-  if (item.fracturedItem) add('fractured_item', 'Fractured Item', true, 'cls');
-  if (item.desecratedItem) add('desecrated', 'Desecrated Item', true, 'cls');
+  add('corrupted', 'Corrupted', !!item.corrupted);
+  if (pinClean) out[0].enabled = true;
+  if (item.sanctified) add('sanctified', 'Sanctified', true);
+  if (item.mirrored) add('mirrored', 'Mirrored', true);
+  if (item.fracturedItem) add('fractured_item', 'Fractured Item', true);
+  if (item.desecratedItem) add('desecrated', 'Desecrated Item', true);
   return out;
 }
 
