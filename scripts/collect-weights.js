@@ -62,26 +62,38 @@ function readLimits(kind, h) {
     if (used >= max - 2) blockedUntil[kind] = Math.max(blockedUntil[kind], Date.now() + period * 1000);
   });
 }
+// Отказ 429 приходит и при счётчиках далеко от лимитов (скрытое правило ~25 выборок подряд, штраф 600 с).
+// Поэтому: пережидаем штраф, дальше идём вдвое медленнее; три отказа подряд без продвижения — стоп (чтобы не нарваться на бан длиннее).
+let strikes = 0;
+const jitter = (ms) => Math.round(ms * (0.7 + Math.random() * 0.6)); // ±30%: ритм не механический
 async function call(kind, url, body) {
-  const wait = Math.max(last[kind] + MIN_GAP[kind], blockedUntil[kind]) - Date.now();
-  if (wait > 0) {
-    if (wait > 15000) say(`  … waiting ${Math.round(wait / 1000)} s (${kind} rate limit)`);
-    await sleep(wait);
+  for (;;) {
+    const wait = Math.max(last[kind] + jitter(MIN_GAP[kind]), blockedUntil[kind]) - Date.now();
+    if (wait > 0) {
+      if (wait > 15000) say(`  … waiting ${Math.round(wait / 1000)} s (${kind} rate limit)`);
+      await sleep(wait);
+    }
+    last[kind] = Date.now();
+    const res = await fetch(url, {
+      method: body ? 'POST' : 'GET',
+      headers: { 'User-Agent': UA, ...(body ? { 'Content-Type': 'application/json' } : {}) },
+      body: body ? JSON.stringify(body) : undefined,
+    });
+    readLimits(kind, res.headers);
+    if (res.status === 429) {
+      const after = Number(res.headers.get('retry-after') || 600);
+      strikes++;
+      say(`429 on ${kind} (strike ${strikes}/3), retry after ${after} s; last limits/state ${lastState[kind]}`);
+      if (strikes >= 3) throw new Error('three 429 in a row — stopping to avoid a longer ban; run again later to resume');
+      MIN_GAP[kind] = Math.min(MIN_GAP[kind] * 2, 60000);
+      say(`  slowing down: ${kind} every ~${Math.round(MIN_GAP[kind] / 1000)} s; waiting out the penalty`);
+      blockedUntil[kind] = Date.now() + (after + 60) * 1000;
+      continue;
+    }
+    if (!res.ok) throw new Error(`${kind} HTTP ${res.status}: ${(await res.text()).slice(0, 200)}`);
+    strikes = 0;
+    return res.json();
   }
-  last[kind] = Date.now();
-  const res = await fetch(url, {
-    method: body ? 'POST' : 'GET',
-    headers: { 'User-Agent': UA, ...(body ? { 'Content-Type': 'application/json' } : {}) },
-    body: body ? JSON.stringify(body) : undefined,
-  });
-  readLimits(kind, res.headers);
-  if (res.status === 429) {
-    const after = Number(res.headers.get('retry-after') || 0);
-    throw new Error(`rate limited (429) on ${kind}, retry after ${after} s; last limits/state ${lastState[kind]} `
-      + '— the limit is shared with the app and the browser on this IP; stopping to avoid a ban, run again later to resume');
-  }
-  if (!res.ok) throw new Error(`${kind} HTTP ${res.status}: ${(await res.text()).slice(0, 200)}`);
-  return res.json();
 }
 
 async function main() {
