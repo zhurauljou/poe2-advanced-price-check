@@ -4,6 +4,7 @@ contextBridge.exposeInMainWorld('pc', {
   onItem: (cb) => ipcRenderer.on('item', (_e, data) => cb(data)),
   onStatus: (cb) => ipcRenderer.on('status', (_e, data) => cb(data)),
   uniquePrice: (name, base) => ipcRenderer.invoke('unique-price', name, base),
+  whisperGame: (text) => ipcRenderer.invoke('whisper-game', text),
   quickPrice: (item, filters) => ipcRenderer.invoke('quick-price', item, filters),
   search: (item, filters, relax) => ipcRenderer.invoke('search', item, filters, relax),
   setLeague: (league) => ipcRenderer.invoke('set-league', league),

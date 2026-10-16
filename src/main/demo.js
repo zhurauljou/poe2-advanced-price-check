@@ -15,7 +15,7 @@ const enabled = !!arg('demo');
 function mockSearch(rates) {
   const lot = (amount, currency, divine, seller, h) => ({
     amount, currency, currencyName: currency, currencyImage: null, divine, seller, online: true,
-    indexed: new Date(Date.now() - h * 3600e3).toISOString(), whisper: `@${seller} hi`,
+    indexed: new Date(Date.now() - h * 3600e3).toISOString(), whisper: h % 2 ? `@${seller} hi` : undefined,
   });
   const listings = [lot(12, 'exalted', 0.03, 'Stadder', 3), lot(1, 'chaos', 0.16, 'Frozenc', 20), lot(1, 'divine', 1, 'Qhaelo', 13),
     lot(2, 'divine', 2, 'DonDoddd', 50), lot(5, 'divine', 5, 'GrabThatMercAndTwist', 96),

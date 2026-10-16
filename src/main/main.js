@@ -160,6 +160,28 @@ async function pressCopy() {
   uIOhook.keyToggle(UiohookKey.Ctrl, 'up');
 }
 
+async function tap(key, mod) {
+  if (mod) { uIOhook.keyToggle(mod, 'down'); await sleep(15); }
+  uIOhook.keyToggle(key, 'down');
+  await sleep(30);
+  uIOhook.keyToggle(key, 'up');
+  if (mod) { await sleep(10); uIOhook.keyToggle(mod, 'up'); }
+}
+
+// Шёпот продавцу в игре: переключаемся в игру, открываем чат (Enter) и вставляем текст (Ctrl+V).
+// Отправляет сам игрок — своим Enter: одно действие на сервере = одно нажатие игрока.
+async function whisperInGame(text) {
+  clipboard.writeText(text);
+  if (!gameHwnd) return false;
+  winapi.focus(gameHwnd);
+  await sleep(150);
+  if (winapi.foreground() !== gameHwnd) return false;
+  await tap(UiohookKey.Enter);
+  await sleep(120);
+  await tap(UiohookKey.V, UiohookKey.Ctrl);
+  return true;
+}
+
 // Нажимаем Ctrl+C за пользователя и ждём, пока игра положит текст предмета в буфер.
 // Не ответила за 400 мс — пробуем ещё раз.
 async function copyItem() {
@@ -432,6 +454,7 @@ app.whenReady().then(() => {
   ipcMain.handle('demand', (_e, opts) => categoryDemand({ ...opts, league: settings.get().league, limit: 10, minLevel: DEMAND_LEVEL }, api.fetchBuffer));
   ipcMain.handle('set-price-currency', (_e, c) => { settings.set({ priceCurrency: c }); });
   ipcMain.handle('copy', (_e, t) => clipboard.writeText(t));
+  ipcMain.handle('whisper-game', (_e, t) => whisperInGame(t));
   ipcMain.handle('open-url', (_e, u) => {
     if (/^https:\/\/((www\.)?pathofexile\.com|poe\.ninja|github\.com\/zhurauljou\/poe2-advanced-price-check)\//.test(u)) shell.openExternal(u);
   });
