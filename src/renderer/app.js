@@ -379,7 +379,7 @@ function renderDemand(d) {
 
 function demandRows(rows) {
   return rows.map((r) => `
-    <div class="brow${r.mine ? ' mine' : ''}"${r.mine ? ' title="Your item has this"' : ''}><span class="bname">${r.mine ? '✓ ' : ''}${esc(r.name)}</span><span class="bpct">${fmt(r.pct)}%</span>
+    <div class="brow ${heat(r.pct)}${r.mine ? ' mine' : ''}"${r.mine ? ' title="Your item has this"' : ''}><span class="bname">${r.mine ? '✓ ' : ''}${esc(r.name)}</span><span class="bpct">${hot(r.pct)}${fmt(r.pct)}%</span>
       <span class="bbar"><i style="width:${Math.min(100, r.pct)}%"></i></span></div>`).join('');
 }
 
@@ -390,9 +390,13 @@ function setTab(name) {
   fit();
 }
 
+// Насколько востребовано: < 10% — приглушаем (почти никому не нужно), ≥ 60% — подсвечиваем (нужно почти всем).
+const heat = (pct) => (pct >= 60 ? 'hot' : pct < 10 ? 'cold' : '');
+const hot = (pct) => (pct >= 60 ? '<span class="flame" title="Most builds use this">🔥</span>' : '');
+
 function buildRows(rows) {
   return rows.map((r) => `
-    <div class="brow"><span class="bname">${esc(r.name)}</span><span class="bpct">${fmt(r.pct)}%</span>
+    <div class="brow ${heat(r.pct)}"><span class="bname">${esc(r.name)}</span><span class="bpct">${hot(r.pct)}${fmt(r.pct)}%</span>
       <span class="bbar"><i style="width:${Math.min(100, r.pct)}%"></i></span></div>`).join('');
 }
 

@@ -162,6 +162,14 @@ footer { display: flex; justify-content: space-between; gap: 8px; padding: 6px 1
   background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='22' height='7' viewBox='0 0 22 7'%3E%3Cpath d='M0 3.5h7M15 3.5h7' stroke='%23dac18e'/%3E%3Cpath d='M11 0l3.5 3.5L11 7 7.5 3.5z' fill='%23dac18e'/%3E%3C/svg%3E") no-repeat; }
 .dcol .k { font: 700 13.5px var(--sc); letter-spacing: .4px; color: var(--label); margin: 6px 0 2px; }
 .brow.mine .bname { color: var(--good); }
+/* Востребованность: редкое — приглушено, массовое — горит. */
+.brow.cold { opacity: .45; }
+.brow.hot .bname { color: #ffe3a3; font-weight: 700; text-shadow: 0 0 10px rgba(255, 190, 80, .35); }
+.brow.hot .bpct { color: #ffd27a; text-shadow: 0 0 10px rgba(255, 190, 80, .5); }
+.brow.hot .bbar { height: 3px; }
+.brow.hot .bbar i { background: linear-gradient(90deg, #b07a28, #ffd27a); box-shadow: 0 0 8px rgba(255, 190, 80, .6); }
+.brow.hot.mine .bname { color: #9cf0a6; }
+.flame { font-size: 11px; margin-right: 3px; }
 .brow.mine .bbar i { background: linear-gradient(90deg, #2f6b3a, var(--good)); }
 
 /* ---- карточка конкурента при наведении на лот ---- */

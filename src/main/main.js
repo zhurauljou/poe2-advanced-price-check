@@ -330,6 +330,10 @@ app.whenReady().then(() => {
     ready.then(() => priceCheck(sample)).then(() => {
       if (!arg('shot')) return;
       setTimeout(async () => {
+        if (process.argv.includes('--full')) {
+          await win.webContents.executeJavaScript('setCompact(false)');
+          await new Promise((r) => setTimeout(r, 500));
+        }
         if (arg('hover')) {
           // --hover=N: навести на N-й лот — проверить карточку сравнения
           await win.webContents.executeJavaScript(`document.querySelectorAll('.lot')[${+arg('hover')}]
