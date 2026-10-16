@@ -31,5 +31,18 @@ const dist = path.join(root, 'dist');
 const files = fs.readdirSync(dist).filter((f) => /\.(exe|blockmap)$/.test(f) || f === 'latest.yml').map((f) => path.join(dist, f));
 if (!files.some((f) => f.endsWith('latest.yml'))) throw new Error('Нет dist/latest.yml — без него обновления не увидят релиз');
 
-run(GH, ['release', 'create', tag, ...files, '--title', tag, '--notes', notes]);
+// В описании — заметная ссылка на установщик: в списке файлов релиза непонятно, что качать.
+const exe = path.basename(files.find((f) => f.endsWith('.exe')));
+const url = `https://github.com/zhurauljou/poe2-advanced-price-check/releases/download/${tag}/${exe}`;
+const body = `## ⬇ [Download ${exe}](${url})
+
+**RU:** скачайте \`${exe}\` по ссылке выше (или в списке Assets ниже) и запустите. Уже установленная программа обновится сама.
+**EN:** download \`${exe}\` above (or from Assets below) and run it. Installed copies update themselves.
+
+Windows SmartScreen may warn about an unknown publisher: *More info → Run anyway*.
+
+### What's new
+${notes}`;
+
+run(GH, ['release', 'create', tag, ...files, '--title', tag, '--notes', body]);
 console.log(`Готово: ${tag} выложен. Установленные программы обновятся в течение 6 часов (или по «Check for updates» в трее).`);
