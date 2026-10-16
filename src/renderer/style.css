@@ -318,3 +318,23 @@ body.cmp-page { background: #0a0d12; }
 .chip img { width: 22px; height: 22px; }
 .dot { display: inline-block; width: 6px; height: 6px; border-radius: 50%; background: var(--muted); margin-right: 6px; vertical-align: 2px; }
 .dot.on { background: var(--good); box-shadow: 0 0 4px var(--good); }
+
+/* ---- окно «Updates» ---- */
+body.upd-page { height: auto; }
+.upd-title { font: 700 15px var(--sc); letter-spacing: .5px; color: var(--gold); }
+.upd { padding: 6px 18px 16px; text-align: center; gap: 8px; }
+.upd-ver { color: var(--muted); font-size: 14px; }
+.upd-ver b { color: var(--cream); }
+.upd-state { font: 700 18px var(--sc); letter-spacing: .3px; color: var(--cream); }
+.upd-state b { color: var(--gold); }
+.upd-detail { color: var(--muted); font-size: 13.5px; min-height: 18px; }
+.upd-bar { height: 6px; background: #1a1f27; border: 1px solid #2c2a25; overflow: hidden; }
+.upd-bar i { display: block; height: 100%; width: 0; background: linear-gradient(90deg, #6b5228, #dac18e);
+             box-shadow: 0 0 8px rgba(255, 190, 80, .5); transition: width .3s; }
+.upd-actions { display: flex; flex-direction: column; align-items: center; gap: 6px; margin-top: 4px; }
+.upd-actions #action { min-width: 180px; height: 34px; font: 700 15px var(--sc); letter-spacing: .4px; }
+.upd-actions #action.primary-go { color: #1a1408; background: linear-gradient(#f1d79a, #c9a45c); border-color: #f1d79a;
+                                  box-shadow: 0 0 12px rgba(255, 190, 80, .35); }
+.spin { display: inline-block; width: 13px; height: 13px; margin-right: 8px; vertical-align: -1px; border: 2px solid #4a3f2c;
+        border-top-color: var(--gold); border-radius: 50%; animation: spin .8s linear infinite; }
+@keyframes spin { to { transform: rotate(360deg); } }

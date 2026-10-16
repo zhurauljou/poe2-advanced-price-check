@@ -295,19 +295,45 @@ function syncHotkey() {
   }
 }
 
-// Ручная проверка из трея — её результат показываем уведомлением: подпись пункта меню без открытия меню не видна.
-let manualCheck = false;
+// Окно «Updates» — живой статус обновления (меню трея закрывается после клика, в нём прогресс не показать).
+let updWin = null;
 
-// Пункт меню про обновление — по состоянию updater.status.
-function updateItem(refresh) {
+function openUpdates() {
+  if (updWin && !updWin.isDestroyed()) {
+    updWin.show();
+    updWin.focus();
+  } else {
+    updWin = new BrowserWindow({
+      width: 380, height: 200, frame: false, resizable: false, alwaysOnTop: true, fullscreenable: false, show: false,
+      title: 'Updates', backgroundColor: '#0b1017', icon: ICON,
+      webPreferences: { preload: path.join(__dirname, 'preload.js'), contextIsolation: true },
+    });
+    updWin.setAlwaysOnTop(true, 'screen-saver');
+    updWin.loadFile(path.join(__dirname, '../renderer/updates.html'));
+    updWin.once('ready-to-show', () => updWin.show());
+  }
+  // Открыли — сразу проверяем, если ещё не знаем о новой версии.
+  if (['idle', 'latest', 'error'].includes(updater.status.state)) updater.check();
+}
+
+function updStatus() {
+  if (DEMO && process.argv.some((x) => x.startsWith('--upd='))) {
+    // демо: --upd='{"state":"downloading",...}' — проверить вид окна без релиза
+    return JSON.parse(process.argv.find((x) => x.startsWith('--upd=')).slice(6));
+  }
+  return updater.available() ? updater.status : { ...updater.status, state: 'unavailable' };
+}
+
+// Пункт трея про обновление — открывает окно «Updates»; подпись — по состоянию.
+function updateItem() {
   const s = updater.status;
   const v = `v${app.getVersion()}`;
-  if (!updater.available()) return { label: `${v} (from source — updates via git)`, enabled: false };
-  if (s.state === 'ready') return { label: `Restart to update to v${s.version}`, click: () => updater.install() };
-  if (s.state === 'downloading') return { label: `Downloading v${s.version}…`, enabled: false };
-  if (s.state === 'checking') return { label: 'Checking for updates…', enabled: false };
-  const note = s.state === 'latest' ? ' — up to date' : s.state === 'error' ? ' — check failed' : '';
-  return { label: `Check for updates (${v}${note})`, click: () => { manualCheck = true; updater.check(); refresh(); } };
+  const label = !updater.available() ? `${v} (from source)`
+    : s.state === 'available' ? `⬇ Update v${s.version} available…`
+    : s.state === 'downloading' ? `Downloading v${s.version}… ${Math.round((s.progress && s.progress.percent) || 0)}%`
+    : s.state === 'ready' ? `Restart to update to v${s.version}…`
+    : `Check for updates (${v})…`;
+  return { label, click: openUpdates };
 }
 
 function buildTray() {
@@ -348,7 +374,7 @@ function buildTray() {
         click: () => { settings.set({ windowPos: null }); refresh(); },
       },
       { type: 'separator' },
-      updateItem(refresh),
+      updateItem(),
       { type: 'separator' },
       { label: 'Quit', click: () => app.quit() },
     ]));
@@ -361,22 +387,19 @@ app.whenReady().then(() => {
   createOverlay();
   createCompare();
   refreshTray = buildTray();
+  let lastNotified = null;
   updater.init((s) => {
     refreshTray();
+    if (updWin && !updWin.isDestroyed()) updWin.webContents.send('upd-status', updStatus());
+    // Фоновая проверка нашла новую версию / скачали — уведомление (клик открывает окно «Updates»).
     const say = (content) => tray.displayBalloon({ title: 'PoE 2 Price Checker', content });
-    if (s.state === 'ready') {
-      say(`Update v${s.version} is ready — restart from the tray menu, or it installs on quit.`);
-      manualCheck = false;
-    } else if (manualCheck && s.state === 'latest') {
-      say(`You have the latest version (v${app.getVersion()}).`);
-      manualCheck = false;
-    } else if (manualCheck && s.state === 'downloading') {
-      say(`Downloading update v${s.version}… You'll get a notice when it's ready.`);
-    } else if (manualCheck && s.state === 'error') {
-      say(`Update check failed: ${s.error || 'unknown error'}`);
-      manualCheck = false;
-    }
+    const key = `${s.state}:${s.version}`;
+    if (key === lastNotified || (updWin && updWin.isVisible())) return;
+    if (s.state === 'available') say(`Update v${s.version} is available — click to open.`);
+    if (s.state === 'ready') say(`Update v${s.version} is downloaded — click to install.`);
+    if (s.state === 'available' || s.state === 'ready') lastNotified = key;
   });
+  tray.on('balloon-click', openUpdates);
   api.onWait = (ms) => send('status', { text: `Waiting for the trade site rate limit… ${Math.ceil(ms / 1000)} s` });
   ready = initData().then(refreshTray);
   ready.catch((e) => log('init failed', e));
@@ -388,7 +411,15 @@ app.whenReady().then(() => {
 
   // npm start -- --demo=<файл с текстом предмета> [--shot=<png>] — проверка оверлея без игры.
   const arg = (k) => (process.argv.find((a) => a.startsWith(`--${k}=`)) || '').slice(k.length + 3);
-  if (arg('demo')) {
+  if (DEMO && arg('upd')) {
+    // Снимок окна «Updates» в заданном состоянии и выход (после регистрации обработчиков ниже).
+    setTimeout(openUpdates, 300);
+    setTimeout(async () => {
+      require('fs').writeFileSync(arg('shot'), (await updWin.webContents.capturePage()).toPNG());
+      app.quit();
+    }, 3000);
+  }
+  if (arg('demo') && !arg('upd')) {
     const sample = require('fs').readFileSync(arg('demo'), 'utf8');
     ready.then(() => priceCheck(sample)).then(() => {
       if (!arg('shot')) return;
@@ -439,7 +470,17 @@ app.whenReady().then(() => {
   ipcMain.handle('demand', (_e, opts) => categoryDemand({ ...opts, league: settings.get().league, limit: 10 }, api.fetchBuffer));
   ipcMain.handle('set-price-currency', (_e, c) => { settings.set({ priceCurrency: c }); });
   ipcMain.handle('copy', (_e, t) => clipboard.writeText(t));
-  ipcMain.handle('open-url', (_e, u) => { if (/^https:\/\/((www\.)?pathofexile\.com|poe\.ninja)\//.test(u)) shell.openExternal(u); });
+  ipcMain.handle('open-url', (_e, u) => {
+    if (/^https:\/\/((www\.)?pathofexile\.com|poe\.ninja|github\.com\/zhurauljou\/poe2-advanced-price-check)\//.test(u)) shell.openExternal(u);
+  });
+  ipcMain.handle('upd-ready', (e) => e.sender.send('upd-status', updStatus()));
+  ipcMain.handle('upd-check', () => updater.check());
+  ipcMain.handle('upd-download', () => updater.download());
+  ipcMain.handle('upd-install', () => updater.install());
+  ipcMain.handle('upd-close', () => { if (updWin && !updWin.isDestroyed()) updWin.close(); });
+  ipcMain.handle('upd-fit', (_e, h) => {
+    if (updWin && !updWin.isDestroyed()) updWin.setContentSize(380, Math.min(Math.ceil(h) + 2, 400));
+  });
   ipcMain.handle('hide', () => hide());
   ipcMain.handle('compare-show', (_e, html, y) => {
     cmpY = win.getBounds().y + y;

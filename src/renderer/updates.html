@@ -1,0 +1,28 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta http-equiv="Content-Security-Policy"
+        content="default-src 'self'; img-src 'self' data:; font-src 'self' data:; style-src 'self'; script-src 'self'">
+  <title>Updates — PoE 2 Price Checker</title>
+  <link rel="stylesheet" href="fonts/fonts.css">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body class="upd-page">
+  <div class="topbar">
+    <span class="upd-title">Updates</span>
+    <span id="close" class="close" title="Close">✕</span>
+  </div>
+  <main class="upd">
+    <div class="upd-ver">Installed: <b id="current"></b></div>
+    <div id="state" class="upd-state"></div>
+    <div id="bar" class="upd-bar" hidden><i></i></div>
+    <div id="detail" class="upd-detail"></div>
+    <div class="upd-actions">
+      <button id="action" hidden></button>
+      <button id="notes" class="link" hidden>What's new ↗</button>
+    </div>
+  </main>
+  <script src="updates.js"></script>
+</body>
+</html>

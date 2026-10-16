@@ -19,3 +19,15 @@ contextBridge.exposeInMainWorld('pc', {
   onCompare: (cb) => ipcRenderer.on('compare', (_e, html) => cb(html)),
   compareFit: (height) => ipcRenderer.invoke('compare-fit', height),
 });
+
+// Окно «Updates»
+contextBridge.exposeInMainWorld('upd', {
+  onStatus: (cb) => ipcRenderer.on('upd-status', (_e, s) => cb(s)),
+  ready: () => ipcRenderer.invoke('upd-ready'),
+  check: () => ipcRenderer.invoke('upd-check'),
+  download: () => ipcRenderer.invoke('upd-download'),
+  install: () => ipcRenderer.invoke('upd-install'),
+  close: () => ipcRenderer.invoke('upd-close'),
+  fit: (h) => ipcRenderer.invoke('upd-fit', h),
+  openUrl: (url) => ipcRenderer.invoke('open-url', url),
+});
