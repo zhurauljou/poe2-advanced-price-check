@@ -12,7 +12,7 @@ contextBridge.exposeInMainWorld('pc', {
   copy: (text) => ipcRenderer.invoke('copy', text),
   openUrl: (url) => ipcRenderer.invoke('open-url', url),
   hide: () => ipcRenderer.invoke('hide'),
-  fit: (height, width) => ipcRenderer.invoke('fit', height, width),
+  fit: (height) => ipcRenderer.invoke('fit', height),
   // карточка конкурента в окне сбоку
   compareShow: (html, y) => ipcRenderer.invoke('compare-show', html, y),
   compareHide: () => ipcRenderer.invoke('compare-hide'),

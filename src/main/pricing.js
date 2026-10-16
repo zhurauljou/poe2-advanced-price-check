@@ -255,8 +255,6 @@ function itemTip(it) {
   return {
     name: it.name || '',
     base: it.typeLine || it.baseType || '',
-    baseType: it.baseType || '',
-    icon: it.icon || null,
     rarity: it.rarity || '',
     ilvl: it.ilvl,
     corrupted: !!it.corrupted,

@@ -52,69 +52,8 @@ function spark(vals, { w = 96, h = 26 } = {}) {
 
 const pct1 = (v) => `${v > 0 ? '+' : ''}${v.toFixed(1)}%`;
 
-// Компактный режим — только иконка и цена; выбор помним между запусками.
-const MINI_WIDTH = 320;
-let compact = true;
-try { compact = localStorage.getItem('compact') !== '0'; } catch {}
-let lastTrade = null; // результат последнего поиска — для компактного вида
-
 function fit() {
-  requestAnimationFrame(() => window.pc.fit(document.body.scrollHeight + 2, compact ? MINI_WIDTH : null));
-}
-
-function setCompact(on) {
-  compact = on;
-  try { localStorage.setItem('compact', on ? '1' : '0'); } catch {}
-  document.body.classList.toggle('compact', on);
-  $('mini').hidden = !on;
-  if (on) renderMini();
-  fit();
-}
-
-// Иконка: у валюты — с poe.ninja; у экипировки — из найденного лота той же базы (в тексте из игры её нет).
-function miniIcon() {
-  if (state.exchange && state.exchange.image) return state.exchange.image;
-  const tips = (lastTrade && lastTrade.listings || []).map((l) => l.tip).filter((t) => t && t.icon);
-  const same = tips.find((t) => t.baseType === state.item.baseType || t.base === state.item.baseType);
-  return (same || tips[0] || {}).icon || null;
-}
-
-function renderMini(error) {
-  if (!compact || !state) return;
-  const { item } = state;
-  const icon = miniIcon();
-  $('miniIcon').innerHTML = icon ? `<img src="${esc(icon)}" alt="">` : '';
-  $('miniName').className = `mini-name ${item.rarity}`;
-  $('miniName').textContent = item.name || item.baseType;
-  const price = $('miniPrice');
-  const sub = $('miniSub');
-  price.classList.remove('wait');
-  sub.classList.toggle('error', !!error);
-  if (state.exchange) {
-    const x = state.exchange;
-    const stack = item.stack && item.stack.size > 1 ? item.stack.size : 0;
-    price.textContent = money(x.divine);
-    const chaos = rates.chaos ? x.divine * rates.chaos : null;
-    const per = chaos && chaos < 0.5 ? `${fmt(1 / chaos)} per chaos` : 'per unit';
-    sub.textContent = stack ? `${per} · stack ×${stack}: ${money(x.divine * stack)}` : `${per} · poe.ninja`;
-  } else if (error) {
-    price.textContent = '—';
-    sub.textContent = error;
-  } else if (!lastTrade) {
-    price.textContent = state.searchable ? '…' : '—';
-    price.classList.toggle('wait', !!state.searchable);
-    sub.textContent = state.searchable ? 'Searching the trade site' : 'No price data';
-  } else {
-    const divs = lastTrade.listings.map((l) => l.divine).filter((v) => v != null).sort((a, b) => a - b);
-    if (!divs.length) {
-      price.textContent = '—';
-      sub.textContent = 'No similar items listed';
-    } else {
-      const head = divs.slice(0, 5);
-      price.textContent = money(head[Math.floor((head.length - 1) / 2)]);
-      sub.textContent = `cheapest ${money(divs[0])} · ${lastTrade.total.toLocaleString('en-US')} listed`;
-    }
-  }
+  requestAnimationFrame(() => window.pc.fit(document.body.scrollHeight + 2));
 }
 
 function setStatus(text, error) {
@@ -607,14 +546,10 @@ async function runSearch(relax = false) {
     $('open').hidden = false;
     renderTradeHero(r);
     renderResults(r);
-    lastTrade = r;
-    renderMini();
   } catch (e) {
     if (seq !== searchSeq) return;
     $('hero').hidden = true;
-    const msg = String(e.message || e).replace(/^Error invoking remote method '\w+': (Error: )?/, '');
-    setStatus(msg, true);
-    renderMini(msg);
+    setStatus(String(e.message || e).replace(/^Error invoking remote method '\w+': (Error: )?/, ''), true);
   } finally {
     if (seq === searchSeq) $('search').disabled = false;
     fit();
@@ -624,11 +559,7 @@ async function runSearch(relax = false) {
 window.pc.onItem((data) => {
   state = data;
   rates = data.rates || {};
-  lastTrade = null;
   hideCompare();
-  document.body.classList.toggle('compact', compact);
-  $('mini').hidden = !compact;
-  renderMini();
   if (state.filters) state.filters.priceCurrency = data.priceCurrency || 'any';
   searchSeq++;
   setStatus('');
@@ -659,11 +590,6 @@ $('hero').addEventListener('click', (e) => {
   try { localStorage.setItem('exchangeUnit', unit); } catch {}
   renderExchangeHero();
 });
-
-$('expand').addEventListener('click', () => setCompact(false));
-$('compact').addEventListener('click', () => setCompact(true));
-// Клик по иконке/цене — тоже раскрыть подробности.
-$('mini').addEventListener('dblclick', () => setCompact(false));
 
 $('tabs').addEventListener('click', (e) => {
   const b = e.target.closest('[data-tab]');
