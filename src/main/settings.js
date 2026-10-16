@@ -2,7 +2,7 @@ const { app } = require('electron');
 const fs = require('fs');
 const path = require('path');
 
-const DEFAULTS = { league: null, hotkey: 'CommandOrControl+D' };
+const DEFAULTS = { league: null, hotkey: 'CommandOrControl+D', hotkeyGameOnly: true, startWithWindows: false };
 const file = () => path.join(app.getPath('userData'), 'settings.json');
 
 let data = null;

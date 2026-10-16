@@ -223,6 +223,27 @@ async function initData() {
   api.loadNinja(settings.get().league).catch(() => {});
 }
 
+// Ctrl+D занимаем, только пока активна игра (или наше окно): в остальных программах он остаётся их.
+// Без koffi (не смогли спросить активное окно) — держим всегда, как раньше.
+const GAME_TITLE = /^Path of Exile( 2)?$/;
+let hotkeyOn = false;
+
+function syncHotkey() {
+  const hk = settings.get().hotkey;
+  let want = true;
+  if (settings.get().hotkeyGameOnly) {
+    const fg = winapi.foreground();
+    if (fg) want = GAME_TITLE.test(winapi.title(fg)) || (win && fg === winapi.hwndOf(win));
+  }
+  if (want && !hotkeyOn) {
+    hotkeyOn = globalShortcut.register(hk, () => { log('hotkey in', JSON.stringify(winapi.title(winapi.foreground()))); onHotkey(); });
+    if (!hotkeyOn) log('Failed to register hotkey', hk);
+  } else if (!want && hotkeyOn) {
+    globalShortcut.unregister(hk);
+    hotkeyOn = false;
+  }
+}
+
 function buildTray() {
   tray = new Tray(nativeImage.createFromPath(ICON).resize({ width: 16, height: 16 }));
   tray.setToolTip('PoE 2 Price Checker — Ctrl+D over an item');
@@ -241,6 +262,15 @@ function buildTray() {
       },
       { type: 'separator' },
       {
+        label: 'Ctrl+D only in Path of Exile', type: 'checkbox', checked: settings.get().hotkeyGameOnly,
+        click: (mi) => { settings.set({ hotkeyGameOnly: mi.checked }); syncHotkey(); },
+      },
+      {
+        // Автозапуск имеет смысл только у установленной программы, не у запуска из исходников.
+        label: 'Start with Windows', type: 'checkbox', checked: settings.get().startWithWindows, enabled: app.isPackaged,
+        click: (mi) => { settings.set({ startWithWindows: mi.checked }); app.setLoginItemSettings({ openAtLogin: mi.checked }); },
+      },
+      {
         label: 'Reset window position', enabled: !!settings.get().windowPos,
         click: () => { settings.set({ windowPos: null }); refresh(); },
       },
@@ -258,9 +288,9 @@ app.whenReady().then(() => {
   ready = initData().then(refreshTray);
   ready.catch((e) => log('init failed', e));
 
-  const hk = settings.get().hotkey;
-  if (!DEMO && !globalShortcut.register(hk, () => { log('hotkey'); onHotkey(); })) {
-    log('Failed to register hotkey', hk);
+  if (!DEMO) {
+    syncHotkey();
+    setInterval(syncHotkey, 250);
   }
 
   // npm start -- --demo=<файл с текстом предмета> [--shot=<png>] — проверка оверлея без игры.
