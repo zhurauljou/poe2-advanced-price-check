@@ -93,6 +93,15 @@ function matchMods(item) {
 
 // Трейд хранит одинаковые статы одной суммой: «+30 to maximum ES» и «+77 to maximum ES» с разных
 // модов ищутся как 107. Склеиваем их в один фильтр.
+// «+30 to maximum Energy Shield» + сумма 107 → «+107 to maximum Energy Shield». Мод с несколькими числами
+// («Adds 3 to 7 …») так не склеить — тогда null, и показываем части друг под другом.
+function sumText(text, value) {
+  const nums = text.match(NUM) || [];
+  if (nums.length !== 1 || value == null) return null;
+  const v = Math.round(value * 100) / 100;
+  return text.replace(NUM, (n) => (n.startsWith('+') && v >= 0 ? '+' : '') + v);
+}
+
 function mergeSame(mods) {
   const out = [];
   const byId = new Map();
@@ -103,11 +112,16 @@ function mergeSame(mods) {
       if (m.statId) byId.set(m.statId, m);
       continue;
     }
-    prev.parts = prev.parts || [prev.text];
+    if (!prev.parts) {
+      prev.parts = [prev.text];
+      prev.tiers = [prev.tier];
+    }
     prev.parts.push(m.text);
-    prev.text = prev.parts.join('\n');
+    prev.tiers.push(m.tier);
     if (m.value != null) prev.value = (prev.value || 0) + m.value;
     if (m.tier != null && (prev.tier == null || m.tier < prev.tier)) prev.tier = m.tier;
+    // Как в игре — одной строкой с суммой: «+107 to maximum Energy Shield».
+    prev.text = sumText(prev.parts[0], prev.value) || prev.parts.join('\n');
   }
   return out;
 }

@@ -9,6 +9,7 @@ const api = require('./api');
 const pricing = require('./pricing');
 const { log } = require('./log');
 const winapi = require('./winapi');
+const { popularBuilds } = require('./ninjaBuilds');
 const { parseItem } = require('./parser');
 
 const WIDTH = 480;
@@ -276,7 +277,7 @@ app.whenReady().then(() => {
         const img = await win.webContents.capturePage();
         require('fs').writeFileSync(arg('shot'), img.toPNG());
         app.quit();
-      }, 6000);
+      }, 9000);
     });
   }
 
@@ -289,9 +290,10 @@ app.whenReady().then(() => {
     await api.loadNinja(l).catch(() => {});
     return true;
   });
+  ipcMain.handle('builds', (_e, opts) => popularBuilds({ ...opts, league: settings.get().league, limit: 5 }, api.fetchBuffer));
   ipcMain.handle('set-price-currency', (_e, c) => { settings.set({ priceCurrency: c }); });
   ipcMain.handle('copy', (_e, t) => clipboard.writeText(t));
-  ipcMain.handle('open-url', (_e, u) => { if (/^https:\/\/(www\.)?pathofexile\.com\//.test(u)) shell.openExternal(u); });
+  ipcMain.handle('open-url', (_e, u) => { if (/^https:\/\/((www\.)?pathofexile\.com|poe\.ninja)\//.test(u)) shell.openExternal(u); });
   ipcMain.handle('hide', () => hide());
   ipcMain.handle('fit', (_e, h) => {
     const area = screen.getDisplayMatching(win.getBounds()).workArea;

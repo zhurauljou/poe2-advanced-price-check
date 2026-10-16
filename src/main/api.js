@@ -92,6 +92,12 @@ async function tradeRequest(kind, url, body) {
   return data;
 }
 
+async function fetchBuffer(url) {
+  const res = await net.fetch(url, { headers: { 'User-Agent': UA } });
+  if (!res.ok) throw new Error(`${url} → ${res.status}`);
+  return Buffer.from(await res.arrayBuffer());
+}
+
 async function getJson(url) {
   const res = await net.fetch(url, { headers: { 'User-Agent': UA, Accept: 'application/json' } });
   if (!res.ok) throw new Error(`${url} → ${res.status}`);
@@ -193,5 +199,5 @@ async function ninjaLeagues() {
 }
 
 module.exports = {
-  TRADE, tradeRequest, tradeStats, tradeItems, tradeStatic, tradeLeagues, loadNinja, ninjaLeagues, ninja,
+  TRADE, tradeRequest, fetchBuffer, tradeStats, tradeItems, tradeStatic, tradeLeagues, loadNinja, ninjaLeagues, ninja,
 };

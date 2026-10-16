@@ -146,6 +146,7 @@ function prepare(item) {
       tag: m.tag,
       tier: m.tier,
       merged: !!m.parts,
+      parts: m.parts ? m.parts.map((t, k) => ({ text: t, tier: m.tiers[k] })) : null,
       value: m.value,
       template: m.template,
       importance: w.importance,

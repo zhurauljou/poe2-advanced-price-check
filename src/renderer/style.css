@@ -125,6 +125,23 @@ footer { display: flex; justify-content: space-between; gap: 8px; padding: 6px 1
 .spark { overflow: visible; }
 .spark polyline { fill: none; stroke: currentColor; stroke-width: 1.5; stroke-linejoin: round; }
 
+/* ---- популярные билды ---- */
+.center { text-align: center; }
+.small { font-size: 13px; }
+.builds { display: flex; flex-direction: column; gap: 4px; }
+.builds .sect { margin-bottom: 0; }
+.bshare { text-align: center; color: var(--text); }
+.bshare b { color: var(--gold); }
+.bwhat { text-align: center; font-size: 13px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.bcols { display: grid; grid-template-columns: 1fr 1fr; gap: 4px 16px; margin-top: 4px; }
+.bcols .k { font: 700 13.5px var(--sc); letter-spacing: .4px; color: var(--label); margin-bottom: 2px; }
+.brow { display: grid; grid-template-columns: 1fr auto; column-gap: 6px; font-size: 14px; }
+.bname { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: var(--cream); }
+.bpct { color: var(--gold); font-weight: 700; font-variant-numeric: tabular-nums; }
+.bbar { grid-column: 1 / -1; height: 2px; margin: 1px 0 3px; background: #1f242c; }
+.bbar i { display: block; height: 100%; background: linear-gradient(90deg, #6b5228, #dac18e); }
+.bopen { align-self: center; }
+
 /* ---- фильтры ---- */
 .mod { display: flex; gap: 8px; align-items: center; padding: 3px 6px; border-radius: 2px; }
 .mod:hover { background: var(--hover); }
@@ -164,7 +181,7 @@ footer { display: flex; justify-content: space-between; gap: 8px; padding: 6px 1
 .imp i:nth-child(1) { height: 6px; } .imp i:nth-child(2) { height: 9px; } .imp i:nth-child(3) { height: 12px; }
 .imp.i1 i:nth-child(-n+1), .imp.i2 i:nth-child(-n+2), .imp.i3 i { background: var(--bronze); }
 .imp.key.i1 i:nth-child(-n+1), .imp.key.i2 i:nth-child(-n+2), .imp.key.i3 i { background: var(--gold); box-shadow: 0 0 4px rgba(255, 190, 80, .4); }
-.sum-v { color: var(--gold); }
+.tag.tier sup { font-size: 8px; line-height: 0; margin-left: 1px; }
 .misc { display: flex; flex-wrap: wrap; justify-content: center; gap: 6px 16px; margin: 6px 0 4px; padding-top: 8px; border-top: 1px solid var(--line2); }
 .misc .opt { display: flex; gap: 6px; align-items: center; color: var(--cream); cursor: pointer; }
 .misc .opt.off { color: var(--muted); }

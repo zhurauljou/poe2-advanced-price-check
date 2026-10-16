@@ -199,6 +199,61 @@ function renderTradeHero(r) {
     </div>`;
 }
 
+// ---- популярные билды (poe.ninja) ----
+// Уник — по имени; редкая/магическая — категория, база (если выбрана в шапке) и 2–3 самых важных
+// включённых мода: с полным списком модов у ninja почти не остаётся билдов.
+function buildsQuery() {
+  const { item, filters: f } = state;
+  if (!f) return null;
+  if (item.rarity === 'Unique' && f.useName) return { uniqueName: item.name };
+  if (!['Rare', 'Magic', 'Normal'].includes(item.rarity) || !f.category) return null;
+  const mods = f.mods.filter((m) => m.enabled && m.statId && m.tag !== 'pseudo')
+    .sort((a, b) => (b.importance || 0) - (a.importance || 0)).slice(0, 3).map((m) => m.text.split('\n')[0]);
+  return { itemClass: item.itemClass, rarity: item.rarity, baseType: f.useType ? item.baseType : undefined, mods };
+}
+
+let buildsSeq = 0;
+async function loadBuilds() {
+  const q = buildsQuery();
+  const box = $('builds');
+  if (!q) { box.hidden = true; return; }
+  const seq = ++buildsSeq;
+  box.hidden = false;
+  box.innerHTML = `<div class="sect"><span>Popular builds</span></div><div class="muted center">Loading from poe.ninja…</div>`;
+  fit();
+  try {
+    const b = await window.pc.builds(q);
+    if (seq !== buildsSeq) return;
+    renderBuilds(b);
+  } catch (e) {
+    if (seq !== buildsSeq) return;
+    box.innerHTML = `<div class="sect"><span>Popular builds</span></div><div class="muted center">poe.ninja: ${esc(String(e.message || e).replace(/^Error invoking remote method '\w+': (Error: )?/, ''))}</div>`;
+  }
+  fit();
+}
+
+function buildRows(rows) {
+  return rows.map((r) => `
+    <div class="brow"><span class="bname">${esc(r.name)}</span><span class="bpct">${fmt(r.pct)}%</span>
+      <span class="bbar"><i style="width:${Math.min(100, r.pct)}%"></i></span></div>`).join('');
+}
+
+function renderBuilds(b) {
+  const share = b.allTotal ? `<b>${fmt(b.total / b.allTotal * 100)}%</b> of builds · ${b.total.toLocaleString('en-US')} characters`
+    : `${b.total.toLocaleString('en-US')} characters`;
+  const what = b.filters.map(([, v]) => v).join(' + ');
+  $('builds').innerHTML = `
+    <div class="sect"><span>Popular builds</span></div>
+    <div class="bshare">${share}</div>
+    <div class="bwhat muted" title="poe.ninja filter">${esc(what)}</div>
+    ${b.total ? `<div class="bcols">
+      <div><div class="k">Ascendancy</div>${buildRows(b.classes.slice(0, 4))}</div>
+      <div><div class="k">Main skill</div>${buildRows(b.skills.slice(0, 4))}</div>
+    </div>` : '<div class="muted center">No characters on poe.ninja use this</div>'}
+    ${b.ignored && b.ignored.length ? `<div class="muted small">Not on poe.ninja: ${esc(b.ignored.map((x) => Object.values(x)[0]).join(' · '))}</div>` : ''}
+    <button class="link bopen" data-url="${esc(b.page)}">poe.ninja ↗</button>`;
+}
+
 // ---- фильтры ----
 const TAG_LABEL = { pseudo: 'total', rune: 'rune', implicit: 'implicit', crafted: 'crafted', desecrated: 'desecrated',
   fractured: 'fractured', enchant: 'enchant' };
@@ -220,12 +275,14 @@ function modRow(m, i) {
       <label><span class="cb"></span><span class="imp"></span><span class="tcol">?</span><span class="txt">${esc(m.text)}</span></label></div>`;
   }
   const tier = m.tag === 'pseudo' ? '<span class="tcol sigma" title="Total from all modifiers">Σ</span>'
-    : `<span class="tcol">${m.tier ? `<span class="tag tier${m.tier <= 2 ? ' top' : ''}">T${m.tier}</span>` : ''}</span>`;
+    : `<span class="tcol">${m.tier ? `<span class="tag tier${m.tier <= 2 ? ' top' : ''}">T${m.tier}${m.merged ? '<sup>+</sup>' : ''}</span>` : ''}</span>`;
+  // Сумма одинаковых модов (как «+107 to maximum Energy Shield» в игре) — из чего сложена, видно при наведении.
+  const from = m.parts ? ` title="${esc('Sum of: ' + m.parts.map((p) => `${p.text}${p.tier ? ` (T${p.tier})` : ''}`).join(' + '))}"` : '';
   const cat = m.tag !== 'explicit' && m.tag !== 'pseudo' ? ` <span class="tag ${esc(m.tag)}">${esc(TAG_LABEL[m.tag] || m.tag)}</span>` : '';
   const text = m.tag === 'pseudo' ? m.text.replace(/^Σ /, '') : m.text;
   return `<div class="mod t-${esc(m.tag)}${m.enabled ? '' : ' off'}" data-i="${i}">
       <label><input type="checkbox" data-k="enabled"${m.enabled ? ' checked' : ''}>${meter(m) || '<span class="imp"></span>'}${tier}
-        <span class="txt">${esc(text)}${m.merged ? `<span class="sum-v"> = ${fmt(m.value)}</span>` : ''}${cat}</span></label>
+        <span class="txt"${from}>${esc(text)}${cat}</span></label>
       ${m.option ? '' : `<input type="number" data-k="min" step="any" placeholder="min" value="${m.min == null ? '' : m.min}">`}
     </div>`;
 }
@@ -318,6 +375,7 @@ window.pc.onItem((data) => {
   setNote('');
   $('results').hidden = true;
   $('hero').hidden = true;
+  $('builds').hidden = true;
   $('open').hidden = true;
   renderLeagues();
   renderBanner();
@@ -327,6 +385,12 @@ window.pc.onItem((data) => {
   if (!state.exchange && !state.searchable) setStatus('No price data for this item');
   fit();
   if (state.searchable) runSearch(true);
+  loadBuilds();
+});
+
+$('builds').addEventListener('click', (e) => {
+  const b = e.target.closest('.bopen');
+  if (b) window.pc.openUrl(b.dataset.url);
 });
 
 window.pc.onStatus((s) => { setStatus(s.error || s.text, !!s.error); fit(); });
@@ -394,7 +458,7 @@ $('banner').addEventListener('click', (e) => {
   renderBanner();
 });
 
-$('search').addEventListener('click', () => { setNote(''); runSearch(); });
+$('search').addEventListener('click', () => { setNote(''); runSearch(); loadBuilds(); });
 document.addEventListener('keydown', (e) => {
   if (e.key === 'Enter' && state && state.searchable) { setNote(''); runSearch(); }
   if (e.key === 'Escape') window.pc.hide();
