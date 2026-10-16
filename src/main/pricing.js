@@ -384,7 +384,7 @@ function strength(f) {
 function optionName(filters) {
   const t = filters.mods.filter((m) => m.enabled && m.option).map((m) => m.text);
   const first = (t[0] || '').split(' of ')[0];
-  return first && t.every((x) => x.startsWith(first + ' of ')) ? `${first.replace(/y$/, 'ie')}s` : 'options';
+  return first && t.every((x) => x.startsWith(first + ' of ')) ? `${first.replace(/y$/, 'ie')}s` : null;
 }
 
 function weakest(filters) {
@@ -420,7 +420,8 @@ function weakest(filters) {
   const n = filters.mods.filter((m) => m.enabled && m.option).length;
   const cur = Math.min(n, filters.optionMin || n);
   if (n > 1 && cur > 1) {
-    all.push({ kind: 'options', label: `any ${cur - 1} of ${n} ${optionName(filters)}`,
+    const what = optionName(filters);
+    all.push({ kind: 'options', note: what ? { t: 'now any {k} of {n} {what}', v: { k: cur - 1, n, what } } : { t: 'now any {k} of {n} options', v: { k: cur - 1, n } },
       set enabled(v) { filters.optionMin = v ? cur : cur - 1; } });
   }
   const cands = all.filter((f) => strength(f) !== Infinity).sort((a, b) => strength(a) - strength(b));
@@ -452,10 +453,11 @@ async function search(league, item, filters, relax = false) {
     last = weakest(f);
     if (!last) break;
     last.enabled = false;
-    dropped.push(last.kind === 'rolls' ? 'roll minimums → tier floor'
+    // Подпись для пометки «ослабили»: строка (название стата / текст мода) или { t, v } — переводит окно.
+    dropped.push(last.kind === 'rolls' ? { t: 'roll minimums → tier floor' }
       : last.kind === 'proploose' ? `${last.label} −15%`
-      : last.kind === 'base' ? `exact base ${item.baseType}`
-      : last.kind === 'options' ? `now ${last.label}`
+      : last.kind === 'base' ? { t: 'exact base {base}', v: { base: item.baseType } }
+      : last.kind === 'options' ? last.note
       : last.kind === 'prop' || last.kind === 'cheap' ? `${last.label} ≥ ${last.min}` : last.text.split('\n')[0]);
   }
   const url = `${api.TRADE}/trade2/search/poe2/${L}/${s.id}`;

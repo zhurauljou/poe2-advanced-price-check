@@ -15,6 +15,10 @@ const craft = require('./craft');
 let lastItem = null; // последний разобранный предмет — для советов по крафту
 let lastThemeMods = []; // его ключевые моды — спрос для крафта считаем среди билдов с ними
 const { parseItem } = require('./parser');
+const stats = require('./stats');
+const clientLang = require('./clientLang');
+const i18n = require('../shared/i18n');
+const { t } = i18n;
 
 const WIDTH = 480;
 const ICON = path.join(__dirname, '../../assets/icon.png');
@@ -231,7 +235,32 @@ async function onHotkey() {
   }
 }
 
+// Язык клиента игры: auto — по первой строке текста («Класс предмета:» — русский). Для не-английского —
+// названия предметов и справочник модов этого языка (грузим один раз), текст переводим в английский эквивалент.
+let clientLangActive = 'en';
+function detectClientLang(text) {
+  const want = settings.get().clientLang || 'auto';
+  if (want !== 'auto') return want;
+  return Object.keys(clientLang.LANGS).find((l) => text.startsWith(clientLang.LANGS[l].itemClass)) || 'en';
+}
+async function useClientLang(lang) {
+  if (lang === clientLangActive) return;
+  if (lang === 'en') stats.buildLocal(null);
+  else {
+    await clientLang.load(lang, app.getPath('userData'), api.fetchBuffer);
+    stats.buildLocal(await api.cached(`stats-${lang}.json`, `https://${lang}.pathofexile.com/api/trade2/data/stats`));
+  }
+  clientLangActive = lang;
+}
+
 async function priceCheck(text) {
+  const lang = detectClientLang(text);
+  try {
+    await useClientLang(lang);
+  } catch (e) {
+    log('client language', lang, e);
+  }
+  if (lang !== 'en') text = clientLang.toEnglish(text, lang);
   const item = parseItem(text);
   if (!item) {
     log('not an item:', text.slice(0, 80));
@@ -242,7 +271,7 @@ async function priceCheck(text) {
   try {
     await ready;
   } catch (e) {
-    send('status', { error: 'Failed to load data: ' + e.message });
+    send('status', { error: t('Failed to load data: {msg}', { msg: e.message }) });
   }
   const league = settings.get().league;
   // Цены этой лиги уже есть — показываем сразу, свежие докачаются в фоне. Нет — ждём (иначе нечего показать).
@@ -326,7 +355,7 @@ function openUpdates() {
   } else {
     updWin = new BrowserWindow({
       width: 380, height: 200, frame: false, resizable: false, alwaysOnTop: true, fullscreenable: false, show: false,
-      title: 'Updates', backgroundColor: '#0b1017', icon: ICON,
+      title: t('Updates'), backgroundColor: '#0b1017', icon: ICON,
       webPreferences: { preload: path.join(__dirname, 'preload.js'), contextIsolation: true },
     });
     updWin.setAlwaysOnTop(true, 'screen-saver');
@@ -347,25 +376,34 @@ function updStatus() {
 function updateItem() {
   const s = updater.status;
   const v = `v${app.getVersion()}`;
-  const label = !updater.available() ? `${v} (from source)`
-    : s.state === 'available' ? `⬇ Update v${s.version} available…`
-    : s.state === 'downloading' ? `Downloading v${s.version}… ${Math.round((s.progress && s.progress.percent) || 0)}%`
-    : s.state === 'ready' ? `Restart to update to v${s.version}…`
-    : `Check for updates (${v})…`;
+  const label = !updater.available() ? t('{v} (from source)', { v })
+    : s.state === 'available' ? `⬇ ${t('Update v{v} available…', { v: s.version })}`
+    : s.state === 'downloading' ? t('Downloading v{v}… {pct}%', { v: s.version, pct: Math.round((s.progress && s.progress.percent) || 0) })
+    : s.state === 'ready' ? t('Restart to update to v{v}…', { v: s.version })
+    : t('Check for updates ({v})…', { v });
   return { label, click: openUpdates };
+}
+
+// Смена языка интерфейса: запоминаем, перестраиваем трей и сообщаем окнам — они перерисуются сразу.
+function setUiLang(lang) {
+  settings.set({ uiLang: lang });
+  i18n.setLang(lang);
+  refreshTray();
+  for (const w of [win, cmpWin, updWin]) if (w && !w.isDestroyed()) w.webContents.send('ui-lang', lang);
+  if (updWin && !updWin.isDestroyed()) updWin.setTitle(t('Updates'));
 }
 
 function buildTray() {
   tray = new Tray(nativeImage.createFromPath(ICON).resize({ width: 16, height: 16 }));
   const refresh = () => {
     const cur = settings.get().league;
-    tray.setToolTip(`PoE 2 Price Checker — ${hotkeyLabel()} over an item`);
+    tray.setToolTip(`PoE 2 Price Checker — ${t('{key} over an item', { key: hotkeyLabel() })}`);
     tray.setContextMenu(Menu.buildFromTemplate([
       { label: 'PoE 2 Price Checker', enabled: false },
-      { label: `${hotkeyLabel()} — price check the item under cursor`, enabled: false },
+      { label: t('{key} — price check the item under cursor', { key: hotkeyLabel() }), enabled: false },
       { type: 'separator' },
       {
-        label: 'League: ' + (cur || '…'),
+        label: t('League: {name}', { name: cur || '…' }),
         submenu: leagues.map((l) => ({
           label: l, type: 'radio', checked: l === cur,
           click: () => { settings.set({ league: l }); api.loadNinja(l).catch(() => {}); refresh(); },
@@ -373,29 +411,45 @@ function buildTray() {
       },
       { type: 'separator' },
       {
-        label: 'Hotkey',
+        label: t('Hotkey'),
         submenu: HOTKEYS.map(([k, label]) => ({
           label, type: 'radio', checked: settings.get().hotkey === k,
           click: () => { setHotkey(k); refresh(); },
         })),
       },
       {
-        label: 'Hotkey only in Path of Exile', type: 'checkbox', checked: settings.get().hotkeyGameOnly,
+        label: t('Hotkey only in Path of Exile'), type: 'checkbox', checked: settings.get().hotkeyGameOnly,
         click: (mi) => { settings.set({ hotkeyGameOnly: mi.checked }); syncHotkey(); },
       },
       {
         // Автозапуск имеет смысл только у установленной программы, не у запуска из исходников.
-        label: 'Start with Windows', type: 'checkbox', checked: settings.get().startWithWindows, enabled: app.isPackaged,
+        label: t('Start with Windows'), type: 'checkbox', checked: settings.get().startWithWindows, enabled: app.isPackaged,
         click: (mi) => { settings.set({ startWithWindows: mi.checked }); app.setLoginItemSettings({ openAtLogin: mi.checked }); },
       },
       {
-        label: 'Reset window position', enabled: !!settings.get().windowPos,
+        label: t('Reset window position'), enabled: !!settings.get().windowPos,
         click: () => { settings.set({ windowPos: null }); refresh(); },
+      },
+      {
+        // Язык интерфейса: названия языков — на своём языке, чтобы найти нужный при любом выбранном.
+        label: t('Interface language'),
+        submenu: [['en', 'English'], ['ru', 'Русский']].map(([l, label]) => ({
+          label, type: 'radio', checked: i18n.getLang() === l,
+          click: () => setUiLang(l),
+        })),
+      },
+      {
+        // Язык клиента игры: как читать скопированный предмет. Auto — по самому тексту.
+        label: t('Game client language'),
+        submenu: [['auto', t('Auto')], ['en', 'English'], ['ru', 'Русский']].map(([l, label]) => ({
+          label, type: 'radio', checked: (settings.get().clientLang || 'auto') === l,
+          click: () => { settings.set({ clientLang: l }); refresh(); },
+        })),
       },
       { type: 'separator' },
       updateItem(),
       { type: 'separator' },
-      { label: 'Quit', click: () => app.quit() },
+      { label: t('Quit'), click: () => app.quit() },
     ]));
   };
   refresh();
@@ -403,6 +457,8 @@ function buildTray() {
 }
 
 app.whenReady().then(() => {
+  i18n.setLang(settings.get().uiLang);
+  ipcMain.on('ui-lang-get', (e) => { e.returnValue = i18n.getLang(); });
   createOverlay();
   createCompare();
   refreshTray = buildTray();
@@ -414,12 +470,12 @@ app.whenReady().then(() => {
     const say = (content) => tray.displayBalloon({ title: 'PoE 2 Price Checker', content });
     const key = `${s.state}:${s.version}`;
     if (key === lastNotified || (updWin && updWin.isVisible())) return;
-    if (s.state === 'available') say(`Update v${s.version} is available — click to open.`);
-    if (s.state === 'ready') say(`Update v${s.version} is downloaded — click to install.`);
+    if (s.state === 'available') say(t('Update v{v} is available — click to open.', { v: s.version }));
+    if (s.state === 'ready') say(t('Update v{v} is downloaded — click to install.', { v: s.version }));
     if (s.state === 'available' || s.state === 'ready') lastNotified = key;
   });
   tray.on('balloon-click', openUpdates);
-  api.onWait = (ms) => send('status', { text: `Waiting for the trade site rate limit… ${Math.ceil(ms / 1000)} s` });
+  api.onWait = (ms) => send('status', { text: t('Waiting for the trade site rate limit… {n} s', { n: Math.ceil(ms / 1000) }) });
   ready = initData().then(refreshTray);
   ready.catch((e) => log('init failed', e));
 
@@ -444,7 +500,7 @@ app.whenReady().then(() => {
   });
   ipcMain.handle('builds', (_e, opts) => popularBuilds({ ...opts, league: settings.get().league, limit: 5, minLevel: demandLevel() }, api.fetchBuffer));
   ipcMain.handle('craft', async () => {
-    if (!lastItem) return { note: 'No item' };
+    if (!lastItem) return { note: t('No item') };
     const league = settings.get().league;
     const rarity = lastItem.rarity === 'Normal' ? 'Rare' : lastItem.rarity;
     const d = await categoryDemand({ league, itemClass: lastItem.itemClass, rarity, limit: 80, withMods: lastThemeMods, minLevel: demandLevel() },

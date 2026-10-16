@@ -92,3 +92,22 @@ test('текстовый диапазон варианта «Massive Ring(Very S
     'Passives in Radius can be Allocated without being connected to your tree']);
   assert.deepEqual(it.modLines[2].range, { lo: -20, hi: -5 });
 });
+
+test('русский клиент: текст переводится в английский эквивалент, моды — по русскому справочнику', async () => {
+  const cl = require('../src/main/clientLang');
+  const ee2 = path.join(__dirname, 'fixtures', 'ee2-ru-items-sample.ndjson');
+  const dir = fs.mkdtempSync(path.join(require('os').tmpdir(), 'cl-'));
+  fs.mkdirSync(path.join(dir, 'cache'));
+  fs.copyFileSync(ee2, path.join(dir, 'cache', 'ee2-ru-items.ndjson'));
+  await cl.load('ru', dir, null);
+  const it = parseItem(cl.toEnglish(fs.readFileSync(path.join(__dirname, 'fixtures', 'ru-rare-armour-advanced.txt'), 'utf8'), 'ru'));
+  assert.equal(it.itemClass, 'Body Armours');
+  assert.equal(it.rarity, 'Rare');
+  assert.equal(it.baseType, 'Vile Robe');
+  assert.equal(it.ilvl, 81);
+  assert.equal(it.props.es, 1038);
+  assert.equal(it.requires, 'Level 65, 78 Int');
+  assert.equal(it.corrupted, true);
+  assert.equal(it.modLines.length, 8); // руна + 7 аффиксных строк
+  assert.deepEqual(it.affixes.map((a) => [a.side, a.tag, a.tier]).slice(2, 3), [['prefix', 'desecrated', 2]]);
+});

@@ -16,6 +16,8 @@ function norm(s) {
 }
 
 let index = null; // norm(text) -> [{ id, group, text, local }]
+let localIndex = null; // то же по текстам клиента не на английском; text — английский (по id), для шаблонов и спроса
+let enById = new Map();
 
 function build(statsJson) {
   index = new Map();
@@ -25,20 +27,37 @@ function build(statsJson) {
       const key = norm(e.text.replace(/ \(Local\)$/, ''));
       if (!index.has(key)) index.set(key, []);
       index.get(key).push({ id: e.id, group: g.id, text: e.text, local });
+      enById.set(e.id, e.text);
     }
   }
 }
 
-function lookup(text) {
+// Справочник трейда на языке клиента (ru.pathofexile.com/api/trade2/data/stats): строки модов из буфера — на нём.
+// null — английский клиент.
+const LOCAL_TAG = / \((Local|На предмете)\)$/;
+function buildLocal(statsJson) {
+  if (!statsJson) { localIndex = null; return; }
+  localIndex = new Map();
+  for (const g of statsJson.result) {
+    for (const e of g.entries) {
+      const key = norm(e.text.replace(LOCAL_TAG, ''));
+      if (!localIndex.has(key)) localIndex.set(key, []);
+      localIndex.get(key).push({ id: e.id, group: g.id, text: enById.get(e.id) || e.text, local: LOCAL_TAG.test(e.text) });
+    }
+  }
+}
+
+// idx — по какому справочнику: строки из буфера — на языке клиента, тексты RePoE (крафт) — всегда английский.
+function lookup(text, idx = localIndex || index) {
   const values = (text.match(NUM) || []).map(Number);
   // «Has 2 Charm Slots» в игре против «Has # Charm Slot» на трейде.
-  let cands = index.get(norm(text)) || index.get(norm(text).replace(/s$/, ''));
+  let cands = idx.get(norm(text)) || idx.get(norm(text).replace(/s$/, ''));
   let sign = 1;
   if (!cands) {
     // «10% reduced X» на трейде ищется как «#% increased X» с отрицательным значением.
-    for (const [a, b] of [[' reduced ', ' increased '], [' less ', ' more ']]) {
+    for (const [a, b] of [[' reduced ', ' increased '], [' less ', ' more '], [' уменьшение ', ' увеличение '], [' снижение ', ' повышение '], [' меньше', ' больше']]) {
       if (text.includes(a)) {
-        cands = index.get(norm(text.replace(a, b)));
+        cands = idx.get(norm(text.replace(a, b)));
         if (cands) { sign = -1; break; }
       }
     }
@@ -138,7 +157,7 @@ function mergeSame(mods) {
 // Один стат конкретной группы по тексту — для свойств вроде «Grants Skill: Level 16 Wolf Pack».
 function find(text, group) {
   if (!index) return null;
-  const m = lookup(text);
+  const m = lookup(text) || (localIndex ? lookup(text, index) : null);
   const c = m && m.cands.find((x) => x.group === group);
   return c ? { statId: c.id, value: m.value } : null;
 }
@@ -146,9 +165,9 @@ function find(text, group) {
 // Стат трейда для строки мода, которой на вещи ещё нет (кандидат крафта): с учётом локальности класса вещи.
 function statFor(text, tag, itemClass) {
   if (!index) return null;
-  const m = lookup(text);
+  const m = lookup(text, index);
   const c = m && pick(m.cands, tag, LOCAL_CLASSES.has(itemClass));
   return c ? { statId: c.id, value: m.value } : null;
 }
 
-module.exports = { build, matchMods, find, statFor };
+module.exports = { build, buildLocal, matchMods, find, statFor };

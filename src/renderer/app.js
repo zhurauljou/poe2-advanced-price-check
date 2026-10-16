@@ -1,4 +1,7 @@
 const $ = (id) => document.getElementById(id);
+// Язык интерфейса (EN / RU) — src/shared/i18n.js; игровые названия не переводим.
+const { t } = window.i18n;
+window.i18n.setLang(window.pc.uiLang());
 let state = null; // { item, exchange, filters, searchable, league, leagues, rates, priceCurrency }
 let rates = {}; // { chaos, exalted } за 1 div, mirror — div за 1 зеркало
 let searchSeq = 0;
@@ -29,9 +32,9 @@ function money(div) {
 
 function ago(iso) {
   const s = (Date.now() - new Date(iso).getTime()) / 1000;
-  if (s < 3600) return `${Math.max(1, Math.round(s / 60))}m`;
-  if (s < 86400) return `${Math.round(s / 3600)}h`;
-  return `${Math.round(s / 86400)}d`;
+  if (s < 3600) return t('{n}m', { n: Math.max(1, Math.round(s / 60)) });
+  if (s < 86400) return t('{n}h', { n: Math.round(s / 3600) });
+  return t('{n}d', { n: Math.round(s / 86400) });
 }
 
 // Мини-график как во флиппере (trendSvg): пунктир нуля, выше нуля линия зелёная, ниже — красная,
@@ -90,16 +93,16 @@ function renderBanner() {
   if (!state.searchable) return;
   if (f.useName) {
     nameEl.classList.add('pick', 'on');
-    nameEl.title = 'Searching this unique only — click to search any unique on this base';
+    nameEl.title = t('Searching this unique only — click to search any unique on this base');
   } else if (item.rarity === 'Unique' && two) {
     nameEl.classList.add('pick');
-    nameEl.title = 'Click to search this unique only';
+    nameEl.title = t('Click to search this unique only');
   }
   if (!f.useName && f.category) {
     baseEl.classList.add('pick');
     if (f.useType) baseEl.classList.add('on');
-    baseEl.title = f.useType ? 'Searching this base only — click to search any item of this class'
-      : 'Searching any item of this class — click to search this base only';
+    baseEl.title = f.useType ? t('Searching this base only — click to search any item of this class')
+      : t('Searching any item of this class — click to search this base only');
   }
 }
 
@@ -121,7 +124,7 @@ function renderLeagues() {
   // Текущий сезон: трейд отдаёт лиги от новой к старой — первая не Standard и не хардкор.
   const season = state.leagues.find((l) => !isHC(l) && l !== 'Standard');
   const isSeason = (l) => season && (l === season || l === `HC ${season}`);
-  const item = (l) => `<button data-league="${esc(l)}"${l === state.league ? ' class="on"' : ''}>${esc(l.replace(/^HC /, ''))}${isHC(l) ? '<span class="hc">HC</span>' : ''}${isSeason(l) ? '<span class="cur" title="Current league">current</span>' : ''}${l === state.league ? '<span class="chk">✓</span>' : ''}</button>`;
+  const item = (l) => `<button data-league="${esc(l)}"${l === state.league ? ' class="on"' : ''}>${esc(l.replace(/^HC /, ''))}${isHC(l) ? '<span class="hc">HC</span>' : ''}${isSeason(l) ? `<span class="cur" title="${t('Current league')}">${t('current')}</span>` : ''}${l === state.league ? '<span class="chk">✓</span>' : ''}</button>`;
   const soft = state.leagues.filter((l) => !isHC(l));
   const hard = state.leagues.filter(isHC);
   $('leagueMenu').innerHTML = soft.map(item).join('') + (hard.length ? '<div class="lsep"></div>' + hard.map(item).join('') : '');
@@ -148,7 +151,7 @@ function pick(ref, label, valueHtml, filter, op, field) {
   const bound = filter.enabled
     ? ` <span class="tp-op">${op}</span><input type="number" class="tp-in" data-ref="${ref}" data-f="${field}" value="${filter[field] ?? ''}">`
     : '';
-  return `<span class="tp${filter.enabled ? ' on' : ''}" data-ref="${ref}" title="${filter.enabled ? 'Searching by this — click to ignore' : 'Click to search by this'}">${label}: ${valueHtml}${bound}</span>`;
+  return `<span class="tp${filter.enabled ? ' on' : ''}" data-ref="${ref}" title="${filter.enabled ? t('Searching by this — click to ignore') : t('Click to search by this')}">${label}: ${valueHtml}${bound}</span>`;
 }
 
 // Строка подсказки: значения рядом, переносятся целиком (без «·» в конце строки).
@@ -164,7 +167,7 @@ function renderTooltip() {
     const plines = item.properties.map((p) => {
       const v = `<b class="${p.aug ? 'aug' : ''}">${esc(p.v)}</b>`;
       if (p.k === 'Quality') return pick('m:quality', 'Quality', v, f.quality, '≥', 'min');
-      if (p.k === 'Grants Skill') return pick('m:skill', 'Grants Skill', v, f.skill, 'level ≥', 'min');
+      if (p.k === 'Grants Skill') return pick('m:skill', 'Grants Skill', v, f.skill, t('level ≥'), 'min');
       const i = propIdx(PROP_KEY[p.k]);
       return i < 0 ? `${esc(p.k)}: ${v}` : pick(`p:${i}`, esc(p.k), v, props[i], PROP_OP[props[i].key] || '≥', 'min');
     });
@@ -193,10 +196,11 @@ function renderTooltip() {
   // Состояние — три положения по клику: только как у вашей вещи → только противоположное → неважно.
   fl.forEach((x, i) => {
     const v = x.enabled ? x.value : x.own;
-    const label = v ? x.name : `Not ${x.name.toLowerCase()}`;
-    const next = !x.enabled ? 'only such items' : x.value === x.own ? `only "${x.value ? `Not ${x.name.toLowerCase()}` : x.name}"` : 'any';
+    const not = t('Not {lname}', { name: x.name, lname: x.name.toLowerCase() });
+    const label = v ? x.name : not;
+    const next = !x.enabled ? t('only such items') : x.value === x.own ? t('only "{label}"', { label: x.value ? not : x.name }) : t('any');
     flags.push(`<span class="tp flag ${x.key === 'corrupted' && v ? 'corrupt' : 'cls'}${x.enabled ? ' on' : ''}${v ? '' : ' neg'}" data-ref="f:${i}"
-      title="${x.enabled ? `Searching only: ${label}` : 'Ignored — any'} · click: ${next}">${esc(label)}${x.enabled ? '' : ' <small>· any</small>'}</span>`);
+      title="${esc(x.enabled ? t('Searching only: {label}', { label }) : t('Ignored — any'))} · ${t('click:')} ${esc(next)}">${esc(label)}${x.enabled ? '' : ` <small>· ${t('any')}</small>`}</span>`);
   });
   if (!fl.length) {
     if (item.corrupted) flags.push('<span class="corrupt">Corrupted</span>');
@@ -217,7 +221,7 @@ function alt(div, selfId) {
     out.push(`${fmt(div)} div`);
     if (rates.exalted && selfId !== 'exalted') out.push(`${fmt(div * rates.exalted)} ex`);
     // Дешевле chaos — понятнее «сколько штук за 1 chaos», чем «0.0148 chaos».
-    if (rates.chaos && div * rates.chaos < 0.5) out.push(`${fmt(1 / (div * rates.chaos))} per chaos`);
+    if (rates.chaos && div * rates.chaos < 0.5) out.push(t('{x} per {cur}', { x: fmt(1 / (div * rates.chaos)), cur: 'chaos' }));
   }
   return out.join(' · ');
 }
@@ -246,21 +250,21 @@ function renderExchangeHero() {
   const shown = u || (x.divine >= 1 ? 'divine' : 'chaos');
   // Обратный курс: «67.6 per chaos» понятнее, чем «0.0148 chaos».
   const units = x.divine * (perDiv(shown) || 0);
-  const inverse = units > 0 && units < 0.5 ? `${fmt(1 / units)} per ${UNITS.find((d) => d[0] === shown)[2]}` : '';
+  const inverse = units > 0 && units < 0.5 ? t('{x} per {cur}', { x: fmt(1 / units), cur: UNITS.find((d) => d[0] === shown)[2] }) : '';
   const others = UNITS.filter((d) => d[0] !== shown && d[0] !== x.id && perDiv(d[0]))
     .map((d) => `${fmt(x.divine * perDiv(d[0]))} ${d[2]}`);
   $('hero').hidden = false;
   $('hero').innerHTML = `
-    <div class="k">Price per unit</div>
+    <div class="k">${t('Price per unit')}</div>
     <div class="big">${x.image ? `<img src="${esc(x.image)}" alt="">` : ''}${inUnit(x.divine, shown)}</div>
     <div class="alt">${[inverse, ...others].filter(Boolean).join(' · ')}</div>
     <div class="seg units">${UNITS.filter((d) => d[0] !== x.id).map((d) =>
       `<button data-unit="${d[0]}"${d[0] === shown ? ' class="on"' : ''}>${d[1]}</button>`).join('')}</div>
     <div class="grid">
-      <div><span class="k">${stack ? `Stack ×${stack}` : 'Stack'}</span><span class="v">${stack ? inUnit(x.divine * stack, shown) : '—'}</span></div>
-      <div class="trend"><span class="k">7 days</span>${spark(x.spark)}
+      <div><span class="k">${stack ? t('Stack ×{n}', { n: stack }) : t('Stack')}</span><span class="v">${stack ? inUnit(x.divine * stack, shown) : '—'}</span></div>
+      <div class="trend"><span class="k">${t('7 days')}</span>${spark(x.spark)}
         ${x.spark && x.spark.length > 1 ? `<span class="tr ${dir}">${pct1(x.spark[0])} → ${pct1(x.spark[x.spark.length - 1])}</span>` : '<span class="v">—</span>'}</div>
-      <div><span class="k">24h volume</span><span class="v">${fmt(x.volume)} div</span></div>
+      <div><span class="k">${t('24h volume')}</span><span class="v">${fmt(x.volume)} div</span></div>
     </div>`;
 }
 
@@ -286,11 +290,11 @@ document.addEventListener('click', (e) => {
 // Пока ищем — заглушки той же формы, что и результат: окно не прыгает, когда приходят цены.
 function renderSearchingHero() {
   $('hero').hidden = false;
-  $('hero').innerHTML = `<div class="k">Estimated price</div><span class="sk big"></span>
-    <div class="alt">Searching the trade site…</div><span class="sk line"></span>
+  $('hero').innerHTML = `<div class="k">${t('Estimated price')}</div><span class="sk big"></span>
+    <div class="alt">${t('Searching the trade site…')}</div><span class="sk line"></span>
     <div class="grid">${'<div><span class="sk" data-w="60%"></span><br><span class="sk" data-w="80%"></span></div>'.repeat(3)}</div>`;
   $('results').hidden = false;
-  $('results').innerHTML = `<div class="sect"><span>Cheapest listings</span></div><div class="lots">${[70, 55, 62, 48, 66].map((w) => `
+  $('results').innerHTML = `<div class="sect"><span>${t('Cheapest listings')}</span></div><div class="lots">${[70, 55, 62, 48, 66].map((w) => `
     <div class="lot sk-row"><span class="sk" data-w="58px"></span><span></span>
       <span class="sk" data-w="${w}%"></span><span class="sk" data-w="24px"></span></div>`).join('')}</div>`;
 }
@@ -302,13 +306,13 @@ function confidence(total, head, cheapest = []) {
   const spread = head.length > 1 && head[0] > 0 ? head[head.length - 1] / head[0] : 1;
   const allStale = cheapest.length >= 3 && cheapest.every((l) => l.age >= 7);
   let level = 2;
-  let why = `${total} listings, prices within ×${fmt(spread)}`;
+  let why = t('{n} listings, prices within ×{x}', { n: total, x: fmt(spread) });
   if (total >= 10 && spread <= 2 && !allStale) level = 3;
   else if (total < 4 || spread > 4 || allStale) level = 1;
-  if (total < 4) why = `only ${total} similar listing${total === 1 ? '' : 's'}`;
-  else if (allStale) why = 'all cheapest listings are a week+ old — those prices may not be real';
-  else if (spread > 4) why = `cheapest prices differ ×${fmt(spread)} — someone may be underpricing`;
-  const label = { 3: 'Reliable', 2: 'Some data', 1: 'Few listings' }[level];
+  if (total < 4) why = t('only {n} similar listings', { n: total });
+  else if (allStale) why = t('all cheapest listings are a week+ old — those prices may not be real');
+  else if (spread > 4) why = t('cheapest prices differ ×{x} — someone may be underpricing', { x: fmt(spread) });
+  const label = t({ 3: 'Reliable', 2: 'Some data', 1: 'Few listings' }[level]);
   return `<div class="conf c${level}" title="${esc(why)}">${'●'.repeat(level)}${'○'.repeat(3 - level)} ${label}</div>`;
 }
 
@@ -320,26 +324,26 @@ function ageSummary(priced, usedFresh) {
   if (priced.length < 2) return '';
   const bits = [];
   const day = priced.filter((l) => l.age <= 1);
-  if (day.length) bits.push(`Fresh (24h): <b>${day.length}</b> from ${money(day[0].div)}`);
-  if (priced[0].age >= 7) bits.push(`<span class="stale">cheapest hung ${Math.round(priced[0].age)}d — likely overpriced</span>`);
+  if (day.length) bits.push(t('Fresh (24h): <b>{n}</b> from {price}', { n: day.length, price: money(day[0].div) }));
+  if (priced[0].age >= 7) bits.push(`<span class="stale">${t('cheapest hung {n}d — likely overpriced', { n: Math.round(priced[0].age) })}</span>`);
   const newer = priced.filter((l) => l.age <= 3).map((l) => l.div);
   const older = priced.filter((l) => l.age > 3).map((l) => l.div);
   if (newer.length >= 2 && older.length >= 2) {
     const mid = (a) => a[Math.floor((a.length - 1) / 2)];
     const k = mid(newer) / mid(older);
-    if (k < 0.85) bits.push('<span class="down">↓ newer listings are cheaper</span>');
-    else if (k > 1.15) bits.push('<span class="up">↑ newer listings are pricier</span>');
+    if (k < 0.85) bits.push(`<span class="down">↓ ${t('newer listings are cheaper')}</span>`);
+    else if (k > 1.15) bits.push(`<span class="up">↑ ${t('newer listings are pricier')}</span>`);
   }
-  if (usedFresh) bits.push('estimate from listings ≤ 3 days old');
+  if (usedFresh) bits.push(t('estimate from listings ≤ 3 days old'));
   return bits.length ? `<div class="ages">${bits.join(' · ')}</div>` : '';
 }
 
 function renderTradeHero(r) {
   const divs = r.listings.map((l) => l.divine).filter((v) => v != null).sort((a, b) => a - b);
   if (!divs.length) {
-    $('hero').innerHTML = voidState('∅', 'No similar items listed right now',
-      'It may be a rare high-end item. Uncheck filters or lower the minimums to widen the search.',
-      [['relax', 'Relax filters'], ['trade', 'Open trade site']]);
+    $('hero').innerHTML = voidState('∅', t('No similar items listed right now'),
+      t('It may be a rare high-end item. Uncheck filters or lower the minimums to widen the search.'),
+      [['relax', t('Relax filters')], ['trade', t('Open trade site')]]);
     return;
   }
   // Возраст лотов: залежавшийся дешёвый лот (неделю+ не купили) завышает картину — за эту цену не берут.
@@ -361,14 +365,14 @@ function renderTradeHero(r) {
     const fh = (ffresh.length >= 3 ? ffresh : fl.divs).slice(0, 5);
     const fest = fh[Math.floor((fh.length - 1) / 2)];
     const premium = fest > 0 ? Math.round((est / fest - 1) * 100) : 0;
-    floorHtml = `<div class="floor" title="Same modifiers with any roll of the same tier">
-      Any roll in tier: <b>${money(fest)}</b> · ${fl.total.toLocaleString('en-US')} listed
-      ${premium >= 15 ? `<span class="prem">your rolls ≈ +${premium}%</span>` : ''}</div>`;
+    floorHtml = `<div class="floor" title="${t('Same modifiers with any roll of the same tier')}">
+      ${t('Any roll in tier:')} <b>${money(fest)}</b> · ${t('{n} listed', { n: fl.total })}
+      ${premium >= 15 ? `<span class="prem">${t('your rolls ≈ +{n}%', { n: premium })}</span>` : ''}</div>`;
   }
   state.est = est;
   const drivable = state.filters.mods.some((m) => m.enabled && m.statId && !m.option && !m.inSum);
   $('hero').innerHTML = `
-    <div class="k">${fl ? 'Like yours' : 'Estimated price'}</div>
+    <div class="k">${fl ? t('Like yours') : t('Estimated price')}</div>
     <div class="big">${money(est)}</div>
     <div class="alt">${alt(est)}</div>
     ${confidence(r.total, head, priced.slice(0, 5))}
@@ -376,7 +380,7 @@ function renderTradeHero(r) {
     <div class="ninja-u">${ninjaLine()}</div>
     ${ageHtml}
     ${sellHtml(priced, est, divs[0], median, divs.length)}
-    ${drivable ? '<button class="link drive-btn" data-act="impact" title="Searches again without each key modifier (a few trade requests)">What drives the price?</button>' : ''}`;
+    ${drivable ? `<button class="link drive-btn" data-act="impact" title="${t('Searches again without each key modifier (a few trade requests)')}">${t('What drives the price?')}</button>` : ''}`;
 }
 
 // Цена уника на poe.ninja — одна на название + базу, без роллов: опора «за самую простую копию».
@@ -384,8 +388,8 @@ function ninjaLine() {
   const u = state.uniqueNinja;
   if (!u) return '';
   const below = state.est != null && state.est < u.divine * 0.8;
-  return `<span title="poe.ninja: the cheapest copies of this unique, any rolls">poe.ninja (any rolls): <b>${money(u.divine)}</b> · ${u.listings.toLocaleString('en-US')} listed</span>`
-    + (below ? ' · <span class="down" title="Listings like yours are cheaper than the plain floor — check the filters">below poe.ninja</span>' : '');
+  return `<span title="${t('poe.ninja: the cheapest copies of this unique, any rolls')}">${t('poe.ninja (any rolls):')} <b>${money(u.divine)}</b> · ${t('{n} listed', { n: u.listings })}</span>`
+    + (below ? ` · <span class="down" title="${t('Listings like yours are cheaper than the plain floor — check the filters')}">${t('below poe.ninja')}</span>` : '');
 }
 
 async function loadUniqueNinja() {
@@ -436,21 +440,21 @@ function sellHtml(priced, est, cheapest, median, n) {
   const patient = Math.min(est * 2, Math.max(est * 1.2, next));
   // Вместо «Cheapest / Median / Listings» — цены для выставления: те же цифры, но сразу как действие.
   // Самый дешёвый лот и медиана — в подсказках, число лотов — в заголовке списка.
-  const opts = [['Quick sale', quick, `Just under the cheapest active listing — sells fastest. Cheapest listed: ${money(cheapest)}`],
-    ['Market', est, 'The estimate above'], ['Patient', patient, `Above the market — wait for a buyer. Median of ${n}: ${money(median)}`]]
+  const opts = [['Quick sale', quick, t('Just under the cheapest active listing — sells fastest. Cheapest listed: {price}', { price: money(cheapest) })],
+    ['Market', est, t('The estimate above')], ['Patient', patient, t('Above the market — wait for a buyer. Median of {n}: {price}', { n, price: money(median) })]]
     .map(([k, div, title]) => ({ k, title, ...listPrice(div) }))
     // Совпали цены — остаётся Market, а не первая попавшаяся.
     .filter((o, i, a) => o.k === 'Market' || (o.label !== a[1].label && !a.slice(0, i).some((p) => p.label === o.label)));
   return `<div class="grid sell">${opts.map((o) => `
-    <div><span class="k">${o.k}</span><span class="v copy" data-note="~price ${o.amount} ${o.cur}" title="${o.title}
-Click to copy the price note">${o.label}</span></div>`).join('')}</div>`;
+    <div><span class="k">${t(o.k)}</span><span class="v copy" data-note="~price ${o.amount} ${o.cur}" title="${o.title}
+${t('Click to copy the price note')}">${o.label}</span></div>`).join('')}</div>`;
 }
 
 // Вклад модов в цену: по очереди ищем без каждого из главных модов (до 4) — насколько падает цена.
 const IMPACT_MODS = 4;
 let impactSeq = 0;
 async function runImpact() {
-  if ($('search').classList.contains('dirty')) { setStatus('Filters changed — search first, then check what drives the price'); return; }
+  if ($('search').classList.contains('dirty')) { setStatus(t('Filters changed — search first, then check what drives the price')); return; }
   const seq = ++impactSeq;
   const idx = state.filters.mods.map((m, i) => [m, i]).filter(([m]) => m.enabled && m.statId && !m.option && !m.inSum)
     .sort((a, b) => (b[0].importance || 0) - (a[0].importance || 0)).slice(0, IMPACT_MODS).map(([, i]) => i);
@@ -480,9 +484,9 @@ function driveChip(i) {
   if (!d) return '';
   if (d.wait) return ' <span class="drive wait">…</span>';
   if (d.error) return ` <span class="drive" title="${esc(d.error)}">?</span>`;
-  if (d.share == null) return ' <span class="drive" title="Nothing listed without it">—</span>';
+  if (d.share == null) return ` <span class="drive" title="${t('Nothing listed without it')}">—</span>`;
   const pct = Math.round(d.share * 100);
-  return ` <span class="drive${pct >= 50 ? ' big' : pct < 10 ? ' low' : ''}" title="Without it: ${money(d.without)} · ${d.total.toLocaleString('en-US')} listed">${pct < 5 ? 'adds ~0' : `≈${pct}% of price`}</span>`;
+  return ` <span class="drive${pct >= 50 ? ' big' : pct < 10 ? ' low' : ''}" title="${t('Without it: {price}', { price: money(d.without) })} · ${t('{n} listed', { n: d.total })}">${pct < 5 ? t('adds ~0') : t('≈{n}% of price', { n: pct })}</span>`;
 }
 
 // ---- популярные билды (poe.ninja) ----
@@ -499,21 +503,26 @@ function buildsQuery() {
 }
 
 let buildsSeq = 0;
+// Последние данные вкладки Demand — перерисовать при смене языка.
+let lastBuilds = null;
+let lastDemand = null;
 async function loadBuilds() {
   const q = buildsQuery();
   const box = $('builds');
   if (!q) { box.hidden = true; return; }
   const seq = ++buildsSeq;
   box.hidden = false;
-  box.innerHTML = `<div class="sect"><span>Popular builds</span></div><div class="muted center">Loading from poe.ninja…</div>`;
+  lastBuilds = null;
+  box.innerHTML = `<div class="sect"><span>${t('Popular builds')}</span></div><div class="muted center">${t('Loading from poe.ninja…')}</div>`;
   fit();
   try {
     const b = await window.pc.builds(q);
     if (seq !== buildsSeq) return;
+    lastBuilds = b;
     renderBuilds(b);
   } catch (e) {
     if (seq !== buildsSeq) return;
-    box.innerHTML = `<div class="sect"><span>Popular builds</span></div><div class="muted center">poe.ninja: ${esc(errText(e))}</div>`;
+    box.innerHTML = `<div class="sect"><span>${t('Popular builds')}</span></div><div class="muted center">poe.ninja: ${esc(errText(e))}</div>`;
   }
   fit();
 }
@@ -526,14 +535,16 @@ async function loadDemand() {
   if (!f || !f.category || !['Rare', 'Magic', 'Normal'].includes(item.rarity)) { box.hidden = true; return; }
   const seq = ++demandSeq;
   box.hidden = false;
-  box.innerHTML = `<div class="sect"><span>Demand</span></div><div class="muted center">Loading from poe.ninja…</div>`;
+  lastDemand = null;
+  box.innerHTML = `<div class="sect"><span>${t('Demand')}</span></div><div class="muted center">${t('Loading from poe.ninja…')}</div>`;
   try {
     const d = await window.pc.demand({ itemClass: item.itemClass, rarity: item.rarity === 'Normal' ? 'Rare' : item.rarity });
     if (seq !== demandSeq) return;
+    lastDemand = d;
     renderDemand(d);
   } catch (e) {
     if (seq !== demandSeq) return;
-    box.innerHTML = `<div class="sect"><span>Demand</span></div><div class="muted center">poe.ninja: ${esc(errText(e))}</div>`;
+    box.innerHTML = `<div class="sect"><span>${t('Demand')}</span></div><div class="muted center">poe.ninja: ${esc(errText(e))}</div>`;
   }
   fit();
 }
@@ -544,7 +555,7 @@ const ninjaTemplate = (t) => (t || '').replace(/ \(Local\)$/, '').toLowerCase();
 function renderDemand(d) {
   const { item, filters: f } = state;
   if (!d.category || !d.total) {
-    $('demand').innerHTML = `<div class="sect"><span>Demand</span></div>${voidState('◇', 'No poe.ninja data', 'poe.ninja has no build stats for this item class.')}`;
+    $('demand').innerHTML = `<div class="sect"><span>${t('Demand')}</span></div>${voidState('◇', t('No poe.ninja data'), t('poe.ninja has no build stats for this item class.'))}`;
     return;
   }
   const mine = new Set(f.mods.filter((m) => m.template).map((m) => ninjaTemplate(m.template)));
@@ -553,11 +564,11 @@ function renderDemand(d) {
   const baseRows = d.bases.map((r) => ({ ...r, mine: r.name === item.baseType }));
   const baseRank = d.bases.findIndex((b) => b.name === item.baseType);
   $('demand').innerHTML = `
-    <div class="sect"><span>Demand · ${esc(d.category)}</span></div>
-    <div class="bshare">Worn by <b>${fmt(d.total / d.allTotal * 100)}%</b> of level ${demandLevel}+ builds</div>
-    <div class="bwhat muted">Your item: ${baseRank >= 0 ? `base #${baseRank + 1}` : 'base not in top 10'} · ${hits} of top ${modRows.length} modifiers</div>
-    ${demandList('bases', 'Most worn bases', baseRows)}
-    ${demandList('mods', 'Most common modifiers', modRows)}
+    <div class="sect"><span>${t('Demand')} · ${esc(d.category)}</span></div>
+    <div class="bshare">${t('Worn by <b>{pct}%</b> of level {lvl}+ builds', { pct: fmt(d.total / d.allTotal * 100), lvl: demandLevel })}</div>
+    <div class="bwhat muted">${t('Your item:')} ${baseRank >= 0 ? t('base #{n}', { n: baseRank + 1 }) : t('base not in top 10')} · ${t('{n} of top {m} modifiers', { n: hits, m: modRows.length })}</div>
+    ${demandList('bases', t('Most worn bases'), baseRows)}
+    ${demandList('mods', t('Most common modifiers'), modRows)}
     <button class="link bopen" data-url="${esc(d.page)}">poe.ninja ↗</button>`;
 }
 
@@ -568,9 +579,9 @@ function demandList(key, title, rows) {
   const hidden = rows.filter((r, i) => i >= DEMAND_SHOWN && !r.mine).length;
   const open = openDemand.has(key);
   return `<div class="dcol${open ? ' all' : ''}"><div class="k">${title}</div>${rows.map((r, i) => `
-    <div class="brow ${heat(r.pct)}${r.mine ? ' mine' : ''}${i >= DEMAND_SHOWN && !r.mine ? ' more' : ''}"${r.mine ? ' title="Your item has this"' : ''}><span class="bname">${r.mine ? '✓ ' : ''}${esc(r.name)}</span><span class="bpct">${hot(r.pct)}${fmt(r.pct)}%</span>
+    <div class="brow ${heat(r.pct)}${r.mine ? ' mine' : ''}${i >= DEMAND_SHOWN && !r.mine ? ' more' : ''}"${r.mine ? ` title="${t('Your item has this')}"` : ''}><span class="bname">${r.mine ? '✓ ' : ''}${esc(r.name)}</span><span class="bpct">${hot(r.pct)}${fmt(r.pct)}%</span>
       <span class="bbar"><i data-w="${Math.min(100, r.pct)}%"></i></span></div>`).join('')}
-    ${hidden ? `<button class="link bmore" data-dmore="${key}">${open ? 'Show fewer' : `Show all ${rows.length}`}</button>` : ''}</div>`;
+    ${hidden ? `<button class="link bmore" data-dmore="${key}">${open ? t('Show fewer') : t('Show all {n}', { n: rows.length })}</button>` : ''}</div>`;
 }
 
 function setTab(name) {
@@ -588,13 +599,13 @@ async function loadCraft() {
   if (craftFor === state) return;
   craftFor = state;
   const box = $('craft');
-  box.innerHTML = '<div class="sect"><span>Craft</span></div><div class="muted center">Loading mod pool…</div>';
+  box.innerHTML = `<div class="sect"><span>${t('Craft')}</span></div><div class="muted center">${t('Loading mod pool…')}</div>`;
   fit();
   try {
     const r = await window.pc.craft();
     if (craftFor === state) renderCraft(r);
   } catch (e) {
-    box.innerHTML = `<div class="sect"><span>Craft</span></div>${voidState('⚠', 'Mod pool not loaded', esc(errText(e)))}`;
+    box.innerHTML = `<div class="sect"><span>${t('Craft')}</span></div>${voidState('⚠', t('Mod pool not loaded'), esc(errText(e)))}`;
   }
   fit();
 }
@@ -606,9 +617,9 @@ function craftRows(list) {
   return list.map((c) => {
     const key = String(craftCands.size);
     craftCands.set(key, c);
-    const btn = c.stats ? `<button class="link cprice" data-ck="${key}" title="Search for your item with this modifier added (lowest roll of the tier)">price?</button>` : '';
+    const btn = c.stats ? `<button class="link cprice" data-ck="${key}" title="${t('Search for your item with this modifier added (lowest roll of the tier)')}">${t('price?')}</button>` : '';
     return `
-    <div class="brow ${heat(c.pct)}"><span class="bname">${esc(c.text)}<span class="craft-tier">T${c.tier}/${c.tiers}${c.range ? ` · ${esc(c.range)}` : ''}</span>${c.essence ? `<span class="ess" title="${esc(c.essence.name)} makes a magic item rare with this modifier: ${esc(c.essence.tiers.join(' · '))}">◈ ${esc(c.essence.short)}</span>` : ''}${btn}</span>
+    <div class="brow ${heat(c.pct)}"><span class="bname">${esc(c.text)}<span class="craft-tier">T${c.tier}/${c.tiers}${c.range ? ` · ${esc(c.range)}` : ''}</span>${c.essence ? `<span class="ess" title="${esc(t('{essence} makes a magic item rare with this modifier: {tiers}', { essence: c.essence.name, tiers: c.essence.tiers.join(' · ') }))}">◈ ${esc(c.essence.short)}</span>` : ''}${btn}</span>
       <span class="bpct">${hot(c.pct)}${fmt(c.pct)}%</span><span class="bbar"><i data-w="${Math.min(100, c.pct)}%"></i></span></div>`;
   }).join('');
 }
@@ -631,17 +642,17 @@ async function priceCraft(b) {
     const q = await window.pc.quickPrice(it, f);
     const v = estimate(q.lots);
     let html;
-    if (v == null) html = '<span class="cpr" title="Nothing like it is listed — could be rare and pricey">none listed</span>';
+    if (v == null) html = `<span class="cpr" title="${t('Nothing like it is listed — could be rare and pricey')}">${t('none listed')}</span>`;
     else {
       const d = state.est != null ? v - state.est : null;
       const cls = d == null ? '' : d > state.est * 0.1 ? ' up' : d < -state.est * 0.1 ? ' down' : '';
-      const delta = d == null ? '' : Math.abs(d) < state.est * 0.1 ? ' (same)' : ` (${d > 0 ? '+' : '−'}${money(Math.abs(d))})`;
-      html = `<span class="cpr${cls}" title="${q.total.toLocaleString('en-US')} listed with it · vs your current estimate">≈ ${money(v)}${delta}</span>`;
+      const delta = d == null ? '' : Math.abs(d) < state.est * 0.1 ? ` (${t('same')})` : ` (${d > 0 ? '+' : '−'}${money(Math.abs(d))})`;
+      html = `<span class="cpr${cls}" title="${t('{n} listed with it · vs your current estimate', { n: q.total })}">≈ ${money(v)}${delta}</span>`;
     }
     b.outerHTML = html;
   } catch (e) {
     b.disabled = false;
-    b.textContent = 'price?';
+    b.textContent = t('price?');
     setStatus(errText(e), true);
   }
   fit();
@@ -649,47 +660,47 @@ async function priceCraft(b) {
 
 function renderCraft(r) {
   craftCands.clear();
-  const head = '<div class="sect"><span>Craft</span></div>';
+  const head = `<div class="sect"><span>${t('Craft')}</span></div>`;
   if (r.blocked) {
-    $('craft').innerHTML = head + voidState('⛓', `${r.blocked} — can't be modified`,
-      'Its modifiers are locked. The Price tab shows what it is worth as is.', [['price', 'See price']]);
+    $('craft').innerHTML = head + voidState('⛓', t("{state} — can't be modified", { state: r.blocked }),
+      t('Its modifiers are locked. The Price tab shows what it is worth as is.'), [['price', t('See price')]]);
     return;
   }
-  if (r.note) { $('craft').innerHTML = head + voidState('◇', 'No craft tips', esc(r.note)); return; }
+  if (r.note) { $('craft').innerHTML = head + voidState('◇', t('No craft tips'), esc(r.note)); return; }
   const how = (list) => list.map((h) => `<div class="craft-how">${esc(h)}</div>`).join('');
-  const parts = [`<div class="craft-slots">Prefixes <b>${r.max.prefix - r.open.prefix}/${r.max.prefix}</b> · Suffixes <b>${r.max.suffix - r.open.suffix}/${r.max.suffix}</b></div>`];
+  const parts = [`<div class="craft-slots">${t('Prefixes')} <b>${r.max.prefix - r.open.prefix}/${r.max.prefix}</b> · ${t('Suffixes')} <b>${r.max.suffix - r.open.suffix}/${r.max.suffix}</b></div>`];
   for (const s of r.sections) {
     if (s.kind === 'open') {
-      parts.push(`<div class="craft-sec"><div class="k">${s.count} free ${SIDE[s.side]}${s.count > 1 ? 'es' : ''}</div>${how(s.how)}
-        ${s.candidates.length ? `<div class="craft-sub">Popular ${SIDE[s.side]}es that can roll here (best tier for this item level):</div>${craftRows(s.candidates)}`
-          : '<div class="craft-sub">No popular modifiers left for this side.</div>'}</div>`);
+      parts.push(`<div class="craft-sec"><div class="k">${t(`{n} free ${SIDE[s.side]}es`, { n: s.count })}</div>${how(s.how)}
+        ${s.candidates.length ? `<div class="craft-sub">${t(`Popular ${SIDE[s.side]}es that can roll here (best tier for this item level):`)}</div>${craftRows(s.candidates)}`
+          : `<div class="craft-sub">${t('No popular modifiers left for this side.')}</div>`}</div>`);
     } else if (s.kind === 'replace') {
       const w = s.weak;
-      parts.push(`<div class="craft-sec"><div class="k">Full — replace the weakest ${SIDE[w.side]}</div>
-        <div class="craft-weak">${esc(w.text)} <span class="craft-tier">${w.tier ? `T${w.tier}` : ''}${w.pct ? ` · ${fmt(w.pct)}% builds` : ''}</span></div>${how(s.how)}
-        ${s.candidates.length ? `<div class="craft-sub">Could become:</div>${craftRows(s.candidates)}` : ''}</div>`);
+      parts.push(`<div class="craft-sec"><div class="k">${t(`Full — replace the weakest ${SIDE[w.side]}`)}</div>
+        <div class="craft-weak">${esc(w.text)} <span class="craft-tier">${w.tier ? `T${w.tier}` : ''}${w.pct ? ` · ${t('{pct}% builds', { pct: fmt(w.pct) })}` : ''}</span></div>${how(s.how)}
+        ${s.candidates.length ? `<div class="craft-sub">${t('Could become:')}</div>${craftRows(s.candidates)}` : ''}</div>`);
     } else if (s.kind === 'desecrate') {
-      parts.push(`<div class="craft-sec"><div class="k">Desecration</div>${how(s.how)}<div class="craft-sub">Popular desecrated modifiers for this base:</div>${craftRows(s.candidates)}</div>`);
+      parts.push(`<div class="craft-sec"><div class="k">${t('Desecration')}</div>${how(s.how)}<div class="craft-sub">${t('Popular desecrated modifiers for this base:')}</div>${craftRows(s.candidates)}</div>`);
     } else if (s.kind === 'upgrade') {
-      parts.push(`<div class="craft-sec"><div class="k">Make it rare first</div>${how(s.how)}</div>`);
+      parts.push(`<div class="craft-sec"><div class="k">${t('Make it rare first')}</div>${how(s.how)}</div>`);
     } else if (s.kind === 'perfect') {
-      parts.push(`<div class="craft-sec"><div class="k">Perfect Essence</div><div class="craft-sub">Removes a random modifier and adds its own guaranteed one:</div>${how(s.how)}</div>`);
+      parts.push(`<div class="craft-sec"><div class="k">Perfect Essence</div><div class="craft-sub">${t('Removes a random modifier and adds its own guaranteed one:')}</div>${how(s.how)}</div>`);
     } else if (s.kind === 'keep') {
-      parts.push('<div class="craft-sec"><div class="k">Full — all modifiers are top tier</div><div class="craft-sub">Nothing worth replacing.</div></div>');
+      parts.push(`<div class="craft-sec"><div class="k">${t('Full — all modifiers are top tier')}</div><div class="craft-sub">${t('Nothing worth replacing.')}</div></div>`);
     } else if (s.kind === 'cheap') {
-      parts.push(`<div class="craft-sec"><div class="k">Cheap and safe</div>${how(s.how)}</div>`);
+      parts.push(`<div class="craft-sec"><div class="k">${t('Cheap and safe')}</div>${how(s.how)}</div>`);
     }
   }
   if (r.theme && r.theme.length) {
-    parts.splice(1, 0, `<div class="craft-theme" title="Demand % below is among ${r.themeBuilds} builds that wear this item class with these modifiers">Demand among builds using <b>${r.theme.map(esc).join('</b> + <b>')}</b></div>`);
+    parts.splice(1, 0, `<div class="craft-theme" title="${t('Demand % below is among {n} builds that wear this item class with these modifiers', { n: r.themeBuilds })}">${t('Demand among builds using')} <b>${r.theme.map(esc).join('</b> + <b>')}</b></div>`);
   }
-  parts.push(`<div class="craft-foot">Mod pool: game files (RePoE). Roll chances aren't shown — PoE 2 files have no modifier weights.<br>% = share of those builds using the modifier (poe.ninja). «price?» — what your item would cost with it.</div>`);
+  parts.push(`<div class="craft-foot">${t("Mod pool: game files (RePoE). Roll chances aren't shown — PoE 2 files have no modifier weights.")}<br>${t('% = share of those builds using the modifier (poe.ninja). «price?» — what your item would cost with it.')}</div>`);
   $('craft').innerHTML = head + parts.join('');
 }
 
 // Насколько востребовано: < 10% — приглушаем (почти никому не нужно), ≥ 60% — подсвечиваем (нужно почти всем).
 const heat = (pct) => (pct >= 60 ? 'hot' : pct < 10 ? 'cold' : '');
-const hot = (pct) => (pct >= 60 ? '<span class="flame" title="Most builds use this">🔥</span>' : '');
+const hot = (pct) => (pct >= 60 ? `<span class="flame" title="${t('Most builds use this')}">🔥</span>` : '');
 
 function buildRows(rows) {
   return rows.map((r) => `
@@ -700,7 +711,7 @@ function buildRows(rows) {
 // Чей спрос считаем: персонажи 80+ (все, кого видит poe.ninja), 90+ или 95+ — чем выше, тем «премиальнее» моды.
 let demandLevel = 90;
 window.pc.demandLevel().then((l) => { demandLevel = l; }).catch(() => {});
-const levelSeg = () => `<div class="lvl-row"><span class="muted small">Characters</span><div class="seg lvl" title="Whose gear counts: higher level = players who pay for exact modifiers">${[80, 90, 95].map((l) =>
+const levelSeg = () => `<div class="lvl-row"><span class="muted small">${t('Characters')}</span><div class="seg lvl" title="${t('Whose gear counts: higher level = players who pay for exact modifiers')}">${[80, 90, 95].map((l) =>
   `<button data-lvl="${l}"${l === demandLevel ? ' class="on"' : ''}>${l}+</button>`).join('')}</div></div>`;
 
 function renderBuilds(b) {
@@ -711,21 +722,21 @@ function renderBuilds(b) {
   const lvl = !b.total ? null : b.total >= 2500 ? 'high' : b.total >= 300 ? 'med' : 'low';
   const badge = $('demandBadge');
   badge.className = `badge ${lvl || ''}`;
-  badge.textContent = lvl ? { high: '🔥 High', med: 'Med', low: 'Low' }[lvl] : '';
-  badge.title = lvl ? `${b.total.toLocaleString('en-US')} level ${demandLevel}+ characters on poe.ninja use this${pct != null ? ` (${fmt(pct)}% of builds)` : ''}${anyHot ? ' · one build archetype dominates' : ''}` : '';
-  const share = b.allTotal ? `<b>${fmt(b.total / b.allTotal * 100)}%</b> of builds · ${b.total.toLocaleString('en-US')} characters`
-    : `${b.total.toLocaleString('en-US')} characters`;
+  badge.textContent = lvl ? { high: `🔥 ${t('High')}`, med: t('Med'), low: t('Low') }[lvl] : '';
+  badge.title = lvl ? `${t('{n} level {lvl}+ characters on poe.ninja use this', { n: b.total, lvl: demandLevel })}${pct != null ? ` (${t('{pct}% of builds', { pct: fmt(pct) })})` : ''}${anyHot ? ` · ${t('one build archetype dominates')}` : ''}` : '';
+  const chars = t('{n} characters', { n: b.total });
+  const share = b.allTotal ? `${t('<b>{pct}%</b> of builds', { pct: fmt(b.total / b.allTotal * 100) })} · ${chars}` : chars;
   const what = b.filters.filter(([k]) => k !== 'min-level').map(([, v]) => v).join(' + ');
   $('builds').innerHTML = `
-    <div class="sect"><span>Popular builds</span></div>
+    <div class="sect"><span>${t('Popular builds')}</span></div>
     ${levelSeg()}
     <div class="bshare">${share}</div>
-    <div class="bwhat muted" title="poe.ninja filter">${esc(what)}</div>
+    <div class="bwhat muted" title="${t('poe.ninja filter')}">${esc(what)}</div>
     ${b.total ? `<div class="bcols">
-      <div><div class="k">Ascendancy</div>${buildRows(b.classes.slice(0, 4))}</div>
-      <div><div class="k">Main skill</div>${buildRows(b.skills.slice(0, 4))}</div>
-    </div>` : voidState('◇', 'No builds use this', 'No characters on poe.ninja wear this combination.')}
-    ${b.ignored && b.ignored.length ? `<div class="muted small">Not on poe.ninja: ${esc(b.ignored.map((x) => Object.values(x)[0]).join(' · '))}</div>` : ''}
+      <div><div class="k">${t('Ascendancy')}</div>${buildRows(b.classes.slice(0, 4))}</div>
+      <div><div class="k">${t('Main skill')}</div>${buildRows(b.skills.slice(0, 4))}</div>
+    </div>` : voidState('◇', t('No builds use this'), t('No characters on poe.ninja wear this combination.'))}
+    ${b.ignored && b.ignored.length ? `<div class="muted small">${t('Not on poe.ninja:')} ${esc(b.ignored.map((x) => Object.values(x)[0]).join(' · '))}</div>` : ''}
     <button class="link bopen" data-url="${esc(b.page)}">poe.ninja ↗</button>`;
 }
 
@@ -738,7 +749,7 @@ const IMPACT = ['minor', 'low', 'medium', 'high'];
 function meter(m) {
   if (m.importance == null) return '';
   const n = m.importance >= 2.4 ? 3 : m.importance >= 1.6 ? 2 : m.importance >= 0.8 ? 1 : 0;
-  const title = `Price impact: ${IMPACT[n]}${m.key ? ' — key modifier for this slot' : ''}${m.tier ? `, tier ${m.tier}` : ''}`;
+  const title = `${t('Price impact:')} ${t(IMPACT[n])}${m.key ? ` — ${t('key modifier for this slot')}` : ''}${m.tier ? `, ${t('tier {n}', { n: m.tier })}` : ''}`;
   return `<span class="imp i${n}${m.key ? ' key' : ''}" title="${title}"><i></i><i></i><i></i></span>`;
 }
 
@@ -748,8 +759,8 @@ function meter(m) {
 function rollInfo(m) {
   if (!m.range || m.roll == null) return '';
   // Пометка max — только у максимального ролла лучшего тира (T1): на других тирах она мало что значит.
-  const max = m.tier === 1 && m.roll >= 0.9 ? '<span class="maxroll" title="Near max roll of the top tier — usually worth more">max</span>' : '';
-  return ` <span class="rng" title="Tier range · roll ${Math.round(m.roll * 100)}%">${fmt(m.range.lo)}${m.range.lo < 0 ? ' to ' : '–'}${fmt(m.range.hi)}</span>${max}`;
+  const max = m.tier === 1 && m.roll >= 0.9 ? `<span class="maxroll" title="${t('Near max roll of the top tier — usually worth more')}">max</span>` : '';
+  return ` <span class="rng" title="${t('Tier range · roll {n}%', { n: Math.round(m.roll * 100) })}">${fmt(m.range.lo)}${m.range.lo < 0 ? ' to ' : '–'}${fmt(m.range.hi)}</span>${max}`;
 }
 
 // Какие суммы раскрыты (сбрасывается на новом предмете).
@@ -757,21 +768,21 @@ const openSums = new Set();
 
 function modRow(m, i) {
   if (!m.statId) {
-    return `<div class="mod nomatch" title="This modifier has no trade site filter">
+    return `<div class="mod nomatch" title="${t('This modifier has no trade site filter')}">
       <label><span class="cb"></span><span class="imp"></span><span class="tcol">?</span><span class="txt">${esc(m.text)}</span></label></div>`;
   }
-  const tier = m.tag === 'pseudo' ? '<span class="tcol sigma" title="Total from all modifiers">Σ</span>'
+  const tier = m.tag === 'pseudo' ? `<span class="tcol sigma" title="${t('Total from all modifiers')}">Σ</span>`
     : `<span class="tcol">${m.tier ? `<span class="tag tier${m.tier <= 2 ? ' top' : ''}">T${m.tier}</span>` : ''}</span>`;
   // Одинаковые моды — каждый своей строкой, фильтр общий: трейд ищет по сумме.
   const from = m.parts ? ` title="${esc(m.parts.map((p) => `${p.text}${p.tier ? ` (T${p.tier})` : ''}`).join('\n'))}"` : '';
-  const cat = (m.tag !== 'explicit' && m.tag !== 'pseudo' ? ` <span class="tag ${esc(m.tag)}">${esc(TAG_LABEL[m.tag] || m.tag)}</span>` : '')
+  const cat = (m.tag !== 'explicit' && m.tag !== 'pseudo' ? ` <span class="tag ${esc(m.tag)}">${esc(t(TAG_LABEL[m.tag] || m.tag))}</span>` : '')
     // Спрос с poe.ninja: массовый мод — повод включить его, даже если тир слабый.
-    + (m.demand >= 30 ? ` <span class="dem${m.demand >= 60 ? ' hot' : ''}" title="${fmt(m.demand)}% of level ${demandLevel}+ builds wearing this item class have this modifier (poe.ninja)">${m.demand >= 60 ? '🔥 ' : ''}${fmt(m.demand)}% builds</span>` : '');
+    + (m.demand >= 30 ? ` <span class="dem${m.demand >= 60 ? ' hot' : ''}" title="${t('{pct}% of level {lvl}+ builds wearing this item class have this modifier (poe.ninja)', { pct: fmt(m.demand), lvl: demandLevel })}">${m.demand >= 60 ? '🔥 ' : ''}${t('{pct}% builds', { pct: fmt(m.demand) })}</span>` : '');
   const text = m.tag === 'pseudo' ? m.text.replace(/^Σ /, '') : m.text;
   return `<div class="mod t-${esc(m.tag)}${m.enabled ? '' : ' off'}" data-i="${i}">
       <label><input type="checkbox" data-k="enabled"${m.enabled ? ' checked' : ''}>${meter(m) || '<span class="imp"></span>'}${tier}
         <span class="txt"${from}>${esc(text)}${m.merged ? `<span class="sum-v"> = ${fmt(m.value)}</span>` : ''}${cat}${rollInfo(m)}${driveChip(i)}</span></label>
-      ${m.option ? '' : `<input type="number" data-k="min" step="any" placeholder="min" value="${m.min == null ? '' : m.min}">`}
+      ${m.option ? '' : `<input type="number" data-k="min" step="any" placeholder="${t('min')}" value="${m.min == null ? '' : m.min}">`}
     </div>`;
 }
 
@@ -792,21 +803,21 @@ function renderFilters() {
     const parts = f.mods.map((p, j) => [p, j]).filter(([p]) => p.inSum === m.statId);
     if (!parts.length) return;
     const open = openSums.has(m.statId) || parts.some(([p]) => p.enabled);
-    rows.push(`<div class="sum-toggle" data-sum="${esc(m.statId)}">${open ? '▾' : '▸'} ${parts.length} mod${parts.length > 1 ? 's' : ''} in this total</div>`);
+    rows.push(`<div class="sum-toggle" data-sum="${esc(m.statId)}">${open ? '▾' : '▸'} ${t('{n} mods in this total', { n: parts.length })}</div>`);
     if (open) rows.push(`<div class="sum-parts">${parts.map(([p, j]) => modRow(p, j)).join('')}</div>`);
   });
   $('mods').innerHTML = rows.join('');
   // Защита/DPS, уровни и гнёзда выбираются прямо в подсказке под шапкой — здесь валюта цены и «онлайн».
   $('misc').innerHTML = `
-    <div class="seg" title="Which currency listings to search">${CURRENCIES.map(([id, label]) =>
-      `<button data-cur="${id}"${f.priceCurrency === id ? ' class="on"' : ''}>${label}</button>`).join('')}</div>
-    <label class="opt${f.online ? '' : ' off'}"><input type="checkbox" data-o="online"${f.online ? ' checked' : ''}><span title="Instant Buyout or seller online — like the trade site default">Buyable now</span></label>
-    <label class="opt${f.flex ? '' : ' off'}"><input type="checkbox" data-o="flex"${f.flex ? ' checked' : ''}><span title="With 3+ minor modifiers checked, find items that have all but one of them (key modifiers stay required)">Allow 1 minor mod missing</span></label>`;
+    <div class="seg" title="${t('Which currency listings to search')}">${CURRENCIES.map(([id, label]) =>
+      `<button data-cur="${id}"${f.priceCurrency === id ? ' class="on"' : ''}>${id === 'any' ? t(label) : label}</button>`).join('')}</div>
+    <label class="opt${f.online ? '' : ' off'}"><input type="checkbox" data-o="online"${f.online ? ' checked' : ''}><span title="${t('Instant Buyout or seller online — like the trade site default')}">${t('Buyable now')}</span></label>
+    <label class="opt${f.flex ? '' : ' off'}"><input type="checkbox" data-o="flex"${f.flex ? ' checked' : ''}><span title="${t('With 3+ minor modifiers checked, find items that have all but one of them (key modifiers stay required)')}">${t('Allow 1 minor mod missing')}</span></label>`;
   // Моды-варианты (Legacy у Mageblood) ищутся «любые N из выбранных»: порог можно поменять руками.
   const opts = f.mods.filter((m) => m.enabled && m.option).length;
   if (opts > 1) {
-    $('misc').insertAdjacentHTML('afterbegin', `<label class="opt">Match ≥ <input type="number" data-optmin min="1" max="${opts}"
-      value="${Math.min(opts, f.optionMin || opts)}"> of ${opts} checked</label>`);
+    $('misc').insertAdjacentHTML('afterbegin', `<label class="opt">${t('Match ≥')} <input type="number" data-optmin min="1" max="${opts}"
+      value="${Math.min(opts, f.optionMin || opts)}"> ${t('of {n} checked', { n: opts })}</label>`);
   }
 }
 
@@ -828,17 +839,17 @@ function renderResults(r) {
   box.hidden = !r.listings.length;
   if (!r.listings.length) return;
   box.innerHTML = `
-    <div class="sect"><span>Cheapest listings <b class="cnt">${r.total.toLocaleString('en-US')}</b></span></div>
+    <div class="sect"><span>${t('Cheapest listings')} <b class="cnt">${r.total.toLocaleString('en-US')}</b></span></div>
     <div class="lots${showAllLots ? ' all' : ''}">${r.listings.map((l, i) => `
-      <div class="lot${i >= LOTS_SHOWN ? ' more' : ''}${ageClass(l.indexed)}" data-i="${i}" title="${l.whisper ? 'Copy whisper to seller' : 'Instant buyout — opens the trade site (Travel to Hideout)'}">
+      <div class="lot${i >= LOTS_SHOWN ? ' more' : ''}${ageClass(l.indexed)}" data-i="${i}" title="${l.whisper ? t('Copy whisper to seller') : t('Instant buyout — opens the trade site (Travel to Hideout)')}">
         <span class="chip">${l.currencyImage ? `<img src="${esc(l.currencyImage)}" alt="">` : ''}${fmt(l.amount)}${l.currencyImage ? '' : ' ' + esc(l.currencyName)}</span>
         <span class="eq">${cmpBadge(l)}${l.divine != null && !sameUnit(l) ? '≈ ' + money(l.divine) : ''}</span>
-        <span class="seller">${l.whisper ? '' : '<b class="ib" title="Instant buyout">⚡</b>'}<span class="dot${l.online ? ' on' : ''}"></span>${esc(l.seller)}</span>
+        <span class="seller">${l.whisper ? '' : `<b class="ib" title="${t('Instant buyout')}">⚡</b>`}<span class="dot${l.online ? ' on' : ''}"></span>${esc(l.seller)}</span>
         <span class="age">${l.indexed ? ago(l.indexed) : ''}</span>
-        <span class="acts">${l.whisper ? '<i data-a="whisper" title="Whisper in game — opens chat with the message, you press Enter"><svg viewBox="0 0 16 16"><path d="M2 3h12v8H7l-3 3v-3H2z" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linejoin="round"/></svg></i>' : ''}<i data-a="site" title="Open this listing on the trade site">↗</i></span>
+        <span class="acts">${l.whisper ? `<i data-a="whisper" title="${t('Whisper in game — opens chat with the message, you press Enter')}"><svg viewBox="0 0 16 16"><path d="M2 3h12v8H7l-3 3v-3H2z" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linejoin="round"/></svg></i>` : ''}<i data-a="site" title="${t('Open this listing on the trade site')}">↗</i></span>
       </div>`).join('')}
     </div>
-    ${r.listings.length > LOTS_SHOWN ? `<button class="link lots-more">${showAllLots ? 'Show fewer' : `Show all ${r.listings.length}`}</button>` : ''}`;
+    ${r.listings.length > LOTS_SHOWN ? `<button class="link lots-more">${showAllLots ? t('Show fewer') : t('Show all {n}', { n: r.listings.length })}</button>` : ''}`;
   const more = box.querySelector('.lots-more');
   if (more) more.addEventListener('click', () => { showAllLots = !showAllLots; renderResults(r); fit(); });
   box.querySelectorAll('.lot').forEach((row) => row.addEventListener('click', async (e) => {
@@ -846,7 +857,7 @@ function renderResults(r) {
     if (act) {
       const l = r.listings[+row.dataset.i];
       if (act.dataset.a === 'site') await openListing(r, l);
-      else if (!(await window.pc.whisperGame(l.whisper))) setStatus('Whisper copied — switch to the game and paste it into chat (Enter, Ctrl+V)');
+      else if (!(await window.pc.whisperGame(l.whisper))) setStatus(t('Whisper copied — switch to the game and paste it into chat (Enter, Ctrl+V)'));
       fit();
       return;
     }
@@ -859,7 +870,7 @@ function renderResults(r) {
     window.pc.copy(r.listings[+row.dataset.i].whisper);
     box.querySelectorAll('.lot.copied').forEach((x) => x.classList.remove('copied'));
     row.classList.add('copied');
-    setStatus('Whisper copied — paste it into game chat (Enter, Ctrl+V)');
+    setStatus(t('Whisper copied — paste it into game chat (Enter, Ctrl+V)'));
     fit();
   }));
   box.querySelectorAll('.lot').forEach((row) => {
@@ -876,7 +887,7 @@ async function openListing(r, l) {
     try { url = await window.pc.listingUrl(state.item, state.filters, l.account); } catch {}
   }
   window.pc.openUrl(url);
-  setStatus(l.whisper ? 'Opened on the trade site' : 'Opened on the trade site — use Travel to Hideout there');
+  setStatus(l.whisper ? t('Opened on the trade site') : t('Opened on the trade site — use Travel to Hideout there'));
 }
 
 // ---- карточка конкурента при наведении на лот: что у него лучше / хуже, чем у нашей вещи ----
@@ -931,7 +942,7 @@ function cmpBadge(l) {
     else if (c === 'worse') worse++;
   }
   if (!better && !worse) return '';
-  return `<span class="cmpc" title="Modifiers better / worse than yours">${better ? `<i class="b">▲${better}</i>` : ''}${worse ? `<i class="w">▼${worse}</i>` : ''}</span>`;
+  return `<span class="cmpc" title="${t('Modifiers better / worse than yours')}">${better ? `<i class="b">▲${better}</i>` : ''}${worse ? `<i class="w">▼${worse}</i>` : ''}</span>`;
 }
 
 function compareClass(theirs, ours) {
@@ -942,41 +953,41 @@ function compareClass(theirs, ours) {
 }
 
 function showCompare(l, row) {
-  const t = l.tip;
-  if (!t) return;
+  const tip = l.tip;
+  if (!tip) return;
   const { item } = state;
-  const { classify, missing: miss, key, ours, order } = compareModel(t);
+  const { classify, missing: miss, key, ours, order } = compareModel(tip);
   const mark = { better: '▲', worse: '▼', extra: '+', same: '' };
   // Совпадающие моды — в порядке нашей вещи, остальные (которых у нас нет) — в конце; у ▲▼ — наше значение.
   const rank = (m) => (m.statId && order.has(key(m.statId)) ? order.get(key(m.statId)) : 1e3);
-  const modLines = t.mods.map((m, i) => ({ m, i })).sort((a, b) => rank(a.m) - rank(b.m) || a.i - b.i).map(({ m }) => {
+  const modLines = tip.mods.map((m, i) => ({ m, i })).sort((a, b) => rank(a.m) - rank(b.m) || a.i - b.i).map(({ m }) => {
     const cls = classify(m);
     const mine = (cls === 'better' || cls === 'worse') && ours.get(key(m.statId));
-    return `<div class="cm ${cls} d-${esc(m.domain)}">${mark[cls] ? `<i>${mark[cls]}</i>` : ''}${esc(m.text)}${mine ? `<span class="yours">yours ${fmt(mine)}</span>` : ''}</div>`;
+    return `<div class="cm ${cls} d-${esc(m.domain)}">${mark[cls] ? `<i>${mark[cls]}</i>` : ''}${esc(m.text)}${mine ? `<span class="yours">${t('yours {x}', { x: fmt(mine) })}</span>` : ''}</div>`;
   }).join('');
   const missing = miss.map((m) => `<div class="cm missing"><i>✗</i>${esc(m.text.split('\n').join(' + '))}</div>`).join('');
 
   const ourProps = new Map(item.properties.map((p) => [p.k, propNum(p.v)]));
-  const props = t.props.map((p) => {
+  const props = tip.props.map((p) => {
     const cls = ourProps.has(p.k) ? compareClass(propNum(p.v), ourProps.get(p.k)) : '';
-    const yours = cls === 'better' || cls === 'worse' ? `<span class="yours">yours ${fmt(ourProps.get(p.k))}</span>` : '';
+    const yours = cls === 'better' || cls === 'worse' ? `<span class="yours">${t('yours {x}', { x: fmt(ourProps.get(p.k)) })}</span>` : '';
     return `<div class="cm ${cls}">${mark[cls] ? `<i>${mark[cls]}</i>` : ''}${esc(p.k)}: <b>${esc(p.v)}</b>${yours}</div>`;
   });
-  if (t.ilvl) {
-    const cls = compareClass(t.ilvl, item.ilvl);
-    props.push(`<div class="cm ${cls}">${mark[cls] ? `<i>${mark[cls]}</i>` : ''}Item Level: <b>${t.ilvl}</b>${cls ? `<span class="yours">yours ${item.ilvl}</span>` : ''}</div>`);
+  if (tip.ilvl) {
+    const cls = compareClass(tip.ilvl, item.ilvl);
+    props.push(`<div class="cm ${cls}">${mark[cls] ? `<i>${mark[cls]}</i>` : ''}Item Level: <b>${tip.ilvl}</b>${cls ? `<span class="yours">${t('yours {x}', { x: item.ilvl })}</span>` : ''}</div>`);
   }
 
-  const two = t.name && t.base && t.name !== t.base;
+  const two = tip.name && tip.base && tip.name !== tip.base;
   const html = `
-    <div class="banner mini ${esc(t.rarity)}${two ? '' : ' single'}"><div class="bn-name">${esc(t.name || t.base)}</div>${two ? `<div class="bn-base">${esc(t.base)}</div>` : ''}</div>
+    <div class="banner mini ${esc(tip.rarity)}${two ? '' : ' single'}"><div class="bn-name">${esc(tip.name || tip.base)}</div>${two ? `<div class="bn-base">${esc(tip.base)}</div>` : ''}</div>
     <div class="cmp-body">
       ${props.join('')}
       ${props.length ? '<div class="tt"><div class="sep"></div></div>' : ''}
       ${modLines}
-      ${t.corrupted ? '<div class="cm corrupt">Corrupted</div>' : ''}
-      ${missing ? `<div class="cmp-miss">Yours has, theirs doesn't:</div>${missing}` : ''}
-      <div class="cmp-legend"><span class="better">▲ better</span> · <span class="worse">▼ worse</span> · <span class="extra">+ you don't have</span> — than your item</div>
+      ${tip.corrupted ? '<div class="cm corrupt">Corrupted</div>' : ''}
+      ${missing ? `<div class="cmp-miss">${t("Yours has, theirs doesn't:")}</div>${missing}` : ''}
+      <div class="cmp-legend"><span class="better">▲ ${t('better')}</span> · <span class="worse">▼ ${t('worse')}</span> · <span class="extra">+ ${t("you don't have")}</span> — ${t('than your item')}</div>
     </div>`;
   // Карточка — в отдельном окне сбоку (не закрывает оверлей), напротив строки лота.
   window.pc.compareShow(html, row.getBoundingClientRect().top);
@@ -991,8 +1002,24 @@ function markDirty() {
   // Фильтры поменялись — прежний «вклад модов» больше не про них.
   if (state.impact) { impactSeq++; state.impact = null; document.querySelectorAll('#mods .drive').forEach((x) => x.remove()); }
   const b = $('search');
-  if (!b.classList.contains('dirty')) { b.classList.add('dirty'); b.textContent = 'Search · filters changed'; }
+  if (!b.classList.contains('dirty')) { b.classList.add('dirty'); b.textContent = t('Search · filters changed'); }
 }
+
+// Пометка над фильтрами после автоослабления: dropped — строки (текст мода) или { t, v } для перевода.
+let lastNotes = null;
+function renderNotes() {
+  if (!lastNotes) return;
+  const { dropped, relaxStopped } = lastNotes;
+  const notes = [];
+  if (dropped && dropped.length) {
+    notes.push(t('Too few listings — relaxed: {list}', { list: dropped.map((d) => (typeof d === 'string' ? d : t(d.t, d.v))).join(' · ') }));
+  }
+  if (relaxStopped) notes.push(t("Couldn't relax filters further: {why}", { why: relaxStopped }));
+  setNote(notes.join('\n'));
+}
+
+// Чем сейчас заполнен блок цены — чтобы перерисовать его при смене языка.
+let heroRender = null;
 
 async function runSearch(relax = false) {
   const seq = ++searchSeq;
@@ -1000,34 +1027,35 @@ async function runSearch(relax = false) {
   state.impact = null;
   state.est = null;
   $('search').classList.remove('dirty');
-  $('search').textContent = 'Search';
+  $('search').textContent = t('Search');
   $('search').disabled = true;
   setStatus('');
-  renderSearchingHero();
+  heroRender = renderSearchingHero;
+  heroRender();
   fit();
   try {
     const r = await window.pc.search(state.item, state.filters, relax);
     if (seq !== searchSeq) return;
-    const notes = [];
     if (r.dropped && r.dropped.length) {
       state.filters = r.filters;
       renderFilters();
       renderTooltip();
       renderBanner(); // ослабление могло снять точную базу
-      notes.push(`Too few listings — relaxed: ${r.dropped.join(' · ')}`);
     }
-    if (r.relaxStopped) notes.push(`Couldn't relax filters further: ${r.relaxStopped}`);
-    setNote(notes.join('\n'));
+    lastNotes = { dropped: r.dropped, relaxStopped: r.relaxStopped };
+    renderNotes();
     rates = r.rates || rates;
     setStatus(''); // убрать «ждём лимит», если было
     state.tradeUrl = r.url;
     $('open').hidden = false;
-    renderTradeHero(r);
-    renderResults(r);
+    heroRender = () => { renderTradeHero(r); renderResults(r); };
+    heroRender();
   } catch (e) {
     if (seq !== searchSeq) return;
     $('results').hidden = true;
-    $('hero').innerHTML = voidState('⚠', 'Search failed', esc(errText(e)), [['retry', 'Try again']]);
+    const err = esc(errText(e));
+    heroRender = () => { $('hero').innerHTML = voidState('⚠', t('Search failed'), err, [['retry', t('Try again')]]); };
+    heroRender();
   } finally {
     if (seq === searchSeq) $('search').disabled = false;
     fit();
@@ -1045,6 +1073,10 @@ window.pc.onItem((data) => {
   searchSeq++;
   setStatus('');
   setNote('');
+  lastNotes = null;
+  heroRender = null;
+  lastBuilds = null;
+  lastDemand = null;
   $('results').hidden = true;
   $('hero').hidden = true;
   $('builds').hidden = true;
@@ -1054,9 +1086,9 @@ window.pc.onItem((data) => {
   renderBanner();
   fullNameTitles();
   renderTooltip();
-  if (state.exchange) renderExchangeHero();
+  if (state.exchange) { heroRender = renderExchangeHero; heroRender(); }
   renderFilters();
-  if (!state.exchange && !state.searchable) setStatus('No price data for this item');
+  if (!state.exchange && !state.searchable) setStatus(t('No price data for this item'));
   fit();
   // Вкладки — только для предметов с поиском на трейде; валюте хватает одной.
   $('tabs').hidden = !state.searchable;
@@ -1071,7 +1103,7 @@ $('hero').addEventListener('click', (e) => {
   const note = e.target.closest('[data-note]');
   if (note) {
     window.pc.copy(note.dataset.note);
-    setStatus(`Copied "${note.dataset.note}" — paste it as the price note`);
+    setStatus(t('Copied "{note}" — paste it as the price note', { note: note.dataset.note }));
     fit();
     return;
   }
@@ -1108,7 +1140,7 @@ $('tab-demand').addEventListener('click', async (e) => {
     const key = more.dataset.dmore;
     if (openDemand.has(key)) openDemand.delete(key); else openDemand.add(key);
     col.classList.toggle('all', openDemand.has(key));
-    more.textContent = openDemand.has(key) ? 'Show fewer' : `Show all ${col.querySelectorAll('.brow').length}`;
+    more.textContent = openDemand.has(key) ? t('Show fewer') : t('Show all {n}', { n: col.querySelectorAll('.brow').length });
     fit();
     return;
   }
@@ -1226,6 +1258,36 @@ $('leagueMenu').addEventListener('click', async (e) => {
 });
 // Клик мимо — закрыть список.
 document.addEventListener('click', (e) => { if (!e.target.closest('#ldrop')) toggleLeagueMenu(false); });
+
+// ---- язык интерфейса: статичные подписи из index.html (data-i18n) и перерисовка показанного ----
+function applyLang() {
+  document.documentElement.lang = window.i18n.getLang();
+  document.querySelectorAll('[data-i18n]').forEach((el) => { el.textContent = t(el.dataset.i18n); });
+  document.querySelectorAll('[data-i18n-title]').forEach((el) => { el.title = t(el.dataset.i18nTitle); });
+  $('search').textContent = t($('search').classList.contains('dirty') ? 'Search · filters changed' : 'Search');
+}
+applyLang();
+
+window.pc.onUiLang((lang) => {
+  window.i18n.setLang(lang);
+  applyLang();
+  if (!state) { fit(); return; }
+  hideCompare();
+  renderLeagues();
+  renderBanner();
+  fullNameTitles();
+  renderTooltip();
+  renderFilters();
+  if (heroRender && !$('hero').hidden) heroRender();
+  if (!$('note').hidden) renderNotes();
+  if (!state.exchange && !state.searchable) setStatus(t('No price data for this item'));
+  if (lastBuilds && !$('builds').hidden) renderBuilds(lastBuilds);
+  if (lastDemand && !$('demand').hidden) renderDemand(lastDemand);
+  // Советы по крафту собирает главный процесс — запрашиваем заново (сразу, если вкладка открыта).
+  craftFor = null;
+  if (!$('tab-craft').hidden) loadCraft();
+  fit();
+});
 
 // CSP окна запрещает инлайн-стили (style="…"), поэтому ширину полос и заглушек задаём через data-w после вставки.
 new MutationObserver(() => {

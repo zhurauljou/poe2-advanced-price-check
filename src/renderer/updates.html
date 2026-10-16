@@ -10,19 +10,20 @@
 </head>
 <body class="upd-page">
   <div class="topbar">
-    <span class="upd-title">Updates</span>
-    <span id="close" class="close" title="Close">✕</span>
+    <span class="upd-title" data-i18n="Updates">Updates</span>
+    <span id="close" class="close" title="Close" data-i18n-title="Close">✕</span>
   </div>
   <main class="upd">
-    <div class="upd-ver">Installed: <b id="current"></b></div>
+    <div class="upd-ver"><span data-i18n="Installed:">Installed:</span> <b id="current"></b></div>
     <div id="state" class="upd-state"></div>
     <div id="bar" class="upd-bar" hidden><i></i></div>
     <div id="detail" class="upd-detail"></div>
     <div class="upd-actions">
       <button id="action" hidden></button>
-      <button id="notes" class="link" hidden>What's new ↗</button>
+      <button id="notes" class="link" hidden data-i18n="What's new ↗">What's new ↗</button>
     </div>
   </main>
+  <script src="../shared/i18n.js"></script>
   <script src="updates.js"></script>
 </body>
 </html>

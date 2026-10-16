@@ -1,6 +1,12 @@
 const { contextBridge, ipcRenderer } = require('electron');
 
+// Язык интерфейса: синхронно при загрузке окна (без мигания английским) и событие смены из трея.
+const uiLang = () => ipcRenderer.sendSync('ui-lang-get');
+const onUiLang = (cb) => ipcRenderer.on('ui-lang', (_e, lang) => cb(lang));
+
 contextBridge.exposeInMainWorld('pc', {
+  uiLang,
+  onUiLang,
   onItem: (cb) => ipcRenderer.on('item', (_e, data) => cb(data)),
   onStatus: (cb) => ipcRenderer.on('status', (_e, data) => cb(data)),
   uniquePrice: (name, base) => ipcRenderer.invoke('unique-price', name, base),
@@ -28,6 +34,8 @@ contextBridge.exposeInMainWorld('pc', {
 
 // Окно «Updates»
 contextBridge.exposeInMainWorld('upd', {
+  uiLang,
+  onUiLang,
   onStatus: (cb) => ipcRenderer.on('upd-status', (_e, s) => cb(s)),
   ready: () => ipcRenderer.invoke('upd-ready'),
   check: () => ipcRenderer.invoke('upd-check'),

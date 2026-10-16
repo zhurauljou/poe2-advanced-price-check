@@ -2,6 +2,7 @@
 const { net, app } = require('electron');
 const fs = require('fs');
 const path = require('path');
+const { t } = require('../shared/i18n');
 
 const VERSION = require('../../package.json').version;
 const UA = `poe2-price-checker/${VERSION} (personal desktop tool)`;
@@ -39,21 +40,21 @@ function setBan(seconds) {
 
 function waitText(ms) {
   const s = Math.ceil(ms / 1000);
-  return s >= 120 ? `${Math.ceil(s / 60)} min` : `${s} s`;
+  return s >= 120 ? t('{n} min', { n: Math.ceil(s / 60) }) : t('{n} s', { n: s });
 }
 
 async function waitSlot(kind) {
   const L = limits[kind];
   for (;;) {
     const now = Date.now();
-    if (getBan() > now) throw new Error(`Trade site rate limit hit — wait ${waitText(getBan() - now)}`);
+    if (getBan() > now) throw new Error(t('Trade site rate limit hit — wait {time}', { time: waitText(getBan() - now) }));
     let wait = Math.max(0, L.blockedUntil - now);
     for (const [hits, period] of L.rules) {
       const inWin = L.hits.filter((t) => now - t < period * 1000);
       if (inWin.length >= hits) wait = Math.max(wait, inWin[0] + period * 1000 - now + 50);
     }
     if (!wait) break;
-    if (wait > MAX_SILENT_WAIT) throw new Error(`Trade request limit almost used up — wait ${waitText(wait)}`);
+    if (wait > MAX_SILENT_WAIT) throw new Error(t('Trade request limit almost used up — wait {time}', { time: waitText(wait) }));
     if (module.exports.onWait) module.exports.onWait(wait); // окно покажет «ждём лимит», а не молча висит
     await sleep(wait);
   }
@@ -88,10 +89,10 @@ async function tradeRequest(kind, url, body) {
   if (res.status === 429) {
     const ra = Number(res.headers.get('retry-after') || 60);
     setBan(ra);
-    throw new Error(`Trade site rate limit hit — wait ${waitText(ra * 1000)}`);
+    throw new Error(t('Trade site rate limit hit — wait {time}', { time: waitText(ra * 1000) }));
   }
   const data = await res.json().catch(() => null);
-  if (!res.ok) throw new Error((data && data.error && data.error.message) || `Trade site responded ${res.status}`);
+  if (!res.ok) throw new Error((data && data.error && data.error.message) || t('Trade site responded {n}', { n: res.status }));
   return data;
 }
 

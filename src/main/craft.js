@@ -5,6 +5,7 @@
 
 const stats = require('./stats');
 const { essenceFor, perfectFor } = require('./essences');
+const { t } = require('../shared/i18n');
 
 const REPOE = 'https://repoe-fork.github.io/poe2';
 
@@ -59,9 +60,9 @@ const BONES = { armour: 'Rib', weapon: 'Jawbone', quiver: 'Jawbone', ring: 'Coll
 
 function boneFor(tags, ilvl) {
   const bone = Object.entries(BONES).find(([tag]) => tags.includes(tag));
-  if (!bone) return 'a bone (Rib / Jawbone / Collarbone / Cranium)';
+  if (!bone) return t('a bone (Rib / Jawbone / Collarbone / Cranium)');
   if (bone[1] === 'Cranium') return 'Preserved Cranium';
-  return `${ilvl <= 64 ? `Gnawed ${bone[1]} (item level ≤ 64) / ` : ''}Preserved ${bone[1]} / Ancient ${bone[1]} (only modifier level 40+)`;
+  return `${ilvl <= 64 ? `Gnawed ${bone[1]} (${t('item level ≤ 64')}) / ` : ''}Preserved ${bone[1]} / Ancient ${bone[1]} (${t('only modifier level 40+')})`;
 }
 
 // Валюта качества по классу вещи.
@@ -78,16 +79,16 @@ const range = (text) => {
 
 // item — разобранный предмет (item.affixes из расширенного формата), demandMods — [{ name, pct }] с poe.ninja.
 async function advise(item, demandMods, cached) {
-  if (item.rarity !== 'Rare' && item.rarity !== 'Magic') return { note: 'Craft tips are for rare and magic items.' };
+  if (item.rarity !== 'Rare' && item.rarity !== 'Magic') return { note: t('Craft tips are for rare and magic items.') };
   if (item.corrupted || item.mirrored || item.sanctified) {
     return { blocked: item.corrupted ? 'Corrupted' : item.mirrored ? 'Mirrored' : 'Sanctified' };
   }
   if (!item.affixes || !item.affixes.length) {
-    return { note: 'Turn on "Advanced Mod Descriptions" in the game options (or copy with Ctrl+Alt+C) to get craft tips.' };
+    return { note: t('Turn on "Advanced Mod Descriptions" in the game options (or copy with Ctrl+Alt+C) to get craft tips.') };
   }
   const d = await load(cached);
   const base = d.bases.get(item.baseType);
-  if (!base) return { note: `Unknown base "${item.baseType}" in RePoE data.` };
+  if (!base) return { note: t('Unknown base "{base}" in RePoE data.', { base: item.baseType }) };
   const tags = base.tags || [];
   const ilvl = item.ilvl || 100;
 
@@ -144,11 +145,11 @@ async function advise(item, demandMods, cached) {
     const sure = normal.filter((c) => c.essence);
     sections.push({ kind: 'upgrade', how: [
       ...[...new Map(sure.map((c) => [c.essence.name, c])).values()].slice(0, 4)
-        .map((c) => `${c.essence.name} — rare with guaranteed ${c.text}: ${c.essence.tiers.join(' · ')}`),
-      'Regal Orb — makes it rare with one random modifier from the whole pool; the popular ones below are only some of the outcomes',
-      'Greater / Perfect Regal Orb — the same, but only modifiers of level 35+ / 50+',
-      'Omen of Sinistral / Dextral Coronation — the next Regal Orb adds only a prefix / only a suffix',
-      "Hinekora's Lock — see the result of the next currency before using it",
+        .map((c) => t('{essence} — rare with guaranteed {mod}: {tiers}', { essence: c.essence.name, mod: c.text, tiers: c.essence.tiers.join(' · ') })),
+      t('Regal Orb — makes it rare with one random modifier from the whole pool; the popular ones below are only some of the outcomes'),
+      t('Greater / Perfect Regal Orb — the same, but only modifiers of level 35+ / 50+'),
+      t('Omen of Sinistral / Dextral Coronation — the next Regal Orb adds only a prefix / only a suffix'),
+      t("Hinekora's Lock — see the result of the next currency before using it"),
     ] });
   }
 
@@ -157,11 +158,11 @@ async function advise(item, demandMods, cached) {
     if (!open[side]) continue;
     const list = normal.filter((c) => c.side === side).slice(0, 6);
     const omen = side === 'prefix' ? 'Omen of Sinistral Exaltation' : 'Omen of Dextral Exaltation';
-    const exalt = `Exalted Orb${open.prefix && open.suffix ? ` + ${omen} (only ${side}es)` : ''}`;
+    const exalt = `Exalted Orb${open.prefix && open.suffix ? ` + ${omen} (${t(`only ${side}es`)})` : ''}`;
     sections.push({
       kind: 'open', side, count: open[side],
-      how: [magic ? `after it's rare: ${exalt}` : exalt, 'Greater / Perfect Exalted Orb — only modifiers of level 35+ / 50+',
-        ...(open[side] >= 2 ? ['Omen of Greater Exaltation — the next Exalted Orb adds two modifiers'] : [])],
+      how: [magic ? t("after it's rare: {how}", { how: exalt }) : exalt, t('Greater / Perfect Exalted Orb — only modifiers of level 35+ / 50+'),
+        ...(open[side] >= 2 ? [t('Omen of Greater Exaltation — the next Exalted Orb adds two modifiers')] : [])],
       candidates: list,
     });
   }
@@ -183,11 +184,11 @@ async function advise(item, demandMods, cached) {
       const omen = weak.side === 'prefix' ? 'Omen of Sinistral Annulment' : 'Omen of Dextral Annulment';
       const how = weak.tag === 'desecrated'
         // Desecrated снимается прицельно: Omen of Light — Annulment убирает только desecrated-моды.
-        ? ['Orb of Annulment + Omen of Light — removes only the desecrated modifier, then Exalted Orb (or desecrate again)']
-        : [`Orb of Annulment + ${omen} — removes a random ${weak.side} (1 in ${sameSide} to hit this one), then Exalted Orb`,
-          `Chaos Orb + ${erasure} — removes a random ${weak.side} and adds a random modifier (Greater / Perfect Chaos: level 35+ / 50+)`];
+        ? [t('Orb of Annulment + Omen of Light — removes only the desecrated modifier, then Exalted Orb (or desecrate again)')]
+        : [t(`Orb of Annulment + {omen} — removes a random ${weak.side} (1 in {n} to hit this one), then Exalted Orb`, { omen, n: sameSide }),
+          t(`Chaos Orb + {omen} — removes a random ${weak.side} and adds a random modifier (Greater / Perfect Chaos: level 35+ / 50+)`, { omen: erasure })];
       if (lowest && lowest.name === weak.name && weak.tag !== 'desecrated') {
-        how.unshift('Chaos Orb + Omen of Whittling — removes the lowest-level modifier (this one) and adds a random modifier');
+        how.unshift(t('Chaos Orb + Omen of Whittling — removes the lowest-level modifier (this one) and adds a random modifier'));
       }
       sections.push({
         kind: 'replace', weak: { name: weak.name, side: weak.side, tier: weak.tier, text: weak.mod.lines.join(' / '), pct: weak.pct },
@@ -200,7 +201,7 @@ async function advise(item, demandMods, cached) {
   if (!item.desecratedItem && !mine.some((a) => a.tag === 'desecrated')) {
     const des = candidates('desecrated').filter((c) => open[c.side] || (!open.prefix && !open.suffix)).slice(0, 4);
     if (des.length) {
-      sections.push({ kind: 'desecrate', how: [`Desecrate with ${boneFor(tags, ilvl)} — adds an unrevealed desecrated modifier${!open.prefix && !open.suffix ? ' (replaces a random one when full)' : ''}`],
+      sections.push({ kind: 'desecrate', how: [t('Desecrate with {bone} — adds an unrevealed desecrated modifier', { bone: boneFor(tags, ilvl) }) + (!open.prefix && !open.suffix ? ` (${t('replaces a random one when full')})` : '')],
         candidates: des });
     }
   }
@@ -209,19 +210,19 @@ async function advise(item, demandMods, cached) {
   const perfect = item.rarity === 'Rare' ? perfectFor(item.itemClass) : [];
   if (perfect.length) {
     sections.push({ kind: 'perfect', how: [...perfect.map((p) => `${p.name} — ${p.mod}`),
-      'Omen of Sinistral / Dextral Crystallisation — the Perfect Essence removes only a prefix / only a suffix'] });
+      t('Omen of Sinistral / Dextral Crystallisation — the Perfect Essence removes only a prefix / only a suffix')] });
   }
 
   // 4. Дёшево и без риска.
   const cheap = [];
   const armourOrWeapon = tags.includes('armour') || tags.includes('weapon') || tags.includes('onehand') || tags.includes('twohand');
   // Artificer's Orb — оружие, жезлы, посохи и броня (скипетров в списке нет).
-  if (armourOrWeapon && !tags.includes('sceptre') && !item.sockets) cheap.push("Artificer's Orb — add an augment socket, then a rune or soul core");
-  if (armourOrWeapon && (item.quality || 0) < 20) cheap.push(`Quality to 20% (currently ${item.quality || 0}%) — ${qualityCurrency(tags)}`);
-  if ((tags.includes('ring') || tags.includes('amulet')) && !item.quality) cheap.push('Catalyst — quality on rings and amulets boosts matching modifiers (life, minion, caster…); with Omen of Catalysing Exaltation the next Exalted Orb favours that type');
-  if (tags.includes('jewel') && !item.quality) cheap.push('Refined Catalyst — quality on jewels boosts matching modifiers');
+  if (armourOrWeapon && !tags.includes('sceptre') && !item.sockets) cheap.push(t("Artificer's Orb — add an augment socket, then a rune or soul core"));
+  if (armourOrWeapon && (item.quality || 0) < 20) cheap.push(t('Quality to 20% (currently {n}%) — {currency}', { n: item.quality || 0, currency: qualityCurrency(tags) }));
+  if ((tags.includes('ring') || tags.includes('amulet')) && !item.quality) cheap.push(t('Catalyst — quality on rings and amulets boosts matching modifiers (life, minion, caster…); with Omen of Catalysing Exaltation the next Exalted Orb favours that type'));
+  if (tags.includes('jewel') && !item.quality) cheap.push(t('Refined Catalyst — quality on jewels boosts matching modifiers'));
   const total = mine.length;
-  if (!magic && total >= 4 && !item.fracturedItem) cheap.push('Fracturing Orb — locks a random modifier in place (rare with 4+ modifiers); worth it when most modifiers are good');
+  if (!magic && total >= 4 && !item.fracturedItem) cheap.push(t('Fracturing Orb — locks a random modifier in place (rare with 4+ modifiers); worth it when most modifiers are good'));
   if (cheap.length) sections.push({ kind: 'cheap', how: cheap });
 
   return { open, max, sections, source: 'RePoE (game files) · demand: poe.ninja' };
