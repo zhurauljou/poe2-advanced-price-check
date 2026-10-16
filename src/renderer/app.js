@@ -433,7 +433,7 @@ function sellHtml(priced, est, cheapest, median, n) {
     ['Market', est, 'The estimate above'], ['Patient', patient, `Above the market — wait for a buyer. Median of ${n}: ${money(median)}`]]
     .map(([k, div, title]) => ({ k, title, ...listPrice(div) }))
     // Совпали цены — остаётся Market, а не первая попавшаяся.
-    .filter((o, i, a) => (o.k === 'Market' || o.label !== a[1].label) && !a.slice(0, i).some((p) => p.k !== 'Market' && p.label === o.label));
+    .filter((o, i, a) => o.k === 'Market' || (o.label !== a[1].label && !a.slice(0, i).some((p) => p.label === o.label)));
   return `<div class="grid sell">${opts.map((o) => `
     <div><span class="k">${o.k}</span><span class="v copy" data-note="~price ${o.amount} ${o.cur}" title="${o.title}
 Click to copy the price note">${o.label}</span></div>`).join('')}</div>`;

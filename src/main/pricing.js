@@ -101,14 +101,16 @@ const PROP_LOOSE = 0.85;
 const propMin = (v, k) => (v < 20 ? Math.floor(v * k * 100) / 100 : Math.floor(v * k));
 
 function propFilters(item) {
-  if (!['Rare', 'Magic', 'Normal'].includes(item.rarity)) return [];
+  if (!['Rare', 'Magic', 'Normal', 'Unique'].includes(item.rarity)) return [];
+  // У уников защиту/урон задают сами моды (и они в поиске) — свойства можно включить вручную, по умолчанию выключены.
+  const unique = item.rarity === 'Unique';
   return PROPS.filter((p) => item.props[p.key] > 0).map((p) => ({
     ...p,
     value: item.props[p.key],
     // Защита/DPS — главное в цене брони и оружия: ищем почти такие же (−3%); при нехватке лотов ослабление опустит до −15%.
     min: propMin(item.props[p.key], PROP_MIN),
     // У оружия ищем по общему DPS, физ/элем — по желанию.
-    enabled: !['pdps', 'edps', 'spirit', 'crit', 'aps'].includes(p.key),
+    enabled: !unique && !['pdps', 'edps', 'spirit', 'crit', 'aps'].includes(p.key),
   }));
 }
 
