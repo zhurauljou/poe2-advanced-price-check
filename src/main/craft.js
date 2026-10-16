@@ -89,7 +89,9 @@ async function advise(item, demandMods, cached) {
 
   // Сколько мест: у редкой 3+3 (у самоцветов 2+2 — всего 4 мода), у магической 1+1;
   // «-1 Suffix Modifier allowed» и т.п. — поправка.
-  const perSide = item.rarity !== 'Rare' ? 1 : tags.includes('jewel') ? 2 : 3;
+  // Магическую вещь Regal Orb делает редкой — поэтому места считаем как у редкой, а первым шагом советуем Regal.
+  const magic = item.rarity === 'Magic';
+  const perSide = tags.includes('jewel') ? 2 : 3;
   const max = { prefix: perSide, suffix: perSide };
   for (const l of item.modLines || []) {
     const m = l.text.match(/^([+-]\d+) (Prefix|Suffix) Modifiers? allowed$/);
@@ -130,22 +132,26 @@ async function advise(item, demandMods, cached) {
     if (!open[side]) continue;
     const list = normal.filter((c) => c.side === side).slice(0, 6);
     const omen = side === 'prefix' ? 'Omen of Sinistral Exaltation' : 'Omen of Dextral Exaltation';
+    const exalt = `Exalted Orb${open.prefix && open.suffix ? ` + ${omen} (only ${side}es)` : ''}`;
     sections.push({
       kind: 'open', side, count: open[side],
-      how: [`Exalted Orb${open.prefix && open.suffix ? ` + ${omen} (only ${side}es)` : ''}`,
-        'Greater / Perfect Exalted Orb — only higher tiers'],
+      how: magic && side === 'prefix'
+        ? ['Regal Orb — makes it rare and adds a random modifier', `then ${exalt}`]
+        : magic ? [`after Regal Orb: ${exalt}`] : [exalt, 'Greater / Perfect Exalted Orb — only higher tiers'],
       candidates: list,
     });
   }
 
   // 2. Всё занято — заменить самый слабый мод: тир хуже всех и не востребован. Fractured не снять.
   if (!open.prefix && !open.suffix) {
-    const scored = mine.filter((a) => a.mod && a.tag !== 'fractured').map((a) => {
+    // Хорошие тиры (T1–T2) не меняем никогда: даже невостребованный T1 дороже лотереи с Annulment.
+    const scored = mine.filter((a) => a.mod && a.tag !== 'fractured' && !(a.tier && a.tier <= 2)).map((a) => {
       const pct = Math.max(0, ...a.mod.lines.map((l) => want.get(l) || 0));
       return { ...a, pct, score: pct / 100 * 3 - (a.tier || 3) / 3 };
     }).sort((a, b) => a.score - b.score);
     const weak = scored[0];
-    if (weak) {
+    if (!weak) sections.push({ kind: 'keep' });
+    else {
       const sameSide = mine.filter((a) => a.side === weak.side && a.tag !== 'fractured').length;
       const lowest = scored.slice().sort((a, b) => a.mod.required_level - b.mod.required_level)[0];
       const omen = weak.side === 'prefix' ? 'Omen of Sinistral Annulment' : 'Omen of Dextral Annulment';

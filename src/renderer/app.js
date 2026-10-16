@@ -596,7 +596,9 @@ async function priceCraft(b) {
     else f.mods.push({ statId: s.statId, enabled: true, min: s.min, importance: 3, tag: 'explicit', text: c.text });
   }
   try {
-    const q = await window.pc.quickPrice(state.item, f);
+    // Магическая вещь после Regal Orb — уже редкая: ищем среди редких.
+    const it = state.item.rarity === 'Magic' ? { ...state.item, rarity: 'Rare' } : state.item;
+    const q = await window.pc.quickPrice(it, f);
     const v = estimate(q.lots);
     let html;
     if (v == null) html = '<span class="cpr" title="Nothing like it is listed — could be rare and pricey">none listed</span>';
@@ -638,6 +640,8 @@ function renderCraft(r) {
         ${s.candidates.length ? `<div class="craft-sub">Could become:</div>${craftRows(s.candidates)}` : ''}</div>`);
     } else if (s.kind === 'desecrate') {
       parts.push(`<div class="craft-sec"><div class="k">Desecration</div>${how(s.how)}<div class="craft-sub">Popular desecrated modifiers for this base:</div>${craftRows(s.candidates)}</div>`);
+    } else if (s.kind === 'keep') {
+      parts.push('<div class="craft-sec"><div class="k">Full — all modifiers are top tier</div><div class="craft-sub">Nothing worth replacing.</div></div>');
     } else if (s.kind === 'cheap') {
       parts.push(`<div class="craft-sec"><div class="k">Cheap and safe</div>${how(s.how)}</div>`);
     }

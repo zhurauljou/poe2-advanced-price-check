@@ -1,0 +1,16 @@
+Item Class: Helmets
+Rarity: Magic
+Mirage's Deerstalker Hood of the Proficient
+--------
+Evasion Rating: 535 (augmented)
+--------
+Requires: Level 59, 53 (augmented) Dex
+--------
+Sockets: S S 
+--------
+Item Level: 82
+--------
+{ Prefix Modifier "Mirage's" (Tier: 1) — Evasion }
+98(92-100)% increased Evasion Rating
+{ Suffix Modifier "of the Proficient" (Tier: 1) }
+35% reduced Attribute Requirements
