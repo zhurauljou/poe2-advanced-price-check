@@ -45,7 +45,9 @@ body { background: linear-gradient(rgba(0, 0, 0, .45), rgba(0, 0, 0, .18) 70px, 
                   background: url(img/header-left.png) left center / auto 100% no-repeat,
                               url(img/header-right.png) right center / auto 100% no-repeat,
                               url(img/header-middle.png) center / auto 100% repeat-x;
-                  filter: var(--hdr-filter, none); }
+                  filter: var(--hdr-filter, none);
+                  /* С середины шапки вниз — плавно в полную прозрачность, перетекает в фон окна. */
+                  -webkit-mask-image: linear-gradient(#000 50%, transparent 100%); mask-image: linear-gradient(#000 50%, transparent 100%); }
 /* Шапка слегка «утопает» в фон: от левого и правого верхних углов и сверху — тень цвета фона. Слой между
    картинкой шапки (::before) и текстом, поэтому название не затемняется. */
 .banner::after { content: ""; position: absolute; inset: -1px; z-index: -1; pointer-events: none;
