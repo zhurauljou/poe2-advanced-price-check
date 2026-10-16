@@ -360,7 +360,59 @@ function setTab(name) {
   document.querySelectorAll('#tabs button').forEach((b) => b.classList.toggle('on', b.dataset.tab === name));
   $('tab-price').hidden = name !== 'price';
   $('tab-demand').hidden = name !== 'demand';
+  $('tab-craft').hidden = name !== 'craft';
+  if (name === 'craft') loadCraft();
   fit();
+}
+
+// ---- вкладка Craft: что и чем добавить/заменить. Грузим по открытию вкладки, один раз на предмет. ----
+let craftFor = null;
+async function loadCraft() {
+  if (craftFor === state) return;
+  craftFor = state;
+  const box = $('craft');
+  box.innerHTML = '<div class="sect"><span>Craft</span></div><div class="muted center">Loading mod pool…</div>';
+  fit();
+  try {
+    const r = await window.pc.craft();
+    if (craftFor === state) renderCraft(r);
+  } catch (e) {
+    box.innerHTML = `<div class="sect"><span>Craft</span></div><div class="muted center">${esc(String(e.message || e).replace(/^Error invoking remote method '\w+': (Error: )?/, ''))}</div>`;
+  }
+  fit();
+}
+
+const SIDE = { prefix: 'prefix', suffix: 'suffix' };
+function craftRows(list) {
+  return list.map((c) => `
+    <div class="brow ${heat(c.pct)}"><span class="bname">${esc(c.text)}<span class="craft-tier">T${c.tier}/${c.tiers}${c.range ? ` · ${esc(c.range)}` : ''}</span></span>
+      <span class="bpct">${hot(c.pct)}${fmt(c.pct)}%</span><span class="bbar"><i style="width:${Math.min(100, c.pct)}%"></i></span></div>`).join('');
+}
+
+function renderCraft(r) {
+  const head = '<div class="sect"><span>Craft</span></div>';
+  if (r.blocked) { $('craft').innerHTML = `${head}<div class="muted center">${esc(r.blocked)} items can't be modified.</div>`; return; }
+  if (r.note) { $('craft').innerHTML = `${head}<div class="muted center">${esc(r.note)}</div>`; return; }
+  const how = (list) => list.map((h) => `<div class="craft-how">${esc(h)}</div>`).join('');
+  const parts = [`<div class="craft-slots">Prefixes <b>${r.max.prefix - r.open.prefix}/${r.max.prefix}</b> · Suffixes <b>${r.max.suffix - r.open.suffix}/${r.max.suffix}</b></div>`];
+  for (const s of r.sections) {
+    if (s.kind === 'open') {
+      parts.push(`<div class="craft-sec"><div class="k">${s.count} free ${SIDE[s.side]}${s.count > 1 ? 'es' : ''}</div>${how(s.how)}
+        ${s.candidates.length ? `<div class="craft-sub">Popular ${SIDE[s.side]}es that can roll here (best tier for this item level):</div>${craftRows(s.candidates)}`
+          : '<div class="craft-sub">No popular modifiers left for this side.</div>'}</div>`);
+    } else if (s.kind === 'replace') {
+      const w = s.weak;
+      parts.push(`<div class="craft-sec"><div class="k">Full — replace the weakest ${SIDE[w.side]}</div>
+        <div class="craft-weak">${esc(w.text)} <span class="craft-tier">${w.tier ? `T${w.tier}` : ''}${w.pct ? ` · ${fmt(w.pct)}% builds` : ''}</span></div>${how(s.how)}
+        ${s.candidates.length ? `<div class="craft-sub">Could become:</div>${craftRows(s.candidates)}` : ''}</div>`);
+    } else if (s.kind === 'desecrate') {
+      parts.push(`<div class="craft-sec"><div class="k">Desecration</div>${how(s.how)}<div class="craft-sub">Popular desecrated modifiers for this base:</div>${craftRows(s.candidates)}</div>`);
+    } else if (s.kind === 'cheap') {
+      parts.push(`<div class="craft-sec"><div class="k">Cheap and safe</div>${how(s.how)}</div>`);
+    }
+  }
+  parts.push(`<div class="craft-foot">Mod pool: game files (RePoE). Roll chances aren't shown — PoE 2 files have no modifier weights.<br>% = share of builds using the modifier on this item class (poe.ninja).</div>`);
+  $('craft').innerHTML = head + parts.join('');
 }
 
 // Насколько востребовано: < 10% — приглушаем (почти никому не нужно), ≥ 60% — подсвечиваем (нужно почти всем).

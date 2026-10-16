@@ -63,3 +63,11 @@ test('диапазон тира сохраняется (для минимума 
   // 12–20 × 1.4 (катализатор 40%) → 16–28, как в игре
   assert.deepEqual(amu.modLines.find((m) => m.text.startsWith('Minions have 26%')).range, { lo: 16, hi: 28 });
 });
+
+test('аффиксы для крафта: по заголовкам, гибрид — один аффикс', () => {
+  const robe = fixture('rare-armour-advanced.txt');
+  assert.equal(robe.affixes.filter((a) => a.side === 'prefix').length, 3); // Divine (гибрид в 2 строки) + Scintillating + Unassailable
+  assert.equal(robe.affixes.filter((a) => a.side === 'suffix').length, 3);
+  assert.deepEqual(robe.affixes[0], { side: 'prefix', name: 'Divine', tag: 'explicit', tier: 1 });
+  assert.equal(robe.affixes.find((a) => a.name === 'Unassailable').tag, 'desecrated');
+});

@@ -202,5 +202,5 @@ async function ninjaLeagues() {
 }
 
 module.exports = {
-  TRADE, tradeRequest, fetchBuffer, tradeStats, tradeItems, tradeStatic, tradeLeagues, loadNinja, ninjaLeagues, ninja,
+  TRADE, tradeRequest, fetchBuffer, cached, tradeStats, tradeItems, tradeStatic, tradeLeagues, loadNinja, ninjaLeagues, ninja,
 };

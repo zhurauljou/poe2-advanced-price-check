@@ -11,6 +11,8 @@ const { log } = require('./log');
 const winapi = require('./winapi');
 const updater = require('./updater');
 const { popularBuilds, categoryDemand } = require('./ninjaBuilds');
+const craft = require('./craft');
+let lastItem = null; // последний разобранный предмет — для советов по крафту
 const { parseItem } = require('./parser');
 
 const WIDTH = 480;
@@ -229,6 +231,7 @@ async function priceCheck(text) {
       api.fetchBuffer).catch((e) => { log('demand', e.message); return null; });
     demand = await Promise.race([q, new Promise((r) => setTimeout(() => r(null), 1500))]);
   }
+  lastItem = item;
   send('item', { ...pricing.prepare(item, demand), league, leagues, priceCurrency: settings.get().priceCurrency || 'any' });
   show();
 }
@@ -467,6 +470,13 @@ app.whenReady().then(() => {
     return true;
   });
   ipcMain.handle('builds', (_e, opts) => popularBuilds({ ...opts, league: settings.get().league, limit: 5 }, api.fetchBuffer));
+  ipcMain.handle('craft', async () => {
+    if (!lastItem) return { note: 'No item' };
+    const league = settings.get().league;
+    const rarity = lastItem.rarity === 'Normal' ? 'Rare' : lastItem.rarity;
+    const d = await categoryDemand({ league, itemClass: lastItem.itemClass, rarity, limit: 80 }, api.fetchBuffer).catch(() => null);
+    return craft.advise(lastItem, d && d.mods, api.cached);
+  });
   ipcMain.handle('demand', (_e, opts) => categoryDemand({ ...opts, league: settings.get().league, limit: 10 }, api.fetchBuffer));
   ipcMain.handle('set-price-currency', (_e, c) => { settings.set({ priceCurrency: c }); });
   ipcMain.handle('copy', (_e, t) => clipboard.writeText(t));
