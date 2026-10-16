@@ -122,13 +122,24 @@ function pseudoFilters(mods) {
     }
   }
   const out = [];
-  const add = (id, text, value, group) => {
+  // Диапазон суммы — сумма диапазонов частей (сколько раз мод входит в сумму: «ко всем элементальным» — трижды).
+  const times = (m) => {
+    const t = m.template.replace(/ \(Local\)$/, '');
+    const r = t.match(/^#% to (.+) Resistances?$/);
+    if (!r) return 1;
+    return /^all Elemental$/.test(r[1]) ? 3 : ['Fire', 'Cold', 'Lightning'].filter((k) => r[1].includes(k)).length || 1;
+  };
+  const add = (id, text, value, group, perMod = () => 1) => {
     if (!group.length) return;
     group.forEach((m) => { m.enabled = false; });
-    out.push({ statId: id, text, tag: 'pseudo', value, enabled: true, min: minOf(value) });
+    const range = group.every((m) => m.range)
+      ? group.reduce((s, m) => ({ lo: s.lo + m.range.lo * perMod(m), hi: s.hi + m.range.hi * perMod(m) }), { lo: 0, hi: 0 })
+      : null;
+    out.push({ statId: id, text, tag: 'pseudo', value, enabled: true, range, roll: rollQuality(value, range),
+      min: minFor(value, range, 2) });
   };
   const eleSum = ele.Fire + ele.Cold + ele.Lightning;
-  add('pseudo.pseudo_total_elemental_resistance', `Σ +${eleSum}% total Elemental Resistance`, eleSum, used.ele);
+  add('pseudo.pseudo_total_elemental_resistance', `Σ +${eleSum}% total Elemental Resistance`, eleSum, used.ele, times);
   add('pseudo.pseudo_total_chaos_resistance', `Σ +${chaos}% total Chaos Resistance`, chaos, used.chaos);
   add('pseudo.pseudo_total_life', `Σ +${life} total maximum Life`, life, used.life);
   return out;
