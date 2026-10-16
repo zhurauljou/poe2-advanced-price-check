@@ -210,6 +210,9 @@ function prepare(item, demand) {
     quality: item.quality ? { enabled: false, min: item.quality } : null,
     skill: grantedSkill(item),
     corrupted: item.corrupted,
+    // Состояния предмета — переключатели в подсказке: включённое требует то же состояние у лота.
+    // У неосквернённой вещи можно потребовать «не осквернён» (такие дороже — их ещё можно осквернить).
+    flags: flagFilters(item),
     online: true,
     flex: true, // «Allow 1 minor mod missing»
   };
@@ -269,6 +272,7 @@ function buildQuery(item, f) {
   if (Object.keys(equip).length) query.filters.equipment_filters = { filters: equip };
   const misc = {};
   if (f.gemLevel && f.gemLevel.enabled) misc.gem_level = { min: Number(f.gemLevel.min) };
+  for (const fl of f.flags || []) if (fl.enabled) misc[fl.key] = { option: fl.value ? 'true' : 'false' };
   if (Object.keys(misc).length) query.filters.misc_filters = { filters: misc };
   return { query, sort: { price: 'asc' } };
 }
@@ -304,6 +308,20 @@ function itemTip(it) {
       .map((p) => ({ k: clean(p.name), v: clean(p.values[0][0]) })),
     mods,
   };
+}
+
+// Состояния предмета и их фильтры трейда (misc_filters).
+function flagFilters(item) {
+  const out = [];
+  const add = (key, label, value, cls) => out.push({ key, label, value, cls, enabled: false });
+  if (item.rarity === 'Currency') return out;
+  if (item.corrupted) add('corrupted', 'Corrupted', true, 'corrupt');
+  else add('corrupted', 'Not corrupted', false, 'cls');
+  if (item.sanctified) add('sanctified', 'Sanctified', true, 'cls');
+  if (item.mirrored) add('mirrored', 'Mirrored', true, 'cls');
+  if (item.fracturedItem) add('fractured_item', 'Fractured Item', true, 'cls');
+  if (item.desecratedItem) add('desecrated', 'Desecrated Item', true, 'cls');
+  return out;
 }
 
 // Второстепенный мод: не сумма, не вариант и не важный (ключевой хорошего тира держим обязательным).

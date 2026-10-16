@@ -166,8 +166,13 @@ function renderTooltip() {
   }
   const flags = [];
   if (item.unidentified) flags.push('<span class="corrupt">Unidentified</span>');
-  if (item.corrupted) flags.push('<span class="corrupt">Corrupted</span>');
-  if (item.mirrored) flags.push('<span class="cls">Mirrored</span>');
+  // Состояния (Corrupted, Sanctified, Mirrored…) — переключатели: включённое требует то же у лота.
+  const fl = (state.searchable && f.flags) || [];
+  fl.forEach((x, i) => flags.push(`<span class="tp flag ${x.cls}${x.enabled ? ' on' : ''}${x.value ? '' : ' neg'}" data-ref="f:${i}" title="${x.enabled ? 'Searching only such items — click to ignore' : 'Click to search only such items'}">${esc(x.label)}</span>`));
+  if (!fl.length) {
+    if (item.corrupted) flags.push('<span class="corrupt">Corrupted</span>');
+    if (item.mirrored) flags.push('<span class="cls">Mirrored</span>');
+  }
   if (flags.length) lines.push(flags.join(' · '));
   $('tooltip').innerHTML = lines.join('<div class="sep"></div>');
 }
@@ -666,6 +671,7 @@ $('mods').addEventListener('input', (e) => {
 // ref из подсказки → объект фильтра: 'p:2' — state.filters.props[2], 'm:ilvl' — state.filters.ilvl.
 function filterByRef(ref) {
   const [kind, key] = ref.split(':');
+  if (kind === 'f') return state.filters.flags[+key];
   return kind === 'p' ? state.filters.props[+key] : state.filters[key];
 }
 

@@ -93,6 +93,9 @@ function parseItem(text) {
     corrupted: false,
     unidentified: false,
     mirrored: false,
+    sanctified: false,
+    fracturedItem: false, // строка «Fractured Item»
+    desecratedItem: false, // строка «Desecrated Item»
     props: {}, // ar / ev / es / spirit, у оружия pdps / edps / dps
     properties: [], // строки свойств для показа, как в игре: { k: 'Energy Shield', v: '1038', aug: true }
     requires: null, // «Level 65, 78 Int»
@@ -130,6 +133,9 @@ function parseItem(text) {
       else if (item.rarity === 'Gem' && (m = l.match(/^Level: (\d+)/))) item.gemLevel = +m[1];
       else if (l === 'Corrupted') item.corrupted = true;
       else if (l === 'Mirrored') item.mirrored = true;
+      else if (l === 'Sanctified') item.sanctified = true;
+      else if (l === 'Fractured Item') item.fracturedItem = true;
+      else if (l === 'Desecrated Item') item.desecratedItem = true;
     }
   }
   // Свойства — из секций, где все строки «Ключ: значение» (у камней первая строка — теги, её пропускаем).

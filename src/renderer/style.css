@@ -132,6 +132,8 @@ footer { display: flex; justify-content: space-between; gap: 8px; padding: 6px 1
 .tp:hover { border-color: #3d3a33; background: rgba(255, 255, 255, .03); }
 .tp.on { border-color: #6b5a3a; background: rgba(218, 193, 142, .08); box-shadow: 0 0 8px rgba(218, 193, 142, .12); }
 .tp-op { color: var(--gold); }
+.tt .flag.corrupt { color: var(--g-corrupt); }
+.tt .flag.neg:not(.on) { color: #5d5d6a; } /* «Not corrupted» — подсказка, пока не включена */
 .tp-in { width: 54px; height: 22px; margin-left: 2px; padding: 0 4px; font: 700 14px var(--body); vertical-align: 1px; }
 .tt .sep { height: 9px; margin: 3px auto; width: 70%;
            background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='200' height='9' viewBox='0 0 200 9'%3E%3Cpath d='M0 4.5H92M108 4.5H200' stroke='%23584a30'/%3E%3Cpath d='M100 .5l4 4-4 4-4-4z' fill='%239a7a3e'/%3E%3C/svg%3E") center / 100% 9px no-repeat; }
