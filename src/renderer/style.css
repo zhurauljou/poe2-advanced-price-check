@@ -454,3 +454,20 @@ body.upd-page { height: auto; }
 .lot .ib { margin-right: 5px; font-size: 11px; color: #ffd27a; font-weight: normal; } /* мгновенный выкуп */
 .lvl-row { display: flex; justify-content: center; align-items: center; gap: 8px; margin: 2px 0 4px; } .seg.lvl button { padding: 1px 8px; font-size: 12.5px; }
 .tt .flag small { font-size: 11px; color: var(--muted); }
+/* Нет ключевого мода — предупреждение в оценке и строка-исключение в фильтрах */
+.hero .miss-key { margin: 6px auto 2px; max-width: 92%; padding: 5px 8px; border: 1px solid rgba(224, 179, 90, .45); border-radius: 3px;
+                  background: rgba(224, 179, 90, .07); color: #f0c674; font-size: 13.5px; line-height: 1.35; }
+.hero .miss-key small { display: block; margin-top: 2px; color: var(--muted); font-size: 12px; }
+.mod.excl label { color: #f0c674; }
+.mod.excl.off label { color: #7d7d8a; }
+.mod.excl .tcol { color: var(--warn); font: 700 14px var(--body); }
+/* Цель крафта */
+.craft-sec.goal { padding: 6px 8px; border: 1px solid #4a3f2c; border-radius: 3px; background: rgba(218, 193, 142, .04); }
+.goal .g { position: relative; padding-left: 16px; font: 14px/1.35 var(--game); }
+.goal .g i { position: absolute; left: 0; font: 700 12px/1.6 var(--body); font-style: normal; }
+.goal .g.keep { color: #9a9aa8; } .goal .g.keep i { color: var(--muted); }
+.goal .g.remove { color: #8a6a6a; text-decoration: line-through; } .goal .g.remove i { color: var(--bad); }
+.goal .g.add { color: var(--good); } .goal .g.add i { color: var(--good); }
+.goal-steps { margin: 2px 0 4px 18px; padding: 0; font-size: 13.5px; color: var(--gold); }
+.goal-steps li { margin: 2px 0; }
+.goal .goal-price { font-size: 13.5px; }

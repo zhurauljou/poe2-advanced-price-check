@@ -170,7 +170,8 @@ function grantedSkill(item) {
 
 // Что показать в оверлее сразу после копирования: разобранный предмет и фильтры по умолчанию.
 // demand — спрос по классу вещей с poe.ninja ({ mods: [{ name: '#% increased Spirit', pct }] }) или null.
-function prepare(item, demand) {
+// rollsOn(template) — может ли мод встать на эту базу (true / false / null — неизвестно).
+function prepare(item, demand, rollsOn) {
   const demandPct = new Map((demand && demand.mods || []).map((r) => [r.name.toLowerCase(), r.pct]));
   const demandOf = (tpl) => (tpl ? demandPct.get(tpl.replace(/ \(Local\)$/, '').toLowerCase()) : undefined);
   item.baseType = resolveBase(item);
@@ -217,6 +218,14 @@ function prepare(item, demand) {
     };
   });
   const pseudo = searchMods ? pseudoFilters(mods) : [];
+  // Ключевой мод, которого нет: его носят почти все билды (≥ KEY_MISSING%), он может встать на эту базу, а на вещи его нет.
+  // Похожие лоты с ним стоят в разы дороже — поэтому по умолчанию ищем вещи БЕЗ него (честное сравнение).
+  const key = (tpl) => String(tpl || '').replace(/ \(Local\)$/, '').replace(/\+#/g, '#').toLowerCase();
+  const have = new Set(item.mods.map((m) => key(m.template)));
+  const exclude = !searchMods ? [] : (demand && demand.mods || [])
+    .filter((r) => r.pct >= KEY_MISSING && !have.has(key(r.name)) && (!rollsOn || rollsOn(r.name) !== false))
+    .map((r) => { const s = stats.statFor(r.name, 'explicit', item.itemClass); return s && { statId: s.statId, text: r.name, pct: r.pct, enabled: true }; })
+    .filter(Boolean).slice(0, 2);
   const filters = {
     // Переключатели в шапке: искать именно эту базу (дорогие базы!) / именно этот уник.
     useType: true,
@@ -234,11 +243,14 @@ function prepare(item, demand) {
     // Состояния предмета — переключатели в подсказке: включённое требует то же состояние у лота.
     // У неосквернённой вещи можно потребовать «не осквернён» (такие дороже — их ещё можно осквернить).
     flags: flagFilters(item),
+    exclude, // «без ключевого мода»: [{ statId, text, pct, enabled }]
     online: true,
     flex: true, // «Allow 1 minor mod missing»
   };
   return { item, exchange, filters, searchable: !exchange, rates: api.ninja.rates };
 }
+
+const KEY_MISSING = 80;
 
 const TIMELESS = /stat_3418580811\|/;
 
@@ -299,6 +311,8 @@ function buildQuery(item, f) {
   if (f.gemLevel && f.gemLevel.enabled) misc.gem_level = { min: Number(f.gemLevel.min) };
   for (const fl of f.flags || []) if (fl.enabled) misc[fl.key] = { option: fl.value ? 'true' : 'false' };
   if (Object.keys(misc).length) query.filters.misc_filters = { filters: misc };
+  const not = (f.exclude || []).filter((x) => x.enabled);
+  if (not.length) query.stats.push({ type: 'not', filters: not.map((x) => ({ id: x.statId })) });
   return { query, sort: { price: 'asc' } };
 }
 

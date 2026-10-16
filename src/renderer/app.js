@@ -376,6 +376,7 @@ function renderTradeHero(r) {
     <div class="big">${money(est)}</div>
     <div class="alt">${alt(est)}</div>
     ${confidence(r.total, head, priced.slice(0, 5))}
+    ${missingKeyHtml()}
     ${floorHtml}
     <div class="ninja-u">${ninjaLine()}</div>
     ${ageHtml}
@@ -403,6 +404,14 @@ async function loadUniqueNinja() {
     const el = document.querySelector('#hero .ninja-u');
     if (el) { el.innerHTML = ninjaLine(); fit(); }
   } catch {}
+}
+
+// Нет ключевого мода (его носят почти все билды): вещь стоит намного меньше «полных» — объясняем прямо в оценке.
+function missingKeyHtml() {
+  const miss = (state.filters.exclude || []);
+  if (!miss.length) return '';
+  return `<div class="miss-key">⚠ ${miss.map((x) => t('No "{mod}" — {pct}% of builds have it', { mod: esc(x.text), pct: fmt(x.pct) })).join('<br>')}
+    <small>${esc(t(miss.some((x) => x.enabled) ? 'Compared with listings that lack it too; with it the item would be worth much more — see Craft' : 'Listings with it are included — the estimate is likely too high'))}</small></div>`;
 }
 
 // Оценка по лотам [{ div, indexed }] — то же правило, что у основной цены: хватает свежих (≤ 3 дней) — по ним;
@@ -635,6 +644,7 @@ async function priceCraft(b) {
     const same = f.mods.find((m) => m.statId === s.statId);
     if (same) { same.enabled = true; same.min = Math.max(Number(same.min) || 0, (same.value || 0) + s.min); }
     else f.mods.push({ statId: s.statId, enabled: true, min: s.min, importance: 3, tag: 'explicit', text: c.text });
+    for (const x of f.exclude || []) if (x.statId === s.statId) x.enabled = false; // добавляем этот мод — исключать его нельзя
   }
   try {
     // Магическая вещь после Regal Orb — уже редкая: ищем среди редких.
@@ -658,7 +668,57 @@ async function priceCraft(b) {
   fit();
 }
 
+// Цель крафта: что оставить / убрать / добавить и по шагам; кнопка — оценка готовой вещи.
+let craftGoal = null;
+function goalHtml(g) {
+  const row = (cls, mark, x, extra = '') => `<div class="g ${cls}"><i>${mark}</i>${esc(x.text)}${x.tier ? ` <span class="craft-tier">T${x.tier}</span>` : ''}${extra}</div>`;
+  return `<div class="craft-sec goal"><div class="k" title="${esc(t('The best item this base can become — most wanted modifiers for its slots'))}">${esc(t('Goal'))}</div>
+    ${g.keep.map((x) => row('keep', '✓', x)).join('')}
+    ${g.remove.map((x) => row('remove', '✗', x)).join('')}
+    ${g.add.map((x) => row('add', '+', x, ` <span class="dem${x.pct >= 60 ? ' hot' : ''}">${x.pct >= 60 ? '🔥 ' : ''}${esc(t('{pct}% builds', { pct: fmt(x.pct) }))}</span>${x.essence ? ` <span class="ess">◈ ${esc(x.essence.short)}</span>` : ''}`)).join('')}
+    <div class="craft-sub">${esc(t('Steps'))}:</div><ol class="goal-steps">${g.steps.map((s) => `<li>${esc(s)}</li>`).join('')}</ol>
+    <button class="link" data-goal>${esc(t('Price the goal'))}</button> <span class="goal-price"></span></div>`;
+}
+
+// Фильтры «как у готовой вещи»: убранные моды — выключены, добавленные — с нижним роллом тира, их исключение «без мода» — снято.
+const tplKey = (s) => String(s || '').replace(/ \(local\)$/i, '').replace(/\+#/g, '#').toLowerCase();
+function withMods(f, adds) {
+  for (const c of adds) {
+    for (const s of c.stats || []) {
+      for (const x of f.exclude || []) if (x.statId === s.statId) x.enabled = false;
+      const same = f.mods.find((m) => m.statId === s.statId);
+      if (same) { same.enabled = true; same.min = Math.max(Number(same.min) || 0, (same.value || 0) + s.min); }
+      else f.mods.push({ statId: s.statId, enabled: true, min: s.min, importance: 3, tag: 'explicit', text: c.text });
+    }
+  }
+  return f;
+}
+
+async function priceGoal(b) {
+  const g = craftGoal;
+  if (!g || !state) return;
+  b.disabled = true;
+  const out = b.parentNode.querySelector('.goal-price');
+  out.textContent = '…';
+  const f = JSON.parse(JSON.stringify(state.filters));
+  const gone = new Set(g.remove.flatMap((r) => r.templates));
+  for (const m of f.mods) if (m.template && gone.has(tplKey(m.template))) m.enabled = false;
+  withMods(f, g.add);
+  try {
+    const it = state.item.rarity === 'Magic' ? { ...state.item, rarity: 'Rare' } : state.item;
+    const q = await window.pc.quickPrice(it, f);
+    const v = estimate(q.lots);
+    out.innerHTML = v == null ? esc(t('none listed')) : `<b class="up">${esc(t('Goal ≈ {price}', { price: money(v) }))}</b>${state.est != null ? ` · ${esc(t('now'))} ${money(state.est)}` : ''}`;
+  } catch (e) {
+    out.textContent = '';
+    setStatus(errText(e), true);
+  }
+  b.disabled = false;
+  fit();
+}
+
 function renderCraft(r) {
+  craftGoal = r.goal || null;
   craftCands.clear();
   const head = `<div class="sect"><span>${t('Craft')}</span></div>`;
   if (r.blocked) {
@@ -669,6 +729,7 @@ function renderCraft(r) {
   if (r.note) { $('craft').innerHTML = head + voidState('◇', t('No craft tips'), esc(r.note)); return; }
   const how = (list) => list.map((h) => `<div class="craft-how">${esc(h)}</div>`).join('');
   const parts = [`<div class="craft-slots">${t('Prefixes')} <b>${r.max.prefix - r.open.prefix}/${r.max.prefix}</b> · ${t('Suffixes')} <b>${r.max.suffix - r.open.suffix}/${r.max.suffix}</b></div>`];
+  if (r.goal) parts.push(goalHtml(r.goal)); // цель — первой: к чему ведут все шаги ниже
   for (const s of r.sections) {
     if (s.kind === 'open') {
       parts.push(`<div class="craft-sec"><div class="k">${t(`{n} free ${SIDE[s.side]}es`, { n: s.count })}</div>${how(s.how)}
@@ -806,6 +867,10 @@ function renderFilters() {
     rows.push(`<div class="sum-toggle" data-sum="${esc(m.statId)}">${open ? '▾' : '▸'} ${t('{n} mods in this total', { n: parts.length })}</div>`);
     if (open) rows.push(`<div class="sum-parts">${parts.map(([p, j]) => modRow(p, j)).join('')}</div>`);
   });
+  // «Без ключевого мода»: его носят почти все билды, а на вещи его нет — сравниваем с такими же неполными вещами.
+  (f.exclude || []).forEach((x, j) => rows.push(`<div class="mod excl${x.enabled ? '' : ' off'}" data-x="${j}" title="${esc(t('Listings that have this modifier are excluded — your item lacks it'))}">
+      <label><input type="checkbox" data-k="exclude"${x.enabled ? ' checked' : ''}><span class="imp"></span><span class="tcol">≠</span>
+        <span class="txt">${esc(t('Without: {mod}', { mod: x.text }))} <span class="dem hot">🔥 ${esc(t('{pct}% builds', { pct: fmt(x.pct) }))}</span></span></label></div>`));
   $('mods').innerHTML = rows.join('');
   // Защита/DPS, уровни и гнёзда выбираются прямо в подсказке под шапкой — здесь валюта цены и «онлайн».
   $('misc').innerHTML = `
@@ -1120,6 +1185,8 @@ $('tabs').addEventListener('click', (e) => {
 });
 
 $('craft').addEventListener('click', (e) => {
+  const g = e.target.closest('[data-goal]');
+  if (g) { priceGoal(g); return; }
   const b = e.target.closest('[data-ck]');
   if (b) priceCraft(b);
 });
@@ -1164,6 +1231,12 @@ $('mods').addEventListener('input', (e) => {
   const row = e.target.closest('.mod');
   if (!row) return;
   markDirty();
+  if (row.dataset.x != null) {
+    const x = state.filters.exclude[+row.dataset.x];
+    x.enabled = e.target.checked;
+    row.classList.toggle('off', !x.enabled);
+    return;
+  }
   const m = state.filters.mods[+row.dataset.i];
   if (e.target.dataset.k === 'enabled') {
     m.enabled = e.target.checked;

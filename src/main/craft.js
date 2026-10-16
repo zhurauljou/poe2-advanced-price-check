@@ -225,7 +225,58 @@ async function advise(item, demandMods, cached) {
   if (!magic && total >= 4 && !item.fracturedItem) cheap.push(t('Fracturing Orb — locks a random modifier in place (rare with 4+ modifiers); worth it when most modifiers are good'));
   if (cheap.length) sections.push({ kind: 'cheap', how: cheap });
 
-  return { open, max, sections, source: 'RePoE (game files) · demand: poe.ninja' };
+  const goal = planGoal(mine, normal, max, want, magic);
+  return { open, max, sections, goal, source: 'RePoE (game files) · demand: poe.ninja' };
 }
 
-module.exports = { advise };
+// Цель крафта: какой была бы лучшая вещь из этой базы. На каждой стороне — самые ценные моды из текущих и возможных:
+// ценность = спрос (% билдов) × качество тира; кандидату засчитываем средний тир (что выпадет — неизвестно).
+// Fractured снять нельзя — остаются всегда. Возвращает { keep, remove, add } или null, если улучшать нечего.
+const TIER_VALUE = [0, 1, 0.85, 0.7, 0.6];
+function planGoal(mine, candidates, max, want, magic) {
+  const value = (pct, tier) => pct * (TIER_VALUE[tier] || 0.5);
+  const keep = [], remove = [], add = [];
+  for (const side of ['prefix', 'suffix']) {
+    const cur = mine.filter((a) => a.side === side).map((a) => {
+      const pct = a.mod ? Math.max(0, ...a.mod.lines.map((l) => want.get(l) || 0)) : 0;
+      return { kind: 'cur', a, pct, v: a.tag === 'fractured' || !a.mod ? Infinity : value(pct, a.tier) };
+    });
+    const cand = candidates.filter((c) => c.side === side).map((c) => ({ kind: 'add', c, pct: c.pct, v: value(c.pct, 2) }));
+    const chosen = [...cur, ...cand].sort((x, y) => y.v - x.v).slice(0, max[side]);
+    for (const x of cur) {
+      const info = { side, text: x.a.mod ? x.a.mod.lines.join(' / ') : x.a.name, templates: x.a.mod ? x.a.mod.lines : [], tier: x.a.tier, pct: x.pct };
+      (chosen.includes(x) ? keep : remove).push(info);
+    }
+    for (const x of cand) if (chosen.includes(x)) add.push({ ...x.c, side });
+  }
+  if (!add.length) return null;
+  add.sort((x, y) => y.pct - x.pct);
+  // Шаги: сначала — убрать лишнее и вставить самый востребованный мод.
+  const steps = [];
+  if (magic) {
+    const ess = add.find((c) => c.essence);
+    steps.push(ess ? t('{essence} — makes it rare with {mod}', { essence: ess.essence.name, mod: ess.text }) : t('Regal Orb — makes it rare (random modifier)'));
+  }
+  // Сначала сторона, где самый востребованный мод (ключевой) — он сильнее всего поднимает цену.
+  const top = (side) => Math.max(0, ...add.filter((c) => c.side === side).map((c) => c.pct));
+  for (const side of ['prefix', 'suffix'].sort((x, y) => top(y) - top(x))) {
+    const out = remove.filter((r) => r.side === side);
+    const into = add.filter((c) => c.side === side);
+    if (!into.length) continue;
+    const S = side === 'prefix' ? 'Sinistral' : 'Dextral';
+    if (out.length) steps.push(t('Remove {mods}: Orb of Annulment + Omen of {S} Annulment (random {side}), or Chaos Orb + Omen of Whittling if it is the lowest-level modifier', { mods: out.map((r) => r.text).join(', '), S, side: t(side) }));
+    steps.push(t('Add {mods}: Exalted Orb + Omen of {S} Exaltation', { mods: into.map((c) => c.text).join(', '), S }) + (into.length > 1 ? t(' (Omen of Greater Exaltation adds two)') : ''));
+  }
+  return { keep, remove, add: add.map(({ side, text, pct, tier, tiers, range, stats, essence }) => ({ side, text, pct, tier, tiers, range, stats, essence })), steps };
+}
+
+// Может ли мод (шаблон poe.ninja: «# to Level of all Spell Skills») встать на эту базу. null — пул модов ещё не загружен.
+function rollsOn(baseType, template) {
+  if (!data) return null;
+  const base = data.bases.get(baseType);
+  if (!base) return null;
+  const want = templates(template)[0];
+  return data.pool.some((m) => (m.domain === 'item' || m.domain === 'desecrated') && m.lines.includes(want) && canRoll(m, base.tags || []));
+}
+
+module.exports = { advise, load, rollsOn };

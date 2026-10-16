@@ -1,0 +1,17 @@
+Item Class: Staves
+Rarity: Rare
+Doom Spire
+Chiming Staff
+--------
+Requires: Level 78, 165 Int
+--------
+Item Level: 81
+--------
+{ Prefix Modifier "Runic" (Tier: 1) — Damage, Caster }
+109(105-119)% increased Spell Damage
+{ Prefix Modifier "Blasting" (Tier: 2) — Damage, Elemental, Fire }
+Gain 31(30-33)% of Damage as Extra Fire Damage
+{ Suffix Modifier "of Finesse" (Tier: 2) — Caster, Speed }
+37(35-40)% increased Cast Speed
+{ Suffix Modifier "of the Philosopher" (Tier: 3) — Attribute }
++28(25-28) to Intelligence

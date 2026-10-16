@@ -287,7 +287,7 @@ async function priceCheck(text) {
     demand = await Promise.race([q, new Promise((r) => setTimeout(() => r(null), 1500))]);
   }
   lastItem = item;
-  const prepared = pricing.prepare(item, demand);
+  const prepared = pricing.prepare(item, demand, (tpl) => craft.rollsOn(item.baseType, tpl));
   // Тема вещи для советов по крафту: два самых важных включённых мода (без сумм).
   lastThemeMods = prepared.filters.mods.filter((m) => m.enabled && m.statId && m.tag !== 'pseudo' && !m.option)
     .sort((a, b) => (b.importance || 0) - (a.importance || 0)).slice(0, 2).map((m) => m.text.split('\n')[0]);
@@ -308,6 +308,7 @@ async function initData() {
   }
   await pricing.init();
   api.loadNinja(settings.get().league).catch(() => {});
+  craft.load(api.cached).catch((e) => log('craft data', e.message)); // пул модов — и для «нет ключевого мода»
 }
 
 // Горячую клавишу занимаем, только пока активна игра (или наше окно): в остальных программах она остаётся их.
