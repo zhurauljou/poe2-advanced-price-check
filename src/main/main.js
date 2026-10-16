@@ -13,6 +13,7 @@ const updater = require('./updater');
 const { popularBuilds, categoryDemand } = require('./ninjaBuilds');
 const craft = require('./craft');
 let lastItem = null; // последний разобранный предмет — для советов по крафту
+let lastThemeMods = []; // его ключевые моды — спрос для крафта считаем среди билдов с ними
 const { parseItem } = require('./parser');
 
 const WIDTH = 480;
@@ -232,7 +233,11 @@ async function priceCheck(text) {
     demand = await Promise.race([q, new Promise((r) => setTimeout(() => r(null), 1500))]);
   }
   lastItem = item;
-  send('item', { ...pricing.prepare(item, demand), league, leagues, priceCurrency: settings.get().priceCurrency || 'any' });
+  const prepared = pricing.prepare(item, demand);
+  // Тема вещи для советов по крафту: два самых важных включённых мода (без сумм).
+  lastThemeMods = prepared.filters.mods.filter((m) => m.enabled && m.statId && m.tag !== 'pseudo' && !m.option)
+    .sort((a, b) => (b.importance || 0) - (a.importance || 0)).slice(0, 2).map((m) => m.text.split('\n')[0]);
+  send('item', { ...prepared, league, leagues, priceCurrency: settings.get().priceCurrency || 'any' });
   show();
 }
 
@@ -474,8 +479,10 @@ app.whenReady().then(() => {
     if (!lastItem) return { note: 'No item' };
     const league = settings.get().league;
     const rarity = lastItem.rarity === 'Normal' ? 'Rare' : lastItem.rarity;
-    const d = await categoryDemand({ league, itemClass: lastItem.itemClass, rarity, limit: 80 }, api.fetchBuffer).catch(() => null);
-    return craft.advise(lastItem, d && d.mods, api.cached);
+    const d = await categoryDemand({ league, itemClass: lastItem.itemClass, rarity, limit: 80, withMods: lastThemeMods },
+      api.fetchBuffer).catch(() => null);
+    const r = await craft.advise(lastItem, d && d.mods, api.cached);
+    return { ...r, theme: d ? d.themed : [], themeBuilds: d ? d.total : null };
   });
   ipcMain.handle('demand', (_e, opts) => categoryDemand({ ...opts, league: settings.get().league, limit: 10 }, api.fetchBuffer));
   ipcMain.handle('set-price-currency', (_e, c) => { settings.set({ priceCurrency: c }); });

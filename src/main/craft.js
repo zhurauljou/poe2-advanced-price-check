@@ -88,11 +88,14 @@ async function advise(item, demandMods, cached) {
 
   // Востребованные моды (≥ 15% билдов), которые могут встать: лучший доступный по ilvl тир.
   const want = new Map((demandMods || []).filter((r) => r.pct >= 15).map((r) => [r.name.toLowerCase(), r.pct]));
+  // Строки, которые на вещи уже есть, не делают кандидата востребованным: у гибрида «броня / урон миньонов»
+  // спрос считаем по броне — урон миньонов у вещи уже есть (а при спросе «среди билдов с ним» он был бы 100%).
+  const own = new Set((item.modLines || []).flatMap((l) => templates(l.text)));
   const candidates = (domain) => {
     const byType = new Map();
     for (const m of onBase) {
       if (m.domain !== domain || m.is_essence_only) continue;
-      const pct = Math.max(0, ...m.lines.map((l) => want.get(l) || 0));
+      const pct = Math.max(0, ...m.lines.filter((l) => !own.has(l)).map((l) => want.get(l) || 0));
       if (!pct || (m.groups || []).some((g) => present.has(g))) continue;
       if (!byType.has(m.type)) byType.set(m.type, { side: m.generation_type, pct, tiers: [] });
       byType.get(m.type).tiers.push(m);

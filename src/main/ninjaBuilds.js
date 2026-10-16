@@ -282,22 +282,41 @@ async function popularBuilds(opts, fetchBuffer) {
 // Спрос по категории: какие базы и моды носят на редких (магических…) вещах этого класса.
 // Один фильтр «Rare Helmet» — в ответе приходят подразделы itembasetypes-<тип> и itemmods-<тип> со счётчиками.
 async function categoryDemand(opts, fetchBuffer) {
-  const { league, itemClass, rarity = 'Rare', limit = 12, timeMachine } = opts || {};
+  // withMods — моды предмета: спрос считаем среди билдов, которые носят такую вещь С ЭТИМИ модами
+  // (тема вещи: миньоны, заклинания…). Мало таких билдов (< minBuilds) — откатываемся к общему спросу по классу.
+  const { league, itemClass, rarity = 'Rare', limit = 12, timeMachine, withMods = [], minBuilds = 150 } = opts || {};
   const snap = await snapshot(league, fetchBuffer);
   const base = await search(snap, [], timeMachine, fetchBuffer);
   const itemNames = base.values.item || [];
   const cat = categoryKey(itemNames, rarity, itemClass);
   if (!cat) return { league: snap.name, category: null, total: 0, bases: [], mods: [] };
   const type = ((base.props.item || {}).type || [])[itemNames.indexOf(cat)] || null;
-  const res = await search(snap, [['items', cat]], timeMachine, fetchBuffer);
+  let res = await search(snap, [['items', cat]], timeMachine, fetchBuffer);
+  let themed = [];
+  const modKey = subKey(res.dims, 'itemmods', type);
+  if (withMods.length && modKey) {
+    const names = res.dims[modKey].map((r) => r.name);
+    const params = [['items', cat]];
+    for (const m of withMods) {
+      const t = findCi(names, modTemplate(m));
+      if (t && !themed.includes(t)) { params.push([modKey, t]); themed.push(t); }
+    }
+    if (themed.length) {
+      const narrow = await search(snap, params, timeMachine, fetchBuffer);
+      if (narrow.total >= minBuilds) res = narrow; else themed = [];
+    }
+  }
+  const page = `https://poe.ninja/poe2/builds/${snap.url}?items=${encodeURIComponent(cat)}`
+    + themed.map((t) => `&${encodeURIComponent(modKey)}=${encodeURIComponent(t)}`).join('');
   return {
     league: snap.name,
     category: cat,
+    themed, // по каким модам сузили (пусто — общий спрос по классу)
     total: res.total,
     allTotal: base.total,
     bases: top(res.dims[subKey(res.dims, 'itembasetypes', type)] || [], res.total, limit),
     mods: top(res.dims[subKey(res.dims, 'itemmods', type)] || [], res.total, limit),
-    page: `https://poe.ninja/poe2/builds/${snap.url}?items=${encodeURIComponent(cat)}`,
+    page,
   };
 }
 

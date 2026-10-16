@@ -101,6 +101,16 @@ function renderBanner() {
 // Выбор лиги — своя выпадашка: обычные лиги сверху, хардкор (HC / Hardcore) — ниже, с красным тегом.
 const isHC = (l) => /^(HC |Hardcore)/.test(l);
 
+// Обрезанное многоточием имя или база в шапке — полный текст в подсказке (впереди подсказки про клик).
+function fullNameTitles() {
+  requestAnimationFrame(() => {
+    for (const el of [$('name'), $('base')]) {
+      if (el.scrollWidth <= el.clientWidth) continue;
+      el.title = el.textContent + (el.title ? `\n${el.title}` : '');
+    }
+  });
+}
+
 function renderLeagues() {
   $('leagueName').textContent = state.league;
   // Текущий сезон: трейд отдаёт лиги от новой к старой — первая не Standard и не хардкор.
@@ -156,7 +166,7 @@ function renderTooltip() {
     if (item.requires) {
       const rest = esc(item.requires.replace(/^Level \d+,?\s*/, ''));
       meta.push(item.reqLevel
-        ? `Requires: ${pick('m:reqLevel', 'Level', `<b>${item.reqLevel}</b>`, f.reqLevel, '≤', 'max')}${rest ? `, <b>${rest}</b>` : ''}`
+        ? `Requires: ${pick('m:reqLevel', 'Level', `<b>${item.reqLevel}</b>`, f.reqLevel, '≤', 'max')}${rest ? `<span class="req-rest">, <b>${rest}</b></span>` : ''}`
         : `Requires: <b>${esc(item.requires)}</b>`);
     }
     if (item.ilvl) meta.push(pick('m:ilvl', 'Item Level', `<b>${item.ilvl}</b>`, f.ilvl, '≥', 'min'));
@@ -460,7 +470,10 @@ function renderCraft(r) {
       parts.push(`<div class="craft-sec"><div class="k">Cheap and safe</div>${how(s.how)}</div>`);
     }
   }
-  parts.push(`<div class="craft-foot">Mod pool: game files (RePoE). Roll chances aren't shown — PoE 2 files have no modifier weights.<br>% = share of builds using the modifier on this item class (poe.ninja).</div>`);
+  if (r.theme && r.theme.length) {
+    parts.splice(1, 0, `<div class="craft-theme" title="Demand % below is among ${r.themeBuilds} builds that wear this item class with these modifiers">Demand among builds using <b>${r.theme.map(esc).join('</b> + <b>')}</b></div>`);
+  }
+  parts.push(`<div class="craft-foot">Mod pool: game files (RePoE). Roll chances aren't shown — PoE 2 files have no modifier weights.<br>% = share of those builds using the modifier (poe.ninja).</div>`);
   $('craft').innerHTML = head + parts.join('');
 }
 
@@ -602,7 +615,7 @@ function renderResults(r) {
     <div class="lots${showAllLots ? ' all' : ''}">${r.listings.map((l, i) => `
       <div class="lot${i >= LOTS_SHOWN ? ' more' : ''}${ageClass(l.indexed)}" data-i="${i}" title="Copy whisper to seller">
         <span class="chip">${l.currencyImage ? `<img src="${esc(l.currencyImage)}" alt="">` : ''}${fmt(l.amount)}${l.currencyImage ? '' : ' ' + esc(l.currencyName)}</span>
-        <span class="eq">${l.divine != null && !sameUnit(l) ? '≈ ' + money(l.divine) : ''}</span>
+        <span class="eq">${cmpBadge(l)}${l.divine != null && !sameUnit(l) ? '≈ ' + money(l.divine) : ''}</span>
         <span class="seller"><span class="dot${l.online ? ' on' : ''}"></span>${esc(l.seller)}</span>
         <span class="age">${l.indexed ? ago(l.indexed) : ''}</span>
       </div>`).join('')}
@@ -630,6 +643,30 @@ function modValue(text) {
   return nums.length ? nums.reduce((s, v) => s + v, 0) / nums.length : null;
 }
 const propNum = (v) => { const m = String(v).replace(/,/g, '').match(/\d+(?:\.\d+)?/); return m ? +m[0] : null; };
+
+// «▲2 ▼1» в строке лота: сколько модов у конкурента лучше и хуже ваших — без наведения.
+// Та же логика, что в карточке сравнения: по стату, с суммой по категориям; варианты (Legacy) — по тексту.
+function cmpBadge(l) {
+  const t = l.tip;
+  if (!t || !state || !state.filters) return '';
+  const key = (id) => id.replace(/^\w+\./, '');
+  const ours = new Map();
+  for (const m of state.filters.mods) {
+    if (!m.statId || m.tag === 'pseudo' || m.option) continue;
+    ours.set(key(m.statId), (ours.get(key(m.statId)) || 0) + Math.abs(m.value || 0));
+  }
+  const theirs = new Map();
+  for (const m of t.mods) if (m.statId) theirs.set(key(m.statId), (theirs.get(key(m.statId)) || 0) + Math.abs(modValue(m.text) || 0));
+  let better = 0, worse = 0;
+  for (const [k, v] of theirs) {
+    if (!ours.has(k)) continue;
+    const c = compareClass(v, ours.get(k));
+    if (c === 'better') better++;
+    else if (c === 'worse') worse++;
+  }
+  if (!better && !worse) return '';
+  return `<span class="cmpc" title="Modifiers better / worse than yours">${better ? `<i class="b">▲${better}</i>` : ''}${worse ? `<i class="w">▼${worse}</i>` : ''}</span>`;
+}
 
 function compareClass(theirs, ours) {
   if (theirs == null || ours == null) return '';
@@ -700,8 +737,16 @@ function hideCompare() {
   window.pc.compareHide();
 }
 
+// Фильтры поменяли после поиска — кнопка Search подсвечивается: результат на экране уже не про них.
+function markDirty() {
+  const b = $('search');
+  if (!b.classList.contains('dirty')) { b.classList.add('dirty'); b.textContent = 'Search · filters changed'; }
+}
+
 async function runSearch(relax = false) {
   const seq = ++searchSeq;
+  $('search').classList.remove('dirty');
+  $('search').textContent = 'Search';
   $('search').disabled = true;
   setStatus('');
   renderSearchingHero();
@@ -752,6 +797,7 @@ window.pc.onItem((data) => {
   $('demandBadge').textContent = '';
   renderLeagues();
   renderBanner();
+  fullNameTitles();
   renderTooltip();
   if (state.exchange) renderExchangeHero();
   renderFilters();
@@ -798,6 +844,7 @@ $('mods').addEventListener('click', (e) => {
 $('mods').addEventListener('input', (e) => {
   const row = e.target.closest('.mod');
   if (!row) return;
+  markDirty();
   const m = state.filters.mods[+row.dataset.i];
   if (e.target.dataset.k === 'enabled') {
     m.enabled = e.target.checked;
@@ -819,6 +866,7 @@ $('tooltip').addEventListener('click', (e) => {
   if (e.target.closest('.tp-in')) return; // клик в поле границы — не переключаем
   const el = e.target.closest('.tp');
   if (!el) return;
+  markDirty();
   const flt = filterByRef(el.dataset.ref);
   flt.enabled = !flt.enabled;
   renderTooltip();
@@ -832,12 +880,14 @@ $('tooltip').addEventListener('click', (e) => {
 $('tooltip').addEventListener('input', (e) => {
   const t = e.target;
   if (!t.classList.contains('tp-in')) return;
+  markDirty();
   filterByRef(t.dataset.ref)[t.dataset.f] = t.value === '' ? null : Number(t.value);
 });
 
 $('misc').addEventListener('click', (e) => {
   const b = e.target.closest('[data-cur]');
   if (!b) return;
+  markDirty();
   state.filters.priceCurrency = b.dataset.cur;
   window.pc.setPriceCurrency(b.dataset.cur);
   renderFilters();
@@ -845,6 +895,7 @@ $('misc').addEventListener('click', (e) => {
 
 $('misc').addEventListener('input', (e) => {
   const t = e.target;
+  markDirty();
   if (t.dataset.o) state.filters[t.dataset.o] = t.checked;
   if ('optmin' in t.dataset) state.filters.optionMin = Number(t.value) || null;
   if (t.type === 'checkbox') t.closest('.opt').classList.toggle('off', !t.checked);
@@ -853,6 +904,7 @@ $('misc').addEventListener('input', (e) => {
 $('banner').addEventListener('click', (e) => {
   const el = e.target.closest('.pick');
   if (!el || !state || !state.searchable) return;
+  markDirty();
   const f = state.filters;
   const isName = el.id === 'name' && state.item.rarity === 'Unique' && $('base').textContent;
   if (isName) f.useName = !f.useName;

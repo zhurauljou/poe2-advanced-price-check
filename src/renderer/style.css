@@ -241,6 +241,8 @@ body.cmp-page { background: #0a0d12; }
 /* ---- вкладка Craft ---- */
 .craft-slots { text-align: center; color: var(--label); font-size: 14px; }
 .craft-slots b { color: var(--cream); }
+.craft-theme { text-align: center; font-size: 12.5px; color: var(--muted); margin-top: 2px; }
+.craft-theme b { color: var(--g-mod); font-weight: normal; font-family: var(--game); }
 .craft-sec { margin-top: 6px; }
 .craft-sec .k { font: 700 14px var(--sc); letter-spacing: .4px; color: var(--cream); margin-bottom: 3px; }
 .craft-how { display: flex; gap: 6px; font-size: 14px; color: var(--gold); margin: 2px 0; }
@@ -368,3 +370,13 @@ body.upd-page { height: auto; }
 .spin { display: inline-block; width: 13px; height: 13px; margin-right: 8px; vertical-align: -1px; border: 2px solid #4a3f2c;
         border-top-color: var(--gold); border-radius: 50%; animation: spin .8s linear infinite; }
 @keyframes spin { to { transform: rotate(360deg); } }
+
+/* «Level: 65, 78 Int» — без лишнего пробела перед запятой (у значения-переключателя есть поля) */
+.tt .req-rest { margin-left: -5px; }
+/* ▲▼ в строке лота: сколько модов у конкурента лучше и хуже ваших */
+.cmpc { margin-right: 6px; font: 700 12px var(--body); }
+.cmpc i { font-style: normal; margin-left: 3px; }
+.cmpc .b { color: var(--good); } .cmpc .w { color: var(--bad); }
+/* Фильтры поменяли после поиска — Search подсвечен */
+#search.dirty { color: #1a1408; background: linear-gradient(#f1d79a, #c9a45c); border-color: #f1d79a;
+                box-shadow: 0 0 12px rgba(255, 190, 80, .35); }
