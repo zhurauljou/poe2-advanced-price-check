@@ -7,6 +7,7 @@ contextBridge.exposeInMainWorld('pc', {
   whisperGame: (text) => ipcRenderer.invoke('whisper-game', text),
   demandLevel: () => ipcRenderer.invoke('demand-level'),
   setDemandLevel: (l) => ipcRenderer.invoke('set-demand-level', l),
+  marketGame: () => ipcRenderer.invoke('market-game'),
   quickPrice: (item, filters) => ipcRenderer.invoke('quick-price', item, filters),
   search: (item, filters, relax) => ipcRenderer.invoke('search', item, filters, relax),
   setLeague: (league) => ipcRenderer.invoke('set-league', league),

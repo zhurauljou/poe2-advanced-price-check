@@ -823,12 +823,12 @@ function renderResults(r) {
   box.innerHTML = `
     <div class="sect"><span>Cheapest listings <b class="cnt">${r.total.toLocaleString('en-US')}</b></span></div>
     <div class="lots${showAllLots ? ' all' : ''}">${r.listings.map((l, i) => `
-      <div class="lot${i >= LOTS_SHOWN ? ' more' : ''}${ageClass(l.indexed)}" data-i="${i}" title="${l.whisper ? 'Copy whisper to seller' : 'Instant buyout — opens the trade site (Travel to Hideout)'}">
+      <div class="lot${i >= LOTS_SHOWN ? ' more' : ''}${ageClass(l.indexed)}" data-i="${i}" title="${l.whisper ? 'Copy whisper to seller' : 'Instant buyout — opens the in-game market (Travel to Hideout)'}">
         <span class="chip">${l.currencyImage ? `<img src="${esc(l.currencyImage)}" alt="">` : ''}${fmt(l.amount)}${l.currencyImage ? '' : ' ' + esc(l.currencyName)}</span>
         <span class="eq">${cmpBadge(l)}${l.divine != null && !sameUnit(l) ? '≈ ' + money(l.divine) : ''}</span>
         <span class="seller">${l.whisper ? '' : '<b class="ib" title="Instant buyout">⚡</b>'}<span class="dot${l.online ? ' on' : ''}"></span>${esc(l.seller)}</span>
         <span class="age">${l.indexed ? ago(l.indexed) : ''}</span>
-        <span class="acts">${l.whisper ? '<i data-a="whisper" title="Whisper in game — opens chat with the message, you press Enter"><svg viewBox="0 0 16 16"><path d="M2 3h12v8H7l-3 3v-3H2z" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linejoin="round"/></svg></i>' : ''}<i data-a="site" title="Open on the trade site (Travel to Hideout for instant buyout)">↗</i></span>
+        <span class="acts">${l.whisper ? '<i data-a="whisper" title="Whisper in game — opens chat with the message, you press Enter"><svg viewBox="0 0 16 16"><path d="M2 3h12v8H7l-3 3v-3H2z" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linejoin="round"/></svg></i>' : ''}<i data-a="site" title="Open the in-game market with your item (like Shift+Alt+click) — Travel to Hideout there">↗</i></span>
       </div>`).join('')}
     </div>
     ${r.listings.length > LOTS_SHOWN ? `<button class="link lots-more">${showAllLots ? 'Show fewer' : `Show all ${r.listings.length}`}</button>` : ''}`;
@@ -838,15 +838,14 @@ function renderResults(r) {
     const act = e.target.closest('[data-a]');
     if (act) {
       const l = r.listings[+row.dataset.i];
-      if (act.dataset.a === 'site') window.pc.openUrl(r.url);
+      if (act.dataset.a === 'site') await openMarket(r.url);
       else if (!(await window.pc.whisperGame(l.whisper))) setStatus('Whisper copied — switch to the game and paste it into chat (Enter, Ctrl+V)');
       fit();
       return;
     }
     // Мгновенный выкуп — шёпота нет: покупка через «Travel to Hideout» на трейде.
     if (!r.listings[+row.dataset.i].whisper) {
-      window.pc.openUrl(r.url);
-      setStatus('Instant buyout — use Travel to Hideout on the trade site');
+      await openMarket(r.url);
       fit();
       return;
     }
@@ -860,6 +859,13 @@ function renderResults(r) {
     row.addEventListener('mouseenter', () => showCompare(r.listings[+row.dataset.i], row));
     row.addEventListener('mouseleave', hideCompare);
   });
+}
+
+// Внутриигровой маркет с проверяемой вещью (как Shift+Alt+клик по ней); не вышло — сайт трейда.
+async function openMarket(url) {
+  if (await window.pc.marketGame()) { setStatus('Market opened in game — find the listing and use Travel to Hideout'); return; }
+  window.pc.openUrl(url);
+  setStatus('Opened on the trade site — use Travel to Hideout there');
 }
 
 // ---- карточка конкурента при наведении на лот: что у него лучше / хуже, чем у нашей вещи ----
