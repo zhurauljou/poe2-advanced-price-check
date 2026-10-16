@@ -89,12 +89,16 @@ const PROPS = [
   { key: 'edps', label: 'Elemental DPS', covers: 'damage' },
 ];
 
+const PROP_MIN = 0.97;
+const PROP_LOOSE = 0.85;
+
 function propFilters(item) {
   if (!['Rare', 'Magic', 'Normal'].includes(item.rarity)) return [];
   return PROPS.filter((p) => item.props[p.key] > 0).map((p) => ({
     ...p,
     value: item.props[p.key],
-    min: Math.floor(item.props[p.key] * 0.85),
+    // Защита/DPS — главное в цене брони и оружия: ищем почти такие же (−3%); при нехватке лотов ослабление опустит до −15%.
+    min: Math.floor(item.props[p.key] * PROP_MIN),
     // У оружия ищем по общему DPS, физ/элем — по желанию.
     enabled: p.key !== 'pdps' && p.key !== 'edps' && p.key !== 'spirit',
   }));
@@ -343,6 +347,7 @@ const MAX_RELAX = 3; // каждый шаг — отдельный поиск, �
 function strength(f) {
   if (f.kind === 'rolls') return 0.2; // сначала — любой ролл того же тира, ничего не снимая
   if (f.kind === 'cheap') return 0.3; // гнездо и качество докупаются за копейки — снимаем первыми
+  if (f.kind === 'proploose') return 1.7; // защита/DPS −3% → −15%: раньше, чем снимать суммы и саму защиту
   if (f.kind === 'base') return 1.75; // точная база → вся категория: после слабых модов, до сумм и защиты/DPS
   if (f.kind === 'prop') return 2.5;
   if (f.kind === 'options') return 2.8;
@@ -371,6 +376,15 @@ function weakest(filters) {
     all.push({ kind: 'rolls', set enabled(v) {
       tight.forEach((m, i) => { m.min = v ? saved[i] : Math.ceil(m.range.lo); });
       filters.rollsLoosened = !v;
+    } });
+  }
+  // Защита/DPS: сперва опускаем порог до −15%, снимать фильтр — только потом.
+  const strict = (filters.props || []).filter((p) => p.enabled && p.min > Math.floor(p.value * PROP_LOOSE));
+  if (strict.length && !filters.propsLoosened) {
+    const saved = strict.map((p) => p.min);
+    all.push({ kind: 'proploose', label: strict.map((p) => p.label).join(', '), set enabled(v) {
+      strict.forEach((p, i) => { p.min = v ? saved[i] : Math.floor(p.value * PROP_LOOSE); });
+      filters.propsLoosened = !v;
     } });
   }
   // Точная база (не уник по имени) — тоже фильтр: редких баз на рынке бывает 1–2 штуки.
@@ -414,6 +428,7 @@ async function search(league, item, filters, relax = false) {
     if (!last) break;
     last.enabled = false;
     dropped.push(last.kind === 'rolls' ? 'roll minimums → tier floor'
+      : last.kind === 'proploose' ? `${last.label} −15%`
       : last.kind === 'base' ? `exact base ${item.baseType}`
       : last.kind === 'options' ? `now ${last.label}`
       : last.kind === 'prop' || last.kind === 'cheap' ? `${last.label} ≥ ${last.min}` : last.text.split('\n')[0]);
