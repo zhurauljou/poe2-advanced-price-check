@@ -16,7 +16,8 @@ const SEP = '--------';
 // { Desecrated Prefix Modifier "Unassailable" (Tier: 2) — Energy Shield }
 // 93(92-100)% increased Energy Shield
 const MOD_HEADER = /^\{ (.*) \}$/;
-const RANGE = /(-?\d+(?:\.\d+)?)\(-?\d+(?:\.\d+)?--?\d+(?:\.\d+)?\)/g;
+// Диапазон сразу после значения: «93(92-100)%», «-10(-12--8)», и у вариантов — «Legacy of Gold(Amethyst-Topaz)».
+const RANGE = /([^\s(])\([^()\s]+-[^()\s]+\)/g;
 
 function headerInfo(h) {
   const kind = h.split(' — ')[0];

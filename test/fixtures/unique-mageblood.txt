@@ -7,19 +7,21 @@ Requires: Level 55
 --------
 Item Level: 80
 --------
-Has 2 Charm Slots (implicit)
-20% of Flask Recovery applied Instantly (implicit)
+{ Implicit Modifier }
+20% of Flask Recovery applied Instantly
+{ Implicit Modifier — Charm }
+Has 2(1-3) Charm Slots
 --------
 { Unique Modifier }
-Legacy of Stibnite
+Legacy of Stibnite(Amethyst-Topaz) — Unscalable Value
 { Unique Modifier }
-Legacy of Quicksilver
+Legacy of Quicksilver(Amethyst-Topaz) — Unscalable Value
 { Unique Modifier }
-Legacy of Bismuth
+Legacy of Bismuth(Amethyst-Topaz) — Unscalable Value
 { Unique Modifier }
-Legacy of Gold
+Legacy of Gold(Amethyst-Topaz) — Unscalable Value
 { Unique Modifier }
-All Mage's Legacies have 29(20-30)% increased effect per duplicate Mage's Legacy you have
+All Mage's Legacies have 29(25-50)% increased effect per duplicate Mage's Legacy you have
 --------
 Rivers of power coursed through their veins.
 Now, that power is yours, for good or ill.
