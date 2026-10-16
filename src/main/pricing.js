@@ -231,6 +231,39 @@ function buildQuery(item, f) {
   return { query, sort: { price: 'asc' } };
 }
 
+// Разметка трейда «[EnergyShield|Energy Shield]» → «Energy Shield».
+const clean = (s) => String(s || '').replace(/\[(?:[^|\]]*\|)?([^\]]*)\]/g, '$1');
+
+// Вещь конкурента для карточки при наведении на лот: шапка, свойства и моды с id статов
+// (по ним сравниваем с нашей вещью — те же id, что в наших фильтрах).
+function itemTip(it) {
+  const mods = [];
+  for (const [key, list] of Object.entries(it)) {
+    if (!/Mods$/.test(key) || !Array.isArray(list)) continue;
+    const domain = key.replace(/Mods$/, '');
+    for (const m of list) {
+      if (typeof m === 'string') { mods.push({ text: clean(m), domain }); continue; }
+      const tier = m.mods && m.mods[0] && m.mods[0].tier;
+      mods.push({
+        text: clean(m.description),
+        domain: m.domain || domain,
+        statId: m.hash ? m.hash.replace(/^stat\./, '') : null,
+        tier: tier ? +String(tier).replace(/\D/g, '') || null : null,
+      });
+    }
+  }
+  return {
+    name: it.name || '',
+    base: it.typeLine || it.baseType || '',
+    rarity: it.rarity || '',
+    ilvl: it.ilvl,
+    corrupted: !!it.corrupted,
+    props: (it.properties || []).filter((p) => p.values && p.values[0])
+      .map((p) => ({ k: clean(p.name), v: clean(p.values[0][0]) })),
+    mods,
+  };
+}
+
 function toDivine(amount, currency) {
   if (currency === 'divine') return amount;
   const row = api.ninja.byId.get(currency);
@@ -329,6 +362,7 @@ async function search(league, item, filters, relax = false) {
         whisper: r.listing.whisper,
         ilvl: r.item.ilvl,
         corrupted: !!r.item.corrupted,
+        tip: itemTip(r.item),
       };
     });
   }

@@ -434,6 +434,87 @@ function renderResults(r) {
     setStatus('Whisper copied — paste it into game chat (Enter, Ctrl+V)');
     fit();
   }));
+  box.querySelectorAll('.lot').forEach((row) => {
+    row.addEventListener('mouseenter', () => showCompare(r.listings[+row.dataset.i], row));
+    row.addEventListener('mouseleave', hideCompare);
+  });
+}
+
+// ---- карточка конкурента при наведении на лот: что у него лучше / хуже, чем у нашей вещи ----
+// Значение мода — среднее чисел в строке по модулю («reduced» тоже: чем больше, тем сильнее мод).
+function modValue(text) {
+  const nums = (String(text).match(/\d+(?:\.\d+)?/g) || []).map(Number);
+  return nums.length ? nums.reduce((s, v) => s + v, 0) / nums.length : null;
+}
+const propNum = (v) => { const m = String(v).replace(/,/g, '').match(/\d+(?:\.\d+)?/); return m ? +m[0] : null; };
+
+function compareClass(theirs, ours) {
+  if (theirs == null || ours == null) return '';
+  if (theirs > ours * 1.005) return 'better';
+  if (theirs < ours * 0.995) return 'worse';
+  return 'same';
+}
+
+function showCompare(l, row) {
+  const t = l.tip;
+  if (!t) return;
+  const { item, filters: f } = state;
+  // Сравниваем по самому стату, складывая все категории: «41% increased ES» (обычный) + «93%» (desecrated)
+  // против их «138%» — игроку важна сумма, а не откуда мод. Ключ — id без категории: «stat_4015621042».
+  const key = (id) => id.replace(/^\w+\./, '');
+  const ours = new Map();
+  for (const m of f.mods) {
+    if (!m.statId || m.tag === 'pseudo' || m.option) continue;
+    ours.set(key(m.statId), (ours.get(key(m.statId)) || 0) + Math.abs(m.value || 0));
+  }
+  const theirs = new Map();
+  for (const m of t.mods) if (m.statId) theirs.set(key(m.statId), (theirs.get(key(m.statId)) || 0) + Math.abs(modValue(m.text) || 0));
+  // Варианты (Legacy of Gold) у лота приходят с id без номера варианта — их сверяем по тексту.
+  const ourOptions = new Set(f.mods.filter((m) => m.option).map((m) => m.text.toLowerCase()));
+  const theirTexts = new Set(t.mods.map((m) => m.text.toLowerCase()));
+
+  const mark = { better: '▲', worse: '▼', extra: '+', same: '' };
+  const modLines = t.mods.map((m) => {
+    let cls = '';
+    if (ourOptions.has(m.text.toLowerCase())) {
+      cls = 'same';
+    } else if (m.statId && ours.has(key(m.statId))) {
+      cls = compareClass(theirs.get(key(m.statId)), ours.get(key(m.statId))) || 'same';
+    } else if (m.statId) cls = 'extra';
+    return `<div class="cm ${cls} d-${esc(m.domain)}">${mark[cls] ? `<i>${mark[cls]}</i>` : ''}${esc(m.text)}</div>`;
+  }).join('');
+  const missing = f.mods.filter((m) => m.statId && m.tag !== 'pseudo'
+    && (m.option ? !theirTexts.has(m.text.toLowerCase()) : !theirs.has(key(m.statId))))
+    .map((m) => `<div class="cm missing"><i>✗</i>${esc(m.text.split('\n').join(' + '))}</div>`).join('');
+
+  const ourProps = new Map(item.properties.map((p) => [p.k, propNum(p.v)]));
+  const props = t.props.map((p) => {
+    const cls = ourProps.has(p.k) ? compareClass(propNum(p.v), ourProps.get(p.k)) : '';
+    return `<div class="cm ${cls}">${mark[cls] ? `<i>${mark[cls]}</i>` : ''}${esc(p.k)}: <b>${esc(p.v)}</b></div>`;
+  });
+  if (t.ilvl) {
+    const cls = compareClass(t.ilvl, item.ilvl);
+    props.push(`<div class="cm ${cls}">${mark[cls] ? `<i>${mark[cls]}</i>` : ''}Item Level: <b>${t.ilvl}</b></div>`);
+  }
+
+  const two = t.name && t.base && t.name !== t.base;
+  const html = `
+    <div class="banner mini ${esc(t.rarity)}${two ? '' : ' single'}"><div class="bn-name">${esc(t.name || t.base)}</div>${two ? `<div class="bn-base">${esc(t.base)}</div>` : ''}</div>
+    <div class="cmp-body">
+      ${props.join('')}
+      ${props.length ? '<div class="tt"><div class="sep"></div></div>' : ''}
+      ${modLines}
+      ${t.corrupted ? '<div class="cm corrupt">Corrupted</div>' : ''}
+      ${missing ? `<div class="cmp-miss">Yours has, theirs doesn't:</div>${missing}` : ''}
+      <div class="cmp-legend"><span class="better">▲ better</span> · <span class="worse">▼ worse</span> · <span class="extra">+ you don't have</span> — than your item</div>
+    </div>`;
+  // Карточка — в отдельном окне сбоку (не закрывает оверлей), напротив строки лота.
+  window.lastTip = t; // для --dump-tip в демо
+  window.pc.compareShow(html, row.getBoundingClientRect().top);
+}
+
+function hideCompare() {
+  window.pc.compareHide();
 }
 
 async function runSearch(relax = false) {
@@ -474,6 +555,7 @@ async function runSearch(relax = false) {
 window.pc.onItem((data) => {
   state = data;
   rates = data.rates || {};
+  hideCompare();
   if (state.filters) state.filters.priceCurrency = data.priceCurrency || 'any';
   searchSeq++;
   setStatus('');

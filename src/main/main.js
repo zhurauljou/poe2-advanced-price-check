@@ -31,6 +31,33 @@ if (!app.requestSingleInstanceLock()) app.quit();
 process.on('uncaughtException', (e) => log('uncaught', e));
 process.on('unhandledRejection', (e) => log('unhandled', e));
 
+// Карточка конкурента — отдельное окно сбоку от оверлея, чтобы не закрывать его содержимое.
+const CMP_WIDTH = 440;
+let cmpWin = null;
+let cmpY = 0; // экранная Y строки лота, напротив которой показываем карточку
+
+function createCompare() {
+  cmpWin = new BrowserWindow({
+    width: CMP_WIDTH, height: 300, show: false, frame: false, resizable: false, skipTaskbar: true,
+    alwaysOnTop: true, focusable: false, fullscreenable: false, backgroundColor: '#0a0d12',
+    webPreferences: { preload: path.join(__dirname, 'preload.js'), contextIsolation: true, backgroundThrottling: false },
+  });
+  cmpWin.setAlwaysOnTop(true, 'screen-saver');
+  cmpWin.loadFile(path.join(__dirname, '../renderer/compare.html'));
+}
+
+// Справа от оверлея, не влезает — слева; по высоте — напротив строки лота, в пределах экрана.
+function placeCompare(height) {
+  const b = win.getBounds();
+  const area = screen.getDisplayMatching(b).workArea;
+  let x = b.x + b.width + 6;
+  if (x + CMP_WIDTH > area.x + area.width) x = b.x - CMP_WIDTH - 6;
+  const h = Math.min(Math.ceil(height), area.height - 10);
+  const y = Math.max(area.y, Math.min(cmpY - 40, area.y + area.height - h));
+  cmpWin.setBounds({ x: Math.round(x), y: Math.round(y), width: CMP_WIDTH, height: h });
+  if (!cmpWin.isVisible()) cmpWin.showInactive();
+}
+
 function createOverlay() {
   win = new BrowserWindow({
     width: WIDTH,
@@ -107,6 +134,7 @@ let gameHwnd = 0;
 
 function hide() {
   globalShortcut.unregister('Escape');
+  if (cmpWin) cmpWin.hide();
   if (!win || !win.isVisible()) return;
   if (win.isFocused() && gameHwnd) winapi.focus(gameHwnd);
   win.hide();
@@ -284,6 +312,7 @@ function buildTray() {
 
 app.whenReady().then(() => {
   createOverlay();
+  createCompare();
   refreshTray = buildTray();
   api.onWait = (ms) => send('status', { text: `Waiting for the trade site rate limit… ${Math.ceil(ms / 1000)} s` });
   ready = initData().then(refreshTray);
@@ -301,9 +330,18 @@ app.whenReady().then(() => {
     ready.then(() => priceCheck(sample)).then(() => {
       if (!arg('shot')) return;
       setTimeout(async () => {
+        if (arg('hover')) {
+          // --hover=N: навести на N-й лот — проверить карточку сравнения
+          await win.webContents.executeJavaScript(`document.querySelectorAll('.lot')[${+arg('hover')}]
+            .dispatchEvent(new MouseEvent('mouseenter'))`);
+          await new Promise((r) => setTimeout(r, 1500));
+        }
         if (arg('tab')) {
           await win.webContents.executeJavaScript(`setTab(${JSON.stringify(arg('tab'))})`);
           await new Promise((r) => setTimeout(r, 500));
+        }
+        if (process.argv.includes('--dump-tip')) {
+          console.log(await win.webContents.executeJavaScript('JSON.stringify(window.lastTip && window.lastTip.mods)'));
         }
         if (process.argv.includes('--dump-filters')) {
           console.log(await win.webContents.executeJavaScript(
@@ -311,6 +349,10 @@ app.whenReady().then(() => {
         }
         const img = await win.webContents.capturePage();
         require('fs').writeFileSync(arg('shot'), img.toPNG());
+        if (cmpWin.isVisible()) {
+          const c = await cmpWin.webContents.capturePage();
+          require('fs').writeFileSync(arg('shot').replace(/\.png$/, '-cmp.png'), c.toPNG());
+        }
         app.quit();
       }, 9000);
     });
@@ -331,6 +373,12 @@ app.whenReady().then(() => {
   ipcMain.handle('copy', (_e, t) => clipboard.writeText(t));
   ipcMain.handle('open-url', (_e, u) => { if (/^https:\/\/((www\.)?pathofexile\.com|poe\.ninja)\//.test(u)) shell.openExternal(u); });
   ipcMain.handle('hide', () => hide());
+  ipcMain.handle('compare-show', (_e, html, y) => {
+    cmpY = win.getBounds().y + y;
+    cmpWin.webContents.send('compare', html);
+  });
+  ipcMain.handle('compare-fit', (_e, h) => { if (win.isVisible()) placeCompare(h); });
+  ipcMain.handle('compare-hide', () => cmpWin.hide());
   ipcMain.handle('fit', (_e, h) => {
     const area = screen.getDisplayMatching(win.getBounds()).workArea;
     const height = Math.min(Math.ceil(h), area.height - 20);
