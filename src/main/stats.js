@@ -55,6 +55,11 @@ const TAG_GROUP = { explicit: 'explicit', implicit: 'implicit', enchant: 'enchan
 function pick(cands, tag, localItem) {
   const group = TAG_GROUP[tag] || 'explicit';
   let pool = cands.filter((c) => c.group === group);
+  // Моды от Vaal Orb («зачарования») трейд держит в группе enchant; если там нет — как имплицит.
+  if (tag === 'corrupted') {
+    const ench = cands.filter((c) => c.group === 'enchant');
+    if (ench.length) pool = ench;
+  }
   if (!pool.length) pool = cands.filter((c) => c.group === 'explicit');
   if (!pool.length) return null;
   const pref = pool.filter((c) => c.local === localItem);
@@ -70,6 +75,17 @@ function matchMods(item) {
   const ls = item.modLines;
   for (let i = 0; i < ls.length; i++) {
     const l = ls[i];
+    // Моды в три строки (Undying Hate: «Glorifying … / Passives in radius are Conquered … / Desecration makes …»).
+    if (i + 2 < ls.length && ls[i + 1].tag === l.tag && ls[i + 2].tag === l.tag) {
+      const text3 = [l.text, ls[i + 1].text, ls[i + 2].text].join('\n');
+      const joined3 = lookup(text3);
+      const c3 = joined3 && pick(joined3.cands, l.tag, localItem);
+      if (c3) {
+        out.push({ text: text3, tag: l.tag, tier: l.tier, statId: c3.id, template: c3.text, value: joined3.value, range: l.range });
+        i += 2;
+        continue;
+      }
+    }
     if (i + 1 < ls.length && ls[i + 1].tag === l.tag) {
       const joined = lookup(l.text + '\n' + ls[i + 1].text);
       if (joined) {

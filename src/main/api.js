@@ -196,6 +196,34 @@ function ratesFrom(byId, core) {
   };
 }
 
+// ---------- poe.ninja: цены уников (одна «нижняя» цена на название + базу, без учёта роллов) ----------
+const UNIQUE_TYPES = ['UniqueWeapons', 'UniqueArmours', 'UniqueAccessories', 'UniqueJewels', 'UniqueFlasks',
+  'UniqueCharms', 'UniqueTablets', 'UniqueSanctumRelics'];
+const uniques = { league: null, at: 0, map: new Map(), loading: null };
+
+async function fetchUniques(league) {
+  const q = encodeURIComponent(league);
+  const results = await Promise.all(UNIQUE_TYPES.map((t) =>
+    getJson(`${NINJA}/economy/stash/current/item/overview?league=${q}&type=${t}`).catch(() => null)));
+  const map = new Map();
+  for (const d of results) {
+    for (const ln of (d && d.lines) || []) {
+      map.set(`${ln.name}|${ln.baseType}`, { divine: ln.primaryValue, listings: ln.listingCount,
+        change: ln.sparkLine ? ln.sparkLine.totalChange : null });
+    }
+  }
+  Object.assign(uniques, { league, at: Date.now(), map });
+}
+
+// Цена уника на poe.ninja: { divine, listings, change } или null.
+async function uniquePrice(league, name, baseType) {
+  if (uniques.league !== league || Date.now() - uniques.at > 15 * 60e3) {
+    if (!uniques.loading) uniques.loading = fetchUniques(league).finally(() => { uniques.loading = null; });
+    await uniques.loading;
+  }
+  return uniques.map.get(`${name}|${baseType}`) || null;
+}
+
 module.exports = {
-  TRADE, tradeRequest, fetchBuffer, cached, tradeStats, tradeItems, tradeStatic, tradeLeagues, loadNinja, ninja,
+  TRADE, tradeRequest, fetchBuffer, cached, tradeStats, tradeItems, tradeStatic, tradeLeagues, loadNinja, ninja, uniquePrice,
 };

@@ -443,3 +443,4 @@ body.upd-page { height: auto; }
 .cmp-body .tt, .cmp-miss, .cmp-legend { text-align: center; }
 .cm .yours { margin-left: 6px; font: 12px var(--body); color: var(--muted); white-space: nowrap; }
 .ess { margin-left: 6px; font: 700 11.5px var(--body); color: #c9a0e8; white-space: nowrap; } /* эссенция гарантирует мод */
+.hero .ninja-u { margin-top: 4px; font-size: 13.5px; color: var(--label); } .hero .ninja-u b { color: var(--cream); } .hero .ninja-u:empty { display: none; }

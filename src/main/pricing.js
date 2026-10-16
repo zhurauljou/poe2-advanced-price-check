@@ -65,6 +65,8 @@ function minFor(v, range, importance) {
   const q = rollQuality(v, range);
   // С диапазоном считаем и отрицательные («-11(-20--5)% to all Elemental Resistances»: лучше — ближе к -5).
   if (q == null) return minOf(v);
+  // Короткий целый диапазон («Allocates 3(2-4) Sinister Jewel sockets», «+(1-3) Level») — каждая единица важна: ищем ровно своё.
+  if (Number.isInteger(v) && Number.isInteger(range.lo) && Number.isInteger(range.hi) && range.hi - range.lo <= 3) return v;
   let share = importance >= 2.4 ? 0.75 : importance >= 1.2 ? 0.5 : 0.25;
   if (q >= 0.75) share = Math.max(share, 0.8);
   const m = range.lo + (v - range.lo) * share;
@@ -188,7 +190,8 @@ function prepare(item, demand) {
     // Горячий implicit (≥ 60% билдов: Spirit на скипетре) — тоже сразу, с любым роллом: при точной базе он и так есть у всех,
     // а когда ослабление снимет базу и ищет по категории — не потеряется.
     const hotImplicit = m.tag === 'implicit' && !!m.statId && dp >= 60 && searchMods;
-    const rolls = item.rarity === 'Unique' && m.tag === 'explicit' && !!m.statId && !option && !!m.range && m.range.hi > m.range.lo;
+    // Минусовые строки (весь диапазон ≤ 0: «-11(-20--5)% to all Elemental Resistances») — недостаток, за него не платят.
+    const rolls = item.rarity === 'Unique' && m.tag === 'explicit' && !!m.statId && !option && !!m.range && m.range.hi > m.range.lo && m.range.hi > 0;
     return {
       statId: m.statId,
       text: m.text,
@@ -207,7 +210,8 @@ function prepare(item, demand) {
       option,
       range: m.range || null,
       roll: rollQuality(m.value, m.range),
-      min: option ? null : hotImplicit ? (m.range ? Math.ceil(m.range.lo) : minOf(m.value)) : minFor(m.value, m.range, rolls ? Math.max(w.importance, 1.2) : w.importance),
+      // Вариант с числом («Glorifying … # souls» — сид timeless, «+# to Level of all X Skills») ищем и по числу.
+      min: option ? (m.value != null && /#/.test(m.template || '') ? m.value : null) : hotImplicit ? (m.range ? Math.ceil(m.range.lo) : minOf(m.value)) : minFor(m.value, m.range, rolls ? Math.max(w.importance, 1.2) : w.importance),
     };
   });
   const pseudo = searchMods ? pseudoFilters(mods) : [];
@@ -233,6 +237,8 @@ function prepare(item, demand) {
   };
   return { item, exchange, filters, searchable: !exchange, rates: api.ninja.rates };
 }
+
+const TIMELESS = /stat_3418580811\|/;
 
 function buildQuery(item, f) {
   const query = {
@@ -264,7 +270,9 @@ function buildQuery(item, f) {
   const options = f.mods.filter((m) => m.enabled && m.option);
   if (options.length) {
     const min = Math.min(options.length, f.optionMin || options.length);
-    query.stats.push({ type: 'count', value: { min }, filters: options.map((m) => ({ id: m.statId })) });
+    // У timeless-самоцвета сид — точное число (min = max), у остальных вариантов — «не меньше».
+    const val = (m) => (m.min == null ? {} : { value: TIMELESS.test(m.statId) ? { min: m.min, max: m.min } : { min: Number(m.min) } });
+    query.stats.push({ type: 'count', value: { min }, filters: options.map((m) => ({ id: m.statId, ...val(m) })) });
   }
   // Второстепенные моды (не важные и не суммы) при трёх и больше — группой «любые N−1 из N»: находятся вещи,
   // где одного такого мода нет, а остальные не хуже. Взвешенную сумму трейд без входа в аккаунт не принимает.
@@ -329,9 +337,11 @@ function itemTip(it) {
 function flagFilters(item) {
   const out = [];
   const add = (key, label, value, cls) => out.push({ key, label, value, cls, enabled: false });
+  // Непорченый уник — ищем непорченые: испорченные копии (часто «кирпичи») иначе занижают цену.
+  const pinClean = item.rarity === 'Unique' && !item.corrupted;
   if (item.rarity === 'Currency') return out;
   if (item.corrupted) add('corrupted', 'Corrupted', true, 'corrupt');
-  else add('corrupted', 'Not corrupted', false, 'cls');
+  else { add('corrupted', 'Not corrupted', false, 'cls'); if (pinClean) out[out.length - 1].enabled = true; }
   if (item.sanctified) add('sanctified', 'Sanctified', true, 'cls');
   if (item.mirrored) add('mirrored', 'Mirrored', true, 'cls');
   if (item.fracturedItem) add('fractured_item', 'Fractured Item', true, 'cls');

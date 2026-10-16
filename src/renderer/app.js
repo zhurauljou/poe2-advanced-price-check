@@ -366,9 +366,32 @@ function renderTradeHero(r) {
     <div class="alt">${alt(est)}</div>
     ${confidence(r.total, head, priced.slice(0, 5))}
     ${floorHtml}
+    <div class="ninja-u">${ninjaLine()}</div>
     ${ageHtml}
     ${sellHtml(priced, est, divs[0], median, divs.length)}
     ${drivable ? '<button class="link drive-btn" data-act="impact" title="Searches again without each key modifier (a few trade requests)">What drives the price?</button>' : ''}`;
+}
+
+// Цена уника на poe.ninja — одна на название + базу, без роллов: опора «за самую простую копию».
+function ninjaLine() {
+  const u = state.uniqueNinja;
+  if (!u) return '';
+  const below = state.est != null && state.est < u.divine * 0.8;
+  return `<span title="poe.ninja: the cheapest copies of this unique, any rolls">poe.ninja (any rolls): <b>${money(u.divine)}</b> · ${u.listings.toLocaleString('en-US')} listed</span>`
+    + (below ? ' · <span class="down" title="Listings like yours are cheaper than the plain floor — check the filters">below poe.ninja</span>' : '');
+}
+
+async function loadUniqueNinja() {
+  const it = state.item;
+  if (it.rarity !== 'Unique' || !it.name) return;
+  const mine = state;
+  try {
+    const u = await window.pc.uniquePrice(it.name, it.baseType);
+    if (mine !== state || !u) return;
+    state.uniqueNinja = u;
+    const el = document.querySelector('#hero .ninja-u');
+    if (el) { el.innerHTML = ninjaLine(); fit(); }
+  } catch {}
 }
 
 // Оценка по лотам [{ div, indexed }] — то же правило, что у основной цены: хватает свежих (≤ 3 дней) — по ним;
@@ -1001,6 +1024,7 @@ window.pc.onItem((data) => {
   if (state.searchable) runSearch(true);
   loadBuilds();
   loadDemand();
+  loadUniqueNinja();
 });
 
 $('hero').addEventListener('click', (e) => {

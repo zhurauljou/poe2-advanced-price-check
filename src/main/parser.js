@@ -183,6 +183,7 @@ function parseItem(text) {
       let head = null; // заголовок { … } действует до следующего заголовка или конца секции
       for (const raw of sec) {
         if (NOT_MODS.has(raw)) continue;
+        if (/^\(.*\)$/.test(raw)) continue; // строка-пояснение в скобках — не мод
         const h = raw.match(MOD_HEADER);
         if (h) {
           head = headerInfo(h[1]);
