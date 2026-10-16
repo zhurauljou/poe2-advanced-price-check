@@ -184,6 +184,9 @@ footer { display: flex; justify-content: space-between; gap: 8px; padding: 6px 1
 .tabs .badge { padding: 1px 7px; border-radius: 9px; font: 700 12px/1.4 var(--body); letter-spacing: 0; text-shadow: none;
                color: #1a1408; background: linear-gradient(#f1d79a, #c9a45c); box-shadow: 0 0 10px rgba(255, 190, 80, .35); }
 .tabs .badge:empty { display: none; }
+.tabs .badge { white-space: nowrap; }
+.tabs .badge.med { color: #e6dcc4; background: linear-gradient(#5a4a2c, #3b2f1b); box-shadow: none; }
+.tabs .badge.low { color: var(--muted); background: #1f242c; box-shadow: none; }
 .tabs button.on::after { content: ""; position: absolute; left: 50%; bottom: -4px; width: 22px; height: 7px; margin-left: -11px;
   background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='22' height='7' viewBox='0 0 22 7'%3E%3Cpath d='M0 3.5h7M15 3.5h7' stroke='%23dac18e'/%3E%3Cpath d='M11 0l3.5 3.5L11 7 7.5 3.5z' fill='%23dac18e'/%3E%3C/svg%3E") no-repeat; }
 .dcol .k { font: 700 13.5px var(--sc); letter-spacing: .4px; color: var(--label); margin: 6px 0 2px; }

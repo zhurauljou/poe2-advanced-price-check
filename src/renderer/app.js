@@ -429,8 +429,12 @@ function renderBuilds(b) {
   // Бейдж на вкладке Demand — чтобы фичу замечали, не открывая вкладку.
   const pct = b.allTotal ? b.total / b.allTotal * 100 : null;
   const anyHot = [...b.classes, ...b.skills].some((r) => r.pct >= 60);
-  $('demandBadge').textContent = pct != null && b.total ? `${anyHot ? '🔥 ' : ''}${fmt(pct)}%` : '';
-  $('demandBadge').title = pct != null ? `${fmt(pct)}% of builds on poe.ninja use this` : '';
+  // Уровень спроса по числу персонажей (не по %: у нишевых вещей процент всегда мал, а спрос реальный).
+  const lvl = !b.total ? null : b.total >= 2500 ? 'high' : b.total >= 300 ? 'med' : 'low';
+  const badge = $('demandBadge');
+  badge.className = `badge ${lvl || ''}`;
+  badge.textContent = lvl ? { high: '🔥 High', med: 'Med', low: 'Low' }[lvl] : '';
+  badge.title = lvl ? `${b.total.toLocaleString('en-US')} characters on poe.ninja use this${pct != null ? ` (${fmt(pct)}% of builds)` : ''}${anyHot ? ' · one build archetype dominates' : ''}` : '';
   const share = b.allTotal ? `<b>${fmt(b.total / b.allTotal * 100)}%</b> of builds · ${b.total.toLocaleString('en-US')} characters`
     : `${b.total.toLocaleString('en-US')} characters`;
   const what = b.filters.map(([, v]) => v).join(' + ');
