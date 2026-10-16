@@ -1,0 +1,17 @@
+Item Class: Jewels
+Rarity: Rare
+Carrion Eye
+Sapphire
+--------
+Item Level: 80
+--------
+{ Prefix Modifier "Authoritative" (Tier: 1) — Damage, Minion — 58% Increased }
+Minions deal 11(5-15)% increased Damage
+{ Prefix Modifier "Iconic" (Tier: 1) — Aura — 58% Increased }
+23(15-25)% increased Presence Area of Effect
+{ Suffix Modifier "of Marshalling" (Tier: 1) — Minion, Critical }
+Minions have 20(10-20)% increased Critical Hit Chance
+{ Crafted Suffix Modifier "" }
+58(40-60)% increased Effect of Prefixes — Unscalable Value
+--------
+Place into an allocated Jewel Socket on the Passive Skill Tree. Right click to remove from the Socket.

@@ -15,10 +15,11 @@ async function load(cached) {
   ]);
   const byName = new Map();
   for (const b of Object.values(bases)) if (b.name && !byName.has(b.name)) byName.set(b.name, b);
+  // Моды самоцветов лежат в домене 'misc' — для крафта это те же «обычные» моды, что и 'item'.
   const pool = Object.entries(mods)
-    .filter(([, m]) => (m.domain === 'item' || m.domain === 'desecrated')
+    .filter(([, m]) => (m.domain === 'item' || m.domain === 'misc' || m.domain === 'desecrated')
       && (m.generation_type === 'prefix' || m.generation_type === 'suffix'))
-    .map(([id, m]) => ({ id, ...m, lines: templates(m.text) }));
+    .map(([id, m]) => ({ id, ...m, domain: m.domain === 'misc' ? 'item' : m.domain, lines: templates(m.text) }));
   data = { bases: byName, pool };
   return data;
 }
@@ -74,8 +75,10 @@ async function advise(item, demandMods, cached) {
   }));
   const present = new Set(mine.flatMap((a) => (a.mod ? a.mod.groups || [] : [])));
 
-  // Сколько мест: у редкой 3+3, у магической 1+1; «-1 Suffix Modifier allowed» и т.п. — поправка.
-  const max = { prefix: item.rarity === 'Rare' ? 3 : 1, suffix: item.rarity === 'Rare' ? 3 : 1 };
+  // Сколько мест: у редкой 3+3 (у самоцветов 2+2 — всего 4 мода), у магической 1+1;
+  // «-1 Suffix Modifier allowed» и т.п. — поправка.
+  const perSide = item.rarity !== 'Rare' ? 1 : tags.includes('jewel') ? 2 : 3;
+  const max = { prefix: perSide, suffix: perSide };
   for (const l of item.modLines || []) {
     const m = l.text.match(/^([+-]\d+) (Prefix|Suffix) Modifiers? allowed$/);
     if (m) max[m[2].toLowerCase()] += Number(m[1]);
