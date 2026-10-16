@@ -547,7 +547,7 @@ function renderDemand(d) {
   const baseRank = d.bases.findIndex((b) => b.name === item.baseType);
   $('demand').innerHTML = `
     <div class="sect"><span>Demand · ${esc(d.category)}</span></div>
-    <div class="bshare">Worn by <b>${fmt(d.total / d.allTotal * 100)}%</b> of builds</div>
+    <div class="bshare">Worn by <b>${fmt(d.total / d.allTotal * 100)}%</b> of level 90+ builds</div>
     <div class="bwhat muted">Your item: ${baseRank >= 0 ? `base #${baseRank + 1}` : 'base not in top 10'} · ${hits} of top ${modRows.length} modifiers</div>
     ${demandList('bases', 'Most worn bases', baseRows)}
     ${demandList('mods', 'Most common modifiers', modRows)}
@@ -699,10 +699,10 @@ function renderBuilds(b) {
   const badge = $('demandBadge');
   badge.className = `badge ${lvl || ''}`;
   badge.textContent = lvl ? { high: '🔥 High', med: 'Med', low: 'Low' }[lvl] : '';
-  badge.title = lvl ? `${b.total.toLocaleString('en-US')} characters on poe.ninja use this${pct != null ? ` (${fmt(pct)}% of builds)` : ''}${anyHot ? ' · one build archetype dominates' : ''}` : '';
-  const share = b.allTotal ? `<b>${fmt(b.total / b.allTotal * 100)}%</b> of builds · ${b.total.toLocaleString('en-US')} characters`
+  badge.title = lvl ? `${b.total.toLocaleString('en-US')} level 90+ characters on poe.ninja use this${pct != null ? ` (${fmt(pct)}% of builds)` : ''}${anyHot ? ' · one build archetype dominates' : ''}` : '';
+  const share = b.allTotal ? `<b>${fmt(b.total / b.allTotal * 100)}%</b> of builds · ${b.total.toLocaleString('en-US')} characters (level 90+)`
     : `${b.total.toLocaleString('en-US')} characters`;
-  const what = b.filters.map(([, v]) => v).join(' + ');
+  const what = b.filters.filter(([k]) => k !== 'min-level').map(([, v]) => v).join(' + ');
   $('builds').innerHTML = `
     <div class="sect"><span>Popular builds</span></div>
     <div class="bshare">${share}</div>
@@ -752,7 +752,7 @@ function modRow(m, i) {
   const from = m.parts ? ` title="${esc(m.parts.map((p) => `${p.text}${p.tier ? ` (T${p.tier})` : ''}`).join('\n'))}"` : '';
   const cat = (m.tag !== 'explicit' && m.tag !== 'pseudo' ? ` <span class="tag ${esc(m.tag)}">${esc(TAG_LABEL[m.tag] || m.tag)}</span>` : '')
     // Спрос с poe.ninja: массовый мод — повод включить его, даже если тир слабый.
-    + (m.demand >= 30 ? ` <span class="dem${m.demand >= 60 ? ' hot' : ''}" title="${fmt(m.demand)}% of builds wearing this item class have this modifier (poe.ninja)">${m.demand >= 60 ? '🔥 ' : ''}${fmt(m.demand)}% builds</span>` : '');
+    + (m.demand >= 30 ? ` <span class="dem${m.demand >= 60 ? ' hot' : ''}" title="${fmt(m.demand)}% of level 90+ builds wearing this item class have this modifier (poe.ninja)">${m.demand >= 60 ? '🔥 ' : ''}${fmt(m.demand)}% builds</span>` : '');
   const text = m.tag === 'pseudo' ? m.text.replace(/^Σ /, '') : m.text;
   return `<div class="mod t-${esc(m.tag)}${m.enabled ? '' : ' off'}" data-i="${i}">
       <label><input type="checkbox" data-k="enabled"${m.enabled ? ' checked' : ''}>${meter(m) || '<span class="imp"></span>'}${tier}

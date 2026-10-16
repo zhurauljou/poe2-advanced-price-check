@@ -216,15 +216,16 @@ function top(rows, total, n) {
 //   timeMachine — 'day-1', 'week-2' и т.п. из snapshotVersions[].timeMachineLabels
 //   limit       — сколько строк классов/скиллов вернуть
 async function popularBuilds(opts, fetchBuffer) {
-  const { league, uniqueName, itemClass, rarity = 'Rare', baseType, mods = [], filters = [], timeMachine, limit = 10 } = opts || {};
+  const { league, uniqueName, itemClass, rarity = 'Rare', baseType, mods = [], filters = [], timeMachine, limit = 10, minLevel } = opts || {};
   const snap = await snapshot(league, fetchBuffer);
   const ignored = [];
-  const params = [];
+  const lvl = levelParams(minLevel);
+  const params = [...lvl];
 
   // Нужен словарь items, чтобы проверить имя уника и найти «Rare <класс>»; первый поиск без фильтров
   // его даёт, а заодно кэшируется и пригодится как «все билды».
   const needItems = uniqueName || itemClass;
-  const base = needItems ? await search(snap, [], timeMachine, fetchBuffer) : null;
+  const base = needItems ? await search(snap, lvl, timeMachine, fetchBuffer) : null;
   const itemNames = base ? base.values.item || [] : [];
   const itemProps = base ? base.props.item || {} : {};
 
@@ -284,19 +285,20 @@ async function popularBuilds(opts, fetchBuffer) {
 async function categoryDemand(opts, fetchBuffer) {
   // withMods — моды предмета: спрос считаем среди билдов, которые носят такую вещь С ЭТИМИ модами
   // (тема вещи: миньоны, заклинания…). Мало таких билдов (< minBuilds) — откатываемся к общему спросу по классу.
-  const { league, itemClass, rarity = 'Rare', limit = 12, timeMachine, withMods = [], minBuilds = 150 } = opts || {};
+  const { league, itemClass, rarity = 'Rare', limit = 12, timeMachine, withMods = [], minBuilds = 150, minLevel } = opts || {};
   const snap = await snapshot(league, fetchBuffer);
-  const base = await search(snap, [], timeMachine, fetchBuffer);
+  const lvl = levelParams(minLevel);
+  const base = await search(snap, lvl, timeMachine, fetchBuffer);
   const itemNames = base.values.item || [];
   const cat = categoryKey(itemNames, rarity, itemClass);
   if (!cat) return { league: snap.name, category: null, total: 0, bases: [], mods: [] };
   const type = ((base.props.item || {}).type || [])[itemNames.indexOf(cat)] || null;
-  let res = await search(snap, [['items', cat]], timeMachine, fetchBuffer);
+  let res = await search(snap, [['items', cat], ...lvl], timeMachine, fetchBuffer);
   let themed = [];
   const modKey = subKey(res.dims, 'itemmods', type);
   if (withMods.length && modKey) {
     const names = res.dims[modKey].map((r) => r.name);
-    const params = [['items', cat]];
+    const params = [['items', cat], ...lvl];
     for (const m of withMods) {
       const t = findCi(names, modTemplate(m));
       if (t && !themed.includes(t)) { params.push([modKey, t]); themed.push(t); }
@@ -306,7 +308,7 @@ async function categoryDemand(opts, fetchBuffer) {
       if (narrow.total >= minBuilds) res = narrow; else themed = [];
     }
   }
-  const page = `https://poe.ninja/poe2/builds/${snap.url}?items=${encodeURIComponent(cat)}`
+  const page = `https://poe.ninja/poe2/builds/${snap.url}?items=${encodeURIComponent(cat)}${minLevel ? `&min-level=${minLevel}` : ''}`
     + themed.map((t) => `&${encodeURIComponent(modKey)}=${encodeURIComponent(t)}`).join('');
   return {
     league: snap.name,
@@ -318,6 +320,11 @@ async function categoryDemand(opts, fetchBuffer) {
     mods: top(res.dims[subKey(res.dims, 'itemmods', type)] || [], res.total, limit),
     page,
   };
+}
+
+// Только персонажи от этого уровня: на 90+ вещи докупают ради точных модов — спрос «премиальнее», чем у тех, кто качается.
+function levelParams(minLevel) {
+  return minLevel ? [['min-level', String(minLevel)]] : [];
 }
 
 module.exports = { popularBuilds, categoryDemand };

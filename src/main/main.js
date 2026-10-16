@@ -27,6 +27,8 @@ let ready = null; // промис загрузки справочников
 let refreshTray = () => {};
 
 const demo = require('./demo');
+// Спрос (poe.ninja builds) — только среди персонажей 90+: их вещи ближе к тому, за что платят.
+const DEMAND_LEVEL = 90;
 // Демо-прогон живёт в своей папке данных, чтобы работать рядом с запущенной копией из трея.
 if (demo.enabled) app.setPath('userData', app.getPath('userData') + '-demo');
 if (!app.requestSingleInstanceLock()) app.quit();
@@ -228,7 +230,7 @@ async function priceCheck(text) {
   // поэтому ждём только в первый раз и не дольше 1.5 с; не успели — работаем без него.
   let demand = null;
   if (['Rare', 'Magic', 'Normal'].includes(item.rarity)) {
-    const q = categoryDemand({ league, itemClass: item.itemClass, rarity: item.rarity === 'Normal' ? 'Rare' : item.rarity, limit: 80 },
+    const q = categoryDemand({ league, itemClass: item.itemClass, rarity: item.rarity === 'Normal' ? 'Rare' : item.rarity, limit: 80, minLevel: DEMAND_LEVEL },
       api.fetchBuffer).catch((e) => { log('demand', e.message); return null; });
     demand = await Promise.race([q, new Promise((r) => setTimeout(() => r(null), 1500))]);
   }
@@ -417,17 +419,17 @@ app.whenReady().then(() => {
     await api.loadNinja(l).catch(() => {});
     return true;
   });
-  ipcMain.handle('builds', (_e, opts) => popularBuilds({ ...opts, league: settings.get().league, limit: 5 }, api.fetchBuffer));
+  ipcMain.handle('builds', (_e, opts) => popularBuilds({ ...opts, league: settings.get().league, limit: 5, minLevel: DEMAND_LEVEL }, api.fetchBuffer));
   ipcMain.handle('craft', async () => {
     if (!lastItem) return { note: 'No item' };
     const league = settings.get().league;
     const rarity = lastItem.rarity === 'Normal' ? 'Rare' : lastItem.rarity;
-    const d = await categoryDemand({ league, itemClass: lastItem.itemClass, rarity, limit: 80, withMods: lastThemeMods },
+    const d = await categoryDemand({ league, itemClass: lastItem.itemClass, rarity, limit: 80, withMods: lastThemeMods, minLevel: DEMAND_LEVEL },
       api.fetchBuffer).catch(() => null);
     const r = await craft.advise(lastItem, d && d.mods, api.cached);
     return { ...r, theme: d ? d.themed : [], themeBuilds: d ? d.total : null };
   });
-  ipcMain.handle('demand', (_e, opts) => categoryDemand({ ...opts, league: settings.get().league, limit: 10 }, api.fetchBuffer));
+  ipcMain.handle('demand', (_e, opts) => categoryDemand({ ...opts, league: settings.get().league, limit: 10, minLevel: DEMAND_LEVEL }, api.fetchBuffer));
   ipcMain.handle('set-price-currency', (_e, c) => { settings.set({ priceCurrency: c }); });
   ipcMain.handle('copy', (_e, t) => clipboard.writeText(t));
   ipcMain.handle('open-url', (_e, u) => {
