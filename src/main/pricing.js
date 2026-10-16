@@ -178,6 +178,8 @@ function prepare(item, demand) {
     const w = weight(item.itemClass, m.template, m.tier, dp);
     // Мод-вариант (Legacy of … у Mageblood) у уника и есть то, за что платят, — ищем по нему сразу.
     const option = !!m.statId && m.statId.includes('|');
+    // У уника цену делают роллы: мод с разбросом значений («(60-80)%») — сразу в поиске, иначе ищем просто по названию.
+    const rolls = item.rarity === 'Unique' && m.tag === 'explicit' && !!m.statId && !option && !!m.range && m.range.hi > m.range.lo;
     return {
       statId: m.statId,
       text: m.text,
@@ -190,13 +192,13 @@ function prepare(item, demand) {
       importance: w.importance,
       demand: dp != null ? dp : null, // % билдов с этим модом на вещах этого класса
       key: w.key,
-      enabled: (option && m.tag === 'explicit') || (!!m.statId && searchMods
+      enabled: (option && m.tag === 'explicit') || rolls || (!!m.statId && searchMods
         && ['explicit', 'fractured', 'desecrated', 'crafted'].includes(m.tag)
         && w.importance >= ENABLE_FROM && !covered.some((re) => re.test(m.template))),
       option,
       range: m.range || null,
       roll: rollQuality(m.value, m.range),
-      min: option ? null : minFor(m.value, m.range, w.importance),
+      min: option ? null : minFor(m.value, m.range, rolls ? Math.max(w.importance, 1.2) : w.importance),
     };
   });
   const pseudo = searchMods ? pseudoFilters(mods) : [];
