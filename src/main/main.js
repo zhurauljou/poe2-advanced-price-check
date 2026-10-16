@@ -107,7 +107,7 @@ function savedPos() {
 }
 
 function show() {
-  const [, h] = win.getSize();
+  const [w, h] = win.getSize();
   let x, y;
   const saved = savedPos();
   if (saved) {
@@ -117,12 +117,12 @@ function show() {
     const cur = screen.getCursorScreenPoint();
     const area = screen.getDisplayNearestPoint(cur).workArea;
     x = cur.x + 24;
-    if (x + WIDTH > area.x + area.width) x = cur.x - WIDTH - 24;
+    if (x + w > area.x + area.width) x = cur.x - w - 24;
     y = Math.max(area.y, cur.y - 120);
   }
   anchorY = Math.round(y);
   const area = screen.getDisplayNearestPoint({ x, y }).workArea;
-  place({ x: Math.round(x), y: Math.min(anchorY, area.y + area.height - h), width: WIDTH, height: h });
+  place({ x: Math.round(x), y: Math.min(anchorY, area.y + area.height - h), width: w, height: h });
   interacted = false;
   win.showInactive(); // не забираем фокус у игры
   globalShortcut.register('Escape', hide);
@@ -379,13 +379,14 @@ app.whenReady().then(() => {
   });
   ipcMain.handle('compare-fit', (_e, h) => { if (win.isVisible()) placeCompare(h); });
   ipcMain.handle('compare-hide', () => cmpWin.hide());
-  ipcMain.handle('fit', (_e, h) => {
+  // w — ширина: компактный режим (иконка и цена) уже обычного окна.
+  ipcMain.handle('fit', (_e, h, w) => {
     const area = screen.getDisplayMatching(win.getBounds()).workArea;
     const height = Math.min(Math.ceil(h), area.height - 20);
     const b = win.getBounds();
     // Держим верх на месте; вверх сдвигаем, только пока окно не влезает, и возвращаем, когда снова влезает.
     const y = Math.max(area.y, Math.min(anchorY, area.y + area.height - height));
-    place({ x: b.x, y, width: WIDTH, height });
+    place({ x: b.x, y, width: Math.round(w || WIDTH), height });
   });
 });
 

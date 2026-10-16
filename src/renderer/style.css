@@ -24,6 +24,26 @@ body { background: radial-gradient(ellipse 600px 260px at 50% -120px, #1d2836, t
 ::-webkit-scrollbar { width: 8px; }
 ::-webkit-scrollbar-thumb { background: #3d3a33; }
 
+/* ---- компактный режим: иконка и цена ---- */
+body.compact > :not(#mini):not(script) { display: none !important; }
+.mini { display: flex; align-items: center; gap: 12px; padding: 10px 12px; -webkit-app-region: drag;
+        background: radial-gradient(ellipse 80% 90% at 30% 0%, rgba(218, 193, 142, .08), transparent 70%); }
+.mini-icon { flex: none; width: 56px; height: 56px; display: flex; align-items: center; justify-content: center;
+             background: rgba(255, 255, 255, .03); border: 1px solid #2c2a25; }
+.mini-icon img { max-width: 52px; max-height: 52px; filter: drop-shadow(0 0 8px rgba(255, 200, 90, .2)); }
+.mini-txt { flex: 1; min-width: 0; }
+.mini-name { font: 15px/1.2 var(--game); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.mini-name.Normal { color: var(--r-normal); } .mini-name.Magic { color: var(--r-magic); } .mini-name.Rare { color: var(--r-rare); }
+.mini-name.Unique { color: var(--r-unique); } .mini-name.Gem { color: var(--r-gem); } .mini-name.Currency { color: var(--r-currency); }
+.mini-price { font: 700 26px/1.15 var(--title); color: var(--gold); font-variant-numeric: tabular-nums;
+              text-shadow: 0 0 14px rgba(255, 190, 80, .3), 0 2px 0 #000; white-space: nowrap; }
+.mini-price.wait { color: var(--muted); text-shadow: none; animation: pulse 1.2s ease-in-out infinite; }
+.mini-sub { font-size: 13px; color: var(--muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.mini-sub.error { color: var(--bad); white-space: normal; }
+.mini-btn { -webkit-app-region: no-drag; align-self: flex-start; padding: 0 4px; font-size: 17px; line-height: 1; color: var(--bronze); cursor: pointer; }
+.mini-btn:hover { color: var(--cream); }
+.topbar .compact-btn { right: 32px; font-size: 15px; }
+
 /* ---- полоска для перетаскивания ---- */
 .topbar { position: relative; display: flex; justify-content: center; align-items: center; height: 32px; -webkit-app-region: drag; }
 .topbar select, .topbar .close { -webkit-app-region: no-drag; }
