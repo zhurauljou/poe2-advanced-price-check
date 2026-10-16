@@ -432,3 +432,8 @@ body.upd-page { height: auto; }
 .cpr { margin-left: 8px; font: 700 12px var(--body); color: var(--cream); }
 .cpr.up { color: var(--good); } .cpr.down { color: var(--bad); }
 #craft .bname { white-space: normal; } /* у кандидатов крафта текст + тир + цена — переносим, а не обрезаем */
+/* Цены для выставления — по центру своих колонок */
+.grid.sell { text-align: center; }
+.grid.sell .v.copy { margin: 0 auto; }
+.grid.sell .v.copy { position: relative; }
+.grid.sell .v.copy::after { position: absolute; left: 100%; margin-left: 4px; }
