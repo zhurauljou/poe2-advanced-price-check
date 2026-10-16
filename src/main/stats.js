@@ -76,7 +76,7 @@ function matchMods(item) {
         const c = pick(joined.cands, l.tag, localItem);
         if (c) {
           out.push({ text: l.text + '\n' + ls[i + 1].text, tag: l.tag, tier: l.tier, statId: c.id, template: c.text,
-            value: joined.value });
+            value: joined.value, range: l.range });
           i++;
           continue;
         }
@@ -85,7 +85,7 @@ function matchMods(item) {
     const m = lookup(l.text);
     const c = m && pick(m.cands, l.tag, localItem);
     // Несопоставленное показываем серым, без галочки: видно, что мод есть, но искать по нему нельзя.
-    out.push(c ? { text: l.text, tag: l.tag, tier: l.tier, statId: c.id, template: c.text, value: m.value }
+    out.push(c ? { text: l.text, tag: l.tag, tier: l.tier, statId: c.id, template: c.text, value: m.value, range: l.range }
       : { text: l.text, tag: l.tag, tier: l.tier, statId: null });
   }
   return mergeSame(out);
@@ -110,6 +110,8 @@ function mergeSame(mods) {
     prev.parts.push(m.text);
     prev.tiers.push(m.tier);
     if (m.value != null) prev.value = (prev.value || 0) + m.value;
+    // Диапазон суммы — сумма диапазонов (если он известен у всех частей).
+    prev.range = prev.range && m.range ? { lo: prev.range.lo + m.range.lo, hi: prev.range.hi + m.range.hi } : null;
     if (m.tier != null && (prev.tier == null || m.tier < prev.tier)) prev.tier = m.tier;
     // Показываем каждый мод своей строкой; фильтр общий — трейд ищет по сумме.
     prev.text = prev.parts.join('\n');

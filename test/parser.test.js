@@ -54,3 +54,12 @@ test('качество катализатора усиливает моды, к�
   assert.ok(t.includes('Minions have 26% increased Cooldown Recovery Rate'));
   assert.equal(it.modLines.find((m) => m.text === '+50 to Spirit').tier, 1);
 });
+
+test('диапазон тира сохраняется (для минимума по качеству ролла), с учётом катализатора', () => {
+  const robe = fixture('rare-armour-advanced.txt');
+  assert.deepEqual(robe.modLines.find((m) => m.text === '+39% to Fire Resistance').range, { lo: 36, hi: 40 });
+  assert.equal(robe.modLines.find((m) => m.text === '35% reduced Attribute Requirements').range, null);
+  const amu = fixture('amulet-fractured-advanced.txt');
+  // 12–20 × 1.4 (катализатор 40%) → 16–28, как в игре
+  assert.deepEqual(amu.modLines.find((m) => m.text.startsWith('Minions have 26%')).range, { lo: 16, hi: 28 });
+});

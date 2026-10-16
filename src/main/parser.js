@@ -43,6 +43,17 @@ function boostLine(line, pct) {
     return String(n.includes('.') ? Math.floor(v * 100) / 100 : Math.floor(v));
   });
 }
+// Числовой диапазон тира у значения: «+30(26-30)» → { lo: 26, hi: 30 }. Несколько чисел в строке
+// («Adds 3(2-4) to 7(6-8)») — усредняем, как и само значение для трейда. Качество катализатора — как у значения.
+const NUM_RANGE = /(-?\d+(?:\.\d+)?)\((-?\d+(?:\.\d+)?)-(-?\d+(?:\.\d+)?)\)/g;
+function tierRange(raw, pct) {
+  const rs = [...raw.matchAll(NUM_RANGE)].map((m) => [Number(m[2]), Number(m[3])]);
+  if (!rs.length) return null;
+  const k = 1 + (pct || 0) / 100;
+  const scale = (n) => (Number.isInteger(n) ? Math.floor(n * k) : Math.floor(n * k * 100) / 100);
+  const avg = (i) => rs.reduce((s, r) => s + scale(r[i]), 0) / rs.length;
+  return { lo: avg(0), hi: avg(1) };
+}
 const TAGGED = /^(.*) \((implicit|enchant|rune|crafted|fractured|desecrated)\)$/;
 // Строки-свойства («Armour: 120 (augmented)», «Requires: Level 40») — это не моды.
 const PROPERTY = /^[A-Za-z][A-Za-z '()]*: /; // и «Quality (Minion Modifiers): +40%»
@@ -166,7 +177,8 @@ function parseItem(text) {
         const t = l.match(TAGGED);
         if (advanced && !head && !t) continue;
         const tier = head ? head.tier : null;
-        item.modLines.push(t ? { text: t[1], tag: t[2], tier } : { text: l, tag: head ? head.tag : 'explicit', tier });
+        const range = tierRange(raw, head ? head.boost : 0);
+        item.modLines.push(t ? { text: t[1], tag: t[2], tier, range } : { text: l, tag: head ? head.tag : 'explicit', tier, range });
       }
     }
   }

@@ -247,6 +247,10 @@ body.cmp-page { background: #0a0d12; }
 .mod .tcol.sigma { color: var(--gold); font: 700 15px var(--body); }
 .mod .txt { flex: 1; min-width: 0; white-space: pre-line; }
 .mod .txt .tag { font-size: 9.5px; padding: 0 3px; vertical-align: 2px; }
+.mod .rng { font: 12px var(--body); color: #6d6a62; letter-spacing: 0; white-space: nowrap; }
+.mod .maxroll { margin-left: 4px; padding: 0 4px; border-radius: 2px; font: 700 10px/1.5 var(--body); letter-spacing: .3px;
+                color: #1a1408; background: linear-gradient(#f1d79a, #c9a45c); vertical-align: 1px; }
+.mod.off .maxroll { opacity: .6; }
 .mod.t-crafted label { color: var(--g-crafted); }
 .mod.t-enchant label { color: var(--g-enchant); }
 .mod.t-corrupted label { color: var(--g-corrupted); }

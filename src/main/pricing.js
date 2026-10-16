@@ -52,6 +52,24 @@ function minOf(v) {
   return v >= 5 ? Math.floor(v * 0.8) : Math.floor(v * 8) / 10;
 }
 
+// Качество ролла внутри тира: 0 — низ диапазона, 1 — максимум. Без диапазона (простой формат копирования) — null.
+function rollQuality(v, r) {
+  if (!r || v == null || r.hi <= r.lo) return null;
+  return Math.max(0, Math.min(1, (v - r.lo) / (r.hi - r.lo)));
+}
+
+// Минимум для поиска по качеству ролла: не ниже нижней границы тира (иначе сравниваем с тиром хуже) и тем
+// ближе к нашему значению, чем важнее мод; почти максимальный ролл — почти точно, за него и платят.
+// Без диапазона — прежние 80% от значения.
+function minFor(v, range, importance) {
+  const q = rollQuality(v, range);
+  if (q == null || v <= 0) return minOf(v);
+  let share = importance >= 2.4 ? 0.75 : importance >= 1.2 ? 0.5 : 0.25;
+  if (q >= 0.75) share = Math.max(share, 0.8);
+  const m = range.lo + (v - range.lo) * share;
+  return Number.isInteger(v) ? Math.floor(m) : Math.floor(m * 10) / 10;
+}
+
 // Моды, которые уже учтены в итоговой защите/уроне предмета. Фильтр по свойству есть только у брони/оружия,
 // а там эти моды всегда локальные — даже если трейд не пометил их «(Local)» (у % ES, например, не пометил).
 const LOCAL_COVERED = {
@@ -155,7 +173,9 @@ function prepare(item) {
         && ['explicit', 'fractured', 'desecrated', 'crafted'].includes(m.tag)
         && w.importance >= ENABLE_FROM && !covered.some((re) => re.test(m.template))),
       option,
-      min: option ? null : minOf(m.value),
+      range: m.range || null,
+      roll: rollQuality(m.value, m.range),
+      min: option ? null : minFor(m.value, m.range, w.importance),
     };
   });
   const pseudo = searchMods ? pseudoFilters(mods) : [];
@@ -276,6 +296,7 @@ const MAX_RELAX = 3; // каждый шаг — отдельный поиск, �
 
 // Чем меньше — тем раньше снимаем. Важные моды (ключевые хорошего тира) не снимаем вовсе.
 function strength(f) {
+  if (f.kind === 'rolls') return 0.2; // сначала — любой ролл того же тира, ничего не снимая
   if (f.kind === 'cheap') return 0.3; // гнездо и качество докупаются за копейки — снимаем первыми
   if (f.kind === 'base') return 1.75; // точная база → вся категория: после слабых модов, до сумм и защиты/DPS
   if (f.kind === 'prop') return 2.5;
@@ -298,6 +319,15 @@ function weakest(filters) {
     ...[['sockets', 'Sockets'], ['quality', 'Quality']].filter(([k]) => filters[k] && filters[k].enabled)
       .map(([k, label]) => Object.assign(filters[k], { kind: 'cheap', label })),
   ];
+  // Самый мягкий шаг: минимумы модов — до нижней границы тира («любой ролл того же тира»), моды не снимаем.
+  const tight = filters.mods.filter((m) => m.enabled && m.range && m.min != null && m.min > Math.ceil(m.range.lo));
+  if (tight.length && !filters.rollsLoosened) {
+    const saved = tight.map((m) => m.min);
+    all.push({ kind: 'rolls', set enabled(v) {
+      tight.forEach((m, i) => { m.min = v ? saved[i] : Math.ceil(m.range.lo); });
+      filters.rollsLoosened = !v;
+    } });
+  }
   // Точная база (не уник по имени) — тоже фильтр: редких баз на рынке бывает 1–2 штуки.
   if (filters.useType && !filters.useName && filters.category) {
     all.push({ kind: 'base', set enabled(v) { filters.useType = v; } });
@@ -338,7 +368,8 @@ async function search(league, item, filters, relax = false) {
     last = weakest(f);
     if (!last) break;
     last.enabled = false;
-    dropped.push(last.kind === 'base' ? `exact base ${item.baseType}`
+    dropped.push(last.kind === 'rolls' ? 'roll minimums → tier floor'
+      : last.kind === 'base' ? `exact base ${item.baseType}`
       : last.kind === 'options' ? `now ${last.label}`
       : last.kind === 'prop' || last.kind === 'cheap' ? `${last.label} ≥ ${last.min}` : last.text.split('\n')[0]);
   }

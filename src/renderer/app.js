@@ -392,6 +392,13 @@ function meter(m) {
 
 // Строка мода — ровными колонками, как подсказка в игре: [галочка][важность][тир][текст · категория][мин].
 // Категория (desecrated, rune…) — после текста, чтобы теги разной ширины не сдвигали сам мод.
+// Диапазон тира и качество ролла: «36–40», у почти максимального — золотая пометка max.
+function rollInfo(m) {
+  if (!m.range || m.roll == null) return '';
+  const max = m.roll >= 0.9 ? '<span class="maxroll" title="Near max roll for this tier — usually worth more">max</span>' : '';
+  return ` <span class="rng" title="Tier range · roll ${Math.round(m.roll * 100)}%">${fmt(m.range.lo)}–${fmt(m.range.hi)}</span>${max}`;
+}
+
 function modRow(m, i) {
   if (!m.statId) {
     return `<div class="mod nomatch" title="This modifier has no trade site filter">
@@ -405,7 +412,7 @@ function modRow(m, i) {
   const text = m.tag === 'pseudo' ? m.text.replace(/^Σ /, '') : m.text;
   return `<div class="mod t-${esc(m.tag)}${m.enabled ? '' : ' off'}" data-i="${i}">
       <label><input type="checkbox" data-k="enabled"${m.enabled ? ' checked' : ''}>${meter(m) || '<span class="imp"></span>'}${tier}
-        <span class="txt"${from}>${esc(text)}${m.merged ? `<span class="sum-v"> = ${fmt(m.value)}</span>` : ''}${cat}</span></label>
+        <span class="txt"${from}>${esc(text)}${m.merged ? `<span class="sum-v"> = ${fmt(m.value)}</span>` : ''}${cat}${rollInfo(m)}</span></label>
       ${m.option ? '' : `<input type="number" data-k="min" step="any" placeholder="min" value="${m.min == null ? '' : m.min}">`}
     </div>`;
 }
