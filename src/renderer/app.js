@@ -275,14 +275,14 @@ function modRow(m, i) {
       <label><span class="cb"></span><span class="imp"></span><span class="tcol">?</span><span class="txt">${esc(m.text)}</span></label></div>`;
   }
   const tier = m.tag === 'pseudo' ? '<span class="tcol sigma" title="Total from all modifiers">Σ</span>'
-    : `<span class="tcol">${m.tier ? `<span class="tag tier${m.tier <= 2 ? ' top' : ''}">T${m.tier}${m.merged ? '<sup>+</sup>' : ''}</span>` : ''}</span>`;
-  // Сумма одинаковых модов (как «+107 to maximum Energy Shield» в игре) — из чего сложена, видно при наведении.
-  const from = m.parts ? ` title="${esc('Sum of: ' + m.parts.map((p) => `${p.text}${p.tier ? ` (T${p.tier})` : ''}`).join(' + '))}"` : '';
+    : `<span class="tcol">${m.tier ? `<span class="tag tier${m.tier <= 2 ? ' top' : ''}">T${m.tier}</span>` : ''}</span>`;
+  // Одинаковые моды — каждый своей строкой, фильтр общий: трейд ищет по сумме.
+  const from = m.parts ? ` title="${esc(m.parts.map((p) => `${p.text}${p.tier ? ` (T${p.tier})` : ''}`).join('\n'))}"` : '';
   const cat = m.tag !== 'explicit' && m.tag !== 'pseudo' ? ` <span class="tag ${esc(m.tag)}">${esc(TAG_LABEL[m.tag] || m.tag)}</span>` : '';
   const text = m.tag === 'pseudo' ? m.text.replace(/^Σ /, '') : m.text;
   return `<div class="mod t-${esc(m.tag)}${m.enabled ? '' : ' off'}" data-i="${i}">
       <label><input type="checkbox" data-k="enabled"${m.enabled ? ' checked' : ''}>${meter(m) || '<span class="imp"></span>'}${tier}
-        <span class="txt"${from}>${esc(text)}${cat}</span></label>
+        <span class="txt"${from}>${esc(text)}${m.merged ? `<span class="sum-v"> = ${fmt(m.value)}</span>` : ''}${cat}</span></label>
       ${m.option ? '' : `<input type="number" data-k="min" step="any" placeholder="min" value="${m.min == null ? '' : m.min}">`}
     </div>`;
 }

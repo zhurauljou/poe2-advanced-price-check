@@ -181,7 +181,7 @@ footer { display: flex; justify-content: space-between; gap: 8px; padding: 6px 1
 .imp i:nth-child(1) { height: 6px; } .imp i:nth-child(2) { height: 9px; } .imp i:nth-child(3) { height: 12px; }
 .imp.i1 i:nth-child(-n+1), .imp.i2 i:nth-child(-n+2), .imp.i3 i { background: var(--bronze); }
 .imp.key.i1 i:nth-child(-n+1), .imp.key.i2 i:nth-child(-n+2), .imp.key.i3 i { background: var(--gold); box-shadow: 0 0 4px rgba(255, 190, 80, .4); }
-.tag.tier sup { font-size: 8px; line-height: 0; margin-left: 1px; }
+.sum-v { color: var(--gold); }
 .misc { display: flex; flex-wrap: wrap; justify-content: center; gap: 6px 16px; margin: 6px 0 4px; padding-top: 8px; border-top: 1px solid var(--line2); }
 .misc .opt { display: flex; gap: 6px; align-items: center; color: var(--cream); cursor: pointer; }
 .misc .opt.off { color: var(--muted); }
