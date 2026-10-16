@@ -194,6 +194,14 @@ const findCi = (list, name) => {
   return (list || []).find((x) => x.toLowerCase() === l) || null;
 };
 
+// Подраздел по родителю: в словаре тип «Body Armour», а подраздел — «itembasetypes-BodyArmour» (без пробелов).
+function subKey(dims, kind, parent) {
+  if (!parent) return null;
+  const exact = `${kind}-${parent}`;
+  const tight = `${kind}-${String(parent).replace(/\s+/g, '')}`;
+  return dims[exact] ? exact : dims[tight] ? tight : null;
+}
+
 function top(rows, total, n) {
   return rows.slice(0, n).map((r) => ({ name: r.name, count: r.count, pct: total ? Math.round(r.count / total * 1000) / 10 : 0 }));
 }
@@ -236,16 +244,18 @@ async function popularBuilds(opts, fetchBuffer) {
   // поэтому сначала спрашиваем без них (тоже полезный кэш), потом сверяем и добавляем.
   if (parentKey && (baseType || mods.length)) {
     const pre = await search(snap, params, timeMachine, fetchBuffer);
+    const baseKey = subKey(pre.dims, 'itembasetypes', parentKey);
+    const modKey = subKey(pre.dims, 'itemmods', parentKey);
     if (baseType) {
       const b = findCi(pre.values.itembasetypes, baseType);
-      if (b && pre.dims[`itembasetypes-${parentKey}`]) params.push([`itembasetypes-${parentKey}`, b]);
+      if (b && baseKey) params.push([baseKey, b]);
       else ignored.push({ baseType });
     }
     const seen = new Set();
     for (const m of mods) {
       const t = findCi(pre.values.itemmods, modTemplate(m));
-      if (t && pre.dims[`itemmods-${parentKey}`] && !seen.has(t)) { params.push([`itemmods-${parentKey}`, t]); seen.add(t); }
-      else if (!t || !pre.dims[`itemmods-${parentKey}`]) ignored.push({ mod: m });
+      if (t && modKey && !seen.has(t)) { params.push([modKey, t]); seen.add(t); }
+      else if (!t || !modKey) ignored.push({ mod: m });
     }
   } else {
     if (baseType) ignored.push({ baseType });
@@ -269,4 +279,26 @@ async function popularBuilds(opts, fetchBuffer) {
   };
 }
 
-module.exports = { popularBuilds, modTemplate, decodeSearch, decodeNdic, decodeNovl };
+// Спрос по категории: какие базы и моды носят на редких (магических…) вещах этого класса.
+// Один фильтр «Rare Helmet» — в ответе приходят подразделы itembasetypes-<тип> и itemmods-<тип> со счётчиками.
+async function categoryDemand(opts, fetchBuffer) {
+  const { league, itemClass, rarity = 'Rare', limit = 12, timeMachine } = opts || {};
+  const snap = await snapshot(league, fetchBuffer);
+  const base = await search(snap, [], timeMachine, fetchBuffer);
+  const itemNames = base.values.item || [];
+  const cat = categoryKey(itemNames, rarity, itemClass);
+  if (!cat) return { league: snap.name, category: null, total: 0, bases: [], mods: [] };
+  const type = ((base.props.item || {}).type || [])[itemNames.indexOf(cat)] || null;
+  const res = await search(snap, [['items', cat]], timeMachine, fetchBuffer);
+  return {
+    league: snap.name,
+    category: cat,
+    total: res.total,
+    allTotal: base.total,
+    bases: top(res.dims[subKey(res.dims, 'itembasetypes', type)] || [], res.total, limit),
+    mods: top(res.dims[subKey(res.dims, 'itemmods', type)] || [], res.total, limit),
+    page: `https://poe.ninja/poe2/builds/${snap.url}?items=${encodeURIComponent(cat)}`,
+  };
+}
+
+module.exports = { popularBuilds, categoryDemand, modTemplate, decodeSearch, decodeNdic, decodeNovl };

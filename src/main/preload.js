@@ -7,6 +7,7 @@ contextBridge.exposeInMainWorld('pc', {
   leagues: () => ipcRenderer.invoke('leagues'),
   setLeague: (league) => ipcRenderer.invoke('set-league', league),
   builds: (opts) => ipcRenderer.invoke('builds', opts),
+  demand: (opts) => ipcRenderer.invoke('demand', opts),
   setPriceCurrency: (c) => ipcRenderer.invoke('set-price-currency', c),
   copy: (text) => ipcRenderer.invoke('copy', text),
   openUrl: (url) => ipcRenderer.invoke('open-url', url),

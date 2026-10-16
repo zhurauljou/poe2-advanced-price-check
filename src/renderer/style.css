@@ -116,6 +116,7 @@ footer { display: flex; justify-content: space-between; gap: 8px; padding: 6px 1
 .hero .big.wait { color: var(--muted); text-shadow: none; animation: pulse 1.2s ease-in-out infinite; }
 @keyframes pulse { 50% { opacity: .4; } }
 .hero .alt { color: var(--muted); font-size: 14px; }
+.hero .seg.units { margin-top: 8px; }
 .grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 4px 10px; margin-top: 10px; padding-top: 10px;
         border-top: 1px solid var(--line2); text-align: left; }
 .grid > div { min-width: 0; }
@@ -124,6 +125,19 @@ footer { display: flex; justify-content: space-between; gap: 8px; padding: 6px 1
 .up { color: var(--good); } .down { color: var(--bad); }
 .spark { overflow: visible; }
 .spark polyline { fill: none; stroke: currentColor; stroke-width: 1.5; stroke-linejoin: round; }
+
+/* ---- вкладки Price / Demand (как «Flip cycles · Pairs» во флиппере) ---- */
+.tab { display: flex; flex-direction: column; gap: 10px; }
+.tabs { display: flex; justify-content: center; gap: 22px; margin: -2px 0 -2px; }
+.tabs button { position: relative; padding: 2px 4px 8px; background: none; border: 0; box-shadow: none; border-radius: 0;
+               font: 700 17px var(--sc); letter-spacing: .6px; color: var(--bronze); }
+.tabs button:hover { background: none; color: var(--cream); }
+.tabs button.on { color: var(--cream); text-shadow: 0 0 14px rgba(241, 228, 194, .25); }
+.tabs button.on::after { content: ""; position: absolute; left: 50%; bottom: 0; width: 22px; height: 7px; margin-left: -11px;
+  background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='22' height='7' viewBox='0 0 22 7'%3E%3Cpath d='M0 3.5h7M15 3.5h7' stroke='%23dac18e'/%3E%3Cpath d='M11 0l3.5 3.5L11 7 7.5 3.5z' fill='%23dac18e'/%3E%3C/svg%3E") no-repeat; }
+.dcol .k { font: 700 13.5px var(--sc); letter-spacing: .4px; color: var(--label); margin: 6px 0 2px; }
+.brow.mine .bname { color: var(--good); }
+.brow.mine .bbar i { background: linear-gradient(90deg, #2f6b3a, var(--good)); }
 
 /* ---- популярные билды ---- */
 .center { text-align: center; }

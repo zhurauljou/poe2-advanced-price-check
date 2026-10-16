@@ -7,13 +7,41 @@
   "private": true,
   "scripts": {
     "start": "electron .",
-    "test": "node --test test/*.test.js"
+    "test": "node --test test/*.test.js",
+    "dist": "electron-builder --win nsis"
   },
   "devDependencies": {
-    "electron": "^44.7.2"
+    "electron": "^44.7.2",
+    "electron-builder": "^26.15.3"
   },
   "dependencies": {
     "koffi": "^3.3.3",
     "uiohook-napi": "^1.5.5"
+  },
+  "author": "PoE 2 Price Checker",
+  "build": {
+    "appId": "local.poe2.pricechecker",
+    "productName": "PoE 2 Price Checker",
+    "directories": {
+      "output": "dist"
+    },
+    "files": [
+      "src/**/*",
+      "assets/**/*",
+      "package.json"
+    ],
+    "win": {
+      "target": "nsis",
+      "icon": "assets/icon.ico"
+    },
+    "nsis": {
+      "oneClick": false,
+      "perMachine": false,
+      "allowToChangeInstallationDirectory": true,
+      "createDesktopShortcut": true,
+      "shortcutName": "PoE 2 Price Checker"
+    },
+    "npmRebuild": false,
+    "nodeGypRebuild": false
   }
 }

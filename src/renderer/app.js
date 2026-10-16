@@ -156,17 +156,42 @@ function alt(div, selfId) {
   return out.join(' · ');
 }
 
+// Валюту оцениваем в популярной валюте на выбор: Div / Chaos / Ex. Выбор помним между запусками.
+const UNITS = [['divine', 'Div', 'div'], ['chaos', 'Chaos', 'chaos'], ['exalted', 'Ex', 'ex']];
+let unit = null;
+try { unit = localStorage.getItem('exchangeUnit'); } catch {}
+
+function perDiv(id) {
+  return id === 'divine' ? 1 : rates[id];
+}
+
+// Цена в выбранной валюте; «auto» (ничего не выбрано или выбрана сама эта валюта) — по обычному правилу div/chaos.
+function inUnit(div, u) {
+  const def = UNITS.find((d) => d[0] === u);
+  if (!def || !perDiv(u)) return money(div);
+  return `${fmt(div * perDiv(u))} ${def[2]}`;
+}
+
 function renderExchangeHero() {
   const x = state.exchange;
   const stack = state.item.stack && state.item.stack.size > 1 ? state.item.stack.size : 0;
   const dir = x.change == null ? '' : x.change >= 0 ? 'up' : 'down';
+  const u = unit && unit !== x.id ? unit : null;
+  const shown = u || (x.divine >= 1 ? 'divine' : 'chaos');
+  // Обратный курс: «67.6 per chaos» понятнее, чем «0.0148 chaos».
+  const units = x.divine * (perDiv(shown) || 0);
+  const inverse = units > 0 && units < 0.5 ? `${fmt(1 / units)} per ${UNITS.find((d) => d[0] === shown)[2]}` : '';
+  const others = UNITS.filter((d) => d[0] !== shown && d[0] !== x.id && perDiv(d[0]))
+    .map((d) => `${fmt(x.divine * perDiv(d[0]))} ${d[2]}`);
   $('hero').hidden = false;
   $('hero').innerHTML = `
     <div class="k">Price per unit</div>
-    <div class="big">${x.image ? `<img src="${esc(x.image)}" alt="">` : ''}${money(x.divine)}</div>
-    <div class="alt">${alt(x.divine, x.id)}</div>
+    <div class="big">${x.image ? `<img src="${esc(x.image)}" alt="">` : ''}${inUnit(x.divine, shown)}</div>
+    <div class="alt">${[inverse, ...others].filter(Boolean).join(' · ')}</div>
+    <div class="seg units">${UNITS.filter((d) => d[0] !== x.id).map((d) =>
+      `<button data-unit="${d[0]}"${d[0] === shown ? ' class="on"' : ''}>${d[1]}</button>`).join('')}</div>
     <div class="grid">
-      <div><span class="k">${stack ? `Stack ×${stack}` : 'Stack'}</span><span class="v">${stack ? money(x.divine * stack) : '—'}</span></div>
+      <div><span class="k">${stack ? `Stack ×${stack}` : 'Stack'}</span><span class="v">${stack ? inUnit(x.divine * stack, shown) : '—'}</span></div>
       <div><span class="k">7 days</span><span class="v ${dir}">${x.change == null ? '—' : `${x.change >= 0 ? '+' : ''}${fmt(x.change)}%`} ${spark(x.spark)}</span></div>
       <div><span class="k">24h volume</span><span class="v">${fmt(x.volume)} div</span></div>
     </div>`;
@@ -229,6 +254,62 @@ async function loadBuilds() {
     if (seq !== buildsSeq) return;
     box.innerHTML = `<div class="sect"><span>Popular builds</span></div><div class="muted center">poe.ninja: ${esc(String(e.message || e).replace(/^Error invoking remote method '\w+': (Error: )?/, ''))}</div>`;
   }
+  fit();
+}
+
+// ---- спрос по категории (poe.ninja): какие базы и моды носят на таких вещах ----
+let demandSeq = 0;
+async function loadDemand() {
+  const { item, filters: f } = state;
+  const box = $('demand');
+  if (!f || !f.category || !['Rare', 'Magic', 'Normal'].includes(item.rarity)) { box.hidden = true; return; }
+  const seq = ++demandSeq;
+  box.hidden = false;
+  box.innerHTML = `<div class="sect"><span>Demand</span></div><div class="muted center">Loading from poe.ninja…</div>`;
+  try {
+    const d = await window.pc.demand({ itemClass: item.itemClass, rarity: item.rarity === 'Normal' ? 'Rare' : item.rarity });
+    if (seq !== demandSeq) return;
+    renderDemand(d);
+  } catch (e) {
+    if (seq !== demandSeq) return;
+    box.innerHTML = `<div class="sect"><span>Demand</span></div><div class="muted center">poe.ninja: ${esc(String(e.message || e).replace(/^Error invoking remote method '\w+': (Error: )?/, ''))}</div>`;
+  }
+  fit();
+}
+
+// Шаблон мода, как у ninja: «# to maximum Life», «#% to Fire Resistance» — наш шаблон трейда без «(Local)».
+const ninjaTemplate = (t) => (t || '').replace(/ \(Local\)$/, '').toLowerCase();
+
+function renderDemand(d) {
+  const { item, filters: f } = state;
+  if (!d.category || !d.total) {
+    $('demand').innerHTML = `<div class="sect"><span>Demand</span></div><div class="muted center">No data on poe.ninja for this item class</div>`;
+    return;
+  }
+  const mine = new Set(f.mods.filter((m) => m.template).map((m) => ninjaTemplate(m.template)));
+  const modRows = d.mods.map((r) => ({ ...r, mine: mine.has(r.name.toLowerCase()) }));
+  const hits = modRows.filter((r) => r.mine).length;
+  const baseRows = d.bases.map((r) => ({ ...r, mine: r.name === item.baseType }));
+  const baseRank = d.bases.findIndex((b) => b.name === item.baseType);
+  $('demand').innerHTML = `
+    <div class="sect"><span>Demand · ${esc(d.category)}</span></div>
+    <div class="bshare">Worn by <b>${fmt(d.total / d.allTotal * 100)}%</b> of builds</div>
+    <div class="bwhat muted">Your item: ${baseRank >= 0 ? `base #${baseRank + 1}` : 'base not in top 10'} · ${hits} of top ${modRows.length} modifiers</div>
+    <div class="dcol"><div class="k">Most worn bases</div>${demandRows(baseRows)}</div>
+    <div class="dcol"><div class="k">Most common modifiers</div>${demandRows(modRows)}</div>
+    <button class="link bopen" data-url="${esc(d.page)}">poe.ninja ↗</button>`;
+}
+
+function demandRows(rows) {
+  return rows.map((r) => `
+    <div class="brow${r.mine ? ' mine' : ''}"${r.mine ? ' title="Your item has this"' : ''}><span class="bname">${r.mine ? '✓ ' : ''}${esc(r.name)}</span><span class="bpct">${fmt(r.pct)}%</span>
+      <span class="bbar"><i style="width:${Math.min(100, r.pct)}%"></i></span></div>`).join('');
+}
+
+function setTab(name) {
+  document.querySelectorAll('#tabs button').forEach((b) => b.classList.toggle('on', b.dataset.tab === name));
+  $('tab-price').hidden = name !== 'price';
+  $('tab-demand').hidden = name !== 'demand';
   fit();
 }
 
@@ -384,11 +465,28 @@ window.pc.onItem((data) => {
   renderFilters();
   if (!state.exchange && !state.searchable) setStatus('No price data for this item');
   fit();
+  // Вкладки — только для предметов с поиском на трейде; валюте хватает одной.
+  $('tabs').hidden = !state.searchable;
+  setTab('price');
   if (state.searchable) runSearch(true);
   loadBuilds();
+  loadDemand();
 });
 
-$('builds').addEventListener('click', (e) => {
+$('hero').addEventListener('click', (e) => {
+  const b = e.target.closest('[data-unit]');
+  if (!b || !state.exchange) return;
+  unit = b.dataset.unit;
+  try { localStorage.setItem('exchangeUnit', unit); } catch {}
+  renderExchangeHero();
+});
+
+$('tabs').addEventListener('click', (e) => {
+  const b = e.target.closest('[data-tab]');
+  if (b) setTab(b.dataset.tab);
+});
+
+$('tab-demand').addEventListener('click', (e) => {
   const b = e.target.closest('.bopen');
   if (b) window.pc.openUrl(b.dataset.url);
 });

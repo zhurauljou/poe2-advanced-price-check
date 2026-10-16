@@ -20,8 +20,16 @@
   <main>
     <div id="status" hidden></div>
     <section id="tooltip" class="tt"></section>
+    <nav id="tabs" class="tabs" hidden>
+      <button data-tab="price" class="on">Price</button>
+      <button data-tab="demand">Demand</button>
+    </nav>
+    <div id="tab-demand" class="tab" hidden>
+      <section id="builds" class="builds" hidden></section>
+      <section id="demand" class="builds" hidden></section>
+    </div>
+    <div id="tab-price" class="tab">
     <section id="hero" class="hero" hidden></section>
-    <section id="builds" class="builds" hidden></section>
     <section id="filters" hidden>
       <div class="sect"><span>Search filters</span></div>
       <div id="mods"></div>
@@ -30,6 +38,7 @@
     </section>
     <div id="note" class="note" hidden></div>
     <section id="results" hidden></section>
+    </div>
   </main>
   <footer>
     <span>Esc — close · Enter — search · click a listing — copy whisper</span>

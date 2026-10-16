@@ -9,7 +9,7 @@ const api = require('./api');
 const pricing = require('./pricing');
 const { log } = require('./log');
 const winapi = require('./winapi');
-const { popularBuilds } = require('./ninjaBuilds');
+const { popularBuilds, categoryDemand } = require('./ninjaBuilds');
 const { parseItem } = require('./parser');
 
 const WIDTH = 480;
@@ -300,6 +300,10 @@ app.whenReady().then(() => {
     ready.then(() => priceCheck(sample)).then(() => {
       if (!arg('shot')) return;
       setTimeout(async () => {
+        if (arg('tab')) {
+          await win.webContents.executeJavaScript(`setTab(${JSON.stringify(arg('tab'))})`);
+          await new Promise((r) => setTimeout(r, 500));
+        }
         if (process.argv.includes('--dump-filters')) {
           console.log(await win.webContents.executeJavaScript(
             'JSON.stringify({ ilvl: state.filters.ilvl, reqLevel: state.filters.reqLevel, sockets: state.filters.sockets, quality: state.filters.quality, skill: state.filters.skill, props: state.item.properties })'));
@@ -321,6 +325,7 @@ app.whenReady().then(() => {
     return true;
   });
   ipcMain.handle('builds', (_e, opts) => popularBuilds({ ...opts, league: settings.get().league, limit: 5 }, api.fetchBuffer));
+  ipcMain.handle('demand', (_e, opts) => categoryDemand({ ...opts, league: settings.get().league, limit: 10 }, api.fetchBuffer));
   ipcMain.handle('set-price-currency', (_e, c) => { settings.set({ priceCurrency: c }); });
   ipcMain.handle('copy', (_e, t) => clipboard.writeText(t));
   ipcMain.handle('open-url', (_e, u) => { if (/^https:\/\/((www\.)?pathofexile\.com|poe\.ninja)\//.test(u)) shell.openExternal(u); });
