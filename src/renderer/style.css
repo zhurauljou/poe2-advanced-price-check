@@ -28,12 +28,30 @@ body { background: linear-gradient(rgba(0, 0, 0, .45), rgba(0, 0, 0, .18) 70px, 
 
 /* ---- полоска для перетаскивания ---- */
 .topbar { position: relative; display: flex; justify-content: center; align-items: center; height: 32px; -webkit-app-region: drag; }
-.topbar select, .topbar .close { -webkit-app-region: no-drag; }
-/* Лига — просто золотой текст по центру, стрелка вплотную к названию. */
-.topbar select { field-sizing: content; max-width: 300px; border: 0; padding: 2px 16px 2px 4px; cursor: pointer; font-size: 15px;
-                 background: transparent url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 12 8'%3E%3Cpath d='M1 1.5l5 5 5-5' fill='none' stroke='%23dac18e' stroke-width='1.6'/%3E%3C/svg%3E") no-repeat right 2px center / 9px 6px; }
-.topbar select:hover { color: #fff4b4; }
-.topbar select option { background: var(--panel); color: var(--cream); }
+.topbar .ldrop, .topbar .close { -webkit-app-region: no-drag; }
+/* Лига — золотой текст по центру со стрелкой; список — своя панель в стиле окна (системный не стилизуется). */
+.ldrop { position: relative; }
+.ldrop > button { display: inline-flex; align-items: center; gap: 6px; padding: 2px 6px; background: none; border: 0; box-shadow: none;
+                  font: 700 15px var(--sc); letter-spacing: .4px; color: var(--gold); }
+.ldrop > button:hover { background: none; color: #fff4b4; }
+.ldrop > button svg { width: 9px; height: 6px; transition: transform .15s; }
+.ldrop.open > button svg { transform: rotate(180deg); }
+.lmenu { position: absolute; top: calc(100% + 6px); left: 50%; z-index: 60; min-width: 230px; padding: 4px 0;
+         transform: translateX(-50%); background: linear-gradient(#15130f, #0b0d11); border: 1px solid #6b5228;
+         box-shadow: 0 10px 30px rgba(0, 0, 0, .75), inset 0 1px 0 rgba(255, 224, 138, .08);
+         animation: lmenu-in .12s ease-out; }
+@keyframes lmenu-in { from { opacity: 0; transform: translate(-50%, -4px); } }
+.lmenu::before { content: ""; position: absolute; top: -6px; left: 50%; width: 10px; height: 10px; margin-left: -5px;
+                 background: #15130f; border: 1px solid #6b5228; border-right: 0; border-bottom: 0; transform: rotate(45deg); }
+.lmenu button { position: relative; display: flex; align-items: center; gap: 8px; width: 100%; padding: 6px 14px 6px 18px;
+                background: none; border: 0; border-radius: 0; box-shadow: none; text-align: left;
+                font: 700 15px var(--sc); letter-spacing: .3px; color: var(--text); }
+.lmenu button:hover { background: rgba(218, 193, 142, .08); color: var(--cream); }
+.lmenu button.on { color: var(--gold); box-shadow: inset 2px 0 var(--gold); background: rgba(218, 193, 142, .05); }
+.lmenu button .chk { margin-left: auto; color: var(--gold); font-family: var(--body); }
+.lmenu .hc { padding: 0 4px; border: 1px solid rgba(224, 103, 90, .5); border-radius: 2px; color: var(--bad);
+             font: 700 10px/1.5 var(--body); letter-spacing: .4px; }
+.lmenu .lsep { height: 1px; margin: 4px 10px; background: linear-gradient(90deg, transparent, #4a3a22, transparent); }
 .close { position: absolute; right: 10px; top: 50%; transform: translateY(-50%); padding: 2px 4px; font-size: 16px; line-height: 1;
          color: var(--bronze); cursor: pointer; }
 .close:hover { color: var(--cream); }

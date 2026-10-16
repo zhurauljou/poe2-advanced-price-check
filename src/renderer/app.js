@@ -98,8 +98,22 @@ function renderBanner() {
   }
 }
 
+// Выбор лиги — своя выпадашка: обычные лиги сверху, хардкор (HC / Hardcore) — ниже, с красным тегом.
+const isHC = (l) => /^(HC |Hardcore)/.test(l);
+
 function renderLeagues() {
-  $('league').innerHTML = state.leagues.map((l) => `<option${l === state.league ? ' selected' : ''}>${esc(l)}</option>`).join('');
+  $('leagueName').textContent = state.league;
+  const item = (l) => `<button data-league="${esc(l)}"${l === state.league ? ' class="on"' : ''}>${esc(l.replace(/^HC /, ''))}${isHC(l) ? '<span class="hc">HC</span>' : ''}${l === state.league ? '<span class="chk">✓</span>' : ''}</button>`;
+  const soft = state.leagues.filter((l) => !isHC(l));
+  const hard = state.leagues.filter(isHC);
+  $('leagueMenu').innerHTML = soft.map(item).join('') + (hard.length ? '<div class="lsep"></div>' + hard.map(item).join('') : '');
+}
+
+function toggleLeagueMenu(open) {
+  const on = open != null ? open : $('leagueMenu').hidden;
+  $('leagueMenu').hidden = !on;
+  $('ldrop').classList.toggle('open', on);
+  if (on) fit();
 }
 
 // Свойство подсказки → фильтр защиты (state.filters.props по key).
@@ -677,12 +691,24 @@ $('banner').addEventListener('click', (e) => {
 $('search').addEventListener('click', () => { setNote(''); runSearch(); loadBuilds(); });
 document.addEventListener('keydown', (e) => {
   if (e.key === 'Enter' && state && state.searchable) { setNote(''); runSearch(); }
-  if (e.key === 'Escape') window.pc.hide();
+  if (e.key === 'Escape') {
+    // Сначала закрываем открытый список лиг, а не всё окно.
+    if (!$('leagueMenu').hidden) toggleLeagueMenu(false);
+    else window.pc.hide();
+  }
 });
 $('open').addEventListener('click', () => state.tradeUrl && window.pc.openUrl(state.tradeUrl));
 $('close').addEventListener('click', () => window.pc.hide());
-$('league').addEventListener('change', async (e) => {
-  state.league = e.target.value;
+$('leagueBtn').addEventListener('click', (e) => { e.stopPropagation(); toggleLeagueMenu(); });
+$('leagueMenu').addEventListener('click', async (e) => {
+  const b = e.target.closest('[data-league]');
+  if (!b) return;
+  toggleLeagueMenu(false);
+  if (b.dataset.league === state.league) return;
+  state.league = b.dataset.league;
+  renderLeagues();
   await window.pc.setLeague(state.league);
   if (state.searchable) runSearch();
 });
+// Клик мимо — закрыть список.
+document.addEventListener('click', (e) => { if (!e.target.closest('#ldrop')) toggleLeagueMenu(false); });
