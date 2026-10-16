@@ -123,8 +123,13 @@ footer { display: flex; justify-content: space-between; gap: 8px; padding: 6px 1
 .grid .k { display: block; font: 500 13.5px var(--body); color: var(--muted); letter-spacing: 0; }
 .grid .v { display: flex; align-items: center; gap: 6px; color: var(--cream); font-weight: 700; font-variant-numeric: tabular-nums; white-space: nowrap; }
 .up { color: var(--good); } .down { color: var(--bad); }
-.spark { overflow: visible; }
-.spark polyline { fill: none; stroke: currentColor; stroke-width: 1.5; stroke-linejoin: round; }
+/* График тренда — как во флиппере: пунктир нуля, выше зелёный, ниже красный. */
+.spark { display: block; overflow: visible; }
+.spark polyline { fill: none; stroke-width: 1.5; stroke-linejoin: round; stroke-linecap: round; }
+.spark line.z { stroke: var(--muted); stroke-width: 1; stroke-dasharray: 2 2; opacity: .6; }
+.spark polyline.pos { stroke: var(--good); } .spark polyline.neg { stroke: var(--bad); }
+.spark circle.pos { fill: var(--good); } .spark circle.neg { fill: var(--bad); }
+.grid .trend .tr { display: block; font-size: 13px; font-weight: 700; font-variant-numeric: tabular-nums; white-space: nowrap; }
 
 /* ---- вкладки Price / Demand (как «Flip cycles · Pairs» во флиппере) ---- */
 .tab { display: flex; flex-direction: column; gap: 10px; }

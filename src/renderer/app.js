@@ -29,13 +29,28 @@ function ago(iso) {
   return `${Math.round(s / 86400)}d`;
 }
 
-function spark(data) {
-  if (!data || data.length < 2) return '';
-  const w = 56, h = 16;
-  const min = Math.min(...data), max = Math.max(...data), span = max - min || 1;
-  const pts = data.map((v, i) => `${(i / (data.length - 1)) * w},${h - ((v - min) / span) * h}`).join(' ');
-  return `<svg class="spark" width="${w}" height="${h}"><polyline points="${pts}"/></svg>`;
+// Мини-график как во флиппере (trendSvg): пунктир нуля, выше нуля линия зелёная, ниже — красная,
+// точка на последнем значении. Одна и та же линия рисуется дважды, обрезанная по нулю.
+let svgUid = 0;
+function spark(vals, { w = 96, h = 26 } = {}) {
+  const pts = (vals || []).map((v, i) => [i, v]).filter((p) => p[1] != null && isFinite(p[1]));
+  if (pts.length < 2) return '';
+  const P = 2, n = vals.length - 1;
+  const lo = Math.min(0, ...pts.map((p) => p[1])), hi = Math.max(0, ...pts.map((p) => p[1]));
+  const x = (i) => (P + i / n * (w - 2 * P)).toFixed(1);
+  const y = (v) => (hi === lo ? h / 2 : P + (hi - v) / (hi - lo) * (h - 2 * P)).toFixed(1);
+  const line = pts.map(([i, v]) => `${x(i)},${y(v)}`).join(' ');
+  const [li, lv] = pts[pts.length - 1];
+  const id = `zc${++svgUid}`, yz = +y(0);
+  return `<svg class="spark" viewBox="0 0 ${w} ${h}" width="${w}" height="${h}">` +
+    `<defs><clipPath id="${id}p"><rect x="0" y="-1" width="${w}" height="${yz + 1}"/></clipPath>` +
+    `<clipPath id="${id}n"><rect x="0" y="${yz}" width="${w}" height="${h - yz + 1}"/></clipPath></defs>` +
+    `<line class="z" x1="0" x2="${w}" y1="${yz}" y2="${yz}"/>` +
+    `<polyline class="pos" clip-path="url(#${id}p)" points="${line}"/><polyline class="neg" clip-path="url(#${id}n)" points="${line}"/>` +
+    `<circle class="${lv >= 0 ? 'pos' : 'neg'}" cx="${x(li)}" cy="${y(lv)}" r="1.8"/></svg>`;
 }
+
+const pct1 = (v) => `${v > 0 ? '+' : ''}${v.toFixed(1)}%`;
 
 function fit() {
   requestAnimationFrame(() => window.pc.fit(document.body.scrollHeight + 2));
@@ -192,7 +207,8 @@ function renderExchangeHero() {
       `<button data-unit="${d[0]}"${d[0] === shown ? ' class="on"' : ''}>${d[1]}</button>`).join('')}</div>
     <div class="grid">
       <div><span class="k">${stack ? `Stack ×${stack}` : 'Stack'}</span><span class="v">${stack ? inUnit(x.divine * stack, shown) : '—'}</span></div>
-      <div><span class="k">7 days</span><span class="v ${dir}">${x.change == null ? '—' : `${x.change >= 0 ? '+' : ''}${fmt(x.change)}%`} ${spark(x.spark)}</span></div>
+      <div class="trend"><span class="k">7 days</span>${spark(x.spark)}
+        ${x.spark && x.spark.length > 1 ? `<span class="tr ${dir}">${pct1(x.spark[0])} → ${pct1(x.spark[x.spark.length - 1])}</span>` : '<span class="v">—</span>'}</div>
       <div><span class="k">24h volume</span><span class="v">${fmt(x.volume)} div</span></div>
     </div>`;
 }
