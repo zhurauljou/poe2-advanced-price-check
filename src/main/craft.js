@@ -4,6 +4,7 @@
 // показываем, какие ВОСТРЕБОВАННЫЕ (по poe.ninja) моды могут встать и каким способом.
 
 const stats = require('./stats');
+const { essenceFor, perfectFor } = require('./essences');
 
 const REPOE = 'https://repoe-fork.github.io/poe2';
 
@@ -45,26 +46,6 @@ function tradeStats(mod, domain, itemClass) {
   const out = lines.map((l) => stats.statFor(l, domain === 'desecrated' ? 'desecrated' : 'explicit', itemClass));
   return out.every(Boolean) ? out.map((s) => ({ statId: s.statId, min: s.value })) : null;
 }
-
-// Эссенции и моды, которые они гарантируют (тир эссенции — Lesser…Perfect — задаёт силу мода).
-// Lesser/обычная/Greater делают магическую вещь редкой с этим модом, Perfect — на редкой меняет случайный мод на него.
-const ESSENCES = [
-  ['Essence of the Body', /^# to maximum life$/], ['Essence of the Mind', /^# to maximum mana$/],
-  ['Essence of Enhancement', /^#% increased (armour|evasion rating|energy shield)/], ['Essence of Abrasion', /^adds # to # physical damage/],
-  ['Essence of Flames', /^adds # to # fire damage/], ['Essence of Ice', /^adds # to # cold damage/],
-  ['Essence of Electricity', /^adds # to # lightning damage/], ['Essence of Ruin', /^#% to chaos resistance$/],
-  ['Essence of Battle', /^# to accuracy rating/], ['Essence of Sorcery', /^#% increased spell damage$/],
-  ['Essence of Haste', /^#% increased attack speed$/], ['Essence of the Infinite', /^# to (strength|dexterity|intelligence)$/],
-  ['Essence of Seeking', /critical hit chance/], ['Essence of Insulation', /^#% to fire resistance$/],
-  ['Essence of Thawing', /^#% to cold resistance$/], ['Essence of Grounding', /^#% to lightning resistance$/],
-  ['Essence of Alacrity', /^#% increased cast speed$/], ['Essence of Opulence', /^#% increased rarity of items found$/],
-];
-const essenceFor = (text) => {
-  const lines = text.split(' / ');
-  if (lines.length > 1) return null; // гибриды эссенции не дают
-  const e = ESSENCES.find(([, re]) => re.test(lines[0]));
-  return e ? e[0] : null;
-};
 
 // Вес мода на базе: первый тег из spawn_weights, который есть у базы (в PoE 2 — только 0 или 1).
 function canRoll(mod, tags) {
@@ -145,14 +126,15 @@ async function advise(item, demandMods, cached) {
   };
 
   const normal = candidates('item');
-  for (const c of normal) c.essence = essenceFor(c.text);
+  for (const c of normal) c.essence = essenceFor(c.text, item.itemClass);
   const sections = [];
 
   // 0. Магическая → редкая: эссенция даёт гарантированный мод, Regal — случайный из всего пула.
   if (magic) {
     const sure = normal.filter((c) => c.essence);
     sections.push({ kind: 'upgrade', how: [
-      ...(sure.length ? [`Essence — makes it rare with a guaranteed modifier: ${[...new Set(sure.map((c) => `${c.essence} (${c.text.split(' / ')[0]})`))].slice(0, 4).join(', ')}`] : []),
+      ...[...new Map(sure.map((c) => [c.essence.name, c])).values()].slice(0, 4)
+        .map((c) => `${c.essence.name} — rare with guaranteed ${c.text}: ${c.essence.tiers.join(' · ')}`),
       'Regal Orb — makes it rare with one random modifier from the whole pool; the popular ones below are only some of the outcomes',
       'Greater / Perfect Regal Orb — the same, but only higher-tier modifiers',
     ] });
@@ -191,10 +173,6 @@ async function advise(item, demandMods, cached) {
       if (lowest && lowest.name === weak.name && weak.tag !== 'desecrated') {
         how.unshift('Chaos Orb + Omen of Whittling — replaces the lowest-level modifier, which is this one');
       }
-      const sure = normal.filter((c) => c.side === weak.side && c.essence);
-      if (sure.length) {
-        how.push(`Perfect Essence — removes a random modifier and adds a guaranteed one: ${sure.slice(0, 3).map((c) => `Perfect ${c.essence}`).join(', ')}`);
-      }
       sections.push({
         kind: 'replace', weak: { name: weak.name, side: weak.side, tier: weak.tier, text: weak.mod.lines.join(' / '), pct: weak.pct },
         how, candidates: normal.filter((c) => c.side === weak.side).slice(0, 5),
@@ -210,6 +188,10 @@ async function advise(item, demandMods, cached) {
         candidates: des });
     }
   }
+
+  // Perfect-эссенции — только на редких: убирают случайный мод и добавляют свой (у слота свой набор, не тот, что у Greater).
+  const perfect = item.rarity === 'Rare' ? perfectFor(item.itemClass) : [];
+  if (perfect.length) sections.push({ kind: 'perfect', how: perfect.map((p) => `${p.name} — ${p.mod}`) });
 
   // 4. Дёшево и без риска.
   const cheap = [];

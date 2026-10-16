@@ -578,7 +578,7 @@ function craftRows(list) {
     craftCands.set(key, c);
     const btn = c.stats ? `<button class="link cprice" data-ck="${key}" title="Search for your item with this modifier added (lowest roll of the tier)">price?</button>` : '';
     return `
-    <div class="brow ${heat(c.pct)}"><span class="bname">${esc(c.text)}<span class="craft-tier">T${c.tier}/${c.tiers}${c.range ? ` · ${esc(c.range)}` : ''}</span>${c.essence ? `<span class="ess" title="Guaranteed with this essence — its tier (Lesser…Perfect) sets the roll">◈ ${esc(c.essence.replace(/^Essence of (the )?/, ''))}</span>` : ''}${btn}</span>
+    <div class="brow ${heat(c.pct)}"><span class="bname">${esc(c.text)}<span class="craft-tier">T${c.tier}/${c.tiers}${c.range ? ` · ${esc(c.range)}` : ''}</span>${c.essence ? `<span class="ess" title="${esc(c.essence.name)} makes a magic item rare with this modifier: ${esc(c.essence.tiers.join(' · '))}">◈ ${esc(c.essence.short)}</span>` : ''}${btn}</span>
       <span class="bpct">${hot(c.pct)}${fmt(c.pct)}%</span><span class="bbar"><i data-w="${Math.min(100, c.pct)}%"></i></span></div>`;
   }).join('');
 }
@@ -642,6 +642,8 @@ function renderCraft(r) {
       parts.push(`<div class="craft-sec"><div class="k">Desecration</div>${how(s.how)}<div class="craft-sub">Popular desecrated modifiers for this base:</div>${craftRows(s.candidates)}</div>`);
     } else if (s.kind === 'upgrade') {
       parts.push(`<div class="craft-sec"><div class="k">Make it rare first</div>${how(s.how)}</div>`);
+    } else if (s.kind === 'perfect') {
+      parts.push(`<div class="craft-sec"><div class="k">Perfect Essence</div><div class="craft-sub">Removes a random modifier and adds its own guaranteed one:</div>${how(s.how)}</div>`);
     } else if (s.kind === 'keep') {
       parts.push('<div class="craft-sec"><div class="k">Full — all modifiers are top tier</div><div class="craft-sub">Nothing worth replacing.</div></div>');
     } else if (s.kind === 'cheap') {
