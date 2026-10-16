@@ -437,3 +437,8 @@ body.upd-page { height: auto; }
 .grid.sell .v.copy { margin: 0 auto; }
 .grid.sell .v.copy { position: relative; }
 .grid.sell .v.copy::after { position: absolute; left: 100%; margin-left: 4px; }
+/* Карточка конкурента — моды по левому краю, как в фильтрах: так проще сопоставлять построчно */
+.cmp-body { text-align: left; padding-left: 12px; padding-right: 12px; }
+.cmp-body .cm { padding-right: 0; }
+.cmp-body .tt, .cmp-miss, .cmp-legend { text-align: center; }
+.cm .yours { margin-left: 6px; font: 12px var(--body); color: var(--muted); white-space: nowrap; }

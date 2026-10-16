@@ -834,7 +834,10 @@ function compareModel(t) {
   };
   const missing = mods.filter((m) => m.statId && m.tag !== 'pseudo'
     && (m.option ? !theirTexts.has(m.text.toLowerCase()) : !theirs.has(key(m.statId))));
-  return { classify, missing, key };
+  // Порядок наших модов — чтобы карточка конкурента шла в том же порядке, что и фильтры.
+  const order = new Map();
+  mods.forEach((m) => { if (m.statId && !order.has(key(m.statId))) order.set(key(m.statId), order.size); });
+  return { classify, missing, key, ours, order };
 }
 
 // «▲2 ▼1» в строке лота: сколько модов у конкурента лучше и хуже ваших — без наведения.
@@ -866,22 +869,26 @@ function showCompare(l, row) {
   const t = l.tip;
   if (!t) return;
   const { item } = state;
-  const { classify, missing: miss } = compareModel(t);
+  const { classify, missing: miss, key, ours, order } = compareModel(t);
   const mark = { better: '▲', worse: '▼', extra: '+', same: '' };
-  const modLines = t.mods.map((m) => {
+  // Совпадающие моды — в порядке нашей вещи, остальные (которых у нас нет) — в конце; у ▲▼ — наше значение.
+  const rank = (m) => (m.statId && order.has(key(m.statId)) ? order.get(key(m.statId)) : 1e3);
+  const modLines = t.mods.map((m, i) => ({ m, i })).sort((a, b) => rank(a.m) - rank(b.m) || a.i - b.i).map(({ m }) => {
     const cls = classify(m);
-    return `<div class="cm ${cls} d-${esc(m.domain)}">${mark[cls] ? `<i>${mark[cls]}</i>` : ''}${esc(m.text)}</div>`;
+    const mine = (cls === 'better' || cls === 'worse') && ours.get(key(m.statId));
+    return `<div class="cm ${cls} d-${esc(m.domain)}">${mark[cls] ? `<i>${mark[cls]}</i>` : ''}${esc(m.text)}${mine ? `<span class="yours">yours ${fmt(mine)}</span>` : ''}</div>`;
   }).join('');
   const missing = miss.map((m) => `<div class="cm missing"><i>✗</i>${esc(m.text.split('\n').join(' + '))}</div>`).join('');
 
   const ourProps = new Map(item.properties.map((p) => [p.k, propNum(p.v)]));
   const props = t.props.map((p) => {
     const cls = ourProps.has(p.k) ? compareClass(propNum(p.v), ourProps.get(p.k)) : '';
-    return `<div class="cm ${cls}">${mark[cls] ? `<i>${mark[cls]}</i>` : ''}${esc(p.k)}: <b>${esc(p.v)}</b></div>`;
+    const yours = cls === 'better' || cls === 'worse' ? `<span class="yours">yours ${fmt(ourProps.get(p.k))}</span>` : '';
+    return `<div class="cm ${cls}">${mark[cls] ? `<i>${mark[cls]}</i>` : ''}${esc(p.k)}: <b>${esc(p.v)}</b>${yours}</div>`;
   });
   if (t.ilvl) {
     const cls = compareClass(t.ilvl, item.ilvl);
-    props.push(`<div class="cm ${cls}">${mark[cls] ? `<i>${mark[cls]}</i>` : ''}Item Level: <b>${t.ilvl}</b></div>`);
+    props.push(`<div class="cm ${cls}">${mark[cls] ? `<i>${mark[cls]}</i>` : ''}Item Level: <b>${t.ilvl}</b>${cls ? `<span class="yours">yours ${item.ilvl}</span>` : ''}</div>`);
   }
 
   const two = t.name && t.base && t.name !== t.base;
