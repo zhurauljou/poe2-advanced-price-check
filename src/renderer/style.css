@@ -153,6 +153,14 @@ footer { display: flex; justify-content: space-between; gap: 8px; padding: 6px 1
 .conf { display: inline-block; margin-top: 4px; font: 700 12.5px var(--body); letter-spacing: .5px; cursor: help; }
 .conf.c3 { color: var(--good); } .conf.c2 { color: var(--warn); } .conf.c1 { color: var(--bad); }
 .hero .floor { margin-top: 6px; font-size: 14px; color: var(--label); }
+.hero .ages { margin-top: 4px; font-size: 13px; color: var(--muted); }
+.hero .ages b { color: var(--cream); }
+.hero .ages .stale { color: var(--warn); }
+/* Лоты: 5 сразу, остальные по кнопке; залежавшиеся приглушены, свежие — с зелёным возрастом */
+.lots:not(.all) .lot.more { display: none; }
+.lot.stale { opacity: .55; }
+.lot.fresh .age { color: var(--good); }
+.lots-more { display: block; margin: 6px auto 0; }
 .hero .floor b { color: var(--cream); }
 .hero .floor .prem { margin-left: 6px; padding: 0 6px; border-radius: 2px; font: 700 12px/1.5 var(--body); color: #1a1408;
                      background: linear-gradient(#f1d79a, #c9a45c); box-shadow: 0 0 8px rgba(255, 190, 80, .3); }
@@ -260,10 +268,10 @@ body.cmp-page { background: #0a0d12; }
 .bopen { align-self: center; }
 
 /* ---- фильтры ---- */
-.mod { display: flex; gap: 8px; align-items: center; padding: 3px 6px; border-radius: 2px; }
+.mod { display: flex; gap: 8px; align-items: center; padding: 1px 6px; border-radius: 2px; }
 .mod:hover { background: var(--hover); }
 .mod label { flex: 1; display: flex; gap: 7px; align-items: center; cursor: pointer; min-width: 0;
-             font: 15px/1.3 var(--game); color: var(--g-mod); }
+             font: 14.5px/1.22 var(--game); color: var(--g-mod); }
 /* Колонки фиксированной ширины — текст модов начинается ровно на одной вертикали. */
 .mod .cb { width: 13px; flex: none; }
 .mod .imp { width: 16px; }
@@ -287,7 +295,7 @@ body.cmp-page { background: #0a0d12; }
 .mod.t-pseudo label, .mod.t-prop label { color: var(--cream); }
 .mod.off label { color: #7d7d8a; }
 .mod.nomatch label { color: #696973; cursor: default; }
-.mod input[type=number] { width: 60px; padding: 2px 4px; }
+.mod input[type=number] { width: 56px; height: 24px; padding: 1px 4px; }
 .tag { font: 700 10.5px/1.5 var(--body); text-transform: uppercase; letter-spacing: .4px; color: var(--bronze); border: 1px solid #2c2a25;
        border-radius: 2px; padding: 0 4px; flex: none; }
 .tag.tier { min-width: 23px; text-align: center; }

@@ -464,13 +464,15 @@ async function search(league, item, filters, relax = false) {
 async function quickPrices(L, item, f) {
   const s = await api.tradeRequest('search', `${api.TRADE}/api/trade2/search/poe2/${L}`, buildQuery(item, f));
   const ids = (s.result || []).slice(0, 5);
-  let divs = [];
+  let lots = [];
   if (ids.length) {
     const fr = await api.tradeRequest('fetch', `${api.TRADE}/api/trade2/fetch/${ids.join(',')}?query=${s.id}`);
-    divs = (fr.result || []).filter(Boolean).map((r) => r.listing.price || {})
-      .map((p) => (p.amount != null ? toDivine(p.amount, p.currency) : null)).filter((v) => v != null).sort((a, b) => a - b);
+    // С возрастом лота — чтобы и вторую цену считать по свежим лотам, как основную.
+    lots = (fr.result || []).filter(Boolean).map((r) => ({ p: r.listing.price || {}, indexed: r.listing.indexed }))
+      .map(({ p, indexed }) => ({ div: p.amount != null ? toDivine(p.amount, p.currency) : null, indexed }))
+      .filter((l) => l.div != null).sort((a, b) => a.div - b.div);
   }
-  return { total: s.total, divs, url: `${api.TRADE}/trade2/search/poe2/${L}/${s.id}` };
+  return { total: s.total, divs: lots.map((l) => l.div), lots, url: `${api.TRADE}/trade2/search/poe2/${L}/${s.id}` };
 }
 
 module.exports = { init, prepare, search };

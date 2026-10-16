@@ -243,16 +243,40 @@ function renderSearchingHero() {
 // Оценка — медиана самых дешёвых (до 5) лотов: один демпингующий продавец её не уронит.
 // Насколько верить оценке: сколько похожих лотов и насколько разбросаны цены самых дешёвых.
 // Разброс — во сколько раз самая дорогая из (до 5) самых дешёвых дороже самой дешёвой.
-function confidence(total, head) {
+function confidence(total, head, cheapest = []) {
   const spread = head.length > 1 && head[0] > 0 ? head[head.length - 1] / head[0] : 1;
+  const allStale = cheapest.length >= 3 && cheapest.every((l) => l.age >= 7);
   let level = 2;
   let why = `${total} listings, prices within ×${fmt(spread)}`;
-  if (total >= 10 && spread <= 2) level = 3;
-  else if (total < 4 || spread > 4) level = 1;
+  if (total >= 10 && spread <= 2 && !allStale) level = 3;
+  else if (total < 4 || spread > 4 || allStale) level = 1;
   if (total < 4) why = `only ${total} similar listing${total === 1 ? '' : 's'}`;
+  else if (allStale) why = 'all cheapest listings are a week+ old — those prices may not be real';
   else if (spread > 4) why = `cheapest prices differ ×${fmt(spread)} — someone may be underpricing`;
   const label = { 3: 'Reliable', 2: 'Some data', 1: 'Few listings' }[level];
   return `<div class="conf c${level}" title="${esc(why)}">${'●'.repeat(level)}${'○'.repeat(3 - level)} ${label}</div>`;
+}
+
+// Сколько дней назад лот выставлен или переоценён (трейд: listing.indexed).
+const ageDays = (iso) => (iso ? (Date.now() - new Date(iso).getTime()) / 86400e3 : 99);
+
+// Строка про возраст лотов: свежие за сутки, залежавшийся самый дешёвый, тренд «свежие дешевле/дороже».
+function ageSummary(priced, usedFresh) {
+  if (priced.length < 2) return '';
+  const bits = [];
+  const day = priced.filter((l) => l.age <= 1);
+  if (day.length) bits.push(`Fresh (24h): <b>${day.length}</b> from ${money(day[0].div)}`);
+  if (priced[0].age >= 7) bits.push(`<span class="stale">cheapest hung ${Math.round(priced[0].age)}d — likely overpriced</span>`);
+  const newer = priced.filter((l) => l.age <= 3).map((l) => l.div);
+  const older = priced.filter((l) => l.age > 3).map((l) => l.div);
+  if (newer.length >= 2 && older.length >= 2) {
+    const mid = (a) => a[Math.floor((a.length - 1) / 2)];
+    const k = mid(newer) / mid(older);
+    if (k < 0.85) bits.push('<span class="down">↓ newer listings are cheaper</span>');
+    else if (k > 1.15) bits.push('<span class="up">↑ newer listings are pricier</span>');
+  }
+  if (usedFresh) bits.push('estimate from listings ≤ 3 days old');
+  return bits.length ? `<div class="ages">${bits.join(' · ')}</div>` : '';
 }
 
 function renderTradeHero(r) {
@@ -262,14 +286,23 @@ function renderTradeHero(r) {
       <div class="alt">No similar items listed right now — it may be a rare high-end item.<br>Uncheck filters or lower the minimums to widen the search.</div>`;
     return;
   }
-  const head = divs.slice(0, 5);
+  // Возраст лотов: залежавшийся дешёвый лот (неделю+ не купили) завышает картину — за эту цену не берут.
+  // Если свежих (≤ 3 дней) лотов хватает, оценку строим по ним; иначе — по всем, но надёжность ниже.
+  const priced = r.listings.filter((l) => l.divine != null).map((l) => ({ div: l.divine, age: ageDays(l.indexed) }))
+    .sort((a, b) => a.div - b.div);
+  const fresh = priced.filter((l) => l.age <= 3);
+  const basis = fresh.length >= 3 ? fresh.map((l) => l.div) : divs;
+  const head = basis.slice(0, 5);
   const est = head[Math.floor((head.length - 1) / 2)];
   const median = divs[Math.floor((divs.length - 1) / 2)];
+  const ageHtml = ageSummary(priced, fresh.length >= 3 && fresh.length < priced.length);
   // Вторая цена: те же моды с любым роллом своего тира — сколько рынок доплачивает за ваши роллы.
   let floorHtml = '';
   const fl = r.floor;
   if (fl && fl.divs.length) {
-    const fh = fl.divs.slice(0, 5);
+    // То же правило, что и для основной цены: хватает свежих (≤ 3 дней) — по ним.
+    const ffresh = (fl.lots || []).filter((l) => ageDays(l.indexed) <= 3).map((l) => l.div);
+    const fh = (ffresh.length >= 3 ? ffresh : fl.divs).slice(0, 5);
     const fest = fh[Math.floor((fh.length - 1) / 2)];
     const premium = fest > 0 ? Math.round((est / fest - 1) * 100) : 0;
     floorHtml = `<div class="floor" title="Same modifiers with any roll of the same tier">
@@ -280,8 +313,9 @@ function renderTradeHero(r) {
     <div class="k">${fl ? 'Like yours' : 'Estimated price'}</div>
     <div class="big">${money(est)}</div>
     <div class="alt">${alt(est)}</div>
-    ${confidence(r.total, head)}
+    ${confidence(r.total, head, priced.slice(0, 5))}
     ${floorHtml}
+    ${ageHtml}
     <div class="grid">
       <div><span class="k">Cheapest</span><span class="v">${money(divs[0])}</span></div>
       <div><span class="k">Median of ${divs.length}</span><span class="v">${money(median)}</span></div>
@@ -553,20 +587,29 @@ function sameUnit(l) {
   return (unit === 'chaos' && l.currency === 'chaos') || (unit === 'div' && l.currency === 'divine');
 }
 
+// Сразу видно 5 самых дешёвых лотов — остальные по «Show all»: окно короче.
+const LOTS_SHOWN = 5;
+let showAllLots = false;
+// Свежий лот (≤ 1 дня) — подсвечен; залежавшийся (≥ 7 дней) — приглушён: такая цена, скорее всего, не продаёт.
+const ageClass = (iso) => { const d = ageDays(iso); return d <= 1 ? ' fresh' : d >= 7 ? ' stale' : ''; };
+
 function renderResults(r) {
   const box = $('results');
   box.hidden = !r.listings.length;
   if (!r.listings.length) return;
   box.innerHTML = `
     <div class="sect"><span>Cheapest listings</span></div>
-    <div class="lots">${r.listings.map((l, i) => `
-      <div class="lot" data-i="${i}" title="Copy whisper to seller">
+    <div class="lots${showAllLots ? ' all' : ''}">${r.listings.map((l, i) => `
+      <div class="lot${i >= LOTS_SHOWN ? ' more' : ''}${ageClass(l.indexed)}" data-i="${i}" title="Copy whisper to seller">
         <span class="chip">${l.currencyImage ? `<img src="${esc(l.currencyImage)}" alt="">` : ''}${fmt(l.amount)}${l.currencyImage ? '' : ' ' + esc(l.currencyName)}</span>
         <span class="eq">${l.divine != null && !sameUnit(l) ? '≈ ' + money(l.divine) : ''}</span>
         <span class="seller"><span class="dot${l.online ? ' on' : ''}"></span>${esc(l.seller)}</span>
         <span class="age">${l.indexed ? ago(l.indexed) : ''}</span>
       </div>`).join('')}
-    </div>`;
+    </div>
+    ${r.listings.length > LOTS_SHOWN ? `<button class="link lots-more">${showAllLots ? 'Show fewer' : `Show all ${r.listings.length}`}</button>` : ''}`;
+  const more = box.querySelector('.lots-more');
+  if (more) more.addEventListener('click', () => { showAllLots = !showAllLots; renderResults(r); fit(); });
   box.querySelectorAll('.lot').forEach((row) => row.addEventListener('click', () => {
     window.pc.copy(r.listings[+row.dataset.i].whisper);
     box.querySelectorAll('.lot.copied').forEach((x) => x.classList.remove('copied'));
@@ -696,6 +739,7 @@ window.pc.onItem((data) => {
   state = data;
   rates = data.rates || {};
   openSums.clear();
+  showAllLots = false;
   hideCompare();
   if (state.filters) state.filters.priceCurrency = data.priceCurrency || 'any';
   searchSeq++;
