@@ -547,7 +547,7 @@ function renderDemand(d) {
   const baseRank = d.bases.findIndex((b) => b.name === item.baseType);
   $('demand').innerHTML = `
     <div class="sect"><span>Demand · ${esc(d.category)}</span></div>
-    <div class="bshare">Worn by <b>${fmt(d.total / d.allTotal * 100)}%</b> of level 90+ builds</div>
+    <div class="bshare">Worn by <b>${fmt(d.total / d.allTotal * 100)}%</b> of level ${demandLevel}+ builds</div>
     <div class="bwhat muted">Your item: ${baseRank >= 0 ? `base #${baseRank + 1}` : 'base not in top 10'} · ${hits} of top ${modRows.length} modifiers</div>
     ${demandList('bases', 'Most worn bases', baseRows)}
     ${demandList('mods', 'Most common modifiers', modRows)}
@@ -690,6 +690,12 @@ function buildRows(rows) {
       <span class="bbar"><i data-w="${Math.min(100, r.pct)}%"></i></span></div>`).join('');
 }
 
+// Чей спрос считаем: персонажи 80+ (все, кого видит poe.ninja), 90+ или 95+ — чем выше, тем «премиальнее» моды.
+let demandLevel = 90;
+window.pc.demandLevel().then((l) => { demandLevel = l; }).catch(() => {});
+const levelSeg = () => `<div class="lvl-row"><span class="muted small">Characters</span><div class="seg lvl" title="Whose gear counts: higher level = players who pay for exact modifiers">${[80, 90, 95].map((l) =>
+  `<button data-lvl="${l}"${l === demandLevel ? ' class="on"' : ''}>${l}+</button>`).join('')}</div></div>`;
+
 function renderBuilds(b) {
   // Бейдж на вкладке Demand — чтобы фичу замечали, не открывая вкладку.
   const pct = b.allTotal ? b.total / b.allTotal * 100 : null;
@@ -699,12 +705,13 @@ function renderBuilds(b) {
   const badge = $('demandBadge');
   badge.className = `badge ${lvl || ''}`;
   badge.textContent = lvl ? { high: '🔥 High', med: 'Med', low: 'Low' }[lvl] : '';
-  badge.title = lvl ? `${b.total.toLocaleString('en-US')} level 90+ characters on poe.ninja use this${pct != null ? ` (${fmt(pct)}% of builds)` : ''}${anyHot ? ' · one build archetype dominates' : ''}` : '';
-  const share = b.allTotal ? `<b>${fmt(b.total / b.allTotal * 100)}%</b> of builds · ${b.total.toLocaleString('en-US')} characters (level 90+)`
+  badge.title = lvl ? `${b.total.toLocaleString('en-US')} level ${demandLevel}+ characters on poe.ninja use this${pct != null ? ` (${fmt(pct)}% of builds)` : ''}${anyHot ? ' · one build archetype dominates' : ''}` : '';
+  const share = b.allTotal ? `<b>${fmt(b.total / b.allTotal * 100)}%</b> of builds · ${b.total.toLocaleString('en-US')} characters`
     : `${b.total.toLocaleString('en-US')} characters`;
   const what = b.filters.filter(([k]) => k !== 'min-level').map(([, v]) => v).join(' + ');
   $('builds').innerHTML = `
     <div class="sect"><span>Popular builds</span></div>
+    ${levelSeg()}
     <div class="bshare">${share}</div>
     <div class="bwhat muted" title="poe.ninja filter">${esc(what)}</div>
     ${b.total ? `<div class="bcols">
@@ -752,7 +759,7 @@ function modRow(m, i) {
   const from = m.parts ? ` title="${esc(m.parts.map((p) => `${p.text}${p.tier ? ` (T${p.tier})` : ''}`).join('\n'))}"` : '';
   const cat = (m.tag !== 'explicit' && m.tag !== 'pseudo' ? ` <span class="tag ${esc(m.tag)}">${esc(TAG_LABEL[m.tag] || m.tag)}</span>` : '')
     // Спрос с poe.ninja: массовый мод — повод включить его, даже если тир слабый.
-    + (m.demand >= 30 ? ` <span class="dem${m.demand >= 60 ? ' hot' : ''}" title="${fmt(m.demand)}% of level 90+ builds wearing this item class have this modifier (poe.ninja)">${m.demand >= 60 ? '🔥 ' : ''}${fmt(m.demand)}% builds</span>` : '');
+    + (m.demand >= 30 ? ` <span class="dem${m.demand >= 60 ? ' hot' : ''}" title="${fmt(m.demand)}% of level ${demandLevel}+ builds wearing this item class have this modifier (poe.ninja)">${m.demand >= 60 ? '🔥 ' : ''}${fmt(m.demand)}% builds</span>` : '');
   const text = m.tag === 'pseudo' ? m.text.replace(/^Σ /, '') : m.text;
   return `<div class="mod t-${esc(m.tag)}${m.enabled ? '' : ' off'}" data-i="${i}">
       <label><input type="checkbox" data-k="enabled"${m.enabled ? ' checked' : ''}>${meter(m) || '<span class="imp"></span>'}${tier}
@@ -1068,7 +1075,16 @@ $('craft').addEventListener('click', (e) => {
   if (b) priceCraft(b);
 });
 
-$('tab-demand').addEventListener('click', (e) => {
+$('tab-demand').addEventListener('click', async (e) => {
+  const lv = e.target.closest('[data-lvl]');
+  if (lv) {
+    demandLevel = +lv.dataset.lvl;
+    await window.pc.setDemandLevel(demandLevel);
+    craftFor = null; // тема крафта — тоже по новому уровню
+    loadBuilds();
+    loadDemand();
+    return;
+  }
   const more = e.target.closest('[data-dmore]');
   if (more) {
     const col = more.closest('.dcol');

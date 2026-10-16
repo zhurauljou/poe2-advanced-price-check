@@ -27,8 +27,9 @@ let ready = null; // промис загрузки справочников
 let refreshTray = () => {};
 
 const demo = require('./demo');
-// Спрос (poe.ninja builds) — только среди персонажей 90+: их вещи ближе к тому, за что платят.
-const DEMAND_LEVEL = 90;
+// Спрос (poe.ninja builds) — среди персонажей от этого уровня (80 / 90 / 95, переключатель на вкладке Demand).
+// 80 — без фильтра: poe.ninja и так учитывает только 80+.
+const demandLevel = () => { const l = settings.get().demandLevel || 90; return l > 80 ? l : null; };
 // Демо-прогон живёт в своей папке данных, чтобы работать рядом с запущенной копией из трея.
 if (demo.enabled) app.setPath('userData', app.getPath('userData') + '-demo');
 if (!app.requestSingleInstanceLock()) app.quit();
@@ -252,7 +253,7 @@ async function priceCheck(text) {
   // поэтому ждём только в первый раз и не дольше 1.5 с; не успели — работаем без него.
   let demand = null;
   if (['Rare', 'Magic', 'Normal'].includes(item.rarity)) {
-    const q = categoryDemand({ league, itemClass: item.itemClass, rarity: item.rarity === 'Normal' ? 'Rare' : item.rarity, limit: 80, minLevel: DEMAND_LEVEL },
+    const q = categoryDemand({ league, itemClass: item.itemClass, rarity: item.rarity === 'Normal' ? 'Rare' : item.rarity, limit: 80, minLevel: demandLevel() },
       api.fetchBuffer).catch((e) => { log('demand', e.message); return null; });
     demand = await Promise.race([q, new Promise((r) => setTimeout(() => r(null), 1500))]);
   }
@@ -441,19 +442,21 @@ app.whenReady().then(() => {
     await api.loadNinja(l).catch(() => {});
     return true;
   });
-  ipcMain.handle('builds', (_e, opts) => popularBuilds({ ...opts, league: settings.get().league, limit: 5, minLevel: DEMAND_LEVEL }, api.fetchBuffer));
+  ipcMain.handle('builds', (_e, opts) => popularBuilds({ ...opts, league: settings.get().league, limit: 5, minLevel: demandLevel() }, api.fetchBuffer));
   ipcMain.handle('craft', async () => {
     if (!lastItem) return { note: 'No item' };
     const league = settings.get().league;
     const rarity = lastItem.rarity === 'Normal' ? 'Rare' : lastItem.rarity;
-    const d = await categoryDemand({ league, itemClass: lastItem.itemClass, rarity, limit: 80, withMods: lastThemeMods, minLevel: DEMAND_LEVEL },
+    const d = await categoryDemand({ league, itemClass: lastItem.itemClass, rarity, limit: 80, withMods: lastThemeMods, minLevel: demandLevel() },
       api.fetchBuffer).catch(() => null);
     const r = await craft.advise(lastItem, d && d.mods, api.cached);
     return { ...r, theme: d ? d.themed : [], themeBuilds: d ? d.total : null };
   });
-  ipcMain.handle('demand', (_e, opts) => categoryDemand({ ...opts, league: settings.get().league, limit: 10, minLevel: DEMAND_LEVEL }, api.fetchBuffer));
+  ipcMain.handle('demand', (_e, opts) => categoryDemand({ ...opts, league: settings.get().league, limit: 10, minLevel: demandLevel() }, api.fetchBuffer));
   ipcMain.handle('set-price-currency', (_e, c) => { settings.set({ priceCurrency: c }); });
   ipcMain.handle('copy', (_e, t) => clipboard.writeText(t));
+  ipcMain.handle('demand-level', () => settings.get().demandLevel || 90);
+  ipcMain.handle('set-demand-level', (_e, l) => settings.set({ demandLevel: l }));
   ipcMain.handle('whisper-game', (_e, t) => whisperInGame(t));
   ipcMain.handle('open-url', (_e, u) => {
     if (/^https:\/\/((www\.)?pathofexile\.com|poe\.ninja|github\.com\/zhurauljou\/poe2-advanced-price-check)\//.test(u)) shell.openExternal(u);
