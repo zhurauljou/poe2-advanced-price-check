@@ -2,6 +2,7 @@
 const api = require('./api');
 const stats = require('./stats');
 const { weight } = require('./weights');
+const { log } = require('./log');
 
 let types = null; // Set базовых типов с трейда — чтобы вытащить базу из имени магического предмета
 let currencyInfo = null; // id валюты трейда -> { text, image }
@@ -190,11 +191,14 @@ function buildQuery(item, f) {
 
   for (const m of f.mods) {
     if (!m.enabled || !m.statId) continue;
-    const [id, option] = m.statId.split('|');
+    // Мод-вариант («explicit.stat_264262054|3» — Legacy of Bismuth) трейд ищет по id целиком, без значения.
+    if (m.option) {
+      query.stats[0].filters.push({ id: m.statId });
+      continue;
+    }
     const v = {};
-    if (option != null) v.option = /^\d+$/.test(option) ? Number(option) : option;
-    else if (m.min != null && m.min !== '') v.min = Number(m.min);
-    query.stats[0].filters.push({ id, value: v });
+    if (m.min != null && m.min !== '') v.min = Number(m.min);
+    query.stats[0].filters.push({ id: m.statId, value: v });
   }
   const equip = {};
   for (const p of f.props || []) if (p.enabled && p.min !== '' && p.min != null) equip[p.key] = { min: Number(p.min) };
@@ -242,11 +246,14 @@ async function search(league, item, filters, relax = false) {
   const dropped = [];
   let s = null;
   let last = null; // фильтр, снятый перед текущей попыткой
+  let relaxStopped = null; // почему не смогли ослабить дальше (лимит трейда)
   for (let attempt = 0; ; attempt++) {
     try {
       s = await api.tradeRequest('search', `${api.TRADE}/api/trade2/search/poe2/${L}`, buildQuery(item, f));
     } catch (e) {
       if (!s) throw e;
+      log('relax stopped:', e.message);
+      relaxStopped = e.message;
       // Лимит кончился посреди ослабления — показываем то, что уже нашли, со старыми фильтрами.
       last.enabled = true;
       dropped.pop();
@@ -281,7 +288,8 @@ async function search(league, item, filters, relax = false) {
       };
     });
   }
-  return { total: s.total, url, listings, exaltedPerDivine: api.ninja.exaltedPerDivine, filters: f, dropped };
+  return { total: s.total, url, listings, exaltedPerDivine: api.ninja.exaltedPerDivine, filters: f, dropped,
+    relaxStopped };
 }
 
 module.exports = { init, prepare, search };

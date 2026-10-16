@@ -251,11 +251,14 @@ async function runSearch(relax = false) {
   try {
     const r = await window.pc.search(state.item, state.filters, relax);
     if (seq !== searchSeq) return;
+    const notes = [];
     if (r.dropped && r.dropped.length) {
       state.filters = r.filters;
       renderFilters();
-      setNote(`Too few listings — relaxed: ${r.dropped.join(' · ')}`);
+      notes.push(`Too few listings — relaxed: ${r.dropped.join(' · ')}`);
     }
+    if (r.relaxStopped) notes.push(`Couldn't relax filters further: ${r.relaxStopped}`);
+    setNote(notes.join('\n'));
     state.tradeUrl = r.url;
     $('open').hidden = false;
     renderTradeHero(r);

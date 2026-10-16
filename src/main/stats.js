@@ -1,6 +1,6 @@
 // Сопоставление строк модов с фильтрами трейда (api/trade2/data/stats).
 // Статы с выбором варианта (Legacy of Quicksilver у Mageblood) приходят как «explicit.stat_264262054|8» —
-// id стата и номер варианта; в запрос они уходят как { id, value: { option: 8 } }.
+// id стата и номер варианта; трейд ищет их по этому id целиком: { id: 'explicit.stat_264262054|8' }.
 
 const LOCAL_CLASSES = new Set([
   'Body Armours', 'Helmets', 'Gloves', 'Boots', 'Shields', 'Bucklers', 'Foci',
