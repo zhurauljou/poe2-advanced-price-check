@@ -407,7 +407,8 @@ function meter(m) {
 // Диапазон тира и качество ролла: «36–40», у почти максимального — золотая пометка max.
 function rollInfo(m) {
   if (!m.range || m.roll == null) return '';
-  const max = m.roll >= 0.9 ? '<span class="maxroll" title="Near max roll for this tier — usually worth more">max</span>' : '';
+  // Пометка max — только у максимального ролла лучшего тира (T1): на других тирах она мало что значит.
+  const max = m.tier === 1 && m.roll >= 0.9 ? '<span class="maxroll" title="Near max roll of the top tier — usually worth more">max</span>' : '';
   return ` <span class="rng" title="Tier range · roll ${Math.round(m.roll * 100)}%">${fmt(m.range.lo)}–${fmt(m.range.hi)}</span>${max}`;
 }
 
