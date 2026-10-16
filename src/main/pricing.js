@@ -210,7 +210,6 @@ function prepare(item, demand) {
     gemLevel: item.gemLevel ? { enabled: true, min: item.gemLevel } : null,
     quality: item.quality ? { enabled: false, min: item.quality } : null,
     skill: grantedSkill(item),
-    corrupted: item.corrupted,
     // Состояния предмета — переключатели в подсказке: включённое требует то же состояние у лота.
     // У неосквернённой вещи можно потребовать «не осквернён» (такие дороже — их ещё можно осквернить).
     flags: flagFilters(item),

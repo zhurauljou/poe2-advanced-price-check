@@ -127,4 +127,4 @@ function find(text, group) {
   return c ? { statId: c.id, value: m.value } : null;
 }
 
-module.exports = { build, matchMods, find, norm, isReady: () => !!index };
+module.exports = { build, matchMods, find };

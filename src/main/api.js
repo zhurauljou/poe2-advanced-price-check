@@ -196,11 +196,6 @@ function ratesFrom(byId, core) {
   };
 }
 
-async function ninjaLeagues() {
-  const d = await getJson(`${NINJA}/data/index-state`);
-  return d.economyLeagues || [];
-}
-
 module.exports = {
-  TRADE, tradeRequest, fetchBuffer, cached, tradeStats, tradeItems, tradeStatic, tradeLeagues, loadNinja, ninjaLeagues, ninja,
+  TRADE, tradeRequest, fetchBuffer, cached, tradeStats, tradeItems, tradeStatic, tradeLeagues, loadNinja, ninja,
 };

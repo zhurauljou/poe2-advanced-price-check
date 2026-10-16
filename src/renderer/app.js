@@ -7,6 +7,11 @@ function esc(s) {
   return String(s == null ? '' : s).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
 }
 
+// Текст ошибки из главного процесса без обёртки Electron («Error invoking remote method 'search': Error: …»).
+function errText(e) {
+  return String((e && e.message) || e).replace(/^Error invoking remote method '\w+': (Error: )?/, '');
+}
+
 function fmt(n) {
   if (n == null || !isFinite(n)) return '—';
   const a = Math.abs(n);
@@ -361,7 +366,7 @@ async function loadBuilds() {
     renderBuilds(b);
   } catch (e) {
     if (seq !== buildsSeq) return;
-    box.innerHTML = `<div class="sect"><span>Popular builds</span></div><div class="muted center">poe.ninja: ${esc(String(e.message || e).replace(/^Error invoking remote method '\w+': (Error: )?/, ''))}</div>`;
+    box.innerHTML = `<div class="sect"><span>Popular builds</span></div><div class="muted center">poe.ninja: ${esc(errText(e))}</div>`;
   }
   fit();
 }
@@ -381,7 +386,7 @@ async function loadDemand() {
     renderDemand(d);
   } catch (e) {
     if (seq !== demandSeq) return;
-    box.innerHTML = `<div class="sect"><span>Demand</span></div><div class="muted center">poe.ninja: ${esc(String(e.message || e).replace(/^Error invoking remote method '\w+': (Error: )?/, ''))}</div>`;
+    box.innerHTML = `<div class="sect"><span>Demand</span></div><div class="muted center">poe.ninja: ${esc(errText(e))}</div>`;
   }
   fit();
 }
@@ -436,7 +441,7 @@ async function loadCraft() {
     const r = await window.pc.craft();
     if (craftFor === state) renderCraft(r);
   } catch (e) {
-    box.innerHTML = `<div class="sect"><span>Craft</span></div><div class="muted center">${esc(String(e.message || e).replace(/^Error invoking remote method '\w+': (Error: )?/, ''))}</div>`;
+    box.innerHTML = `<div class="sect"><span>Craft</span></div><div class="muted center">${esc(errText(e))}</div>`;
   }
   fit();
 }
@@ -644,23 +649,43 @@ function modValue(text) {
 }
 const propNum = (v) => { const m = String(v).replace(/,/g, '').match(/\d+(?:\.\d+)?/); return m ? +m[0] : null; };
 
-// «▲2 ▼1» в строке лота: сколько модов у конкурента лучше и хуже ваших — без наведения.
-// Та же логика, что в карточке сравнения: по стату, с суммой по категориям; варианты (Legacy) — по тексту.
-function cmpBadge(l) {
-  const t = l.tip;
-  if (!t || !state || !state.filters) return '';
+// Сравнение модов конкурента с нашей вещью — общее для карточки сбоку и «▲▼» в строке лота.
+// По самому стату, складывая все категории: «41% increased ES» (обычный) + «93%» (desecrated) против их «138%» —
+// игроку важна сумма, а не откуда мод. Ключ — id без категории («stat_4015621042»). Варианты (Legacy of Gold)
+// приходят у лота с id без номера варианта — их сверяем по тексту.
+function compareModel(t) {
+  const mods = state.filters.mods;
   const key = (id) => id.replace(/^\w+\./, '');
+  const add = (map, k, v) => map.set(k, (map.get(k) || 0) + v);
   const ours = new Map();
-  for (const m of state.filters.mods) {
-    if (!m.statId || m.tag === 'pseudo' || m.option) continue;
-    ours.set(key(m.statId), (ours.get(key(m.statId)) || 0) + Math.abs(m.value || 0));
-  }
   const theirs = new Map();
-  for (const m of t.mods) if (m.statId) theirs.set(key(m.statId), (theirs.get(key(m.statId)) || 0) + Math.abs(modValue(m.text) || 0));
-  let better = 0, worse = 0;
-  for (const [k, v] of theirs) {
-    if (!ours.has(k)) continue;
-    const c = compareClass(v, ours.get(k));
+  for (const m of mods) if (m.statId && m.tag !== 'pseudo' && !m.option) add(ours, key(m.statId), Math.abs(m.value || 0));
+  for (const m of t.mods) if (m.statId) add(theirs, key(m.statId), Math.abs(modValue(m.text) || 0));
+  const ourOptions = new Set(mods.filter((m) => m.option).map((m) => m.text.toLowerCase()));
+  const theirTexts = new Set(t.mods.map((m) => m.text.toLowerCase()));
+  // better / worse / same — мод есть у обоих; extra — у нас такого нет; '' — не сравнить (нет id стата).
+  const classify = (m) => {
+    if (ourOptions.has(m.text.toLowerCase())) return 'same';
+    if (!m.statId) return '';
+    const k = key(m.statId);
+    return ours.has(k) ? compareClass(theirs.get(k), ours.get(k)) || 'same' : 'extra';
+  };
+  const missing = mods.filter((m) => m.statId && m.tag !== 'pseudo'
+    && (m.option ? !theirTexts.has(m.text.toLowerCase()) : !theirs.has(key(m.statId))));
+  return { classify, missing, key };
+}
+
+// «▲2 ▼1» в строке лота: сколько модов у конкурента лучше и хуже ваших — без наведения.
+function cmpBadge(l) {
+  if (!l.tip || !state || !state.filters) return '';
+  const { classify, key } = compareModel(l.tip);
+  const seen = new Set(); // одинаковые моды на трейде — одна сумма, считаем один раз
+  let better = 0;
+  let worse = 0;
+  for (const m of l.tip.mods) {
+    if (!m.statId || seen.has(key(m.statId))) continue;
+    seen.add(key(m.statId));
+    const c = classify(m);
     if (c === 'better') better++;
     else if (c === 'worse') worse++;
   }
@@ -678,34 +703,14 @@ function compareClass(theirs, ours) {
 function showCompare(l, row) {
   const t = l.tip;
   if (!t) return;
-  const { item, filters: f } = state;
-  // Сравниваем по самому стату, складывая все категории: «41% increased ES» (обычный) + «93%» (desecrated)
-  // против их «138%» — игроку важна сумма, а не откуда мод. Ключ — id без категории: «stat_4015621042».
-  const key = (id) => id.replace(/^\w+\./, '');
-  const ours = new Map();
-  for (const m of f.mods) {
-    if (!m.statId || m.tag === 'pseudo' || m.option) continue;
-    ours.set(key(m.statId), (ours.get(key(m.statId)) || 0) + Math.abs(m.value || 0));
-  }
-  const theirs = new Map();
-  for (const m of t.mods) if (m.statId) theirs.set(key(m.statId), (theirs.get(key(m.statId)) || 0) + Math.abs(modValue(m.text) || 0));
-  // Варианты (Legacy of Gold) у лота приходят с id без номера варианта — их сверяем по тексту.
-  const ourOptions = new Set(f.mods.filter((m) => m.option).map((m) => m.text.toLowerCase()));
-  const theirTexts = new Set(t.mods.map((m) => m.text.toLowerCase()));
-
+  const { item } = state;
+  const { classify, missing: miss } = compareModel(t);
   const mark = { better: '▲', worse: '▼', extra: '+', same: '' };
   const modLines = t.mods.map((m) => {
-    let cls = '';
-    if (ourOptions.has(m.text.toLowerCase())) {
-      cls = 'same';
-    } else if (m.statId && ours.has(key(m.statId))) {
-      cls = compareClass(theirs.get(key(m.statId)), ours.get(key(m.statId))) || 'same';
-    } else if (m.statId) cls = 'extra';
+    const cls = classify(m);
     return `<div class="cm ${cls} d-${esc(m.domain)}">${mark[cls] ? `<i>${mark[cls]}</i>` : ''}${esc(m.text)}</div>`;
   }).join('');
-  const missing = f.mods.filter((m) => m.statId && m.tag !== 'pseudo'
-    && (m.option ? !theirTexts.has(m.text.toLowerCase()) : !theirs.has(key(m.statId))))
-    .map((m) => `<div class="cm missing"><i>✗</i>${esc(m.text.split('\n').join(' + '))}</div>`).join('');
+  const missing = miss.map((m) => `<div class="cm missing"><i>✗</i>${esc(m.text.split('\n').join(' + '))}</div>`).join('');
 
   const ourProps = new Map(item.properties.map((p) => [p.k, propNum(p.v)]));
   const props = t.props.map((p) => {
@@ -729,7 +734,6 @@ function showCompare(l, row) {
       <div class="cmp-legend"><span class="better">▲ better</span> · <span class="worse">▼ worse</span> · <span class="extra">+ you don't have</span> — than your item</div>
     </div>`;
   // Карточка — в отдельном окне сбоку (не закрывает оверлей), напротив строки лота.
-  window.lastTip = t; // для --dump-tip в демо
   window.pc.compareShow(html, row.getBoundingClientRect().top);
 }
 
@@ -773,7 +777,7 @@ async function runSearch(relax = false) {
   } catch (e) {
     if (seq !== searchSeq) return;
     $('hero').hidden = true;
-    setStatus(String(e.message || e).replace(/^Error invoking remote method '\w+': (Error: )?/, ''), true);
+    setStatus(errText(e), true);
   } finally {
     if (seq === searchSeq) $('search').disabled = false;
     fit();

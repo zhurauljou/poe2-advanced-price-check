@@ -320,4 +320,4 @@ async function categoryDemand(opts, fetchBuffer) {
   };
 }
 
-module.exports = { popularBuilds, categoryDemand, modTemplate, decodeSearch, decodeNdic, decodeNovl };
+module.exports = { popularBuilds, categoryDemand };

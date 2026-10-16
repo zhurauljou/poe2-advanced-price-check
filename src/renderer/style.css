@@ -158,6 +158,7 @@ footer { display: flex; justify-content: space-between; gap: 8px; padding: 6px 1
 .hero .ages .stale { color: var(--warn); }
 /* Лоты: 5 сразу, остальные по кнопке; залежавшиеся приглушены, свежие — с зелёным возрастом */
 .lots:not(.all) .lot.more { display: none; }
+.lots.all { max-height: 280px; overflow-y: auto; } /* все лоты — прокрутка внутри списка, окно не растёт за экран */
 .lot.stale { opacity: .55; }
 .lot.fresh .age { color: var(--good); }
 .lots-more { display: block; margin: 6px auto 0; }

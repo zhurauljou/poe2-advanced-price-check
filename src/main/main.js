@@ -26,9 +26,9 @@ let leagues = [];
 let ready = null; // промис загрузки справочников
 let refreshTray = () => {};
 
-const DEMO = process.argv.some((a) => a.startsWith('--demo='));
+const demo = require('./demo');
 // Демо-прогон живёт в своей папке данных, чтобы работать рядом с запущенной копией из трея.
-if (DEMO) app.setPath('userData', app.getPath('userData') + '-demo');
+if (demo.enabled) app.setPath('userData', app.getPath('userData') + '-demo');
 if (!app.requestSingleInstanceLock()) app.quit();
 
 // Ошибка в фоне не должна всплывать системным окном поверх игры — пишем в лог и работаем дальше.
@@ -241,18 +241,6 @@ async function priceCheck(text) {
   show();
 }
 
-// --demo … --mock-trade: проверка вёрстки результатов без запросов к трейду (у него жёсткие лимиты).
-function mockSearch() {
-  const lot = (amount, currency, divine, seller, h) => ({
-    amount, currency, currencyName: currency, currencyImage: null, divine, seller, online: true,
-    indexed: new Date(Date.now() - h * 3600e3).toISOString(), whisper: `@${seller} hi`,
-  });
-  const listings = [lot(12, 'exalted', 0.03, 'Stadder', 3), lot(1, 'chaos', 0.16, 'Frozenc', 20), lot(1, 'divine', 1, 'Qhaelo', 13),
-    lot(2, 'divine', 2, 'DonDoddd', 50), lot(5, 'divine', 5, 'GrabThatMercAndTwist', 96)];
-  return { total: 37, url: 'https://www.pathofexile.com/trade2', listings, rates: api.ninja.rates,
-    filters: null, dropped: [] };
-}
-
 function send(ch, data) {
   if (win) win.webContents.send(ch, data);
 }
@@ -325,10 +313,8 @@ function openUpdates() {
 }
 
 function updStatus() {
-  if (DEMO && process.argv.some((x) => x.startsWith('--upd='))) {
-    // демо: --upd='{"state":"downloading",...}' — проверить вид окна без релиза
-    return JSON.parse(process.argv.find((x) => x.startsWith('--upd=')).slice(6));
-  }
+  const fake = demo.fakeUpdateStatus();
+  if (fake) return fake;
   return updater.available() ? updater.status : { ...updater.status, state: 'unavailable' };
 }
 
@@ -412,62 +398,16 @@ app.whenReady().then(() => {
   ready = initData().then(refreshTray);
   ready.catch((e) => log('init failed', e));
 
-  if (!DEMO) {
+  if (!demo.enabled) {
     syncHotkey();
     setInterval(syncHotkey, 250);
   }
 
-  // npm start -- --demo=<файл с текстом предмета> [--shot=<png>] — проверка оверлея без игры.
-  const arg = (k) => (process.argv.find((a) => a.startsWith(`--${k}=`)) || '').slice(k.length + 3);
-  if (DEMO && arg('upd')) {
-    // Снимок окна «Updates» в заданном состоянии и выход (после регистрации обработчиков ниже).
-    setTimeout(openUpdates, 300);
-    setTimeout(async () => {
-      require('fs').writeFileSync(arg('shot'), (await updWin.webContents.capturePage()).toPNG());
-      app.quit();
-    }, 3000);
-  }
-  if (arg('demo') && !arg('upd')) {
-    const sample = require('fs').readFileSync(arg('demo'), 'utf8');
-    ready.then(() => priceCheck(sample)).then(() => {
-      if (!arg('shot')) return;
-      setTimeout(async () => {
-        if (arg('eval')) {
-          // --eval=<js>: выполнить в окне перед снимком (открыть меню и т.п.)
-          await win.webContents.executeJavaScript(arg('eval'));
-          await new Promise((r) => setTimeout(r, 400));
-        }
-        if (arg('hover')) {
-          // --hover=N: навести на N-й лот — проверить карточку сравнения
-          await win.webContents.executeJavaScript(`document.querySelectorAll('.lot')[${+arg('hover')}]
-            .dispatchEvent(new MouseEvent('mouseenter'))`);
-          await new Promise((r) => setTimeout(r, 1500));
-        }
-        if (arg('tab')) {
-          await win.webContents.executeJavaScript(`setTab(${JSON.stringify(arg('tab'))})`);
-          await new Promise((r) => setTimeout(r, 500));
-        }
-        if (process.argv.includes('--dump-tip')) {
-          console.log(await win.webContents.executeJavaScript('JSON.stringify(window.lastTip && window.lastTip.mods)'));
-        }
-        if (process.argv.includes('--dump-filters')) {
-          console.log(await win.webContents.executeJavaScript(
-            'JSON.stringify({ ilvl: state.filters.ilvl, reqLevel: state.filters.reqLevel, sockets: state.filters.sockets, quality: state.filters.quality, skill: state.filters.skill, props: state.item.properties })'));
-        }
-        const img = await win.webContents.capturePage();
-        require('fs').writeFileSync(arg('shot'), img.toPNG());
-        if (cmpWin.isVisible()) {
-          const c = await cmpWin.webContents.capturePage();
-          require('fs').writeFileSync(arg('shot').replace(/\.png$/, '-cmp.png'), c.toPNG());
-        }
-        app.quit();
-      }, 9000);
-    });
-  }
+  // Демо-режим (проверка без игры) — см. demo.js.
+  demo.run({ ready, priceCheck, openUpdates, windows: () => ({ main: win, cmp: cmpWin, upd: updWin }) });
 
-  ipcMain.handle('search', (_e, item, filters, relax) => (DEMO && process.argv.includes('--mock-trade')
-    ? mockSearch() : pricing.search(settings.get().league, item, filters, relax)));
-  ipcMain.handle('leagues', () => ({ leagues, current: settings.get().league }));
+  ipcMain.handle('search', (_e, item, filters, relax) => (demo.mockTrade()
+    ? demo.mockSearch(api.ninja.rates) : pricing.search(settings.get().league, item, filters, relax)));
   ipcMain.handle('set-league', async (_e, l) => {
     settings.set({ league: l });
     refreshTray();
