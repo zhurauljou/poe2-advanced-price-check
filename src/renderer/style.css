@@ -177,9 +177,10 @@ body.cmp-page { background: #0a0d12; }
 .cmp .banner.mini { height: 48px; margin: 0; padding: 0 50px; }
 .cmp .banner.mini.single { height: 36px; }
 .cmp .banner.mini .bn-name, .cmp .banner.mini .bn-base { font-size: 16px; }
-.cmp-body { padding: 6px 12px 0; text-align: center; font: 15px/1.35 var(--game); color: var(--g-mod); }
-.cm { position: relative; }
-.cm i { position: absolute; left: -2px; font-style: normal; font: 700 12px/1.6 var(--body); }
+.cmp-body { padding: 6px 8px 0; text-align: center; font: 15px/1.35 var(--game); color: var(--g-mod); }
+/* Значок ▲▼+ — в левом поле строки; справа такое же поле, чтобы текст оставался по центру и не наезжал на значок. */
+.cm { position: relative; padding: 0 18px; }
+.cm i { position: absolute; left: 0; top: 0; width: 14px; text-align: center; font-style: normal; font: 700 12px/1.6 var(--body); }
 .cm b { font-weight: normal; color: var(--cream); }
 .cmp-body > .cm:not([class*="d-"]) { color: var(--g-prop); }
 .cm.d-rune { color: var(--g-rune); } .cm.d-desecrated { color: var(--g-desecrated); } .cm.d-fractured { color: var(--g-fractured); }
