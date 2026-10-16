@@ -3,6 +3,8 @@
 // Весов выпадения в файлах PoE 2 нет (только «может / не может»), поэтому вероятностей не считаем —
 // показываем, какие ВОСТРЕБОВАННЫЕ (по poe.ninja) моды могут встать и каким способом.
 
+const stats = require('./stats');
+
 const REPOE = 'https://repoe-fork.github.io/poe2';
 
 let data = null; // { bases: Map name→base, pool: [...] }
@@ -32,6 +34,16 @@ function templates(text) {
     .replace(/-?\d+(?:\.\d+)?/g, '#')
     .replace(/\+#/g, '#')
     .trim().toLowerCase()).filter(Boolean);
+}
+
+// Фильтры трейда для мода с нижним роллом тира: «(39-42)% increased [EnergyShield|Energy Shield]» → 39% … → стат.
+// null — если хоть одну строку не сопоставили (тогда цену после крафта не считаем).
+function tradeStats(mod, domain, itemClass) {
+  const lines = String(mod.text || '').split('\n').map((l) => l
+    .replace(/\[(?:[^|\]]*\|)?([^\]]*)\]/g, '$1')
+    .replace(/\((-?[\d.]+)--?[\d.]+\)/g, '$1').trim()).filter(Boolean);
+  const out = lines.map((l) => stats.statFor(l, domain === 'desecrated' ? 'desecrated' : 'explicit', itemClass));
+  return out.every(Boolean) ? out.map((s) => ({ statId: s.statId, min: s.value })) : null;
 }
 
 // Вес мода на базе: первый тег из spawn_weights, который есть у базы (в PoE 2 — только 0 или 1).
@@ -106,7 +118,7 @@ async function advise(item, demandMods, cached) {
       if (bestIdx < 0) return null;
       const best = tiers[bestIdx];
       return { side: c.side, pct: c.pct, text: best.lines.join(' / '), tier: bestIdx + 1, tiers: tiers.length,
-        range: range(best.text), level: best.required_level };
+        range: range(best.text), level: best.required_level, stats: tradeStats(best, domain, item.itemClass) };
     }).filter(Boolean).sort((a, b) => b.pct - a.pct);
   };
 

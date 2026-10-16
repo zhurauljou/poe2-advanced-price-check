@@ -408,6 +408,8 @@ app.whenReady().then(() => {
 
   ipcMain.handle('search', (_e, item, filters, relax) => (demo.mockTrade()
     ? demo.mockSearch(api.ninja.rates) : pricing.search(settings.get().league, item, filters, relax)));
+  ipcMain.handle('quick-price', (_e, item, filters) => (demo.mockTrade()
+    ? demo.mockQuick() : pricing.quick(settings.get().league, item, filters)));
   ipcMain.handle('set-league', async (_e, l) => {
     settings.set({ league: l });
     refreshTray();

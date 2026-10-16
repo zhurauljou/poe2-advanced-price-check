@@ -127,4 +127,12 @@ function find(text, group) {
   return c ? { statId: c.id, value: m.value } : null;
 }
 
-module.exports = { build, matchMods, find };
+// Стат трейда для строки мода, которой на вещи ещё нет (кандидат крафта): с учётом локальности класса вещи.
+function statFor(text, tag, itemClass) {
+  if (!index) return null;
+  const m = lookup(text);
+  const c = m && pick(m.cands, tag, LOCAL_CLASSES.has(itemClass));
+  return c ? { statId: c.id, value: m.value } : null;
+}
+
+module.exports = { build, matchMods, find, statFor };

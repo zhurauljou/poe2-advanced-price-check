@@ -268,6 +268,7 @@ document.addEventListener('click', (e) => {
   if (act === 'relax') { setNote(''); runSearch(true); }
   if (act === 'trade' && state.tradeUrl) window.pc.openUrl(state.tradeUrl);
   if (act === 'price') setTab('price');
+  if (act === 'impact') runImpact();
   if (act === 'ninja') window.pc.openUrl(b.dataset.url || 'https://poe.ninja/poe2/builds');
 });
 
@@ -353,6 +354,8 @@ function renderTradeHero(r) {
       Any roll in tier: <b>${money(fest)}</b> · ${fl.total.toLocaleString('en-US')} listed
       ${premium >= 15 ? `<span class="prem">your rolls ≈ +${premium}%</span>` : ''}</div>`;
   }
+  state.est = est;
+  const drivable = state.filters.mods.some((m) => m.enabled && m.statId && !m.option && !m.inSum);
   $('hero').innerHTML = `
     <div class="k">${fl ? 'Like yours' : 'Estimated price'}</div>
     <div class="big">${money(est)}</div>
@@ -364,7 +367,90 @@ function renderTradeHero(r) {
       <div><span class="k">Cheapest</span><span class="v">${money(divs[0])}</span></div>
       <div><span class="k">Median of ${divs.length}</span><span class="v">${money(median)}</span></div>
       <div><span class="k">Listings</span><span class="v">${r.total.toLocaleString('en-US')}</span></div>
-    </div>`;
+    </div>
+    ${sellHtml(priced, est)}
+    ${drivable ? '<button class="link drive-btn" data-act="impact" title="Searches again without each key modifier (a few trade requests)">What drives the price?</button>' : ''}`;
+}
+
+// Оценка по лотам [{ div, indexed }] — то же правило, что у основной цены: хватает свежих (≤ 3 дней) — по ним;
+// медиана до 5 самых дешёвых.
+function estimate(lots) {
+  const sorted = (lots || []).filter((l) => l.div != null).sort((a, b) => a.div - b.div);
+  const fresh = sorted.filter((l) => ageDays(l.indexed) <= 3);
+  const head = (fresh.length >= 3 ? fresh : sorted).slice(0, 5).map((l) => l.div);
+  return head.length ? head[Math.floor((head.length - 1) / 2)] : null;
+}
+
+// Цена для выставления — круглая, в валюте, которой так торгуют: от 1 div — div, дешевле — chaos, совсем дёшево — ex.
+function listPrice(div) {
+  const round = (v, step) => Math.max(step, Math.round(v / step) * step);
+  if (div >= 1) {
+    const amount = round(div, div < 10 ? 0.5 : div < 50 ? 1 : 5);
+    return { amount, cur: 'divine', label: `${fmt(amount)} div` };
+  }
+  if (rates.chaos && div * rates.chaos >= 1) {
+    const amount = round(div * rates.chaos, 1);
+    return { amount, cur: 'chaos', label: `${amount} chaos` };
+  }
+  const amount = round(div * (rates.exalted || 0), 1);
+  return { amount, cur: 'exalted', label: `${amount} ex` };
+}
+
+// Три цены для продажи: быстро (чуть ниже самого дешёвого живого лота), по рынку (оценка), подождать (выше рынка,
+// не дороже следующих по цене лотов). Клик копирует «~price N currency» для заметки в стеше.
+function sellHtml(priced, est) {
+  if (!est || !priced.length) return '';
+  const active = priced.filter((l) => l.age < 7);
+  // Один демпингующий лот не должен утянуть «быструю» цену вниз: не дешевле 60% рынка.
+  const quick = Math.min(est * 0.95, Math.max(est * 0.6, (active[0] || priced[0]).div * 0.95));
+  const next = priced[Math.min(4, priced.length - 1)].div;
+  const patient = Math.min(est * 2, Math.max(est * 1.2, next));
+  const opts = [['Quick sale', quick, 'Just under the cheapest active listing — sells fastest'],
+    ['Market', est, 'The estimate above'], ['Patient', patient, 'Above the market — wait for a buyer']]
+    .map(([k, div, title]) => ({ k, title, ...listPrice(div) }))
+    .filter((o, i, a) => !a.slice(0, i).some((p) => p.label === o.label));
+  return `<div class="sell"><span class="sell-k">List it</span>${opts.map((o) => `
+    <button class="sellb" data-note="~price ${o.amount} ${o.cur}" title="${o.title} · click to copy the stash price note">
+      <small>${o.k}</small>${o.label}</button>`).join('')}</div>`;
+}
+
+// Вклад модов в цену: по очереди ищем без каждого из главных модов (до 4) — насколько падает цена.
+const IMPACT_MODS = 4;
+let impactSeq = 0;
+async function runImpact() {
+  if ($('search').classList.contains('dirty')) { setStatus('Filters changed — search first, then check what drives the price'); return; }
+  const seq = ++impactSeq;
+  const idx = state.filters.mods.map((m, i) => [m, i]).filter(([m]) => m.enabled && m.statId && !m.option && !m.inSum)
+    .sort((a, b) => (b[0].importance || 0) - (a[0].importance || 0)).slice(0, IMPACT_MODS).map(([, i]) => i);
+  state.impact = {};
+  idx.forEach((i) => { state.impact[i] = { wait: true }; });
+  renderFilters();
+  fit();
+  for (const i of idx) {
+    const f = JSON.parse(JSON.stringify(state.filters));
+    f.mods[i].enabled = false;
+    try {
+      const q = await window.pc.quickPrice(state.item, f);
+      if (seq !== impactSeq) return;
+      const without = estimate(q.lots);
+      state.impact[i] = { without, total: q.total, share: without == null ? null : Math.max(0, 1 - without / state.est) };
+    } catch (e) {
+      if (seq !== impactSeq) return;
+      state.impact[i] = { error: errText(e) };
+    }
+    renderFilters();
+    fit();
+  }
+}
+
+function driveChip(i) {
+  const d = state.impact && state.impact[i];
+  if (!d) return '';
+  if (d.wait) return ' <span class="drive wait">…</span>';
+  if (d.error) return ` <span class="drive" title="${esc(d.error)}">?</span>`;
+  if (d.share == null) return ' <span class="drive" title="Nothing listed without it">—</span>';
+  const pct = Math.round(d.share * 100);
+  return ` <span class="drive${pct >= 50 ? ' big' : pct < 10 ? ' low' : ''}" title="Without it: ${money(d.without)} · ${d.total.toLocaleString('en-US')} listed">${pct < 5 ? 'adds ~0' : `≈${pct}% of price`}</span>`;
 }
 
 // ---- популярные билды (poe.ninja) ----
@@ -482,13 +568,53 @@ async function loadCraft() {
 }
 
 const SIDE = { prefix: 'prefix', suffix: 'suffix' };
+// Кандидаты крафта по ключу кнопки «price?»: сколько будет стоить вещь, если этот мод встанет (нижний ролл тира).
+const craftCands = new Map();
 function craftRows(list) {
-  return list.map((c) => `
-    <div class="brow ${heat(c.pct)}"><span class="bname">${esc(c.text)}<span class="craft-tier">T${c.tier}/${c.tiers}${c.range ? ` · ${esc(c.range)}` : ''}</span></span>
-      <span class="bpct">${hot(c.pct)}${fmt(c.pct)}%</span><span class="bbar"><i data-w="${Math.min(100, c.pct)}%"></i></span></div>`).join('');
+  return list.map((c) => {
+    const key = String(craftCands.size);
+    craftCands.set(key, c);
+    const btn = c.stats ? `<button class="link cprice" data-ck="${key}" title="Search for your item with this modifier added (lowest roll of the tier)">price?</button>` : '';
+    return `
+    <div class="brow ${heat(c.pct)}"><span class="bname">${esc(c.text)}<span class="craft-tier">T${c.tier}/${c.tiers}${c.range ? ` · ${esc(c.range)}` : ''}</span>${btn}</span>
+      <span class="bpct">${hot(c.pct)}${fmt(c.pct)}%</span><span class="bbar"><i data-w="${Math.min(100, c.pct)}%"></i></span></div>`;
+  }).join('');
+}
+
+// Цена после крафта: текущие фильтры + мод-кандидат. Тот же стат уже есть (сумма) — минимум растёт на ролл кандидата.
+async function priceCraft(b) {
+  const c = craftCands.get(b.dataset.ck);
+  if (!c || !state) return;
+  b.disabled = true;
+  b.textContent = '…';
+  const f = JSON.parse(JSON.stringify(state.filters));
+  for (const s of c.stats) {
+    const same = f.mods.find((m) => m.statId === s.statId);
+    if (same) { same.enabled = true; same.min = Math.max(Number(same.min) || 0, (same.value || 0) + s.min); }
+    else f.mods.push({ statId: s.statId, enabled: true, min: s.min, importance: 3, tag: 'explicit', text: c.text });
+  }
+  try {
+    const q = await window.pc.quickPrice(state.item, f);
+    const v = estimate(q.lots);
+    let html;
+    if (v == null) html = '<span class="cpr" title="Nothing like it is listed — could be rare and pricey">none listed</span>';
+    else {
+      const d = state.est != null ? v - state.est : null;
+      const cls = d == null ? '' : d > state.est * 0.1 ? ' up' : d < -state.est * 0.1 ? ' down' : '';
+      const delta = d == null ? '' : Math.abs(d) < state.est * 0.1 ? ' (same)' : ` (${d > 0 ? '+' : '−'}${money(Math.abs(d))})`;
+      html = `<span class="cpr${cls}" title="${q.total.toLocaleString('en-US')} listed with it · vs your current estimate">≈ ${money(v)}${delta}</span>`;
+    }
+    b.outerHTML = html;
+  } catch (e) {
+    b.disabled = false;
+    b.textContent = 'price?';
+    setStatus(errText(e), true);
+  }
+  fit();
 }
 
 function renderCraft(r) {
+  craftCands.clear();
   const head = '<div class="sect"><span>Craft</span></div>';
   if (r.blocked) {
     $('craft').innerHTML = head + voidState('⛓', `${r.blocked} — can't be modified`,
@@ -517,7 +643,7 @@ function renderCraft(r) {
   if (r.theme && r.theme.length) {
     parts.splice(1, 0, `<div class="craft-theme" title="Demand % below is among ${r.themeBuilds} builds that wear this item class with these modifiers">Demand among builds using <b>${r.theme.map(esc).join('</b> + <b>')}</b></div>`);
   }
-  parts.push(`<div class="craft-foot">Mod pool: game files (RePoE). Roll chances aren't shown — PoE 2 files have no modifier weights.<br>% = share of those builds using the modifier (poe.ninja).</div>`);
+  parts.push(`<div class="craft-foot">Mod pool: game files (RePoE). Roll chances aren't shown — PoE 2 files have no modifier weights.<br>% = share of those builds using the modifier (poe.ninja). «price?» — what your item would cost with it.</div>`);
   $('craft').innerHTML = head + parts.join('');
 }
 
@@ -597,7 +723,7 @@ function modRow(m, i) {
   const text = m.tag === 'pseudo' ? m.text.replace(/^Σ /, '') : m.text;
   return `<div class="mod t-${esc(m.tag)}${m.enabled ? '' : ' off'}" data-i="${i}">
       <label><input type="checkbox" data-k="enabled"${m.enabled ? ' checked' : ''}>${meter(m) || '<span class="imp"></span>'}${tier}
-        <span class="txt"${from}>${esc(text)}${m.merged ? `<span class="sum-v"> = ${fmt(m.value)}</span>` : ''}${cat}${rollInfo(m)}</span></label>
+        <span class="txt"${from}>${esc(text)}${m.merged ? `<span class="sum-v"> = ${fmt(m.value)}</span>` : ''}${cat}${rollInfo(m)}${driveChip(i)}</span></label>
       ${m.option ? '' : `<input type="number" data-k="min" step="any" placeholder="min" value="${m.min == null ? '' : m.min}">`}
     </div>`;
 }
@@ -782,12 +908,17 @@ function hideCompare() {
 
 // Фильтры поменяли после поиска — кнопка Search подсвечивается: результат на экране уже не про них.
 function markDirty() {
+  // Фильтры поменялись — прежний «вклад модов» больше не про них.
+  if (state.impact) { impactSeq++; state.impact = null; document.querySelectorAll('#mods .drive').forEach((x) => x.remove()); }
   const b = $('search');
   if (!b.classList.contains('dirty')) { b.classList.add('dirty'); b.textContent = 'Search · filters changed'; }
 }
 
 async function runSearch(relax = false) {
   const seq = ++searchSeq;
+  impactSeq++;
+  state.impact = null;
+  state.est = null;
   $('search').classList.remove('dirty');
   $('search').textContent = 'Search';
   $('search').disabled = true;
@@ -856,6 +987,13 @@ window.pc.onItem((data) => {
 });
 
 $('hero').addEventListener('click', (e) => {
+  const note = e.target.closest('[data-note]');
+  if (note) {
+    window.pc.copy(note.dataset.note);
+    setStatus(`Copied "${note.dataset.note}" — paste it as the price note`);
+    fit();
+    return;
+  }
   const b = e.target.closest('[data-unit]');
   if (!b || !state.exchange) return;
   unit = b.dataset.unit;
@@ -866,6 +1004,11 @@ $('hero').addEventListener('click', (e) => {
 $('tabs').addEventListener('click', (e) => {
   const b = e.target.closest('[data-tab]');
   if (b) setTab(b.dataset.tab);
+});
+
+$('craft').addEventListener('click', (e) => {
+  const b = e.target.closest('[data-ck]');
+  if (b) priceCraft(b);
 });
 
 $('tab-demand').addEventListener('click', (e) => {

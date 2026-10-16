@@ -474,4 +474,7 @@ async function quickPrices(L, item, f) {
   return { total: s.total, divs: lots.map((l) => l.div), lots, url: `${api.TRADE}/trade2/search/poe2/${L}/${s.id}` };
 }
 
-module.exports = { init, prepare, search };
+// Цена по изменённым фильтрам (без мода — «вклад мода», с модом из крафта — «цена после крафта»).
+const quick = (league, item, filters) => quickPrices(encodeURIComponent(league), item, filters);
+
+module.exports = { init, prepare, search, quick };
