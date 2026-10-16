@@ -103,7 +103,10 @@ const isHC = (l) => /^(HC |Hardcore)/.test(l);
 
 function renderLeagues() {
   $('leagueName').textContent = state.league;
-  const item = (l) => `<button data-league="${esc(l)}"${l === state.league ? ' class="on"' : ''}>${esc(l.replace(/^HC /, ''))}${isHC(l) ? '<span class="hc">HC</span>' : ''}${l === state.league ? '<span class="chk">✓</span>' : ''}</button>`;
+  // Текущий сезон: трейд отдаёт лиги от новой к старой — первая не Standard и не хардкор.
+  const season = state.leagues.find((l) => !isHC(l) && l !== 'Standard');
+  const isSeason = (l) => season && (l === season || l === `HC ${season}`);
+  const item = (l) => `<button data-league="${esc(l)}"${l === state.league ? ' class="on"' : ''}>${esc(l.replace(/^HC /, ''))}${isHC(l) ? '<span class="hc">HC</span>' : ''}${isSeason(l) ? '<span class="cur" title="Current league">current</span>' : ''}${l === state.league ? '<span class="chk">✓</span>' : ''}</button>`;
   const soft = state.leagues.filter((l) => !isHC(l));
   const hard = state.leagues.filter(isHC);
   $('leagueMenu').innerHTML = soft.map(item).join('') + (hard.length ? '<div class="lsep"></div>' + hard.map(item).join('') : '');

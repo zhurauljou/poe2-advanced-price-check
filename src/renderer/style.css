@@ -36,14 +36,14 @@ body { background: linear-gradient(rgba(0, 0, 0, .45), rgba(0, 0, 0, .18) 70px, 
 .ldrop > button:hover { background: none; color: #fff4b4; }
 .ldrop > button svg { width: 9px; height: 6px; transition: transform .15s; }
 .ldrop.open > button svg { transform: rotate(180deg); }
-.lmenu { position: absolute; top: calc(100% + 6px); left: 50%; z-index: 60; min-width: 230px; padding: 4px 0;
+.lmenu { position: absolute; top: calc(100% + 6px); left: 50%; z-index: 60; min-width: 270px; padding: 4px 0;
          transform: translateX(-50%); background: linear-gradient(#15130f, #0b0d11); border: 1px solid #6b5228;
          box-shadow: 0 10px 30px rgba(0, 0, 0, .75), inset 0 1px 0 rgba(255, 224, 138, .08);
          animation: lmenu-in .12s ease-out; }
 @keyframes lmenu-in { from { opacity: 0; transform: translate(-50%, -4px); } }
 .lmenu::before { content: ""; position: absolute; top: -6px; left: 50%; width: 10px; height: 10px; margin-left: -5px;
                  background: #15130f; border: 1px solid #6b5228; border-right: 0; border-bottom: 0; transform: rotate(45deg); }
-.lmenu button { position: relative; display: flex; align-items: center; gap: 8px; width: 100%; padding: 6px 14px 6px 18px;
+.lmenu button { position: relative; display: flex; align-items: center; gap: 8px; white-space: nowrap; width: 100%; padding: 6px 14px 6px 18px;
                 background: none; border: 0; border-radius: 0; box-shadow: none; text-align: left;
                 font: 700 15px var(--sc); letter-spacing: .3px; color: var(--text); }
 .lmenu button:hover { background: rgba(218, 193, 142, .08); color: var(--cream); }
@@ -51,6 +51,8 @@ body { background: linear-gradient(rgba(0, 0, 0, .45), rgba(0, 0, 0, .18) 70px, 
 .lmenu button .chk { margin-left: auto; color: var(--gold); font-family: var(--body); }
 .lmenu .hc { padding: 0 4px; border: 1px solid rgba(224, 103, 90, .5); border-radius: 2px; color: var(--bad);
              font: 700 10px/1.5 var(--body); letter-spacing: .4px; }
+.lmenu .cur { padding: 0 5px; border-radius: 2px; color: #1a1408; background: linear-gradient(#f1d79a, #c9a45c);
+              font: 700 10px/1.5 var(--body); letter-spacing: .4px; text-transform: uppercase; box-shadow: 0 0 8px rgba(255, 190, 80, .3); }
 .lmenu .lsep { height: 1px; margin: 4px 10px; background: linear-gradient(90deg, transparent, #4a3a22, transparent); }
 .close { position: absolute; right: 10px; top: 50%; transform: translateY(-50%); padding: 2px 4px; font-size: 16px; line-height: 1;
          color: var(--bronze); cursor: pointer; }
