@@ -708,7 +708,10 @@ async function priceGoal(b) {
     const it = state.item.rarity === 'Magic' ? { ...state.item, rarity: 'Rare' } : state.item;
     const q = await window.pc.quickPrice(it, f);
     const v = estimate(q.lots);
-    out.innerHTML = v == null ? esc(t('none listed')) : `<b class="up">${esc(t('Goal ≈ {price}', { price: money(v) }))}</b>${state.est != null ? ` · ${esc(t('now'))} ${money(state.est)}` : ''}`;
+    const worse = v != null && state.est != null && v <= state.est;
+    out.innerHTML = v == null ? esc(t('none listed'))
+      : `<b class="${worse ? 'down' : 'up'}">${esc(t('Goal ≈ {price}', { price: money(v) }))}</b>${state.est != null ? ` · ${esc(t('now'))} ${money(state.est)}` : ''}`
+        + (worse ? `<br><span class="down">${esc(t('Not worth it — your item is already worth more as it is'))}</span>` : '');
   } catch (e) {
     out.textContent = '';
     setStatus(errText(e), true);

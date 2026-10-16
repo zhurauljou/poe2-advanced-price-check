@@ -233,13 +233,17 @@ async function advise(item, demandMods, cached) {
 // ценность = спрос (% билдов) × качество тира; кандидату засчитываем средний тир (что выпадет — неизвестно).
 // Fractured снять нельзя — остаются всегда. Возвращает { keep, remove, add } или null, если улучшать нечего.
 const TIER_VALUE = [0, 1, 0.85, 0.7, 0.6];
+const KEEP_BONUS = 1.5;
 function planGoal(mine, candidates, max, want, magic) {
   const value = (pct, tier) => pct * (TIER_VALUE[tier] || 0.5);
   const keep = [], remove = [], add = [];
   for (const side of ['prefix', 'suffix']) {
     const cur = mine.filter((a) => a.side === side).map((a) => {
       const pct = a.mod ? Math.max(0, ...a.mod.lines.map((l) => want.get(l) || 0)) : 0;
-      return { kind: 'cur', a, pct, v: a.tag === 'fractured' || !a.mod ? Infinity : value(pct, a.tier) };
+      // Fractured и хорошие тиры (T1–T2) не трогаем: даже не самый ходовой T1 дороже лотереи Annulment + Exalted.
+      // Остальные держим, пока кандидат не ценнее в полтора раза — замена случайна и стоит валюты.
+      const locked = a.tag === 'fractured' || !a.mod || (a.tier && a.tier <= 2);
+      return { kind: 'cur', a, pct, v: locked ? Infinity : value(pct, a.tier) * KEEP_BONUS };
     });
     const cand = candidates.filter((c) => c.side === side).map((c) => ({ kind: 'add', c, pct: c.pct, v: value(c.pct, 2) }));
     const chosen = [...cur, ...cand].sort((x, y) => y.v - x.v).slice(0, max[side]);

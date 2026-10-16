@@ -294,6 +294,7 @@
     'Add {mods}: Exalted Orb + Omen of {S} Exaltation': 'Добавить {mods}: Exalted Orb + Omen of {S} Exaltation',
     ' (Omen of Greater Exaltation adds two)': ' (Omen of Greater Exaltation добавит два)',
     'Goal': 'Цель',
+    'Not worth it — your item is already worth more as it is': 'Не стоит того — вещь уже дороже как есть',
     now: 'сейчас', prefix: 'префикс', suffix: 'суффикс',
     'The best item this base can become — most wanted modifiers for its slots': 'Лучшая вещь из этой базы — самые востребованные моды на её места',
     'keep': 'оставить', 'remove': 'убрать', 'add': 'добавить',
