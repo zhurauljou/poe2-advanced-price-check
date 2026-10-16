@@ -212,19 +212,20 @@ function meter(m) {
   return `<span class="imp i${n}${m.key ? ' key' : ''}" title="${title}"><i></i><i></i><i></i></span>`;
 }
 
+// Строка мода — ровными колонками, как подсказка в игре: [галочка][важность][тир][текст · категория][мин].
+// Категория (desecrated, rune…) — после текста, чтобы теги разной ширины не сдвигали сам мод.
 function modRow(m, i) {
   if (!m.statId) {
     return `<div class="mod nomatch" title="This modifier has no trade site filter">
-      <label><span class="tag">?</span><span>${esc(m.text)}</span></label></div>`;
+      <label><span class="cb"></span><span class="imp"></span><span class="tcol">?</span><span class="txt">${esc(m.text)}</span></label></div>`;
   }
-  const tags = [
-    meter(m),
-    m.tier ? `<span class="tag tier${m.tier <= 2 ? ' top' : ''}">T${m.tier}</span>` : '',
-    m.tag !== 'explicit' ? `<span class="tag ${esc(m.tag)}">${esc(TAG_LABEL[m.tag] || m.tag)}</span>` : '',
-  ].join('');
+  const tier = m.tag === 'pseudo' ? '<span class="tcol sigma" title="Total from all modifiers">Σ</span>'
+    : `<span class="tcol">${m.tier ? `<span class="tag tier${m.tier <= 2 ? ' top' : ''}">T${m.tier}</span>` : ''}</span>`;
+  const cat = m.tag !== 'explicit' && m.tag !== 'pseudo' ? ` <span class="tag ${esc(m.tag)}">${esc(TAG_LABEL[m.tag] || m.tag)}</span>` : '';
+  const text = m.tag === 'pseudo' ? m.text.replace(/^Σ /, '') : m.text;
   return `<div class="mod t-${esc(m.tag)}${m.enabled ? '' : ' off'}" data-i="${i}">
-      <label><input type="checkbox" data-k="enabled"${m.enabled ? ' checked' : ''}>${tags}
-        <span>${esc(m.text)}${m.merged ? `<span class="sum-v"> = ${fmt(m.value)}</span>` : ''}</span></label>
+      <label><input type="checkbox" data-k="enabled"${m.enabled ? ' checked' : ''}>${meter(m) || '<span class="imp"></span>'}${tier}
+        <span class="txt">${esc(text)}${m.merged ? `<span class="sum-v"> = ${fmt(m.value)}</span>` : ''}${cat}</span></label>
       ${m.option ? '' : `<input type="number" data-k="min" step="any" placeholder="min" value="${m.min == null ? '' : m.min}">`}
     </div>`;
 }

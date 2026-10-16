@@ -128,8 +128,16 @@ footer { display: flex; justify-content: space-between; gap: 8px; padding: 6px 1
 /* ---- фильтры ---- */
 .mod { display: flex; gap: 8px; align-items: center; padding: 3px 6px; border-radius: 2px; }
 .mod:hover { background: var(--hover); }
-.mod label { flex: 1; display: flex; gap: 7px; align-items: center; cursor: pointer; min-width: 0; white-space: pre-line;
+.mod label { flex: 1; display: flex; gap: 7px; align-items: center; cursor: pointer; min-width: 0;
              font: 15px/1.3 var(--game); color: var(--g-mod); }
+/* Колонки фиксированной ширины — текст модов начинается ровно на одной вертикали. */
+.mod .cb { width: 13px; flex: none; }
+.mod .imp { width: 16px; }
+.mod .tcol { width: 26px; flex: none; text-align: center; }
+.mod .tcol .tag { display: inline-block; min-width: 0; width: 100%; }
+.mod .tcol.sigma { color: var(--gold); font: 700 15px var(--body); }
+.mod .txt { flex: 1; min-width: 0; white-space: pre-line; }
+.mod .txt .tag { font-size: 9.5px; padding: 0 3px; vertical-align: 2px; }
 .mod.t-crafted label { color: var(--g-crafted); }
 .mod.t-enchant label { color: var(--g-enchant); }
 .mod.t-corrupted label { color: var(--g-corrupted); }
