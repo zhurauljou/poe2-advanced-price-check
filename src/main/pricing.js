@@ -471,6 +471,7 @@ async function search(league, item, filters, relax = false) {
         currencyImage: cur ? cur.image : null,
         divine: p.amount != null ? toDivine(p.amount, p.currency) : null,
         seller: r.listing.account && (r.listing.account.lastCharacterName || r.listing.account.name),
+        account: r.listing.account && r.listing.account.name,
         online: !!(r.listing.account && r.listing.account.online),
         indexed: r.listing.indexed,
         whisper: r.listing.whisper,
@@ -515,4 +516,14 @@ async function quickPrices(L, item, f) {
 // Цена по изменённым фильтрам (без мода — «вклад мода», с модом из крафта — «цена после крафта»).
 const quick = (league, item, filters) => quickPrices(encodeURIComponent(league), item, filters);
 
-module.exports = { init, prepare, search, quick };
+// Ссылка на трейд, где виден именно этот лот: те же фильтры + аккаунт продавца.
+async function listingUrl(league, item, filters, account) {
+  const L = encodeURIComponent(league);
+  const q = buildQuery(item, filters);
+  q.query.filters.trade_filters = q.query.filters.trade_filters || { filters: {} };
+  q.query.filters.trade_filters.filters.account = { input: account };
+  const s = await api.tradeRequest('search', `${api.TRADE}/api/trade2/search/poe2/${L}`, q);
+  return `${api.TRADE}/trade2/search/poe2/${L}/${s.id}`;
+}
+
+module.exports = { init, prepare, search, quick, listingUrl };

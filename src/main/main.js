@@ -138,7 +138,6 @@ function show() {
 // Окно игры — активное окно в момент Ctrl+D. Ему возвращаем фокус, когда закрываем оверлей,
 // в который кликали (крестик, Esc после клика): сам Windows фокус игре не отдаёт.
 let gameHwnd = 0;
-let itemCursor = null; // где был курсор (над вещью) при последней проверке
 
 function hide() {
   globalShortcut.unregister('Escape');
@@ -184,31 +183,6 @@ async function whisperInGame(text) {
   return true;
 }
 
-// Внутриигровой маркет с этой вещью: возвращаем курсор туда, где он был при проверке, и делаем Shift+Alt+клик —
-// игра сама открывает маркет с похожими (там у лотов есть Travel to Hideout).
-async function marketInGame() {
-  if (!gameHwnd || !itemCursor) return false;
-  winapi.focus(gameHwnd);
-  await sleep(150);
-  if (winapi.foreground() !== gameHwnd) return false;
-  const back = winapi.cursor();
-  // Окно оверлея над вещью — клик ушёл бы в него, а не в игру: прячем.
-  const p = screen.screenToDipPoint(itemCursor);
-  const b = win.getBounds();
-  if (win.isVisible() && p.x >= b.x && p.x < b.x + b.width && p.y >= b.y && p.y < b.y + b.height) hide();
-  winapi.moveCursor(itemCursor);
-  await sleep(80);
-  uIOhook.keyToggle(UiohookKey.Shift, 'down');
-  uIOhook.keyToggle(UiohookKey.Alt, 'down');
-  await sleep(40);
-  winapi.click();
-  await sleep(40);
-  uIOhook.keyToggle(UiohookKey.Alt, 'up');
-  uIOhook.keyToggle(UiohookKey.Shift, 'up');
-  if (back) { await sleep(60); winapi.moveCursor(back); }
-  return true;
-}
-
 // Нажимаем Ctrl+C за пользователя и ждём, пока игра положит текст предмета в буфер.
 // Не ответила за 400 мс — пробуем ещё раз.
 async function copyItem() {
@@ -247,7 +221,6 @@ async function onHotkey() {
       hide();
       await sleep(80);
     }
-    itemCursor = winapi.cursor();
     const text = await copyItem();
     if (!text) return;
     await priceCheck(text);
@@ -485,7 +458,8 @@ app.whenReady().then(() => {
   ipcMain.handle('demand-level', () => settings.get().demandLevel || 90);
   ipcMain.handle('set-demand-level', (_e, l) => settings.set({ demandLevel: l }));
   ipcMain.handle('whisper-game', (_e, t) => whisperInGame(t));
-  ipcMain.handle('market-game', () => marketInGame());
+  ipcMain.handle('listing-url', (_e, item, filters, account) => (demo.mockTrade() ? 'https://www.pathofexile.com/trade2'
+    : pricing.listingUrl(settings.get().league, item, filters, account)));
   ipcMain.handle('open-url', (_e, u) => {
     if (/^https:\/\/((www\.)?pathofexile\.com|poe\.ninja|github\.com\/zhurauljou\/poe2-advanced-price-check)\//.test(u)) shell.openExternal(u);
   });
