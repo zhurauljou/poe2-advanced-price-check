@@ -109,6 +109,8 @@ function renderTooltip() {
   if (!state.exchange) {
     const plines = item.properties.map((p) => {
       const v = `<b class="${p.aug ? 'aug' : ''}">${esc(p.v)}</b>`;
+      if (p.k === 'Quality') return pick('m:quality', 'Quality', v, f.quality, '≥', 'min');
+      if (p.k === 'Grants Skill') return pick('m:skill', 'Grants Skill', v, f.skill, 'level ≥', 'min');
       const i = propIdx(PROP_KEY[p.k]);
       return i < 0 ? `${esc(p.k)}: ${v}` : pick(`p:${i}`, esc(p.k), v, props[i], '≥', 'min');
     });
@@ -201,13 +203,22 @@ function renderTradeHero(r) {
 const TAG_LABEL = { pseudo: 'total', rune: 'rune', implicit: 'implicit', crafted: 'crafted', desecrated: 'desecrated',
   fractured: 'fractured', enchant: 'enchant' };
 
+// Шкала важности мода для цены: 0–3 деления (ключевой для слота × качество тира). Ключевые — золотом.
+const IMPACT = ['minor', 'low', 'medium', 'high'];
+function meter(m) {
+  if (m.importance == null) return '';
+  const n = m.importance >= 2.4 ? 3 : m.importance >= 1.6 ? 2 : m.importance >= 0.8 ? 1 : 0;
+  const title = `Price impact: ${IMPACT[n]}${m.key ? ' — key modifier for this slot' : ''}${m.tier ? `, tier ${m.tier}` : ''}`;
+  return `<span class="imp i${n}${m.key ? ' key' : ''}" title="${title}"><i></i><i></i><i></i></span>`;
+}
+
 function modRow(m, i) {
   if (!m.statId) {
     return `<div class="mod nomatch" title="This modifier has no trade site filter">
       <label><span class="tag">?</span><span>${esc(m.text)}</span></label></div>`;
   }
   const tags = [
-    m.weight === 'key' ? '<span class="key" title="Key modifier for this slot — drives the price">★</span>' : '',
+    meter(m),
     m.tier ? `<span class="tag tier${m.tier <= 2 ? ' top' : ''}">T${m.tier}</span>` : '',
     m.tag !== 'explicit' ? `<span class="tag ${esc(m.tag)}">${esc(TAG_LABEL[m.tag] || m.tag)}</span>` : '',
   ].join('');

@@ -1,7 +1,7 @@
 // Оценка предмета: биржевые предметы — по poe.ninja, остальное — поиском на трейде.
 const api = require('./api');
 const stats = require('./stats');
-const { weight } = require('./weights');
+const { weight, ENABLE_FROM, KEEP_FROM } = require('./weights');
 const { log } = require('./log');
 
 let types = null; // Set базовых типов с трейда — чтобы вытащить базу из имени магического предмета
@@ -116,6 +116,14 @@ function pseudoFilters(mods) {
   return out;
 }
 
+// «Grants Skill: Level 16 Wolf Pack (Max Level 17)» → фильтр skill.wolf_pack ≥ 16.
+function grantedSkill(item) {
+  const p = item.properties.find((x) => x.k === 'Grants Skill');
+  if (!p) return null;
+  const s = stats.find(`Grants Skill: ${p.v.replace(/ \(Max Level \d+\)$/, '')}`, 'skill');
+  return s ? { enabled: false, statId: s.statId, min: s.value } : null;
+}
+
 // Что показать в оверлее сразу после копирования: разобранный предмет и фильтры по умолчанию.
 function prepare(item) {
   item.baseType = resolveBase(item);
@@ -140,10 +148,11 @@ function prepare(item) {
       merged: !!m.parts,
       value: m.value,
       template: m.template,
-      weight: w,
+      importance: w.importance,
+      key: w.key,
       enabled: (option && m.tag === 'explicit') || (!!m.statId && searchMods
         && ['explicit', 'fractured', 'desecrated', 'crafted'].includes(m.tag)
-        && w !== 'weak' && !covered.some((re) => re.test(m.template))),
+        && w.importance >= ENABLE_FROM && !covered.some((re) => re.test(m.template))),
       option,
       min: option ? null : minOf(m.value),
     };
@@ -161,6 +170,8 @@ function prepare(item) {
     reqLevel: item.reqLevel ? { enabled: false, max: item.reqLevel } : null,
     sockets: item.sockets ? { enabled: true, min: item.sockets } : null, // гнёзда сильно влияют на цену — сразу
     gemLevel: item.gemLevel ? { enabled: true, min: item.gemLevel } : null,
+    quality: item.quality ? { enabled: false, min: item.quality } : null,
+    skill: grantedSkill(item),
     corrupted: item.corrupted,
     online: true,
   };
@@ -185,6 +196,8 @@ function buildQuery(item, f) {
   const rarity = { Normal: 'normal', Magic: 'magic', Rare: 'nonunique', Unique: 'unique' }[item.rarity];
   if (rarity) type.rarity = { option: rarity };
   if (f.ilvl && f.ilvl.enabled) type.ilvl = { min: Number(f.ilvl.min) };
+  if (f.quality && f.quality.enabled) type.quality = { min: Number(f.quality.min) };
+  if (f.skill && f.skill.enabled) query.stats[0].filters.push({ id: f.skill.statId, value: { min: Number(f.skill.min) } });
   if (f.reqLevel && f.reqLevel.enabled) query.filters.req_filters = { filters: { lvl: { max: Number(f.reqLevel.max) } } };
   if (Object.keys(type).length) query.filters.type_filters = { filters: type };
 
@@ -223,13 +236,12 @@ function toDivine(amount, currency) {
 const MIN_RESULTS = 5;
 const MAX_RELAX = 2; // каждый шаг — отдельный поиск, а их у трейда мало (≈30 за 5 минут)
 
-// Чем меньше — тем раньше снимаем. Ключевые моды не снимаем вовсе.
+// Чем меньше — тем раньше снимаем. Важные моды (ключевые хорошего тира) не снимаем вовсе.
 function strength(f) {
-  if (f.kind === 'prop') return 60;
-  if (f.weight === 'key') return Infinity;
-  if (f.option) return 50;
-  if (f.tag === 'pseudo') return 40;
-  return 20 - (f.tier || 3);
+  if (f.kind === 'prop') return 2.5;
+  if (f.option) return 2.8;
+  if (f.tag === 'pseudo') return 1.8;
+  return f.importance >= KEEP_FROM ? Infinity : f.importance;
 }
 
 function weakest(filters) {

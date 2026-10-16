@@ -271,7 +271,7 @@ app.whenReady().then(() => {
       setTimeout(async () => {
         if (process.argv.includes('--dump-filters')) {
           console.log(await win.webContents.executeJavaScript(
-            'JSON.stringify({ ilvl: state.filters.ilvl, reqLevel: state.filters.reqLevel, sockets: state.filters.sockets })'));
+            'JSON.stringify({ ilvl: state.filters.ilvl, reqLevel: state.filters.reqLevel, sockets: state.filters.sockets, quality: state.filters.quality, skill: state.filters.skill, props: state.item.properties })'));
         }
         const img = await win.webContents.capturePage();
         require('fs').writeFileSync(arg('shot'), img.toPNG());

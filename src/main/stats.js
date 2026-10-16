@@ -112,4 +112,12 @@ function mergeSame(mods) {
   return out;
 }
 
-module.exports = { build, matchMods, norm, isReady: () => !!index };
+// Один стат конкретной группы по тексту — для свойств вроде «Grants Skill: Level 16 Wolf Pack».
+function find(text, group) {
+  if (!index) return null;
+  const m = lookup(text);
+  const c = m && m.cands.find((x) => x.group === group);
+  return c ? { statId: c.id, value: m.value } : null;
+}
+
+module.exports = { build, matchMods, find, norm, isReady: () => !!index };

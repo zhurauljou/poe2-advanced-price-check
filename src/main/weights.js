@@ -1,7 +1,7 @@
-// Насколько мод важен для цены в зависимости от слота.
-//   key  — двигает цену сильнее всего: включаем всегда, автоослабление его не снимает;
-//   weak — почти не влияет: по умолчанию не ищем;
-//   null — обычный мод.
+// Важность мода для цены — число 0…3: «насколько мод ценен в этом слоте» × «насколько хорош его тир».
+//   основа: ключевой для слота 3, обычный 2, малоценный 0.5;
+//   тир: T1 ×1 … T7+ ×0.15 (тир неизвестен — простой формат копирования или уник — ×0.8).
+// По важности выбираются галочки по умолчанию и порядок снятия фильтров при автоослаблении.
 // Шаблоны — тексты статов трейда (# вместо чисел).
 
 const WEAPONS = new Set([
@@ -29,23 +29,31 @@ const SLOT_KEY = {
 
 const WEAK = /Attribute Requirements|Light Radius|Stun Threshold|Thorns|Mana Regeneration Rate|^# to Accuracy Rating$|Flask Charges|Charm Charges|Duration on you$/;
 
+const TIER_FACTOR = [1, 1, 0.85, 0.7, 0.5, 0.35, 0.25]; // индекс — номер тира; T7 и хуже — 0.15
+const UNKNOWN_TIER = 0.8;
+
+// С какой важности мод включаем по умолчанию и какую автоослабление уже не снимает.
+const ENABLE_FROM = 1.2;
+const KEEP_FROM = 2;
+
 function slotKey(itemClass) {
   if (WEAPONS.has(itemClass)) return CRIT;
   if (CASTER.has(itemClass)) return [...SPELL, ...CRIT];
   return SLOT_KEY[itemClass] || [];
 }
 
-// Низкий тир (T4 и хуже) у обычного мода — по умолчанию не ищем: такой мод цену почти не держит.
-const WEAK_TIER = 4;
-
-function weight(itemClass, template, tier) {
-  if (!template) return null;
-  const t = template.replace(/ \(Local\)$/, '');
-  const lowTier = tier != null && tier >= WEAK_TIER;
-  // Ключевой мод слабого тира (6% редкости T7) цену не делает — считаем обычным.
-  if (ANY_KEY.some((re) => re.test(t)) || slotKey(itemClass).some((re) => re.test(t))) return lowTier ? null : 'key';
-  if (WEAK.test(t)) return 'weak';
-  return lowTier ? 'weak' : null;
+function tierFactor(tier) {
+  if (tier == null) return UNKNOWN_TIER;
+  return tier < TIER_FACTOR.length ? TIER_FACTOR[tier] : 0.15;
 }
 
-module.exports = { weight };
+// → { importance: 0…3, key: ключевой ли мод для слота (без учёта тира) }
+function weight(itemClass, template, tier) {
+  if (!template) return { importance: 0, key: false };
+  const t = template.replace(/ \(Local\)$/, '');
+  const key = ANY_KEY.some((re) => re.test(t)) || slotKey(itemClass).some((re) => re.test(t));
+  const base = key ? 3 : WEAK.test(t) ? 0.5 : 2;
+  return { importance: Math.round(base * tierFactor(tier) * 100) / 100, key };
+}
+
+module.exports = { weight, ENABLE_FROM, KEEP_FROM };

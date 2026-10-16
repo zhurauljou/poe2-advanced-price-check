@@ -97,6 +97,8 @@ footer { display: flex; justify-content: space-between; gap: 8px; padding: 6px 1
 .tt .corrupt { color: var(--g-corrupt); }
 /* Значение, по которому можно искать: пунктир при наведении, выбранное — в золотой рамке с полем границы. */
 .tp { display: inline-block; padding: 0 5px; margin: 1px 0; border: 1px solid transparent; border-radius: 2px; cursor: pointer; }
+/* Выключенное — пунктирное подчёркивание: видно, что по значению можно кликнуть. */
+.tp:not(.on) { text-decoration: underline dotted #6b5a3a; text-underline-offset: 3px; }
 .tp:hover { border-color: #3d3a33; background: rgba(255, 255, 255, .03); }
 .tp.on { border-color: #6b5a3a; background: rgba(218, 193, 142, .08); box-shadow: 0 0 8px rgba(218, 193, 142, .12); }
 .tp-op { color: var(--gold); }
@@ -149,7 +151,11 @@ footer { display: flex; justify-content: space-between; gap: 8px; padding: 6px 1
 .tag:is(.implicit, .crafted, .enchant, .rune, .desecrated, .fractured, .corrupted) {
   color: var(--c); border-color: color-mix(in srgb, var(--c) 45%, transparent); background: color-mix(in srgb, var(--c) 10%, transparent); }
 .mod.off .tag { opacity: .6; }
-.key { color: var(--gold); font-size: 13px; text-shadow: 0 0 8px rgba(255, 190, 80, .5); flex: none; }
+.imp { display: inline-flex; align-items: flex-end; gap: 2px; flex: none; height: 12px; }
+.imp i { width: 4px; border-radius: 1px; background: #2a2e36; }
+.imp i:nth-child(1) { height: 6px; } .imp i:nth-child(2) { height: 9px; } .imp i:nth-child(3) { height: 12px; }
+.imp.i1 i:nth-child(-n+1), .imp.i2 i:nth-child(-n+2), .imp.i3 i { background: var(--bronze); }
+.imp.key.i1 i:nth-child(-n+1), .imp.key.i2 i:nth-child(-n+2), .imp.key.i3 i { background: var(--gold); box-shadow: 0 0 4px rgba(255, 190, 80, .4); }
 .sum-v { color: var(--gold); }
 .misc { display: flex; flex-wrap: wrap; justify-content: center; gap: 6px 16px; margin: 6px 0 4px; padding-top: 8px; border-top: 1px solid var(--line2); }
 .misc .opt { display: flex; gap: 6px; align-items: center; color: var(--cream); cursor: pointer; }
