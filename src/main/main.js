@@ -8,6 +8,7 @@ const settings = require('./settings');
 const api = require('./api');
 const pricing = require('./pricing');
 const { log } = require('./log');
+const winapi = require('./winapi');
 const { parseItem } = require('./parser');
 
 const WIDTH = 480;
@@ -62,9 +63,15 @@ function show() {
   globalShortcut.register('Escape', hide);
 }
 
+// Окно игры — активное окно в момент Ctrl+D. Ему возвращаем фокус, когда закрываем оверлей,
+// в который кликали (крестик, Esc после клика): сам Windows фокус игре не отдаёт.
+let gameHwnd = 0;
+
 function hide() {
   globalShortcut.unregister('Escape');
-  if (win && win.isVisible()) win.hide();
+  if (!win || !win.isVisible()) return;
+  if (win.isFocused() && gameHwnd) winapi.focus(gameHwnd);
+  win.hide();
 }
 
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
@@ -112,7 +119,9 @@ async function onHotkey() {
   if (copying) return;
   copying = true;
   try {
-    // Фокус у нашего окна (кликнули в него) — Ctrl+C ушёл бы ему, а не игре. Прячем, Windows вернёт фокус игре.
+    const fg = winapi.foreground();
+    if (fg && fg !== winapi.hwndOf(win)) gameHwnd = fg;
+    // Фокус у нашего окна (кликнули в него) — Ctrl+C ушёл бы ему, а не игре. Прячем и отдаём фокус игре.
     if (win.isVisible() && win.isFocused()) {
       hide();
       await sleep(80);
