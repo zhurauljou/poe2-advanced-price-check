@@ -9,6 +9,7 @@ const api = require('./api');
 const pricing = require('./pricing');
 const { log } = require('./log');
 const winapi = require('./winapi');
+const updater = require('./updater');
 const { popularBuilds, categoryDemand } = require('./ninjaBuilds');
 const { parseItem } = require('./parser');
 
@@ -286,6 +287,18 @@ function syncHotkey() {
   }
 }
 
+// Пункт меню про обновление — по состоянию updater.status.
+function updateItem(refresh) {
+  const s = updater.status;
+  const v = `v${app.getVersion()}`;
+  if (!updater.available()) return { label: `${v} (from source — updates via git)`, enabled: false };
+  if (s.state === 'ready') return { label: `Restart to update to v${s.version}`, click: () => updater.install() };
+  if (s.state === 'downloading') return { label: `Downloading v${s.version}…`, enabled: false };
+  if (s.state === 'checking') return { label: 'Checking for updates…', enabled: false };
+  const note = s.state === 'latest' ? ' — up to date' : s.state === 'error' ? ' — check failed' : '';
+  return { label: `Check for updates (${v}${note})`, click: () => { updater.check(); refresh(); } };
+}
+
 function buildTray() {
   tray = new Tray(nativeImage.createFromPath(ICON).resize({ width: 16, height: 16 }));
   const refresh = () => {
@@ -324,6 +337,8 @@ function buildTray() {
         click: () => { settings.set({ windowPos: null }); refresh(); },
       },
       { type: 'separator' },
+      updateItem(refresh),
+      { type: 'separator' },
       { label: 'Quit', click: () => app.quit() },
     ]));
   };
@@ -335,6 +350,12 @@ app.whenReady().then(() => {
   createOverlay();
   createCompare();
   refreshTray = buildTray();
+  updater.init((s) => {
+    refreshTray();
+    if (s.state === 'ready') {
+      tray.displayBalloon({ title: 'PoE 2 Price Checker', content: `Update v${s.version} is ready — restart from the tray menu, or it installs on quit.` });
+    }
+  });
   api.onWait = (ms) => send('status', { text: `Waiting for the trade site rate limit… ${Math.ceil(ms / 1000)} s` });
   ready = initData().then(refreshTray);
   ready.catch((e) => log('init failed', e));
