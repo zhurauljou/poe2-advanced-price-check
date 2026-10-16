@@ -239,6 +239,7 @@ const MAX_RELAX = 2; // каждый шаг — отдельный поиск, �
 
 // Чем меньше — тем раньше снимаем. Важные моды (ключевые хорошего тира) не снимаем вовсе.
 function strength(f) {
+  if (f.kind === 'cheap') return 0.3; // гнездо и качество докупаются за копейки — снимаем первыми
   if (f.kind === 'prop') return 2.5;
   if (f.option) return 2.8;
   if (f.tag === 'pseudo') return 1.8;
@@ -249,6 +250,8 @@ function weakest(filters) {
   const all = [
     ...filters.mods.filter((m) => m.enabled && m.statId),
     ...(filters.props || []).filter((p) => p.enabled).map((p) => Object.assign(p, { kind: 'prop' })),
+    ...[['sockets', 'Sockets'], ['quality', 'Quality']].filter(([k]) => filters[k] && filters[k].enabled)
+      .map(([k, label]) => Object.assign(filters[k], { kind: 'cheap', label })),
   ];
   const cands = all.filter((f) => strength(f) !== Infinity).sort((a, b) => strength(a) - strength(b));
   return cands[0] || null;
@@ -279,7 +282,7 @@ async function search(league, item, filters, relax = false) {
     last = weakest(f);
     if (!last) break;
     last.enabled = false;
-    dropped.push(last.kind === 'prop' ? `${last.label} ≥ ${last.min}` : last.text.split('\n')[0]);
+    dropped.push(last.kind === 'prop' || last.kind === 'cheap' ? `${last.label} ≥ ${last.min}` : last.text.split('\n')[0]);
   }
   const url = `${api.TRADE}/trade2/search/poe2/${L}/${s.id}`;
   const ids = (s.result || []).slice(0, 10);

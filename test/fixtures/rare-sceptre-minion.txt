@@ -1,0 +1,31 @@
+Item Class: Sceptres
+Rarity: Rare
+Agony Smasher
+Rattling Sceptre
+--------
+Quality: +20% (augmented)
+Spirit: 148 (augmented)
+--------
+Requires: Level 64
+--------
+Sockets: S 
+--------
+Item Level: 84
+--------
+30% reduced Mana Cost Efficiency of Command Skills (rune)
+Minions deal 60% increased Damage with Command Skills (rune)
+--------
+Grants Skill: Level 19 Skeletal Warrior Minion
+--------
+{ Prefix Modifier "Mazarine" (Tier: 2) — Mana }
++133(125-149) to maximum Mana
+{ Prefix Modifier "Count's" (Tier: 4) }
+48(45-50)% increased Spirit
+{ Desecrated Prefix Modifier "Instigative" (Tier: 6) — Damage }
+Allies in your Presence deal 54(45-54)% increased Damage
+{ Suffix Modifier "of the Slavedriver" (Tier: 1) — Minion, Gem }
++4 to Level of all Minion Skills
+{ Suffix Modifier "of the Rector" (Tier: 1) — Life, Minion }
+Minions have 46(46-50)% increased maximum Life
+{ Crafted Suffix Modifier "of the Stars" — Minion }
++4(4-5) maximum stacks of Puppet Master
