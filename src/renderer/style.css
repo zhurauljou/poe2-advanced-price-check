@@ -1,5 +1,6 @@
 /* Тема GGG из poe2-flip (в стиле pathofexile2.com) + игровая подсказка предмета. */
 :root {
+  /* --g-mod чуть светлее игрового #8888ff: на тёмно-синем фоне оригинал читается плохо */
   color-scheme: dark;
   --bg: #0b1017; --panel: #0e131b; --panel2: #131a24; --line: #4a3f2c; --line2: #1c222c; --hover: #161d28;
   --text: #b6b6b6; --muted: #8c8c8c; --gold: #dac18e; --cream: #f1e4c2; --bronze: #837053; --label: #a99a7c;
@@ -7,7 +8,7 @@
   --input: #07090d; --input-line: #2c2f35; --chip-line: #7d6a46;
   /* цвета игры */
   --r-normal: #c8c8c8; --r-magic: #8888ff; --r-rare: #ffff77; --r-unique: #af6025; --r-gem: #1ba29b; --r-currency: #aa9e82;
-  --g-mod: #8888ff; --g-rune: #9dc2e6; --g-crafted: #b4b4ff; --g-desecrated: #5fd16a; --g-fractured: #c9a85c;
+  --g-mod: #9a9aff; --g-rune: #9dc2e6; --g-crafted: #b4b4ff; --g-desecrated: #5fd16a; --g-fractured: #c9a85c;
   --g-enchant: #6fd0d8; --g-corrupted: #e0584a;
   --g-prop: #7f7f7f; --g-corrupt: #d20000;
   --body: "Alegreya Sans", "Segoe UI", sans-serif;
@@ -133,7 +134,7 @@ footer { display: flex; justify-content: space-between; gap: 8px; padding: 6px 1
 .tp.on { border-color: #6b5a3a; background: rgba(218, 193, 142, .08); box-shadow: 0 0 8px rgba(218, 193, 142, .12); }
 .tp-op { color: var(--gold); }
 .tt .flag.corrupt { color: var(--g-corrupt); }
-.tt .flag.neg:not(.on) { color: #5d5d6a; } /* «Not corrupted» — подсказка, пока не включена */
+.tt .flag.neg:not(.on) { color: #7d7d8a; } /* «Not corrupted» — подсказка, пока не включена */
 .tp-in { width: 54px; height: 22px; margin-left: 2px; padding: 0 4px; font: 700 14px var(--body); vertical-align: 1px; }
 .tt .sep { height: 9px; margin: 3px auto; width: 70%;
            background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='200' height='9' viewBox='0 0 200 9'%3E%3Cpath d='M0 4.5H92M108 4.5H200' stroke='%23584a30'/%3E%3Cpath d='M100 .5l4 4-4 4-4-4z' fill='%239a7a3e'/%3E%3C/svg%3E") center / 100% 9px no-repeat; }
@@ -148,6 +149,9 @@ footer { display: flex; justify-content: space-between; gap: 8px; padding: 6px 1
 .hero .big.wait { color: var(--muted); text-shadow: none; animation: pulse 1.2s ease-in-out infinite; }
 @keyframes pulse { 50% { opacity: .4; } }
 .hero .alt { color: var(--muted); font-size: 14px; }
+/* Надёжность оценки: ●●● Reliable / ●●○ Some data / ●○○ Few listings */
+.conf { display: inline-block; margin-top: 4px; font: 700 12.5px var(--body); letter-spacing: .5px; cursor: help; }
+.conf.c3 { color: var(--good); } .conf.c2 { color: var(--warn); } .conf.c1 { color: var(--bad); }
 .hero .floor { margin-top: 6px; font-size: 14px; color: var(--label); }
 .hero .floor b { color: var(--cream); }
 .hero .floor .prem { margin-left: 6px; padding: 0 6px; border-radius: 2px; font: 700 12px/1.5 var(--body); color: #1a1408;
@@ -192,7 +196,7 @@ footer { display: flex; justify-content: space-between; gap: 8px; padding: 6px 1
 .dcol .k { font: 700 13.5px var(--sc); letter-spacing: .4px; color: var(--label); margin: 6px 0 2px; }
 .brow.mine .bname { color: var(--good); }
 /* Востребованность: редкое — приглушено, массовое — горит. */
-.brow.cold { opacity: .45; }
+.brow.cold { opacity: .6; }
 .brow.hot .bname { color: #ffe3a3; font-weight: 700; text-shadow: 0 0 10px rgba(255, 190, 80, .35); }
 .brow.hot .bpct { color: #ffd27a; text-shadow: 0 0 10px rgba(255, 190, 80, .5); }
 .brow.hot .bbar { height: 3px; }
@@ -235,7 +239,7 @@ body.cmp-page { background: #0a0d12; }
 .craft-how::before { content: "◆"; font-size: 8px; line-height: 20px; color: #9a7a3e; flex: none; }
 .craft-weak { font: 14px/1.3 var(--game); color: var(--g-mod); margin: 2px 0 4px; }
 .craft-sub { font-size: 12.5px; color: var(--muted); margin: 6px 0 2px; }
-.craft-tier { color: #6d6a62; font-size: 12px; white-space: nowrap; margin-left: 6px; }
+.craft-tier { color: #8a867e; font-size: 12px; white-space: nowrap; margin-left: 6px; }
 .craft-foot { margin-top: 8px; font-size: 12px; color: var(--muted); text-align: center; }
 
 /* ---- популярные билды ---- */
@@ -270,7 +274,7 @@ body.cmp-page { background: #0a0d12; }
 .mod .txt .tag { font-size: 9.5px; padding: 0 3px; vertical-align: 2px; }
 .mod .dem { font: 700 11px var(--body); color: #b89a5e; letter-spacing: 0; white-space: nowrap; }
 .mod .dem.hot { color: #ffd27a; text-shadow: 0 0 8px rgba(255, 190, 80, .35); }
-.mod .rng { font: 12px var(--body); color: #6d6a62; letter-spacing: 0; white-space: nowrap; }
+.mod .rng { font: 12px var(--body); color: #8a867e; letter-spacing: 0; white-space: nowrap; }
 .mod .maxroll { margin-left: 4px; padding: 0 4px; border-radius: 2px; font: 700 10px/1.5 var(--body); letter-spacing: .3px;
                 color: #1a1408; background: linear-gradient(#f1d79a, #c9a45c); vertical-align: 1px; }
 .mod.off .maxroll { opacity: .6; }
@@ -281,8 +285,8 @@ body.cmp-page { background: #0a0d12; }
 .mod.t-desecrated label { color: var(--g-desecrated); }
 .mod.t-fractured label { color: var(--g-fractured); }
 .mod.t-pseudo label, .mod.t-prop label { color: var(--cream); }
-.mod.off label { color: #5d5d6a; }
-.mod.nomatch label { color: #4f4f58; cursor: default; }
+.mod.off label { color: #7d7d8a; }
+.mod.nomatch label { color: #696973; cursor: default; }
 .mod input[type=number] { width: 60px; padding: 2px 4px; }
 .tag { font: 700 10.5px/1.5 var(--body); text-transform: uppercase; letter-spacing: .4px; color: var(--bronze); border: 1px solid #2c2a25;
        border-radius: 2px; padding: 0 4px; flex: none; }

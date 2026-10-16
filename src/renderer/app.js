@@ -241,6 +241,20 @@ function renderSearchingHero() {
 }
 
 // Оценка — медиана самых дешёвых (до 5) лотов: один демпингующий продавец её не уронит.
+// Насколько верить оценке: сколько похожих лотов и насколько разбросаны цены самых дешёвых.
+// Разброс — во сколько раз самая дорогая из (до 5) самых дешёвых дороже самой дешёвой.
+function confidence(total, head) {
+  const spread = head.length > 1 && head[0] > 0 ? head[head.length - 1] / head[0] : 1;
+  let level = 2;
+  let why = `${total} listings, prices within ×${fmt(spread)}`;
+  if (total >= 10 && spread <= 2) level = 3;
+  else if (total < 4 || spread > 4) level = 1;
+  if (total < 4) why = `only ${total} similar listing${total === 1 ? '' : 's'}`;
+  else if (spread > 4) why = `cheapest prices differ ×${fmt(spread)} — someone may be underpricing`;
+  const label = { 3: 'Reliable', 2: 'Some data', 1: 'Few listings' }[level];
+  return `<div class="conf c${level}" title="${esc(why)}">${'●'.repeat(level)}${'○'.repeat(3 - level)} ${label}</div>`;
+}
+
 function renderTradeHero(r) {
   const divs = r.listings.map((l) => l.divine).filter((v) => v != null).sort((a, b) => a - b);
   if (!divs.length) {
@@ -266,6 +280,7 @@ function renderTradeHero(r) {
     <div class="k">${fl ? 'Like yours' : 'Estimated price'}</div>
     <div class="big">${money(est)}</div>
     <div class="alt">${alt(est)}</div>
+    ${confidence(r.total, head)}
     ${floorHtml}
     <div class="grid">
       <div><span class="k">Cheapest</span><span class="v">${money(divs[0])}</span></div>
