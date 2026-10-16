@@ -71,7 +71,9 @@ function learnRules(kind, res) {
   for (const [count, period, ban] of state) {
     if (ban > 0) setBan(ban);
     const rule = rules.find((r) => r[1] === period);
-    if (rule && count >= rule[0] - 1) L.blockedUntil = Math.max(L.blockedUntil, Date.now() + period * 1000);
+    // Короткие окна (10 с) считаем сами по своим запросам — иначе каждая серия поисков ждала бы целое окно.
+    // По счётчику сервера тормозим только в длинных окнах (минута и дольше), где бан — на полчаса.
+    if (rule && period >= 60 && count >= rule[0] - 1) L.blockedUntil = Math.max(L.blockedUntil, Date.now() + period * 1000);
   }
 }
 

@@ -181,7 +181,9 @@ function prepare(item) {
 
 function buildQuery(item, f) {
   const query = {
-    status: { option: f.online ? 'online' : 'any' },
+    // 'available' — «Instant Buyout and In Person», как по умолчанию на сайте. 'online' был бы только
+    // «In Person (Online)» и отбрасывал все лоты с мгновенным выкупом — а это большая часть рынка PoE 2.
+    status: { option: f.online ? 'available' : 'any' },
     stats: [{ type: 'and', filters: [] }],
     filters: {},
   };
@@ -202,13 +204,15 @@ function buildQuery(item, f) {
   if (f.reqLevel && f.reqLevel.enabled) query.filters.req_filters = { filters: { lvl: { max: Number(f.reqLevel.max) } } };
   if (Object.keys(type).length) query.filters.type_filters = { filters: type };
 
+  // Моды-варианты («explicit.stat_264262054|3» — Legacy of Bismuth) трейд ищет по id целиком, без значения.
+  // Их — группой «count»: f.optionMin из N — «любые 3 из ваших 4 Legacy» (по умолчанию все N).
+  const options = f.mods.filter((m) => m.enabled && m.option);
+  if (options.length) {
+    const min = Math.min(options.length, f.optionMin || options.length);
+    query.stats.push({ type: 'count', value: { min }, filters: options.map((m) => ({ id: m.statId })) });
+  }
   for (const m of f.mods) {
-    if (!m.enabled || !m.statId) continue;
-    // Мод-вариант («explicit.stat_264262054|3» — Legacy of Bismuth) трейд ищет по id целиком, без значения.
-    if (m.option) {
-      query.stats[0].filters.push({ id: m.statId });
-      continue;
-    }
+    if (!m.enabled || !m.statId || m.option) continue;
     const v = {};
     if (m.min != null && m.min !== '') v.min = Number(m.min);
     query.stats[0].filters.push({ id: m.statId, value: v });
@@ -242,14 +246,21 @@ function strength(f) {
   if (f.kind === 'cheap') return 0.3; // гнездо и качество докупаются за копейки — снимаем первыми
   if (f.kind === 'base') return 1.75; // точная база → вся категория: после слабых модов, до сумм и защиты/DPS
   if (f.kind === 'prop') return 2.5;
-  if (f.option) return 2.8;
+  if (f.kind === 'options') return 2.8;
   if (f.tag === 'pseudo') return 1.8;
   return f.importance >= KEEP_FROM ? Infinity : f.importance;
 }
 
+// «Legacy of Gold», «Legacy of Ruby» → «Legacies»: общее начало вариантов для подписи.
+function optionName(filters) {
+  const t = filters.mods.filter((m) => m.enabled && m.option).map((m) => m.text);
+  const first = (t[0] || '').split(' of ')[0];
+  return first && t.every((x) => x.startsWith(first + ' of ')) ? `${first.replace(/y$/, 'ie')}s` : 'options';
+}
+
 function weakest(filters) {
   const all = [
-    ...filters.mods.filter((m) => m.enabled && m.statId),
+    ...filters.mods.filter((m) => m.enabled && m.statId && !m.option),
     ...(filters.props || []).filter((p) => p.enabled).map((p) => Object.assign(p, { kind: 'prop' })),
     ...[['sockets', 'Sockets'], ['quality', 'Quality']].filter(([k]) => filters[k] && filters[k].enabled)
       .map(([k, label]) => Object.assign(filters[k], { kind: 'cheap', label })),
@@ -257,6 +268,13 @@ function weakest(filters) {
   // Точная база (не уник по имени) — тоже фильтр: редких баз на рынке бывает 1–2 штуки.
   if (filters.useType && !filters.useName && filters.category) {
     all.push({ kind: 'base', set enabled(v) { filters.useType = v; } });
+  }
+  // Варианты (Legacy у Mageblood): не снимаем конкретный, а требуем «любые на один меньше».
+  const n = filters.mods.filter((m) => m.enabled && m.option).length;
+  const cur = Math.min(n, filters.optionMin || n);
+  if (n > 1 && cur > 1) {
+    all.push({ kind: 'options', label: `any ${cur - 1} of ${n} ${optionName(filters)}`,
+      set enabled(v) { filters.optionMin = v ? cur : cur - 1; } });
   }
   const cands = all.filter((f) => strength(f) !== Infinity).sort((a, b) => strength(a) - strength(b));
   return cands[0] || null;
@@ -288,6 +306,7 @@ async function search(league, item, filters, relax = false) {
     if (!last) break;
     last.enabled = false;
     dropped.push(last.kind === 'base' ? `exact base ${item.baseType}`
+      : last.kind === 'options' ? `now ${last.label}`
       : last.kind === 'prop' || last.kind === 'cheap' ? `${last.label} ≥ ${last.min}` : last.text.split('\n')[0]);
   }
   const url = `${api.TRADE}/trade2/search/poe2/${L}/${s.id}`;

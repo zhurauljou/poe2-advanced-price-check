@@ -397,7 +397,13 @@ function renderFilters() {
   $('misc').innerHTML = `
     <div class="seg" title="Which currency listings to search">${CURRENCIES.map(([id, label]) =>
       `<button data-cur="${id}"${f.priceCurrency === id ? ' class="on"' : ''}>${label}</button>`).join('')}</div>
-    <label class="opt${f.online ? '' : ' off'}"><input type="checkbox" data-o="online"${f.online ? ' checked' : ''}>Online only</label>`;
+    <label class="opt${f.online ? '' : ' off'}"><input type="checkbox" data-o="online"${f.online ? ' checked' : ''}><span title="Instant Buyout or seller online — like the trade site default">Buyable now</span></label>`;
+  // Моды-варианты (Legacy у Mageblood) ищутся «любые N из выбранных»: порог можно поменять руками.
+  const opts = f.mods.filter((m) => m.enabled && m.option).length;
+  if (opts > 1) {
+    $('misc').insertAdjacentHTML('afterbegin', `<label class="opt">Match ≥ <input type="number" data-optmin min="1" max="${opts}"
+      value="${Math.min(opts, f.optionMin || opts)}"> of ${opts} checked</label>`);
+  }
 }
 
 // ---- лоты ----
@@ -519,6 +525,7 @@ $('mods').addEventListener('input', (e) => {
   if (e.target.dataset.k === 'enabled') {
     m.enabled = e.target.checked;
     row.classList.toggle('off', !m.enabled);
+    if (m.option) renderFilters(); // пересчитать «Match ≥ N of M»
   } else if (e.target.dataset.k === 'min') {
     m.min = e.target.value === '' ? null : Number(e.target.value);
   }
@@ -561,6 +568,7 @@ $('misc').addEventListener('click', (e) => {
 $('misc').addEventListener('input', (e) => {
   const t = e.target;
   if (t.dataset.o) state.filters[t.dataset.o] = t.checked;
+  if ('optmin' in t.dataset) state.filters.optionMin = Number(t.value) || null;
   if (t.type === 'checkbox') t.closest('.opt').classList.toggle('off', !t.checked);
 });
 
