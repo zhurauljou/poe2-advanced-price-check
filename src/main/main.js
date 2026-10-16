@@ -269,6 +269,10 @@ app.whenReady().then(() => {
     ready.then(() => priceCheck(sample)).then(() => {
       if (!arg('shot')) return;
       setTimeout(async () => {
+        if (process.argv.includes('--dump-filters')) {
+          console.log(await win.webContents.executeJavaScript(
+            'JSON.stringify({ ilvl: state.filters.ilvl, reqLevel: state.filters.reqLevel, sockets: state.filters.sockets })'));
+        }
         const img = await win.webContents.capturePage();
         require('fs').writeFileSync(arg('shot'), img.toPNG());
         app.quit();

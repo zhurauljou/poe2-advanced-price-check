@@ -86,17 +86,47 @@ function renderLeagues() {
   $('league').innerHTML = state.leagues.map((l) => `<option${l === state.league ? ' selected' : ''}>${esc(l)}</option>`).join('');
 }
 
+// Свойство подсказки → фильтр защиты (state.filters.props по key).
+const PROP_KEY = { Armour: 'ar', 'Evasion Rating': 'ev', 'Energy Shield': 'es', Spirit: 'spirit' };
+
+// Значение в подсказке, по которому можно искать: клик включает, рядом — граница поиска.
+// ref: 'p:<i>' — фильтр защиты/DPS, 'm:<key>' — уровень/ilvl/гнёзда.
+function pick(ref, label, valueHtml, filter, op, field) {
+  if (!filter || !state.searchable) return `${label}: ${valueHtml}`;
+  const bound = filter.enabled
+    ? ` <span class="tp-op">${op}</span><input type="number" class="tp-in" data-ref="${ref}" data-f="${field}" value="${filter[field] ?? ''}">`
+    : '';
+  return `<span class="tp${filter.enabled ? ' on' : ''}" data-ref="${ref}" title="${filter.enabled ? 'Searching by this — click to ignore' : 'Click to search by this'}">${label}: ${valueHtml}${bound}</span>`;
+}
+
 function renderTooltip() {
   const { item } = state;
+  const f = state.filters || {};
+  const props = f.props || [];
+  const propIdx = (key) => props.findIndex((p) => p.key === key);
   const lines = [];
   if (!state.exchange) {
-    const props = item.properties.map((p) => `${esc(p.k)}: <b class="${p.aug ? 'aug' : ''}">${esc(p.v)}</b>`);
-    if (props.length) lines.push(props.join('<br>'));
+    const plines = item.properties.map((p) => {
+      const v = `<b class="${p.aug ? 'aug' : ''}">${esc(p.v)}</b>`;
+      const i = propIdx(PROP_KEY[p.k]);
+      return i < 0 ? `${esc(p.k)}: ${v}` : pick(`p:${i}`, esc(p.k), v, props[i], '≥', 'min');
+    });
+    // DPS в игровой подсказке нет — показываем отдельной строкой, чтобы по нему тоже можно было искать.
+    const dps = ['dps', 'pdps', 'edps'].map(propIdx).filter((i) => i >= 0)
+      .map((i) => pick(`p:${i}`, props[i].label, `<b>${fmt(props[i].value)}</b>`, props[i], '≥', 'min'));
+    if (dps.length) plines.push(dps.join(' · '));
+    if (plines.length) lines.push(plines.join('<br>'));
+
     const meta = [];
-    if (item.requires) meta.push(`Requires: <b>${esc(item.requires)}</b>`);
-    if (item.ilvl) meta.push(`Item Level: <b>${item.ilvl}</b>`);
-    if (item.gemLevel) meta.push(`Level: <b>${item.gemLevel}</b>`);
-    if (item.sockets) meta.push(`Sockets: <b>${'◆ '.repeat(item.sockets).trim()}</b>`);
+    if (item.requires) {
+      const rest = esc(item.requires.replace(/^Level \d+,?\s*/, ''));
+      meta.push(item.reqLevel
+        ? `Requires: ${pick('m:reqLevel', 'Level', `<b>${item.reqLevel}</b>`, f.reqLevel, '≤', 'max')}${rest ? `, <b>${rest}</b>` : ''}`
+        : `Requires: <b>${esc(item.requires)}</b>`);
+    }
+    if (item.ilvl) meta.push(pick('m:ilvl', 'Item Level', `<b>${item.ilvl}</b>`, f.ilvl, '≥', 'min'));
+    if (item.gemLevel) meta.push(pick('m:gemLevel', 'Level', `<b>${item.gemLevel}</b>`, f.gemLevel, '≥', 'min'));
+    if (item.sockets) meta.push(pick('m:sockets', 'Sockets', `<b>${'◆ '.repeat(item.sockets).trim()}</b>`, f.sockets, '≥', 'min'));
     if (meta.length) lines.push(meta.join(' · '));
   }
   const flags = [];
@@ -185,32 +215,14 @@ function modRow(m, i) {
     </div>`;
 }
 
-// Дополнительные фильтры под модами: поле в state.filters, подпись и какая граница.
-const MISC = [
-  { key: 'ilvl', label: 'Item level', op: '≥', field: 'min' },
-  { key: 'reqLevel', label: 'Required level', op: '≤', field: 'max' },
-  { key: 'sockets', label: 'Sockets', op: '≥', field: 'min' },
-  { key: 'gemLevel', label: 'Gem level', op: '≥', field: 'min' },
-];
-
 function renderFilters() {
   const box = $('filters');
   box.hidden = !state.searchable;
   if (!state.searchable) return;
   const f = state.filters;
   $('mods').innerHTML = f.mods.map(modRow).join('');
-  $('props').innerHTML = (f.props || []).map((p, i) => `
-    <div class="mod t-prop${p.enabled ? '' : ' off'}" data-p="${i}">
-      <label><input type="checkbox" data-k="enabled"${p.enabled ? ' checked' : ''}>
-        <span class="tag">property</span><span>${esc(p.label)}: ${fmt(p.value)}</span></label>
-      <input type="number" data-k="min" step="any" placeholder="min" value="${p.min}">
-    </div>`).join('');
-
-  const misc = MISC.filter((d) => f[d.key]).map((d) => `
-    <label class="opt${f[d.key].enabled ? '' : ' off'}"><input type="checkbox" data-m="${d.key}"${f[d.key].enabled ? ' checked' : ''}>
-      ${d.label} ${d.op} <input type="number" data-mv="${d.key}" data-f="${d.field}" value="${f[d.key][d.field]}"></label>`);
-  misc.push(`<label class="opt${f.online ? '' : ' off'}"><input type="checkbox" data-o="online"${f.online ? ' checked' : ''}>Online only</label>`);
-  $('misc').innerHTML = misc.join('');
+  // Защита/DPS, уровни и гнёзда выбираются прямо в подсказке под шапкой — здесь только «онлайн».
+  $('misc').innerHTML = `<label class="opt${f.online ? '' : ' off'}"><input type="checkbox" data-o="online"${f.online ? ' checked' : ''}>Online only</label>`;
 }
 
 // ---- лоты ----
@@ -255,6 +267,7 @@ async function runSearch(relax = false) {
     if (r.dropped && r.dropped.length) {
       state.filters = r.filters;
       renderFilters();
+      renderTooltip();
       notes.push(`Too few listings — relaxed: ${r.dropped.join(' · ')}`);
     }
     if (r.relaxStopped) notes.push(`Couldn't relax filters further: ${r.relaxStopped}`);
@@ -306,24 +319,35 @@ $('mods').addEventListener('input', (e) => {
   }
 });
 
-$('props').addEventListener('input', (e) => {
-  const row = e.target.closest('.mod');
-  if (!row) return;
-  const p = state.filters.props[+row.dataset.p];
-  if (e.target.dataset.k === 'enabled') {
-    p.enabled = e.target.checked;
-    row.classList.toggle('off', !p.enabled);
-  } else {
-    p.min = e.target.value === '' ? null : Number(e.target.value);
+// ref из подсказки → объект фильтра: 'p:2' — state.filters.props[2], 'm:ilvl' — state.filters.ilvl.
+function filterByRef(ref) {
+  const [kind, key] = ref.split(':');
+  return kind === 'p' ? state.filters.props[+key] : state.filters[key];
+}
+
+$('tooltip').addEventListener('click', (e) => {
+  if (e.target.closest('.tp-in')) return; // клик в поле границы — не переключаем
+  const el = e.target.closest('.tp');
+  if (!el) return;
+  const flt = filterByRef(el.dataset.ref);
+  flt.enabled = !flt.enabled;
+  renderTooltip();
+  fit();
+  if (flt.enabled) {
+    const input = $('tooltip').querySelector(`.tp-in[data-ref="${el.dataset.ref}"]`);
+    if (input) input.select();
   }
 });
 
-$('misc').addEventListener('input', (e) => {
-  const f = state.filters;
+$('tooltip').addEventListener('input', (e) => {
   const t = e.target;
-  if (t.dataset.m) f[t.dataset.m].enabled = t.checked;
-  if (t.dataset.mv) f[t.dataset.mv][t.dataset.f] = Number(t.value);
-  if (t.dataset.o) f[t.dataset.o] = t.checked;
+  if (!t.classList.contains('tp-in')) return;
+  filterByRef(t.dataset.ref)[t.dataset.f] = t.value === '' ? null : Number(t.value);
+});
+
+$('misc').addEventListener('input', (e) => {
+  const t = e.target;
+  if (t.dataset.o) state.filters[t.dataset.o] = t.checked;
   if (t.type === 'checkbox') t.closest('.opt').classList.toggle('off', !t.checked);
 });
 

@@ -93,6 +93,12 @@ footer { display: flex; justify-content: space-between; gap: 8px; padding: 6px 1
 .tt b { font-weight: normal; color: #fff; }
 .tt b.aug { color: var(--g-mod); }
 .tt .corrupt { color: var(--g-corrupt); }
+/* Значение, по которому можно искать: пунктир при наведении, выбранное — в золотой рамке с полем границы. */
+.tp { display: inline-block; padding: 0 5px; margin: 1px 0; border: 1px solid transparent; border-radius: 2px; cursor: pointer; }
+.tp:hover { border-color: #3d3a33; background: rgba(255, 255, 255, .03); }
+.tp.on { border-color: #6b5a3a; background: rgba(218, 193, 142, .08); box-shadow: 0 0 8px rgba(218, 193, 142, .12); }
+.tp-op { color: var(--gold); }
+.tp-in { width: 54px; height: 22px; margin-left: 2px; padding: 0 5px; font: 700 14px var(--body); text-align: right; vertical-align: 1px; }
 .tt .sep { height: 9px; margin: 3px auto; width: 70%;
            background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='200' height='9' viewBox='0 0 200 9'%3E%3Cpath d='M0 4.5H92M108 4.5H200' stroke='%23584a30'/%3E%3Cpath d='M100 .5l4 4-4 4-4-4z' fill='%239a7a3e'/%3E%3C/svg%3E") center / 100% 9px no-repeat; }
 
@@ -143,7 +149,6 @@ footer { display: flex; justify-content: space-between; gap: 8px; padding: 6px 1
 .mod.off .tag { opacity: .6; }
 .key { color: var(--gold); font-size: 13px; text-shadow: 0 0 8px rgba(255, 190, 80, .5); flex: none; }
 .sum-v { color: var(--gold); }
-#props:not(:empty) { padding-bottom: 4px; margin-bottom: 4px; border-bottom: 1px solid var(--line2); }
 .misc { display: flex; flex-wrap: wrap; justify-content: center; gap: 6px 16px; margin: 6px 0 4px; padding-top: 8px; border-top: 1px solid var(--line2); }
 .misc .opt { display: flex; gap: 6px; align-items: center; color: var(--cream); cursor: pointer; }
 .misc .opt.off { color: var(--muted); }
