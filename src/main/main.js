@@ -285,6 +285,7 @@ function buildTray() {
 app.whenReady().then(() => {
   createOverlay();
   refreshTray = buildTray();
+  api.onWait = (ms) => send('status', { text: `Waiting for the trade site rate limit… ${Math.ceil(ms / 1000)} s` });
   ready = initData().then(refreshTray);
   ready.catch((e) => log('init failed', e));
 

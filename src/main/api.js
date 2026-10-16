@@ -54,6 +54,7 @@ async function waitSlot(kind) {
     }
     if (!wait) break;
     if (wait > MAX_SILENT_WAIT) throw new Error(`Trade request limit almost used up — wait ${waitText(wait)}`);
+    if (module.exports.onWait) module.exports.onWait(wait); // окно покажет «ждём лимит», а не молча висит
     await sleep(wait);
   }
   L.hits.push(Date.now());

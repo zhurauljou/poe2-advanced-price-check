@@ -223,7 +223,7 @@ function renderTradeHero(r) {
   const divs = r.listings.map((l) => l.divine).filter((v) => v != null).sort((a, b) => a - b);
   if (!divs.length) {
     $('hero').innerHTML = `<div class="k">Estimated price</div><div class="big wait" style="animation:none">—</div>
-      <div class="alt">Nothing found — uncheck some filters or lower the minimums</div>`;
+      <div class="alt">No similar items listed right now — it may be a rare high-end item.<br>Uncheck filters or lower the minimums to widen the search.</div>`;
     return;
   }
   const head = divs.slice(0, 5);
@@ -444,11 +444,13 @@ async function runSearch(relax = false) {
       state.filters = r.filters;
       renderFilters();
       renderTooltip();
+      renderBanner(); // ослабление могло снять точную базу
       notes.push(`Too few listings — relaxed: ${r.dropped.join(' · ')}`);
     }
     if (r.relaxStopped) notes.push(`Couldn't relax filters further: ${r.relaxStopped}`);
     setNote(notes.join('\n'));
     rates = r.rates || rates;
+    setStatus(''); // убрать «ждём лимит», если было
     state.tradeUrl = r.url;
     $('open').hidden = false;
     renderTradeHero(r);

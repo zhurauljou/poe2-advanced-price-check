@@ -235,11 +235,12 @@ function toDivine(amount, currency) {
 
 // Сколько лотов нужно, чтобы цене можно было верить. Меньше — автоослабление снимает самый слабый фильтр.
 const MIN_RESULTS = 5;
-const MAX_RELAX = 2; // каждый шаг — отдельный поиск, а их у трейда мало (≈30 за 5 минут)
+const MAX_RELAX = 3; // каждый шаг — отдельный поиск, а их у трейда мало (≈30 за 5 минут)
 
 // Чем меньше — тем раньше снимаем. Важные моды (ключевые хорошего тира) не снимаем вовсе.
 function strength(f) {
   if (f.kind === 'cheap') return 0.3; // гнездо и качество докупаются за копейки — снимаем первыми
+  if (f.kind === 'base') return 1.75; // точная база → вся категория: после слабых модов, до сумм и защиты/DPS
   if (f.kind === 'prop') return 2.5;
   if (f.option) return 2.8;
   if (f.tag === 'pseudo') return 1.8;
@@ -253,6 +254,10 @@ function weakest(filters) {
     ...[['sockets', 'Sockets'], ['quality', 'Quality']].filter(([k]) => filters[k] && filters[k].enabled)
       .map(([k, label]) => Object.assign(filters[k], { kind: 'cheap', label })),
   ];
+  // Точная база (не уник по имени) — тоже фильтр: редких баз на рынке бывает 1–2 штуки.
+  if (filters.useType && !filters.useName && filters.category) {
+    all.push({ kind: 'base', set enabled(v) { filters.useType = v; } });
+  }
   const cands = all.filter((f) => strength(f) !== Infinity).sort((a, b) => strength(a) - strength(b));
   return cands[0] || null;
 }
@@ -282,7 +287,8 @@ async function search(league, item, filters, relax = false) {
     last = weakest(f);
     if (!last) break;
     last.enabled = false;
-    dropped.push(last.kind === 'prop' || last.kind === 'cheap' ? `${last.label} ≥ ${last.min}` : last.text.split('\n')[0]);
+    dropped.push(last.kind === 'base' ? `exact base ${item.baseType}`
+      : last.kind === 'prop' || last.kind === 'cheap' ? `${last.label} ≥ ${last.min}` : last.text.split('\n')[0]);
   }
   const url = `${api.TRADE}/trade2/search/poe2/${L}/${s.id}`;
   const ids = (s.result || []).slice(0, 10);
