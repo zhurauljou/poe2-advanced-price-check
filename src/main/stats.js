@@ -50,7 +50,7 @@ function lookup(text) {
 }
 
 const TAG_GROUP = { explicit: 'explicit', implicit: 'implicit', enchant: 'enchant', rune: 'rune',
-  crafted: 'crafted', fractured: 'fractured', desecrated: 'desecrated' };
+  crafted: 'crafted', fractured: 'fractured', desecrated: 'desecrated', corrupted: 'implicit' };
 
 function pick(cands, tag, localItem) {
   const group = TAG_GROUP[tag] || 'explicit';

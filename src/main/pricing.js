@@ -31,6 +31,18 @@ function resolveBase(item) {
   return best;
 }
 
+// Класс предмета → категория трейда: ищем «любые нательные доспехи», когда база не важна.
+const CATEGORY = {
+  'One Hand Maces': 'weapon.onemace', 'Two Hand Maces': 'weapon.twomace', Quarterstaves: 'weapon.warstaff', Bows: 'weapon.bow',
+  Crossbows: 'weapon.crossbow', Spears: 'weapon.spear', Flails: 'weapon.flail', Claws: 'weapon.claw', Daggers: 'weapon.dagger',
+  'One Hand Swords': 'weapon.onesword', 'Two Hand Swords': 'weapon.twosword', 'One Hand Axes': 'weapon.oneaxe',
+  'Two Hand Axes': 'weapon.twoaxe', Talismans: 'weapon.talisman', Wands: 'weapon.wand', Sceptres: 'weapon.sceptre',
+  Staves: 'weapon.staff', Helmets: 'armour.helmet', 'Body Armours': 'armour.chest', Gloves: 'armour.gloves',
+  Boots: 'armour.boots', Quivers: 'armour.quiver', Shields: 'armour.shield', Foci: 'armour.focus', Bucklers: 'armour.buckler',
+  Amulets: 'accessory.amulet', Belts: 'accessory.belt', Rings: 'accessory.ring', Jewels: 'jewel', Charms: 'flask.charm',
+  'Life Flasks': 'flask.life', 'Mana Flasks': 'flask.mana', Waystones: 'map.waystone', Relics: 'sanctum.relic',
+};
+
 // 80% от значения на предмете. Небольшие целые (+2 к уровню навыков, +1 снаряд) ищем точно,
 // дробь оставляем только для мелких дробных чисел (0.5% регена и т.п.).
 function minOf(v) {
@@ -138,6 +150,10 @@ function prepare(item) {
   });
   const pseudo = searchMods ? pseudoFilters(mods) : [];
   const filters = {
+    // Переключатели в шапке: искать именно эту базу (дорогие базы!) / именно этот уник.
+    useType: true,
+    useName: item.rarity === 'Unique' && !item.unidentified,
+    category: CATEGORY[item.itemClass] || null,
     mods: [...pseudo, ...mods],
     props,
     ilvl: item.ilvl && (item.rarity === 'Normal' || item.rarity === 'Magic') ? { enabled: true, min: item.ilvl } : null,
@@ -154,14 +170,18 @@ function buildQuery(item, f) {
     stats: [{ type: 'and', filters: [] }],
     filters: {},
   };
-  if (item.rarity === 'Unique' && !item.unidentified) {
+  const type = {};
+  if (f.useName) {
     query.name = item.name;
     query.type = item.baseType;
-  } else {
+  } else if (f.useType || !f.category) {
     query.type = item.baseType;
+  } else {
+    type.category = { option: f.category };
   }
   const rarity = { Normal: 'normal', Magic: 'magic', Rare: 'nonunique', Unique: 'unique' }[item.rarity];
-  if (rarity) query.filters.type_filters = { filters: { rarity: { option: rarity } } };
+  if (rarity) type.rarity = { option: rarity };
+  if (Object.keys(type).length) query.filters.type_filters = { filters: type };
 
   for (const m of f.mods) {
     if (!m.enabled || !m.statId) continue;

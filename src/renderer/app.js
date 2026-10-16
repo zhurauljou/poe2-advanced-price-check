@@ -54,13 +54,35 @@ function setNote(text) {
 }
 
 // ---- шапка и подсказка, как в игре ----
+// Название и база в шапке — переключатели поиска: «именно этот уник» и «именно эта база»
+// (дорогие базы), иначе ищем по всей категории.
 function renderBanner() {
-  const { item } = state;
+  const { item, filters: f } = state;
   const b = $('banner');
   const two = item.name && item.baseType && item.name !== item.baseType;
   b.className = `banner ${item.rarity}${two ? '' : ' single'}`;
+  const nameEl = $('name');
+  const baseEl = two ? $('base') : $('name');
   $('name').textContent = item.name || item.baseType;
   $('base').textContent = two ? item.baseType : '';
+  for (const el of [$('name'), $('base')]) { el.className = el.id === 'name' ? 'bn-name' : 'bn-base'; el.removeAttribute('title'); }
+  if (!state.searchable) return;
+  if (f.useName) {
+    nameEl.classList.add('pick', 'on');
+    nameEl.title = 'Searching this unique only — click to search any unique on this base';
+  } else if (item.rarity === 'Unique' && two) {
+    nameEl.classList.add('pick');
+    nameEl.title = 'Click to search this unique only';
+  }
+  if (!f.useName && f.category) {
+    baseEl.classList.add('pick');
+    if (f.useType) baseEl.classList.add('on');
+    baseEl.title = f.useType ? 'Searching this base only — click to search any item of this class'
+      : 'Searching any item of this class — click to search this base only';
+  }
+}
+
+function renderLeagues() {
   $('league').innerHTML = state.leagues.map((l) => `<option${l === state.league ? ' selected' : ''}>${esc(l)}</option>`).join('');
 }
 
@@ -248,6 +270,7 @@ window.pc.onItem((data) => {
   $('results').hidden = true;
   $('hero').hidden = true;
   $('open').hidden = true;
+  renderLeagues();
   renderBanner();
   renderTooltip();
   if (state.exchange) renderExchangeHero();
@@ -290,6 +313,16 @@ $('misc').addEventListener('input', (e) => {
   if (t.dataset.m) f[t.dataset.m].enabled = t.checked;
   if (t.dataset.mv) f[t.dataset.mv].min = Number(t.value);
   if (t.dataset.o) f[t.dataset.o] = t.checked;
+});
+
+$('banner').addEventListener('click', (e) => {
+  const el = e.target.closest('.pick');
+  if (!el || !state || !state.searchable) return;
+  const f = state.filters;
+  const isName = el.id === 'name' && state.item.rarity === 'Unique' && $('base').textContent;
+  if (isName) f.useName = !f.useName;
+  else f.useType = !f.useType;
+  renderBanner();
 });
 
 $('search').addEventListener('click', () => { setNote(''); runSearch(); });

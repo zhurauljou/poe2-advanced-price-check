@@ -23,6 +23,7 @@ function headerInfo(h) {
   let tag = 'explicit';
   if (/^Implicit/.test(kind)) tag = 'implicit';
   else if (/^Enhancement/.test(kind)) tag = 'enchant'; // анойнт: «Allocates Dominion»
+  else if (/^Corrupted/.test(kind)) tag = 'corrupted'; // имплицит от Vaal Orb
   else if (/^Crafted/.test(kind)) tag = 'crafted';
   else if (/^Desecrated/.test(kind)) tag = 'desecrated';
   else if (/^Fractured/.test(kind)) tag = 'fractured';

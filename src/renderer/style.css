@@ -7,7 +7,8 @@
   --input: #07090d; --input-line: #2c2f35; --chip-line: #7d6a46;
   /* цвета игры */
   --r-normal: #c8c8c8; --r-magic: #8888ff; --r-rare: #ffff77; --r-unique: #af6025; --r-gem: #1ba29b; --r-currency: #aa9e82;
-  --g-mod: #8888ff; --g-rune: #9dc2e6; --g-crafted: #b4b4ff; --g-desecrated: #c8a2ff; --g-fractured: #a29162;
+  --g-mod: #8888ff; --g-rune: #9dc2e6; --g-crafted: #b4b4ff; --g-desecrated: #5fd16a; --g-fractured: #c9a85c;
+  --g-enchant: #6fd0d8; --g-corrupted: #e0584a;
   --g-prop: #7f7f7f; --g-corrupt: #d20000;
   --body: "Alegreya Sans", "Segoe UI", sans-serif;
   --game: "Fontin SmallCaps", "Cormorant SC", Georgia, serif;
@@ -24,14 +25,20 @@ body { background: radial-gradient(ellipse 600px 260px at 50% -120px, #1d2836, t
 ::-webkit-scrollbar-thumb { background: #3d3a33; }
 
 /* ---- полоска для перетаскивания ---- */
-.topbar { display: flex; align-items: center; gap: 8px; padding: 6px 8px 4px; -webkit-app-region: drag; }
-.topbar .grow { flex: 1; align-self: stretch; }
-.topbar select, .topbar button { -webkit-app-region: no-drag; }
+.topbar { position: relative; display: flex; justify-content: center; align-items: center; height: 32px; -webkit-app-region: drag; }
+.topbar select, .topbar .close { -webkit-app-region: no-drag; }
+/* Лига — просто золотой текст по центру, стрелка вплотную к названию. */
+.topbar select { field-sizing: content; max-width: 300px; border: 0; padding: 2px 16px 2px 4px; cursor: pointer; font-size: 15px;
+                 background: transparent url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 12 8'%3E%3Cpath d='M1 1.5l5 5 5-5' fill='none' stroke='%23dac18e' stroke-width='1.6'/%3E%3C/svg%3E") no-repeat right 2px center / 9px 6px; }
+.topbar select:hover { color: #fff4b4; }
+.topbar select option { background: var(--panel); color: var(--cream); }
+.close { position: absolute; right: 10px; top: 50%; transform: translateY(-50%); padding: 2px 4px; font-size: 16px; line-height: 1;
+         color: var(--bronze); cursor: pointer; }
+.close:hover { color: var(--cream); }
 
 /* ---- шапка предмета на игровом баннере ---- */
 .banner { position: relative; isolation: isolate; height: 64px; margin: 0 6px; padding: 0 62px;
-          display: flex; flex-direction: column; align-items: center; justify-content: center;
-          text-align: center; user-select: text; cursor: text; }
+          display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; }
 .banner::before { content: ""; position: absolute; inset: 0; z-index: -1;
                   background: url(img/header-left.png) left center / auto 100% no-repeat,
                               url(img/header-right.png) right center / auto 100% no-repeat,
@@ -41,6 +48,11 @@ body { background: radial-gradient(ellipse 600px 260px at 50% -120px, #1d2836, t
 .bn-name, .bn-base { font: 19px/1.15 var(--game); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 100%;
                      text-shadow: 0 1px 2px #000; }
 .bn-base:empty { display: none; }
+/* Название/база — переключатели поиска: выбранное светится, снятое приглушено и зачёркнуто пунктиром. */
+.pick { cursor: pointer; padding: 0 6px; border-radius: 2px; opacity: .45; text-decoration: line-through 1px; transition: opacity .12s; }
+.pick:hover { opacity: .8; }
+.pick.on { opacity: 1; text-decoration: none; text-shadow: 0 1px 2px #000, 0 0 10px currentColor; }
+.pick.on:hover { background: rgba(255, 255, 255, .05); }
 /* Рамку редкости перекрашиваем из жёлтой (rare) фильтром — текст при этом не трогаем. */
 .banner.Rare { color: var(--r-rare); }
 .banner.Unique { color: var(--r-unique); --hdr-filter: hue-rotate(-28deg) saturate(1.5) brightness(.95); }
@@ -59,7 +71,6 @@ button { cursor: pointer; background: linear-gradient(#2b2013, #17110a); border-
          box-shadow: inset 0 1px 0 rgba(255, 224, 138, .12); }
 button:hover { background: linear-gradient(#3a2a14, #20170b); border-color: #b08a45; color: #fff4b4; }
 button:disabled { opacity: .5; cursor: default; }
-button.icon { width: 28px; height: 28px; padding: 0; }
 button.link { background: none; border: 0; box-shadow: none; padding: 0; color: var(--gold); font: 700 13px var(--body); }
 button.link:hover { background: none; color: #fff4b4; text-decoration: underline; }
 input[type=checkbox] { accent-color: var(--gold); margin: 0; }
@@ -109,7 +120,9 @@ footer { display: flex; justify-content: space-between; gap: 8px; padding: 6px 1
 .mod:hover { background: var(--hover); }
 .mod label { flex: 1; display: flex; gap: 7px; align-items: center; cursor: pointer; min-width: 0; white-space: pre-line;
              font: 15px/1.3 var(--game); color: var(--g-mod); }
-.mod.t-implicit label, .mod.t-enchant label, .mod.t-crafted label { color: var(--g-crafted); }
+.mod.t-crafted label { color: var(--g-crafted); }
+.mod.t-enchant label { color: var(--g-enchant); }
+.mod.t-corrupted label { color: var(--g-corrupted); }
 .mod.t-rune label { color: var(--g-rune); }
 .mod.t-desecrated label { color: var(--g-desecrated); }
 .mod.t-fractured label { color: var(--g-fractured); }
@@ -121,13 +134,20 @@ footer { display: flex; justify-content: space-between; gap: 8px; padding: 6px 1
        border-radius: 2px; padding: 0 4px; flex: none; }
 .tag.tier { min-width: 23px; text-align: center; }
 .tag.tier.top, .tag.pseudo { color: var(--gold); border-color: #6b5a3a; }
+/* Тег — в цвет своего мода, с лёгкой подложкой того же цвета. */
+.tag.implicit { --c: var(--g-mod); } .tag.crafted { --c: var(--g-crafted); } .tag.enchant { --c: var(--g-enchant); }
+.tag.rune { --c: var(--g-rune); } .tag.desecrated { --c: var(--g-desecrated); } .tag.fractured { --c: var(--g-fractured); }
+.tag.corrupted { --c: var(--g-corrupted); }
+.tag:is(.implicit, .crafted, .enchant, .rune, .desecrated, .fractured, .corrupted) {
+  color: var(--c); border-color: color-mix(in srgb, var(--c) 45%, transparent); background: color-mix(in srgb, var(--c) 10%, transparent); }
+.mod.off .tag { opacity: .6; }
 .key { color: var(--gold); font-size: 13px; text-shadow: 0 0 8px rgba(255, 190, 80, .5); flex: none; }
 .sum-v { color: var(--gold); }
 #props:not(:empty) { padding-bottom: 4px; margin-bottom: 4px; border-bottom: 1px solid var(--line2); }
 .misc { display: flex; flex-wrap: wrap; justify-content: center; gap: 6px 16px; margin: 6px 0 4px; padding-top: 8px; border-top: 1px solid var(--line2); }
 .misc label { display: flex; gap: 6px; align-items: center; color: var(--label); }
 .misc input[type=number] { width: 52px; padding: 2px 6px; }
-#search { width: 100%; margin: 8px 0 0; }
+#search { width: 100%; height: 36px; margin: 8px 0 0; font: 700 17px var(--sc); letter-spacing: .6px; color: var(--gold); }
 .note { padding: 6px 10px; border-left: 2px solid #b08a45; background: rgba(218, 193, 142, .06); color: var(--label); font-size: 14px; }
 .empty { padding: 6px; text-align: center; color: var(--muted); }
 
