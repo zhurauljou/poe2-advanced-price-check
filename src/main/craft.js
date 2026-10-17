@@ -674,11 +674,17 @@ function planGoal(mine, candidates, max, want, magic, magicFree = []) {
     }
     // Chaos + Omen of Whittling снимает мод с наименьшим уровнем — если лишний мод строго ниже всех остальных снимаемых
     // (desecrated уже снят), он уйдёт наверняка, но на его место встанет случайный мод.
-    const levels = mine.filter((a) => a.tag !== 'fractured' && a.tag !== 'desecrated').map((a) => (a.mod ? a.mod.required_level : 0));
+    // Уровень известен только у сопоставленных модов: если хоть один неизвестен — Whittling не оцениваем.
+    const removable = mine.filter((a) => a.tag !== 'fractured' && a.tag !== 'desecrated');
+    const known = removable.every((a) => a.mod);
+    const levels = removable.map((a) => (a.mod ? a.mod.required_level : 0));
     const low = Math.min(...levels);
     const lowJunk = junk.filter((x) => x.level === low);
-    const whittle = lowJunk.length === 1 && levels.filter((l) => l === low).length === 1 ? lowJunk[0].text : null;
-    plan.push({ act: 'remove', mods: junk.map((x) => x.text), sides, whittle,
+    const whittle = known && lowJunk.length === 1 && levels.filter((l) => l === low).length === 1 ? lowJunk[0].text : null;
+    // Самый низкоуровневый — нужный мод: Whittling снял бы его (показываем, почему Whittling тут не годится).
+    const lowest = mine.filter((a) => a.tag !== 'fractured' && a.tag !== 'desecrated' && a.mod && a.mod.required_level === low);
+    const whittleWrong = known && !whittle && lowest.length && !lowJunk.length ? { mod: lowest.map((a) => a.mod.lines.join(' / ')).join(', '), level: low } : null;
+    plan.push({ act: 'remove', mods: junk.map((x) => x.text), sides, whittle, whittleWrong,
       currencies: ['Orb of Annulment', 'Omen of Sinistral Annulment', 'Omen of Dextral Annulment', ...(whittle ? ['Chaos Orb', 'Omen of Whittling'] : [])] });
     for (const x of junk) filled[x.side]--;
   }

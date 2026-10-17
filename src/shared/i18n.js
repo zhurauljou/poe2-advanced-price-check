@@ -422,6 +422,7 @@
     "Removing the unwanted modifiers would hit ≈{n} needed ones on average — on an item like this it is rarely worth it": "Снятие лишних модов в среднем заденет ≈{n} нужных — на такой вещи это редко окупается",
     "Selling as is is better: the currency alone costs ≈ {cost}, the item sells for ≈ {now}": "Выгоднее продать как есть: одна валюта стоит ≈ {cost}, а вещь продаётся за ≈ {now}",
     "No finished items like the goal are listed — its price is unknown": "Готовых вещей как цель на трейде нет — её цена неизвестна",
+    "Chaos Orb + Omen of Whittling would not help: it removes the lowest-level modifier, and that is «{mod}» (level {level})": "Chaos Orb + Omen of Whittling не поможет: он снимает мод самого низкого уровня, а это «{mod}» (уровень {level})",
     common: 'частый', uncommon: 'средний', rare: 'редкий', 'chance ?': 'шанс ?',
     'Valuable modifiers cannot be estimated from trade listings — items with them are priced and listed differently': 'Шанс ценных модов по трейду не оценить — вещи с ними выставляют и оценивают иначе',
     'Rough estimate: Exalted Orb + omen of its side gives this modifier about 1 in {n} times': 'Грубая оценка: Exalted Orb с оменом этой стороны даёт этот мод примерно 1 раз из {n}',
