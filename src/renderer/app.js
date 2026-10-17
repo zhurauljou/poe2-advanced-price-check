@@ -197,7 +197,17 @@ function prevCheckHtml() {
 const PROP_KEY = { Armour: 'ar', 'Evasion Rating': 'ev', 'Energy Shield': 'es', Spirit: 'spirit',
   'Physical Damage': 'pdps', 'Fire Damage': 'edps', 'Cold Damage': 'edps', 'Lightning Damage': 'edps',
   'Critical Hit Chance': 'crit', 'Attacks per Second': 'aps' };
-const PROP_OP = { pdps: 'pDPS ≥', edps: 'eDPS ≥' };
+const PROP_OP = { pdps: 'pDPS ≥', edps: 'eDPS ≥', map_tier: '=' };
+// Моды путевого камня, опасные для многих билдов.
+const WAYSTONE_DANGER = [
+  [/cannot Regenerate/i, 'No regeneration'],
+  [/(less|reduced) Recovery Rate/i, 'Less recovery'],
+  [/-\d+% to (all )?maximum .*Resistances?/i, 'Lower maximum resistances'],
+  [/Cursed with/i, 'Players are cursed'],
+  [/Monsters have \d+% (increased Critical Hit Chance|Critical Damage Bonus)/i, 'Monster critical hits'],
+  [/Penetrate/i, 'Monsters penetrate resistances'],
+  [/additional Projectiles/i, 'Extra monster projectiles'],
+];
 
 // Значение в подсказке, по которому можно искать: клик включает, рядом — граница поиска.
 // ref: 'p:<i>' — фильтр защиты/DPS, 'm:<key>' — уровень/ilvl/гнёзда.
@@ -223,7 +233,9 @@ function renderTooltip() {
       const v = `<b class="${p.aug ? 'aug' : ''}">${esc(p.v)}</b>`;
       if (p.k === 'Quality') return pick('m:quality', 'Quality', v, f.quality, '≥', 'min');
       if (p.k === 'Grants Skill') return pick('m:skill', 'Grants Skill', v, f.skill, t('level ≥'), 'min');
-      const i = propIdx(PROP_KEY[p.k]);
+      // Свойства путевого камня — по подписи из игры (pricing.propFilters кладёт её в label).
+      let i = propIdx(PROP_KEY[p.k]);
+      if (i < 0) i = props.findIndex((x) => x.group === 'map' && x.label === p.k);
       return i < 0 ? `${esc(p.k)}: ${v}` : pick(`p:${i}`, esc(p.k), v, props[i], PROP_OP[props[i].key] || '≥', 'min');
     });
     // DPS в игровой подсказке нет — показываем отдельной строкой, чтобы по нему тоже можно было искать.
@@ -262,6 +274,11 @@ function renderTooltip() {
     if (item.mirrored) flags.push('<span class="cls">Mirrored</span>');
   }
   if (flags.length) lines.push(row(flags));
+  // Путевой камень: моды, опасные для многих билдов, — заметно, до того как его купить или пройти.
+  if (item.itemClass === 'Waystones') {
+    const danger = WAYSTONE_DANGER.filter(([re]) => (item.modLines || []).some((l) => re.test(l.text))).map(([, label]) => `<span class="danger">⚠ ${esc(t(label))}</span>`);
+    if (danger.length) lines.push(row(danger));
+  }
   $('tooltip').innerHTML = lines.join('<div class="sep"></div>');
 }
 
@@ -1973,7 +1990,9 @@ $('tooltip').addEventListener('input', (e) => {
   const t = e.target;
   if (!t.classList.contains('tp-in')) return;
   markDirty();
-  filterByRef(t.dataset.ref)[t.dataset.f] = t.value === '' ? null : Number(t.value);
+  const flt = filterByRef(t.dataset.ref);
+  flt[t.dataset.f] = t.value === '' ? null : Number(t.value);
+  if (flt.exact) flt.max = flt.min; // тир путевого камня — ровно такой
 });
 
 $('misc').addEventListener('click', (e) => {

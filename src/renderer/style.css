@@ -603,3 +603,4 @@ body.set-page { height: auto; user-select: text; }
 .live-row:hover { background: var(--hover); }
 .live-row b { color: var(--cream); white-space: nowrap; }
 .live-row .seller { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: var(--text); }
+.tt .danger { color: var(--bad); font-weight: 700; }

@@ -62,6 +62,13 @@ const TAGGED = /^(.*) \((implicit|enchant|rune|crafted|fractured|desecrated)\)$/
 const PROPERTY = /^[A-Za-z][A-Za-z '()]*: /; // и «Quality (Minion Modifiers): +40%»
 const NOT_MODS = new Set(['Corrupted', 'Twice Corrupted', 'Mirrored', 'Unidentified', 'Fractured Item', 'Desecrated Item', 'Sanctified']);
 
+// Свойства путевого камня → фильтры трейда (map_filters). Подписи в тексте игры узнаём по ключевым словам.
+const MAP_PROPS = [
+  [/^Waystone Tier$/i, 'map_tier'], [/Pack Size/i, 'map_packsize'], [/^Item Rarity$/i, 'map_iir'],
+  [/Waystone Drop Chance/i, 'map_bonus'], [/Revives/i, 'map_revives'], [/Magic Monsters|Monster Effectiveness/i, 'map_magic_monsters'],
+  [/Rare Monsters|Monster Rarity/i, 'map_rare_monsters'], [/Gold/i, 'map_gold'], [/Experience/i, 'map_experience'],
+];
+
 function num(s) {
   return Number(String(s).replace(/[,\s]/g, ''));
 }
@@ -137,6 +144,11 @@ function parseItem(text) {
       else if ((m = l.match(/^Quality(?: \(([^)]*)\))?: \+?(\d+)%/))) { item.quality = +m[2]; if (m[1]) item.qualityKind = m[1]; }
       else if ((m = l.match(/^Stack Size: ([\d,.\s]+)\/([\d,.\s]+)/))) item.stack = { size: num(m[1]), max: num(m[2]) };
       else if (item.rarity === 'Gem' && (m = l.match(/^Level: (\d+)/))) item.gemLevel = +m[1];
+      else if (item.itemClass === 'Waystones' && (m = l.match(/^([^:]+): \+?(-?\d+(?:\.\d+)?)%?/)) && MAP_PROPS.some(([re]) => re.test(m[1]))) {
+        const key = MAP_PROPS.find(([re]) => re.test(m[1]))[1];
+        item.props[key] = +m[2];
+        (item.mapLabels = item.mapLabels || {})[key] = m[1];
+      }
       else if (l === 'Corrupted') item.corrupted = true;
       else if (l === 'Twice Corrupted') { item.corrupted = true; item.twiceCorrupted = true; }
       else if (l === 'Mirrored') item.mirrored = true;

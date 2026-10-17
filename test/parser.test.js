@@ -167,3 +167,12 @@ test('русский клиент: строки модов переводятс�
     stats.buildLocal(null);
   }
 });
+
+test('путевой камень: свойства — фильтры карты (тир, размер групп, редкость, шанс камня)', () => {
+  const it = parseItem(['Item Class: Waystones', 'Rarity: Rare', 'Grim Aisle', 'Waystone (Tier 15)', '--------',
+    'Waystone Tier: 15', 'Monster Pack Size: +18% (augmented)', 'Item Rarity: +42% (augmented)', 'Waystone Drop Chance: +210% (augmented)',
+    '--------', 'Item Level: 80', '--------', 'Players have 40% less Recovery Rate of Life and Energy Shield'].join('\n'));
+  assert.deepEqual(it.props, { map_tier: 15, map_packsize: 18, map_iir: 42, map_bonus: 210 });
+  assert.equal(it.mapLabels.map_packsize, 'Monster Pack Size');
+  assert.equal(it.modLines.length, 1);
+});

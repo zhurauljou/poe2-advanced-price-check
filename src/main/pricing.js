@@ -95,6 +95,16 @@ const PROPS = [
   { key: 'edps', label: 'Elemental DPS', covers: 'damage' },
   { key: 'crit', label: 'Critical Chance', covers: null },
   { key: 'aps', label: 'Attacks per Second', covers: null },
+  // Путевой камень (map_filters): тир — точно, «сочность» (редкость, размер групп, шанс камня) — от −10%.
+  { key: 'map_tier', label: 'Waystone Tier', covers: null, group: 'map', exact: true },
+  { key: 'map_bonus', label: 'Waystone Drop Chance', covers: null, group: 'map', juice: true },
+  { key: 'map_iir', label: 'Item Rarity', covers: null, group: 'map', juice: true },
+  { key: 'map_packsize', label: 'Pack Size', covers: null, group: 'map', juice: true },
+  { key: 'map_magic_monsters', label: 'Magic Monsters', covers: null, group: 'map' },
+  { key: 'map_rare_monsters', label: 'Rare Monsters', covers: null, group: 'map' },
+  { key: 'map_revives', label: 'Revives', covers: null, group: 'map' },
+  { key: 'map_gold', label: 'Gold', covers: null, group: 'map' },
+  { key: 'map_experience', label: 'Experience', covers: null, group: 'map' },
 ];
 
 const PROP_MIN = 0.97;
@@ -109,7 +119,17 @@ function propFilters(item) {
   const unique = item.rarity === 'Unique';
   // Магическая вещь — заготовка: её покупают ради модов и их тиров, а не ради DPS/защиты — свойства по желанию.
   const magic = item.rarity === 'Magic';
-  return PROPS.filter((p) => item.props[p.key] > 0).map((p) => ({
+  if (item.itemClass === 'Waystones') {
+    return PROPS.filter((p) => p.group === 'map' && item.props[p.key] > 0).map((p) => ({
+      ...p,
+      label: (item.mapLabels && item.mapLabels[p.key]) || p.label, // как в подсказке игры — по ней окно находит фильтр
+      value: item.props[p.key],
+      min: p.exact ? item.props[p.key] : Math.floor(item.props[p.key] * 0.9),
+      max: p.exact ? item.props[p.key] : undefined,
+      enabled: !!(p.exact || p.juice),
+    }));
+  }
+  return PROPS.filter((p) => !p.group && item.props[p.key] > 0).map((p) => ({
     ...p,
     value: item.props[p.key],
     // Защита/DPS — главное в цене брони и оружия: ищем почти такие же (−3%); при нехватке лотов ослабление опустит до −15%.
@@ -338,6 +358,9 @@ function prepare(item, demand, rollsOn) {
     online: true,
     flex: true, // «Allow 1 minor mod missing»
   };
+  // Путевой камень покупают за тир и «сочность» (редкость, размер групп, шанс камня), а не за конкретные моды —
+  // моды по желанию (опасные окно помечает в подсказке).
+  if (item.itemClass === 'Waystones') for (const m of filters.mods) m.enabled = false;
   return { item, exchange, filters, searchable: !exchange, rates: api.ninja.rates };
 }
 
@@ -397,7 +420,13 @@ function buildQuery(item, f) {
     query.filters.trade_filters = { filters: { price: { option: f.priceCurrency } } };
   }
   const equip = {};
-  for (const p of f.props || []) if (p.enabled && p.min !== '' && p.min != null) equip[p.key] = { min: Number(p.min) };
+  const mapF = {};
+  for (const p of f.props || []) {
+    if (!p.enabled || p.min === '' || p.min == null) continue;
+    if (p.group === 'map') mapF[p.key] = p.max != null && p.max !== '' ? { min: Number(p.min), max: Number(p.max) } : { min: Number(p.min) };
+    else equip[p.key] = { min: Number(p.min) };
+  }
+  if (Object.keys(mapF).length) query.filters.map_filters = { filters: mapF };
   if (f.sockets && f.sockets.enabled) equip.rune_sockets = { min: Number(f.sockets.min) };
   if (Object.keys(equip).length) query.filters.equipment_filters = { filters: equip };
   const misc = {};
@@ -453,6 +482,8 @@ function flagFilters(item) {
   if (item.rarity === 'Currency') return out;
   add('corrupted', 'Corrupted', !!item.corrupted);
   if (pinClean) out[0].enabled = true;
+  // «Twice Corrupted» — у трейда свой фильтр: две порчи — другая цена, чем у одной.
+  if (item.twiceCorrupted) { add('twice_corrupted', 'Twice Corrupted', true); out[out.length - 1].enabled = true; }
   if (item.sanctified) add('sanctified', 'Sanctified', true);
   if (item.mirrored) add('mirrored', 'Mirrored', true);
   if (item.fracturedItem) add('fractured_item', 'Fractured Item', true);
@@ -485,7 +516,7 @@ function strength(f) {
   if (f.kind === 'cheap') return 0.3; // гнездо и качество докупаются за копейки — снимаем первыми
   if (f.kind === 'proploose') return 1.7; // защита/DPS −3% → −15%: раньше, чем снимать суммы и саму защиту
   if (f.kind === 'base') return 1.75; // точная база → вся категория: после слабых модов, до сумм и защиты/DPS
-  if (f.kind === 'prop') return 2.5;
+  if (f.kind === 'prop') return f.exact ? Infinity : 2.5; // тир путевого камня не снимаем — это другой товар
   if (f.kind === 'options') return 2.8;
   if (f.tag === 'pseudo') return 1.8;
   return f.importance >= KEEP_FROM ? Infinity : f.importance;
@@ -515,7 +546,7 @@ function weakest(filters) {
     } });
   }
   // Защита/DPS: сперва опускаем порог до −15%, снимать фильтр — только потом.
-  const strict = (filters.props || []).filter((p) => p.enabled && p.min > propMin(p.value, PROP_LOOSE));
+  const strict = (filters.props || []).filter((p) => p.enabled && !p.exact && p.min > propMin(p.value, PROP_LOOSE));
   if (strict.length && !filters.propsLoosened) {
     const saved = strict.map((p) => p.min);
     all.push({ kind: 'proploose', label: strict.map((p) => p.label).join(', '), set enabled(v) {
