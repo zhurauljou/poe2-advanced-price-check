@@ -851,7 +851,7 @@ function addCost(s, rolls, s2) {
       const per = cur.reduce((a, n) => a + p(n), 0) / rolls;
       const odds = (o) => { const c = lottery ? o.guess : o.chance; return s.otherOpen && !omen ? c / 2 : c; };
       const cost = os.reduce((a, o) => a + tries(per, odds(o), removal), 0);
-      opts.push({ k, currencies: cur, chances: os.map((o) => (lottery ? null : odds(o))), pool: os[0].pool, cost, per: per * rolls, slam: per / odds(os[0]) });
+      opts.push({ k, currencies: cur, chances: os.map((o) => (lottery ? null : odds(o))), pool: os[0].pool, cost, per: per * rolls, slam: per / odds(os[0]), p: os.reduce((a, o) => a * odds(o), 1) });
     }
   }
   // Desecrate (только для шага, которому окно его отдало: одна desecration на вещь). Кость + Necromancy на сторону
@@ -867,7 +867,7 @@ function addCost(s, rolls, s2) {
       const per = cur.reduce((a, n) => a + p(n), 0);
       // Промах: эссенция сняла нужный мод (мод эссенции всё равно встал) — вернуть его и снять жертву.
       const cost = per + (1 - P) * (restoreValue() + (p('Orb of Annulment') ?? 0));
-      opts.push({ k: 'essence', essence: name, currencies: cur, chances: [P], pool: 0, cost, per, slam: per / P });
+      opts.push({ k: 'essence', essence: name, currencies: cur, chances: [P], pool: 0, cost, per, slam: per / P, p: P });
     }
   }
   if (rolls === 1 && s.useDes && s.desecrate) {
@@ -880,14 +880,18 @@ function addCost(s, rolls, s2) {
         // Подходящих модов на стороне ≤ 3 — нужный гарантированно среди вариантов (остаётся только тир).
         const pc = o.pool <= 3 ? o.good : 1 - Math.pow(1 - one, echo ? 6 : 3);
         const per = cur.reduce((a, n) => a + p(n), 0);
-        opts.push({ k: 'desecrate', bone, echo, currencies: cur, chances: [lottery ? null : pc], pool: o.pool, cost: tries(per, pc, [{ a: desRetry, q: 0 }]), per, slam: per / pc });
+        opts.push({ k: 'desecrate', bone, echo, currencies: cur, chances: [lottery ? null : pc], pool: o.pool, cost: tries(per, pc, [{ a: desRetry, q: 0 }]), per, slam: per / pc, p: pc });
       }
     }
   }
   if (!opts.length) return { cost: null, chance: null, currencies: ['Exalted Orb'], lottery: true };
   // Ни один способ «до победы» не сходится — значит, одна попытка (слэм), промах остаётся на вещи: берём способ
   // с лучшим «шансом за цену попытки».
-  opts.sort((a, b) => a.cost - b.cost || a.slam - b.slam);
+  // Одна попытка (до победы не сходится) на вещи с известной выгодой: промах — испорченная вещь, а не цена сферы.
+  // Тогда выбираем по выгоде попытки: шанс × (цена цели − цена сейчас) − цена попытки (Perfect Exalted на дорогой вещи).
+  const gain = goalValue != null && state.est != null ? Math.max(0, goalValue - state.est) : 0;
+  if (gain && opts.every((o) => !Number.isFinite(o.cost))) opts.sort((a, b) => (b.p * gain - b.per) - (a.p * gain - a.per));
+  else opts.sort((a, b) => a.cost - b.cost || a.slam - b.slam);
   const best = opts[0];
   // Другие способы — для сравнения (по одному лучшему варианту каждого).
   const kind = (o) => (o.k === 'desecrate' ? o.bone : o.k);
