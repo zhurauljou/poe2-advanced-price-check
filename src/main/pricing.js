@@ -456,6 +456,8 @@ function flagFilters(item) {
   if (item.mirrored) add('mirrored', 'Mirrored', true);
   if (item.fracturedItem) add('fractured_item', 'Fractured Item', true);
   if (item.desecratedItem) add('desecrated', 'Desecrated Item', true);
+  // Неопознанная вещь — среди неопознанных: опознанные с хорошими модами иначе завышают цену «кота в мешке».
+  if (item.unidentified) { add('identified', 'Identified', false); out[out.length - 1].enabled = true; }
   return out;
 }
 
@@ -617,7 +619,9 @@ async function search(league, item, filters, relax = false) {
       log('floor price skipped:', e.message);
     }
   }
-  return { total: s.total, url, listings, listingsError, rates: api.ninja.rates, filters: f, dropped,
+  // Лоты в валюте без курса (нет цен poe.ninja для лиги) в оценку не попадают — окно об этом скажет.
+  const unpriced = listings.filter((l) => l.amount != null && l.divine == null).length;
+  return { total: s.total, url, listings, listingsError, unpriced, rates: api.ninja.rates, filters: f, dropped,
     relaxStopped, floor };
 }
 

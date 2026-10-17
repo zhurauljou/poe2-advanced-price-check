@@ -194,9 +194,9 @@ function renderTooltip() {
     if (meta.length) lines.push(row(meta));
   }
   const flags = [];
-  if (item.unidentified) flags.push('<span class="corrupt">Unidentified</span>');
   // Состояния (Corrupted, Sanctified, Mirrored…) — переключатели: включённое требует то же у лота.
   const fl = (state.searchable && f.flags) || [];
+  if (item.unidentified && !fl.some((x) => x.key === 'identified')) flags.push('<span class="corrupt">Unidentified</span>');
   // Состояние — три положения по клику: только как у вашей вещи → только противоположное → неважно.
   fl.forEach((x, i) => {
     const v = x.enabled ? x.value : x.own;
@@ -207,7 +207,7 @@ function renderTooltip() {
       title="${esc(x.enabled ? t('Searching only: {label}', { label }) : t('Ignored — any'))} · ${t('click:')} ${esc(next)}">${esc(label)}${x.enabled ? '' : ` <small>· ${t('any')}</small>`}</span>`);
   });
   if (!fl.length) {
-    if (item.corrupted) flags.push('<span class="corrupt">Corrupted</span>');
+    if (item.corrupted) flags.push(`<span class="corrupt">${item.twiceCorrupted ? 'Twice Corrupted' : 'Corrupted'}</span>`);
     if (item.mirrored) flags.push('<span class="cls">Mirrored</span>');
   }
   if (flags.length) lines.push(row(flags));
@@ -1643,12 +1643,13 @@ function markDirty() {
 let lastNotes = null;
 function renderNotes() {
   if (!lastNotes) return;
-  const { dropped, relaxStopped } = lastNotes;
+  const { dropped, relaxStopped, unpriced } = lastNotes;
   const notes = [];
   if (dropped && dropped.length) {
     notes.push(t('Too few listings — relaxed: {list}', { list: dropped.map((d) => (typeof d === 'string' ? d : t(d.t, d.v))).join(' · ') }));
   }
   if (relaxStopped) notes.push(t("Couldn't relax filters further: {why}", { why: relaxStopped }));
+  if (unpriced) notes.push(t('{n} listings in other currencies are not counted: no poe.ninja exchange rates for this league yet', { n: unpriced }));
   setNote(notes.join('\n'));
 }
 
@@ -1676,7 +1677,7 @@ async function runSearch(relax = false) {
       renderTooltip();
       renderBanner(); // ослабление могло снять точную базу
     }
-    lastNotes = { dropped: r.dropped, relaxStopped: r.relaxStopped };
+    lastNotes = { dropped: r.dropped, relaxStopped: r.relaxStopped, unpriced: r.unpriced };
     renderNotes();
     rates = r.rates || rates;
     setStatus(''); // убрать «ждём лимит», если было

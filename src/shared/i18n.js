@@ -9,6 +9,7 @@
     '{n} free prefixes': ['{n} free prefix', '{n} free prefixes'],
     '{n} free suffixes': ['{n} free suffix', '{n} free suffixes'],
     '{n} mods in this total': ['{n} mod in this total', '{n} mods in this total'],
+    '{n} listings in other currencies are not counted: no poe.ninja exchange rates for this league yet': ['{n} listing in another currency is not counted: no poe.ninja exchange rates for this league yet', '{n} listings in other currencies are not counted: no poe.ninja exchange rates for this league yet'],
     'Found {n} listings, but could not load them': ['Found {n} listing, but could not load it', 'Found {n} listings, but could not load them'],
   };
 
@@ -100,6 +101,7 @@
     'adds ~0': '≈ 0',
     '≈{n}% of price': '≈{n}% цены',
     'Search failed': 'Поиск не удался',
+    '{n} listings in other currencies are not counted: no poe.ninja exchange rates for this league yet': ['{n} лот в другой валюте не учтён: курсов poe.ninja для этой лиги пока нет', '{n} лота в других валютах не учтены: курсов poe.ninja для этой лиги пока нет', '{n} лотов в других валютах не учтены: курсов poe.ninja для этой лиги пока нет'],
     'Found {n} listings, but could not load them': ['Нашёлся {n} лот, но загрузить его не удалось', 'Нашлось {n} лота, но загрузить их не удалось', 'Нашлось {n} лотов, но загрузить их не удалось'],
     'Cancelled — another item was checked': 'Отменено — проверяется другая вещь',
     'Try again': 'Ещё раз',

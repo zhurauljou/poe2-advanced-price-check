@@ -124,3 +124,18 @@ test('текстовый диапазон сохраняется для оцен
   assert.equal(it.modLines[0].textRange, 'Very Small-Massive Ring');
   assert.equal(it.modLines[2].textRange, undefined);
 });
+
+test('«Twice Corrupted» — вещь осквернена, строка не мод', () => {
+  const it = parseItem(['Item Class: Rings', 'Rarity: Rare', 'Grim Coil', 'Ruby Ring', '--------', 'Item Level: 80', '--------',
+    '+11% to Fire Resistance (implicit)', '--------', '+39 to maximum Life', '--------', 'Twice Corrupted'].join('\n'));
+  assert.ok(it.corrupted);
+  assert.ok(it.twiceCorrupted);
+  assert.deepEqual(texts(it), ['+11% to Fire Resistance', '+39 to maximum Life']);
+});
+
+test('неопознанная вещь: без модов, флаг unidentified', () => {
+  const it = parseItem(['Item Class: Rings', 'Rarity: Rare', 'Ruby Ring', '--------', 'Item Level: 80', '--------',
+    '+11% to Fire Resistance (implicit)', '--------', 'Unidentified'].join('\n'));
+  assert.ok(it.unidentified);
+  assert.equal(it.modLines.length, 0);
+});

@@ -60,7 +60,7 @@ function tierRange(raw, pct) {
 const TAGGED = /^(.*) \((implicit|enchant|rune|crafted|fractured|desecrated)\)$/;
 // Строки-свойства («Armour: 120 (augmented)», «Requires: Level 40») — это не моды.
 const PROPERTY = /^[A-Za-z][A-Za-z '()]*: /; // и «Quality (Minion Modifiers): +40%»
-const NOT_MODS = new Set(['Corrupted', 'Mirrored', 'Unidentified', 'Fractured Item', 'Desecrated Item', 'Sanctified']);
+const NOT_MODS = new Set(['Corrupted', 'Twice Corrupted', 'Mirrored', 'Unidentified', 'Fractured Item', 'Desecrated Item', 'Sanctified']);
 
 function num(s) {
   return Number(String(s).replace(/[,\s]/g, ''));
@@ -94,6 +94,7 @@ function parseItem(text) {
     gemLevel: null,
     stack: null,
     corrupted: false,
+    twiceCorrupted: false, // «Twice Corrupted» (рус. «Дважды осквернено») — тоже осквернена
     unidentified: false,
     mirrored: false,
     sanctified: false,
@@ -137,6 +138,7 @@ function parseItem(text) {
       else if ((m = l.match(/^Stack Size: ([\d,.\s]+)\/([\d,.\s]+)/))) item.stack = { size: num(m[1]), max: num(m[2]) };
       else if (item.rarity === 'Gem' && (m = l.match(/^Level: (\d+)/))) item.gemLevel = +m[1];
       else if (l === 'Corrupted') item.corrupted = true;
+      else if (l === 'Twice Corrupted') { item.corrupted = true; item.twiceCorrupted = true; }
       else if (l === 'Mirrored') item.mirrored = true;
       else if (l === 'Sanctified') item.sanctified = true;
       else if (l === 'Fractured Item') item.fracturedItem = true;
