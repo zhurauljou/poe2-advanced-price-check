@@ -427,6 +427,7 @@
     "A downside: a bigger minus is usually worse, but some builds want it": "Недостаток: больший минус обычно хуже, но некоторым билдам он нужен",
     "depends on the build": "зависит от билда",
     "{n} fixed modifiers hidden — every copy has them": "Скрыто неизменяемых модов: {n} — они есть у каждого экземпляра",
+    "or {mods}": "или {mods}",
     common: 'частый', uncommon: 'средний', rare: 'редкий', 'chance ?': 'шанс ?',
     'Valuable modifiers cannot be estimated from trade listings — items with them are priced and listed differently': 'Шанс ценных модов по трейду не оценить — вещи с ними выставляют и оценивают иначе',
     'Rough estimate: Exalted Orb + omen of its side gives this modifier about 1 in {n} times': 'Грубая оценка: Exalted Orb с оменом этой стороны даёт этот мод примерно 1 раз из {n}',

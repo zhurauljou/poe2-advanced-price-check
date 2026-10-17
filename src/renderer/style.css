@@ -533,3 +533,9 @@ footer::before { bottom: 0; top: -12px; -webkit-backdrop-filter: blur(16px); bac
 .profit-row small { color: var(--muted); }
 .profit-row .rec { margin-left: 6px; font-size: 11px; color: var(--good); border: 1px solid var(--good); border-radius: 3px; padding: 0 4px; }
 .cm.diff i, .cmp-legend .diff { color: var(--warn); }
+.ps-how .cur { display: inline-block; padding: 0 5px; margin: 1px 0; border-radius: 3px; border: 1px solid; font-size: 12.5px; line-height: 1.5; }
+.ps-how .cur.orb { color: #e8c674; border-color: rgba(232, 198, 116, .45); background: rgba(232, 198, 116, .08); }
+.ps-how .cur.omen { color: #c9a0ff; border-color: rgba(201, 160, 255, .45); background: rgba(201, 160, 255, .08); }
+.ps-how .cur.bone { color: #ff9b8a; border-color: rgba(255, 155, 138, .45); background: rgba(255, 155, 138, .08); }
+.ps-how .cur.essence { color: #7fd8d0; border-color: rgba(127, 216, 208, .45); background: rgba(127, 216, 208, .08); }
+.ps-how .plus { margin: 0 3px; color: var(--muted); }

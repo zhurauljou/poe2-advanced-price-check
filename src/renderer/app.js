@@ -910,9 +910,9 @@ function expandPlan(plan) {
   return plan.flatMap((s) => {
     if (s.act !== 'add2') return [s];
     const two = stepCost(s);
-    const one = s.steps.map(stepCost);
+    const one = (s.alt || s.steps).map(stepCost);
     const sep = one.every((c) => c.cost != null) ? one[0].cost + one[1].cost : null;
-    return two.cost != null && sep != null && sep < two.cost ? s.steps : [s];
+    return two.cost != null && sep != null && sep < two.cost ? (s.alt || s.steps) : [s];
   });
 }
 
@@ -951,16 +951,26 @@ function withSlot(plan, field, flag, kind) {
     if (i !== best.i) return [s];
     if (s.act === 'add') return [{ ...s, [flag]: true }];
     if (!best.wins) return [{ ...s, steps: s.steps.map((x, j) => (j === best.j ? { ...x, [flag]: true } : x)) }];
-    return s.steps.map((x, j) => (j === best.j ? { ...x, [flag]: true } : x));
+    // Пара Greater Exaltation через стороны разворачивается в исходные шаги (с оменами стороны).
+    return (s.alt || s.steps).map((x, j) => (j === best.j ? { ...x, [flag]: true } : x));
   });
 }
+
+// Валюта в шагах — цветными метками (сферы, омены, кости, эссенции): рецепт читается с одного взгляда.
+function curKind(n) {
+  if (/^Omen of /.test(n)) return 'omen';
+  if (/(Rib|Jawbone|Collarbone|Cranium|Vertebrae)$/.test(n)) return 'bone';
+  if (/Essence/.test(n)) return 'essence';
+  return 'orb';
+}
+const curChips = (list) => list.map((n) => `<span class="cur ${curKind(n)}">${esc(n)}</span>`).join('<span class="plus">+</span>');
 
 const STEP_LABEL = {
   augment: (s) => t('Add a {side} while it is magic', { side: t(s.side) }),
   regal: () => t('Make it rare'),
   essence: (s) => t('Make it rare with {mod}', { mod: s.mod }),
   remove: (s) => t('Remove {mod}', { mod: s.mod || s.mods.join(', ') }),
-  add: (s) => t('Add {mod}', { mod: s.mod }),
+  add: (s) => t('Add {mod}', { mod: s.mod }) + (s.orMods && s.orMods.length ? ` (${t('or {mods}', { mods: s.orMods.slice(0, 3).join(', ') })})` : ''),
   add2: (s) => t('Add {a} and {b}', { a: s.steps[0].mod, b: s.steps[1].mod }),
 };
 
@@ -1011,7 +1021,7 @@ function planHtml(plan) {
     if (c.whittle != null) alts.push(t('{mod}: Chaos Orb + Omen of Whittling removes it for sure (lowest-level modifier), but a random modifier takes its place ({cost} per try)', { mod: s.whittle, cost: money(c.whittle) }));
     const desNote = (c.desAlt || []).some((o) => o.k === 'desecrate') ? t('Desecrate: pick 1 of 3 offered modifiers at the Well of Souls, but a miss costs Orb of Annulment + Omen of Light ({cost})', { cost: money((craftPrices['Orb of Annulment'] || 0) + (craftPrices['Omen of Light'] || 0)) }) : '';
     return `<li><div class="ps-what">${esc(STEP_LABEL[s.act](s))}</div>
-      <div class="ps-how"><span class="game">${esc(c.currencies.join(' + '))}</span> · ${esc(odds)}${c.cost != null ? ` · <b>≈ ${money(c.cost)}</b>` : ''}</div>
+      <div class="ps-how">${curChips(c.currencies)} · ${esc(odds)}${c.cost != null ? ` · <b>≈ ${money(c.cost)}</b>` : ''}</div>
       ${notes.length ? `<div class="ps-note">${esc(notes.join(' · '))}</div>` : ''}
       ${alts.length ? `<div class="ps-note">${esc(t('Instead: {list}', { list: alts.join('; ') }))}</div>` : ''}
       ${desNote ? `<div class="ps-note">${esc(desNote)}</div>` : ''}

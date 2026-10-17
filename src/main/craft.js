@@ -361,6 +361,19 @@ async function advise(item, demandMods, cached) {
     }
   }
   for (const c of normal) c.essence = essenceFor(c.text, item.itemClass);
+  for (const c of normal) {
+    const others = normal.filter((x) => x !== c && x.side === c.side && x.exalt && x.pct >= Math.max(15, c.pct * 0.6));
+    if (!others.length || !c.exalt) continue;
+    const merge = (list) => ({ ...list[0], guess: Math.min(0.95, list.reduce((a, o) => a + o.guess, 0)),
+      chance: list.some((o) => o.chance == null) ? null : Math.min(0.95, list.reduce((a, o) => a + o.chance, 0)) });
+    c.exaltAny = {};
+    for (const k of Object.keys(c.exalt)) c.exaltAny[k] = merge([c.exalt[k], ...others.map((x) => x.exalt[k]).filter(Boolean)]);
+    if (c.desecrate) {
+      c.desecrateAny = {};
+      for (const b of Object.keys(c.desecrate)) c.desecrateAny[b] = merge([c.desecrate[b], ...others.map((x) => x.desecrate && x.desecrate[b]).filter(Boolean)]);
+    }
+    c.orMods = others.map((x) => x.text);
+  }
   if (item.rarity === 'Normal') return { normal: transmuteOptions(normal, sidePool, nOf, ilvl, jewel), popular: normal.slice(0, 8), chanceMeta };
   const sections = [];
 
@@ -700,10 +713,10 @@ function planGoal(mine, candidates, max, want, magic, magicFree = []) {
     // Какой Exalted взять (обычный / Greater / Perfect) и с какими оменами — выбирает окно по ценам валюты.
     // onSide / onItem — сколько модов уже стоит (все нужные: лишнее убрано раньше) — от этого зависит, чем снимать промах.
     const step = (c, i) => ({ act: 'add', side, mod: c.text, pct: c.pct, onSide: filled[side] - fixed[side] + i, onItem: filled.prefix + filled.suffix - fixed.prefix - fixed.suffix + i,
-      annulOmen: `Omen of ${S} Annulment`, exalt: c.exalt || { base: { chance: c.chanceUnknown ? null : c.chance || null } },
+      annulOmen: `Omen of ${S} Annulment`, exalt: c.exaltAny || c.exalt || { base: { chance: c.chanceUnknown ? null : c.chance || null } }, orMods: c.orMods || null,
       sideOmen, otherOpen, retry: ['Orb of Annulment', `Omen of ${S} Annulment`],
       // Вместо Exalted — Desecrate (кость + Necromancy-омен на сторону): выбор 1 из 3 при раскрытии. Окно решит, где выгоднее.
-      desecrate: desFree && c.desecrate && Object.keys(c.desecrate).length ? c.desecrate : null,
+      desecrate: desFree && c.desecrate && Object.keys(c.desecrate).length ? c.desecrateAny || c.desecrate : null,
       necro: otherOpen ? `Omen of ${S} Necromancy` : null,
       // Perfect/порченая эссенция с этим модом: жертвенный Exalted на сторону → Crystallisation стороны + эссенция.
       crafted: craftedFree && c.crafted && c.crafted.length ? c.crafted : null,
@@ -721,6 +734,16 @@ function planGoal(mine, candidates, max, want, magic, magicFree = []) {
       } else plan.push(step(into[i], i));
     }
     filled[side] += into.length;
+  }
+  // Последние два добавления — по одному на префикс и суффикс, и на каждой стороне ровно одно свободное место:
+  // Omen of Greater Exaltation кладёт оба мода одним Exalted (каждый — на свою сторону), омены стороны не нужны.
+  const singles = plan.filter((s) => s.act === 'add');
+  const last = plan.slice(-2);
+  if (last.length === 2 && last.every((s) => s.act === 'add') && last[0].side !== last[1].side && singles.length >= 2
+    && ['prefix', 'suffix'].every((side) => max[side] - filled[side] === 0)) {
+    const bare = (s) => ({ ...s, sideOmen: null, otherOpen: false, necro: null });
+    plan.splice(-2, 2, { act: 'add2', cross: true, side: null, steps: last.map(bare), sideOmen: null, otherOpen: false, alt: last,
+      retry: [...new Set(last.flatMap((s) => s.retry))], currencies: [...new Set([...last.flatMap((s) => s.currencies), 'Omen of Greater Exaltation'])] });
   }
   return { keep, remove, add: add.map(({ side, text, pct, tier, tiers, range, stats, essence, chance, chanceUnknown }) => ({ side, text, pct, tier, tiers, range, stats, essence, chance, chanceUnknown })), plan };
 }
