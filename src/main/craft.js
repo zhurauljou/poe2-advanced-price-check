@@ -143,6 +143,15 @@ function canRoll(mod, tags) {
 // Cranium (самоцветы) бывает только Preserved.
 const BONES = { armour: 'Rib', weapon: 'Jawbone', quiver: 'Jawbone', ring: 'Collarbone', amulet: 'Collarbone', belt: 'Collarbone', jewel: 'Cranium' };
 
+// Кости для плана: Gnawed — только ilvl ≤ 64, Preserved — любой, Ancient — моды 40+; Cranium (самоцветы) — только Preserved.
+function bonesFor(tags, ilvl) {
+  const bone = Object.entries(BONES).find(([tag]) => tags.includes(tag));
+  if (!bone) return [];
+  if (bone[1] === 'Cranium') return [{ name: 'Preserved Cranium', minLevel: 0 }];
+  return [...(ilvl <= 64 ? [{ name: `Gnawed ${bone[1]}`, minLevel: 0 }] : []), { name: `Preserved ${bone[1]}`, minLevel: 0 },
+    ...(ilvl >= 40 ? [{ name: `Ancient ${bone[1]}`, minLevel: 40 }] : [])];
+}
+
 function boneFor(tags, ilvl) {
   const bone = Object.entries(BONES).find(([tag]) => tags.includes(tag));
   if (!bone) return t('a bone (Rib / Jawbone / Collarbone / Cranium)');
@@ -286,20 +295,37 @@ async function advise(item, demandMods, cached) {
   // (цель крафта считается по лучшему тиру). Веса тиров внутри семейства неизвестны — считаем равными.
   // chance — по статистике (null у ценных модов и без данных), guess — как если бы все семейства были равновероятны:
   // им окно выбирает валюту, когда шанс неизвестен. pool — сколько семейств вообще может выпасть.
+  // Desecration: при раскрытии у Well of Souls предлагают 3 мода на выбор — из обычного пула стороны и своих
+  // desecrated-модов (их веса неизвестны — считаем средними). single — шанс одного варианта; окно считает «среди 3 (6 с Abyssal Echoes)».
+  const desFamilies = {};
+  for (const side of ['prefix', 'suffix']) {
+    desFamilies[side] = new Set(onBase.filter((m) => m.domain === 'desecrated' && m.generation_type === side && m.required_level <= ilvl).map((m) => m.type)).size;
+  }
+  const bones = bonesFor(tags, ilvl);
+  const desecrateOK = !item.desecratedItem;
   for (const c of normal) {
     const lv = sidePool[c.side];
     const mineLv = lv.get(c.type);
     if (!mineLv) continue;
     const top = [...mineLv].sort((a, b) => b - a).slice(0, 2).pop();
+    // Шанс, что мод (среди обычных с уровнем ≥ L и extra «чужих» семейств средним весом) — это семейство в T1–T2.
+    const at = (L, extra = 0) => {
+      const share = (type) => lv.get(type).filter((x) => x >= L).length / lv.get(type).length;
+      if (!share(c.type)) return null;
+      const good = mineLv.filter((x) => x >= L && x >= top).length / mineLv.filter((x) => x >= L).length;
+      const types = [...lv.keys()].filter((type) => share(type) > 0);
+      const odds = (w) => { const sum = types.reduce((s, type) => s + w(type), 0); return w(c.type) / (sum + extra * sum / types.length) * good; };
+      return { pool: types.length + extra, guess: odds(share), chance: nOf && !c.chanceUnknown ? odds((type) => nOf(type) * share(type)) : null };
+    };
     c.exalt = {};
     for (const [k, L] of Object.entries(EXALT_MIN)) {
       if (L && tags.includes('jewel')) continue; // у самоцветов один тир — дорогие Exalted ничего не дают
-      const share = (type) => lv.get(type).filter((x) => x >= L).length / lv.get(type).length;
-      if (!share(c.type)) continue;
-      const good = mineLv.filter((x) => x >= L && x >= top).length / mineLv.filter((x) => x >= L).length;
-      const odds = (w) => w(c.type) / [...lv.keys()].reduce((s, type) => s + w(type), 0) * good;
-      c.exalt[k] = { pool: [...lv.keys()].filter((type) => share(type) > 0).length, guess: odds(share),
-        chance: nOf && !c.chanceUnknown ? odds((type) => nOf(type) * share(type)) : null };
+      const o = at(L);
+      if (o) c.exalt[k] = o;
+    }
+    if (desecrateOK && bones.length) {
+      c.desecrate = {};
+      for (const b of bones) { const o = at(b.minLevel, desFamilies[c.side]); if (o) c.desecrate[b.name] = o; }
     }
   }
   for (const c of normal) c.essence = essenceFor(c.text, item.itemClass);
@@ -567,6 +593,8 @@ function planGoal(mine, candidates, max, want, magic, magicFree = []) {
   // Сначала сторона, где самый востребованный мод (ключевой) — он сильнее всего поднимает цену.
   const top = (side) => Math.max(0, ...add.filter((c) => c.side === side).map((c) => c.pct));
   // Сколько модов на стороне сейчас — меняется по ходу плана (омен стороны нужен, только пока на другой есть место).
+  // Desecration — одна на вещь: можно, если desecrated-мода не останется (нет или убирается Omen of Light).
+  const desFree = mine.filter((a) => a.tag === 'desecrated').every((a) => remove.some((r) => r.tag === 'desecrated' && r.text === (a.mod ? a.mod.lines.join(' / ') : a.name)));
   const filled = { prefix: 0, suffix: 0 };
   for (const a of mine) filled[a.side]++;
   for (const side of ['prefix', 'suffix'].sort((x, y) => top(y) - top(x))) {
@@ -590,8 +618,12 @@ function planGoal(mine, candidates, max, want, magic, magicFree = []) {
     const sideOmen = otherOpen ? `Omen of ${S} Exaltation` : null;
     // Какой Exalted взять (обычный / Greater / Perfect) и с какими оменами — выбирает окно по ценам валюты.
     const step = (c) => ({ act: 'add', side, mod: c.text, pct: c.pct, exalt: c.exalt || { base: { chance: c.chanceUnknown ? null : c.chance || null } },
-      sideOmen, otherOpen, currencies: [...Object.keys(c.exalt || { base: 1 }).map((k) => EXALT_NAME[k]), ...(sideOmen ? [sideOmen] : [])],
-      retry: ['Orb of Annulment'] });
+      sideOmen, otherOpen, retry: ['Orb of Annulment'],
+      // Вместо Exalted — Desecrate (кость + Necromancy-омен на сторону): выбор 1 из 3 при раскрытии. Окно решит, где выгоднее.
+      desecrate: desFree && c.desecrate && Object.keys(c.desecrate).length ? c.desecrate : null,
+      necro: otherOpen ? `Omen of ${S} Necromancy` : null,
+      currencies: [...Object.keys(c.exalt || { base: 1 }).map((k) => EXALT_NAME[k]), ...(sideOmen ? [sideOmen] : []),
+        ...(desFree && c.desecrate ? [...Object.keys(c.desecrate), `Omen of ${S} Necromancy`, 'Omen of Abyssal Echoes', 'Omen of Light'] : [])] });
     // Два мода на одну сторону — можно одним Exalted с Omen of Greater Exaltation (если дешевле, окно так и предложит).
     for (let i = 0; i < into.length; i += 2) {
       if (i + 1 < into.length) {

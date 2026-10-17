@@ -777,7 +777,8 @@ function stepCost(s) {
   if (s.act === 'add2') {
     // Omen of Greater Exaltation: один Exalted — два мода; каждый бросок стоит половину (Exalted + омены).
     const g = addCost(s.steps[0], 2, s.steps[1]);
-    return { ...g, two: true };
+    const des = s.steps.find((x) => x.useDes);
+    return { ...g, two: true, desAlt: des ? addCost(des, 1).desAlt.map((o) => ({ ...o, mod: des.mod })) : [] };
   }
   const cost = sum(s.currencies);
   return { cost, chance: 1, currencies: s.currencies };
@@ -805,17 +806,36 @@ function addCost(s, rolls, s2) {
       opts.push({ k, currencies: cur, chances: os.map((o) => (lottery ? null : odds(o))), pool: os[0].pool, cost });
     }
   }
+  // Desecrate (только для шага, которому окно его отдало: одна desecration на вещь). Кость + Necromancy на сторону
+  // (если на другой есть место), при раскрытии — лучший из 3 вариантов (6 с Omen of Abyssal Echoes).
+  // Промах — убрать desecrated-мод прицельно: Orb of Annulment + Omen of Light.
+  if (rolls === 1 && s.useDes && s.desecrate) {
+    const desRetry = (p('Orb of Annulment') ?? 0) + (p('Omen of Light') ?? 0);
+    for (const [bone, o] of Object.entries(s.desecrate)) {
+      for (const echo of [false, true]) {
+        const cur = [bone, ...(s.necro ? [s.necro] : []), ...(echo ? ['Omen of Abyssal Echoes'] : [])];
+        if (cur.some((n) => p(n) == null)) continue;
+        const one = lottery ? o.guess : o.chance;
+        const pc = 1 - Math.pow(1 - one, echo ? 6 : 3);
+        const per = cur.reduce((a, n) => a + p(n), 0);
+        opts.push({ k: 'desecrate', bone, echo, currencies: cur, chances: [lottery ? null : pc], pool: o.pool, cost: (per + (1 - pc) * desRetry) / pc });
+      }
+    }
+  }
   if (!opts.length) return { cost: null, chance: null, currencies: ['Exalted Orb'], lottery: true };
   opts.sort((a, b) => a.cost - b.cost);
   const best = opts[0];
-  // Другие Exalted — для сравнения (по одному лучшему варианту каждого).
-  const alts = opts.filter((o, i) => o.k !== best.k && opts.findIndex((x) => x.k === o.k) === i);
-  return { cost: lottery ? null : best.cost, chance: best.chances[0], chances: best.chances, currencies: best.currencies,
-    lottery, pool: best.pool, k: best.k, alts: lottery ? [] : alts };
+  // Другие способы — для сравнения (по одному лучшему варианту каждого).
+  const kind = (o) => (o.k === 'desecrate' ? o.bone : o.k);
+  const alts = opts.filter((o, i) => kind(o) !== kind(best) && opts.findIndex((x) => kind(x) === kind(o)) === i);
+  const desAlt = best.k !== 'desecrate' ? alts.filter((o) => o.k === 'desecrate') : [];
+  return { cost: lottery ? null : best.cost, score: best.cost, chance: best.chances[0], chances: best.chances, currencies: best.currencies,
+    lottery, pool: best.pool, k: best.k, echo: best.echo, bone: best.bone, alts: lottery ? [] : alts, desAlt };
 }
 
 // add2, если два отдельных Exalted выходят дешевле, — разворачиваем обратно в два шага.
 function expandPlan(plan) {
+  plan = withDesecrate(plan);
   return plan.flatMap((s) => {
     if (s.act !== 'add2') return [s];
     const two = stepCost(s);
@@ -823,6 +843,36 @@ function expandPlan(plan) {
     const sep = one.every((c) => c.cost != null) ? one[0].cost + one[1].cost : null;
     return two.cost != null && sep != null && sep < two.cost ? s.steps : [s];
   });
+}
+
+// Desecration одна на вещь — отдаём её шагу, где она выгоднее всего относительно Exalted. Дешевле — станет основным
+// способом шага, нет — покажется в «Вместо этого» (видно шанс и цену). Мод из пары Greater Exaltation (только если
+// десекрейт там выгоднее) уходит в отдельный шаг.
+function withDesecrate(plan) {
+  let best = null, ratio = Infinity;
+  plan.forEach((s, i) => {
+    for (const [j, x] of (s.act === 'add2' ? s.steps : s.act === 'add' ? [s] : []).entries()) {
+      if (!x.desecrate) continue;
+      const no = addCost(x, 1).score;
+      const yes = addCost({ ...x, useDes: true }, 1);
+      const des = yes.k === 'desecrate' ? yes.score : (yes.alts || []).concat(yes.desAlt || []).find((o) => o.k === 'desecrate')?.cost;
+      if (des == null || !no) continue;
+      const r = des / no;
+      if (r < ratio) { ratio = r; best = { i, j, wins: yes.k === 'desecrate' }; }
+    }
+  });
+  if (!best) return plan;
+  const out = plan.flatMap((s, i) => {
+    if (i !== best.i) return [s];
+    if (s.act === 'add') return [{ ...s, useDes: true }];
+    if (!best.wins) return [{ ...s, steps: s.steps.map((x, j) => (j === best.j ? { ...x, useDes: true } : x)) }];
+    return s.steps.map((x, j) => (j === best.j ? { ...x, useDes: true } : x));
+  });
+  // Desecrate — до Exalted: на полной вещи он заменяет случайный мод.
+  const d = out.findIndex((s) => s.useDes);
+  const first = out.findIndex((s) => s.act === 'add' || s.act === 'add2');
+  if (first >= 0 && first < d) out.splice(first, 0, out.splice(d, 1)[0]);
+  return out;
 }
 
 const STEP_LABEL = {
@@ -849,13 +899,24 @@ function planHtml(plan) {
     else odds = c.chance >= 1 ? t('guaranteed') : oneIn(c.chance);
     const notes = [];
     if (c.two) notes.push(t('one Exalted Orb adds both modifiers'));
+    if (c.k === 'desecrate') {
+      notes.push(t('Desecrate: reveal it at the Well of Souls and pick 1 of 3 offered modifiers — only one desecrated modifier per item'));
+      if (/^Ancient /.test(c.bone)) notes.push(t('Ancient bone — only modifiers of level 40+'));
+      if (c.echo) notes.push(t('Omen of Abyssal Echoes — reroll the 3 options once'));
+      notes.push(t('A miss → Orb of Annulment + Omen of Light removes it ({cost})', { cost: money((craftPrices['Orb of Annulment'] || 0) + (craftPrices['Omen of Light'] || 0)) }));
+    }
     if (EXALT_WHY[c.k]) notes.push(t(EXALT_WHY[c.k], { n: c.pool }));
     if (s.act !== 'remove' && s.sideOmen && !c.currencies.includes(s.sideOmen)) notes.push(t('without a side omen half the rolls land on the other side'));
-    const alts = (c.alts || []).map((o) => `${o.currencies[0]} · ${t('≈ {cost} on average', { cost: money(o.cost) })}`);
+    const altText = (o) => o.k === 'desecrate'
+      ? `${t('Desecrate')}${o.mod ? ` (${o.mod})` : ''}: ${o.currencies.join(' + ')}${o.chances[0] != null ? ` · ${oneIn(o.chances[0])}` : ''}${c.lottery ? '' : ` · ${t('≈ {cost} on average', { cost: money(o.cost) })}`}`
+      : `${o.currencies[0]} · ${t('≈ {cost} on average', { cost: money(o.cost) })}`;
+    const alts = [...(c.alts || []).filter((o) => o.k !== 'desecrate'), ...(c.desAlt || []).slice(0, 1)].map(altText);
+    const desNote = (c.desAlt || []).length ? t('Desecrate: pick 1 of 3 offered modifiers at the Well of Souls, but a miss costs Orb of Annulment + Omen of Light ({cost})', { cost: money((craftPrices['Orb of Annulment'] || 0) + (craftPrices['Omen of Light'] || 0)) }) : '';
     return `<li><div class="ps-what">${esc(STEP_LABEL[s.act](s))}</div>
       <div class="ps-how"><span class="game">${esc(c.currencies.join(' + '))}</span> · ${esc(odds)}${c.cost != null ? ` · <b>≈ ${money(c.cost)}</b>` : ''}</div>
       ${notes.length ? `<div class="ps-note">${esc(notes.join(' · '))}</div>` : ''}
       ${alts.length ? `<div class="ps-note">${esc(t('Instead: {list}', { list: alts.join('; ') }))}</div>` : ''}
+      ${desNote ? `<div class="ps-note">${esc(desNote)}</div>` : ''}
       ${c.risky && c.chance < 1 ? `<div class="ps-risk">${esc(t('A miss removes a good modifier instead'))}</div>` : ''}</li>`;
   }).join('')}</ol>`;
 }
