@@ -212,3 +212,15 @@ test('бижутерия: потусторонний мод (Altered Collarbone)
   assert.ok(s && s.desecrateOnly);
   assert.ok(planner.stepCost(s).currencies.includes('Altered Collarbone'));
 });
+
+test('кольцо на миньонов (качество 40%): отработавший +20% Max Quality снимается вместе с Fire Damage, снятие не стоит «четверть цели» за второстепенный мод', { skip }, async () => {
+  await init();
+  const it = item('ring-minion');
+  assert.equal(it.quality, 40, 'качество «Quality (Minion Modifiers)» распознано');
+  const r = await craft.advise(it, json('ring-minion-themed.demand.json').mods, cached);
+  assert.ok(r.goal.remove.some((x) => /maximum quality/.test(x.text)) && r.goal.remove.some((x) => /fire damage/.test(x.text)));
+  const planner = PlanCost.create(() => ({ prices, goalValue: 800, est: 380 }));
+  const rm = planner.expandPlan(r.goal.plan).find((s) => s.act === 'remove' && s.mods);
+  assert.ok(rm.freeQuality);
+  assert.ok(planner.stepCost(rm).cost < 150, 'снятие — десятки div, а не сотни');
+});

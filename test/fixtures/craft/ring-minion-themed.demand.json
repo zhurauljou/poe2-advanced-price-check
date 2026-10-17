@@ -1,0 +1,380 @@
+{
+ "league": "Forbidden Rites",
+ "class": "Rings",
+ "themed": [
+  "Minions have #% increased Critical Damage Bonus",
+  "Minions have #% increased Critical Hit Chance"
+ ],
+ "mods": [
+  {
+   "name": "Minions have #% increased Critical Damage Bonus",
+   "count": 1710,
+   "pct": 100
+  },
+  {
+   "name": "Minions have #% increased Critical Hit Chance",
+   "count": 1710,
+   "pct": 100
+  },
+  {
+   "name": "Minions deal #% increased Damage",
+   "count": 830,
+   "pct": 48.5
+  },
+  {
+   "name": "# to maximum Mana",
+   "count": 807,
+   "pct": 47.2
+  },
+  {
+   "name": "#% increased Rarity of Items found",
+   "count": 781,
+   "pct": 45.7
+  },
+  {
+   "name": "#% to Maximum Quality",
+   "count": 742,
+   "pct": 43.4
+  },
+  {
+   "name": "Minions have #% increased Cooldown Recovery Rate",
+   "count": 732,
+   "pct": 42.8
+  },
+  {
+   "name": "# to Evasion Rating",
+   "count": 432,
+   "pct": 25.3
+  },
+  {
+   "name": "Adds # to # Physical Damage to Attacks",
+   "count": 412,
+   "pct": 24.1
+  },
+  {
+   "name": "#% to all Elemental Resistances",
+   "count": 343,
+   "pct": 20.1
+  },
+  {
+   "name": "#% to Cold Resistance",
+   "count": 337,
+   "pct": 19.7
+  },
+  {
+   "name": "#% to Lightning Resistance",
+   "count": 335,
+   "pct": 19.6
+  },
+  {
+   "name": "# to maximum Life",
+   "count": 330,
+   "pct": 19.3
+  },
+  {
+   "name": "# to Accuracy Rating",
+   "count": 299,
+   "pct": 17.5
+  },
+  {
+   "name": "#% to Fire Resistance",
+   "count": 293,
+   "pct": 17.1
+  },
+  {
+   "name": "Minions have #% increased maximum Life",
+   "count": 283,
+   "pct": 16.5
+  },
+  {
+   "name": "Minions deal #% increased Damage if you've Hit Recently",
+   "count": 224,
+   "pct": 13.1
+  },
+  {
+   "name": "Adds # to # Fire damage to Attacks",
+   "count": 220,
+   "pct": 12.9
+  },
+  {
+   "name": "Grants # additional Skill Slot",
+   "count": 216,
+   "pct": 12.6
+  },
+  {
+   "name": "#% increased Cold Damage",
+   "count": 201,
+   "pct": 11.8
+  },
+  {
+   "name": "Adds # to # Cold damage to Attacks",
+   "count": 191,
+   "pct": 11.2
+  },
+  {
+   "name": "#% increased Chaos Damage",
+   "count": 177,
+   "pct": 10.4
+  },
+  {
+   "name": "Minions have #% increased Attack and Cast Speed",
+   "count": 176,
+   "pct": 10.3
+  },
+  {
+   "name": "Adds # to # Lightning damage to Attacks",
+   "count": 174,
+   "pct": 10.2
+  },
+  {
+   "name": "#% increased Lightning Damage",
+   "count": 172,
+   "pct": 10.1
+  },
+  {
+   "name": "#% to Chaos Resistance",
+   "count": 166,
+   "pct": 9.7
+  },
+  {
+   "name": "#% increased Fire Damage",
+   "count": 165,
+   "pct": 9.6
+  },
+  {
+   "name": "Minions have #% to all Elemental Resistances",
+   "count": 158,
+   "pct": 9.2
+  },
+  {
+   "name": "#% increased Cast Speed",
+   "count": 140,
+   "pct": 8.2
+  },
+  {
+   "name": "# to Intelligence",
+   "count": 115,
+   "pct": 6.7
+  },
+  {
+   "name": "# to Strength",
+   "count": 114,
+   "pct": 6.7
+  },
+  {
+   "name": "#% increased Mana Regeneration Rate",
+   "count": 84,
+   "pct": 4.9
+  },
+  {
+   "name": "# to Dexterity",
+   "count": 81,
+   "pct": 4.7
+  },
+  {
+   "name": "#% increased maximum Mana",
+   "count": 72,
+   "pct": 4.2
+  },
+  {
+   "name": "Gain # Mana per enemy killed",
+   "count": 40,
+   "pct": 2.3
+  },
+  {
+   "name": "Minions Break Armour equal to #% of Physical damage dealt",
+   "count": 35,
+   "pct": 2
+  },
+  {
+   "name": "# to maximum Runic Ward",
+   "count": 29,
+   "pct": 1.7
+  },
+  {
+   "name": "Gain # Life per enemy killed",
+   "count": 27,
+   "pct": 1.6
+  },
+  {
+   "name": "Minions have #% increased Skill Speed with Command Skills",
+   "count": 27,
+   "pct": 1.6
+  },
+  {
+   "name": "# to all Attributes",
+   "count": 25,
+   "pct": 1.5
+  },
+  {
+   "name": "# Life Regeneration per second",
+   "count": 23,
+   "pct": 1.3
+  },
+  {
+   "name": "#% Surpassing Chance to gain a Puppet Master stack whenever you use a Command Skill",
+   "count": 18,
+   "pct": 1.1
+  },
+  {
+   "name": "Leech #% of Physical Attack Damage as Mana",
+   "count": 18,
+   "pct": 1.1
+  },
+  {
+   "name": "#% increased Spell Damage while on Full Energy Shield",
+   "count": 16,
+   "pct": 0.9
+  },
+  {
+   "name": "Leech #% of Physical Attack Damage as Life",
+   "count": 16,
+   "pct": 0.9
+  },
+  {
+   "name": "#% increased Light Radius",
+   "count": 15,
+   "pct": 0.9
+  },
+  {
+   "name": "#% to Lightning and Chaos Resistances",
+   "count": 15,
+   "pct": 0.9
+  },
+  {
+   "name": "Remnants you create have #% increased effect",
+   "count": 15,
+   "pct": 0.9
+  },
+  {
+   "name": "#% increased Explicit Resistance Modifier magnitudes",
+   "count": 13,
+   "pct": 0.8
+  },
+  {
+   "name": "#% to Fire and Chaos Resistances",
+   "count": 12,
+   "pct": 0.7
+  },
+  {
+   "name": "Minions have #% increased Magnitude of Damaging Ailments",
+   "count": 10,
+   "pct": 0.6
+  },
+  {
+   "name": "#% increased Freeze Buildup if you've consumed an Power Charge Recently",
+   "count": 9,
+   "pct": 0.5
+  },
+  {
+   "name": "#% increased Cooldown Recovery Rate",
+   "count": 8,
+   "pct": 0.5
+  },
+  {
+   "name": "#% to Cold and Chaos Resistances",
+   "count": 8,
+   "pct": 0.5
+  },
+  {
+   "name": "#% increased Magnitude of Shock if you've consumed a Frenzy Charge Recently",
+   "count": 5,
+   "pct": 0.3
+  },
+  {
+   "name": "#% increased Skill Speed",
+   "count": 5,
+   "pct": 0.3
+  },
+  {
+   "name": "#% increased Skill Effect Duration",
+   "count": 4,
+   "pct": 0.2
+  },
+  {
+   "name": "Recover #% of maximum Mana on Kill",
+   "count": 4,
+   "pct": 0.2
+  },
+  {
+   "name": "#% increased Attack Damage while on Low Life",
+   "count": 3,
+   "pct": 0.2
+  },
+  {
+   "name": "#% increased Critical Damage Bonus",
+   "count": 3,
+   "pct": 0.2
+  },
+  {
+   "name": "Offering Skills have #% increased Buff effect",
+   "count": 3,
+   "pct": 0.2
+  },
+  {
+   "name": "# to Dexterity and Intelligence",
+   "count": 2,
+   "pct": 0.1
+  },
+  {
+   "name": "# to Strength and Dexterity",
+   "count": 2,
+   "pct": 0.1
+  },
+  {
+   "name": "#% increased Damage",
+   "count": 2,
+   "pct": 0.1
+  },
+  {
+   "name": "#% increased Life Regeneration rate",
+   "count": 2,
+   "pct": 0.1
+  },
+  {
+   "name": "# Suffix Modifier allowed",
+   "count": 1,
+   "pct": 0.1
+  },
+  {
+   "name": "# to Strength and Intelligence",
+   "count": 1,
+   "pct": 0.1
+  },
+  {
+   "name": "#% increased amount of Mana Leeched",
+   "count": 1,
+   "pct": 0.1
+  },
+  {
+   "name": "#% increased maximum Life",
+   "count": 1,
+   "pct": 0.1
+  },
+  {
+   "name": "#% of Damage is taken from Mana before Life",
+   "count": 1,
+   "pct": 0.1
+  },
+  {
+   "name": "Gain #% of Damage as Extra Cold Damage with Spells",
+   "count": 1,
+   "pct": 0.1
+  },
+  {
+   "name": "Gain #% of Damage as Extra Fire Damage with Spells",
+   "count": 1,
+   "pct": 0.1
+  },
+  {
+   "name": "Gain #% of Damage as Extra Lightning Damage with Spells",
+   "count": 1,
+   "pct": 0.1
+  },
+  {
+   "name": "This item gains bonuses from Socketed Items as though it was Gloves",
+   "count": 1,
+   "pct": 0.1
+  }
+ ]
+}

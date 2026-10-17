@@ -47,18 +47,26 @@
     // Задетый нужный мод: вернуть его стоит как его добавление, но не меньше четверти цены цели — без ключевого мода
     // вещь почти ничего не стоит.
     const restore = restoreValue();
+    // Средняя цена «вернуть задетый» по нужным модам стороны: крафтовый — его эссенция / Alloy, остальные — restoreValue.
+    const sideRestore = (x) => {
+      const list = (x.restore || []).length ? x.restore : [null];
+      const minor = restoreCost ?? (p('Orb of Annulment') ?? 0) * 10; // второстепенный мод — его повторное добавление
+      return list.reduce((a, n) => a + (n === 'minor' ? minor : n && p(n) != null ? p(n) : restore), 0) / list.length;
+    };
     const opts = [];
     const sides = Object.values(s.sides);
     const all = run(sides.reduce((a, x) => a + x.J, 0), sides.reduce((a, x) => a + x.K, 0));
-    opts.push({ currencies: ['Orb of Annulment'], tries: all.tries, hits: all.hits, cost: all.tries * ann + all.hits * restore, spent: all.tries * ann });
+    const allK = sides.reduce((a, x) => a + x.K, 0) || 1;
+    const allRestore = sides.reduce((a, x) => a + sideRestore(x) * x.K, 0) / allK;
+    opts.push({ currencies: ['Orb of Annulment'], tries: all.tries, hits: all.hits, cost: all.tries * ann + all.hits * allRestore, spent: all.tries * ann });
     if (sides.every((x) => !x.J || p(x.omen) != null)) {
-      let tries = 0, hits = 0, spent = 0;
+      let tries = 0, hits = 0, spent = 0, lost = 0;
       for (const x of sides) {
         if (!x.J) continue;
         const r = run(x.J, x.K);
-        tries += r.tries; hits += r.hits; spent += r.tries * (ann + p(x.omen));
+        tries += r.tries; hits += r.hits; spent += r.tries * (ann + p(x.omen)); lost += r.hits * sideRestore(x);
       }
-      opts.push({ currencies: ['Orb of Annulment', ...sides.filter((x) => x.J).map((x) => x.omen)], tries, hits, spent, cost: spent + hits * restore });
+      opts.push({ currencies: ['Orb of Annulment', ...sides.filter((x) => x.J).map((x) => x.omen)], tries, hits, spent, cost: spent + lost });
     }
     opts.sort((a, b) => a.cost - b.cost);
     const best = opts[0];
@@ -255,10 +263,10 @@
       const poisson = (x) => Math.floor(x) + (Math.random() < x % 1 ? 1 : 0);
       const out = [];
       for (let r = 0; r < runs; r++) {
-        let spent = 0, got = 0, lost = 0;
+        let spent = 0, got = 0, lost = 0, restoreLoss = 0;
         steps.forEach((s, i) => {
           const c = costs[i];
-          if (s.act === 'remove' && s.mods) { spent += c.spent || 0; lost += poisson(c.hits || 0); return; }
+          if (s.act === 'remove' && s.mods) { spent += c.spent || 0; restoreLoss += Math.max(0, (c.cost || 0) - (c.spent || 0)) * (poisson(c.hits || 0) / Math.max(c.hits || 1, 1e-9)); return; }
           if (s.act !== 'add' && s.act !== 'add2') { spent += c.cost || 0; return; }
           const parts = s.act === 'add2' ? s.steps : [s];
           const ps = c.ps || [];
@@ -285,7 +293,7 @@
             }
           });
         });
-        const value = Math.max(0, est + (goal - est) * Math.min(1, got / totalWorth) - lost * lossPer);
+        const value = Math.max(0, est + (goal - est) * Math.min(1, got / totalWorth) - lost * lossPer - restoreLoss);
         out.push({ spent, value, net: value - spent, full: got >= totalWorth * 0.999 && !lost });
       }
       const q = (arr, f) => arr[Math.min(arr.length - 1, Math.floor(f * arr.length))];

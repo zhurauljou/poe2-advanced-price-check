@@ -132,7 +132,8 @@ function parseItem(text) {
       } else if ((m = l.match(/^Attacks per Second: ([\d.]+)/))) aps = +m[1];
       else if ((m = l.match(/^Critical Hit Chance: ([\d.]+)%/))) item.props.crit = +m[1];
       else if ((m = l.match(/^Item Level: (\d+)/))) item.ilvl = +m[1];
-      else if ((m = l.match(/^Quality: \+?(\d+)%/))) item.quality = +m[1];
+      // «Quality: +20%» и качество с катализатором на бижутерии — «Quality (Minion Modifiers): +40%».
+      else if ((m = l.match(/^Quality(?: \(([^)]*)\))?: \+?(\d+)%/))) { item.quality = +m[2]; if (m[1]) item.qualityKind = m[1]; }
       else if ((m = l.match(/^Stack Size: ([\d,.\s]+)\/([\d,.\s]+)/))) item.stack = { size: num(m[1]), max: num(m[2]) };
       else if (item.rarity === 'Gem' && (m = l.match(/^Level: (\d+)/))) item.gemLevel = +m[1];
       else if (l === 'Corrupted') item.corrupted = true;

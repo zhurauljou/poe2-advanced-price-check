@@ -12,15 +12,15 @@ Item Level: 80
 { Implicit Modifier — Drop }
 9(6-15)% increased Rarity of Items found (implicit)
 --------
-{ Prefix Modifier "Searing" (Tier: 4) — Damage, Elemental, Fire }
+{ Prefix Modifier "Annealed" (Tier: 4) — Damage, Physical, Attack }
+Adds 6(6-10) to 13(12-17) Physical Damage to Attacks
+{ Prefix Modifier "Blistering" (Tier: 4) — Damage, Elemental, Fire }
 13(13-17)% increased Fire Damage
-{ Prefix Modifier "Gleaming" (Tier: 4) — Damage, Physical, Attack }
-Adds 6(5-7) to 13(11-14) Physical Damage to Attacks
-{ Crafted Prefix Modifier "Breach" — }
+{ Crafted Prefix Modifier "Breachlord's" — }
 +20% to Maximum Quality (crafted)
-{ Suffix Modifier "of Ferocity" (Tier: 1) — Minion, Damage, Critical }
+{ Suffix Modifier "of Piercing" (Tier: 1) — Minion, Critical }
+Minions have 47(45-52)% increased Critical Hit Chance
+{ Suffix Modifier "of Gripping" (Tier: 1) — Minion, Damage, Critical }
 Minions have 42(36-42)% increased Critical Damage Bonus
-{ Suffix Modifier "of Ambush" (Tier: 1) — Minion, Critical }
-Minions have 47(40-50)% increased Critical Hit Chance
-{ Desecrated Suffix Modifier "of the Abyss" (Tier: 1) — Minion }
-Minions have 40(29-40)% increased Cooldown Recovery Rate
+{ Desecrated Suffix Modifier "of Invigoration" (Tier: 1) — Minion }
+Minions have 40(21-29)% increased Cooldown Recovery Rate

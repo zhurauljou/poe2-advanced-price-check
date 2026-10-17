@@ -716,7 +716,7 @@ async function advise(item, demandMods, cached) {
     }
   }
 
-  const goal = planGoal(mine, normal, max, want, magic, magicFree, item.itemClass);
+  const goal = planGoal(mine, normal, max, want, magic, magicFree, item.itemClass, craftedSources, item.quality || 0);
   // Руны / Soul Cores в гнёзда: аугменты для класса, чьи статы носят билды (спрос ≥ 15%) — лучший по семейству статов.
   const augments = [];
   if (!jewel) {
@@ -826,7 +826,7 @@ const EXALT_MIN = Object.fromEntries(methods.tiers('exalt').map(([, lv], i) => [
 const EXALT_NAME = Object.fromEntries(methods.tiers('exalt').map(([n], i) => [EXALT_KEYS[i], n]));
 const KEY_PCT = 30; // мод, который носит столько % билдов, на другой не меняем
 const KEEP_BONUS = 1.5;
-function planGoal(mine, candidates, max, want, magic, magicFree = [], itemClass = '') {
+function planGoal(mine, candidates, max, want, magic, magicFree = [], itemClass = '', craftedSources = [], itemQuality = 0) {
   // Ключевой для слота мод (уровни умений, Spirit, скорость на ботинках…) поднимает цену сильнее, чем говорит его
   // популярность: «+2 к миньонам» на скипетре дороже Mana Regeneration, даже если тот встречается чаще.
   const KEY_BONUS = 2;
@@ -834,7 +834,8 @@ function planGoal(mine, candidates, max, want, magic, magicFree = [], itemClass 
   // если такой мод на вещи уже есть (Attack Speed → speed, %Phys → physical, крит → critical…).
   const myTags = new Set(mine.flatMap((a) => (a.mod ? a.mod.implicit_tags || [] : [])));
   const boosts = (l) => { const m = l.match(/explicit (\w+)(?: damage)? modifier magnitudes/i); return !!m && myTags.has(m[1].toLowerCase()); };
-  const keyOf = (lines) => lines.some((l) => isKey(itemClass, l) || boosts(l));
+  const known = want.size > 0; // спрос загружен — правило слота проверяем им
+  const keyOf = (lines) => lines.some((l) => boosts(l) || (isKey(itemClass, l) && (!known || (want.get(l) || 0) >= 15)));
   const value = (pct, tier) => pct * (TIER_VALUE[tier] || 0.5);
   const keep = [], remove = [], add = [];
   for (const side of ['prefix', 'suffix']) {
@@ -844,7 +845,9 @@ function planGoal(mine, candidates, max, want, magic, magicFree = [], itemClass 
       // Остальные держим, пока кандидат не ценнее в полтора раза — замена случайна и стоит валюты.
       const weak = a.mod && a.mod.lines.every((l) => isWeak(l));
       // Хороший тир держим, только если мод хоть кому-то нужен (+28 Dexterity T2 при 0% билдов — не повод).
-      const locked = a.tag === 'fractured' || !a.mod || (a.tier && a.tier <= 2 && !weak && pct >= 5) || pct >= KEY_PCT;
+      const spentQuality = a.mod && a.mod.lines.some((l) => /to maximum quality$/.test(l)) && itemQuality > 20;
+      if (spentQuality) return { kind: 'cur', a, pct: 0, v: 0, spentQuality: true };
+      const locked = a.tag === 'fractured' || a.tag === 'crafted' || !a.mod || (a.tier && a.tier <= 2 && !weak && pct >= 5) || pct >= KEY_PCT;
       // Неключевой desecrated-мод держит единственный desecrate-слот; снять его можно наверняка (Omen of Light) и
       // раскрыть вместо него выбор 1 из 3–6 для нужного мода — поэтому держим его вдвое слабее.
       const desSlot = a.tag === 'desecrated' ? 0.5 : 1;
@@ -857,6 +860,7 @@ function planGoal(mine, candidates, max, want, magic, magicFree = [], itemClass 
     for (const x of cur) {
       const info = { side, tag: x.a.tag, text: x.a.mod ? x.a.mod.lines.join(' / ') : x.a.name, templates: x.a.mod ? x.a.mod.lines : [], tier: x.a.tier, pct: x.pct,
         level: x.a.mod ? x.a.mod.required_level : null, // для Whittling (снимает мод с наименьшим уровнем)
+        spentQuality: !!x.spentQuality, // качество останется — снять можно даром
         up: x.pct >= KEY_PCT && x.a.tier >= 3 }; // ключевой, но слабый тир — «↑ тир»
       (chosen.includes(x) ? keep : remove).push(info);
     }
@@ -901,7 +905,18 @@ function planGoal(mine, candidates, max, want, magic, magicFree = [], itemClass 
     for (const side of ['prefix', 'suffix']) {
       const J = junk.filter((x) => x.side === side).length;
       const K = filled[side] - fixed[side] - J;
-      sides[side] = { J, K, omen: `Omen of ${side === 'prefix' ? 'Sinistral' : 'Dextral'} Annulment` };
+      // Чем вернуть каждый нужный мод стороны, если Annulment заденет его: крафтовый — своей эссенцией / Alloy.
+      const keepers = mine.filter((a) => a.side === side && a.tag !== 'fractured' && !junk.some((x) => x.side === side && x.text === (a.mod ? a.mod.lines.join(' / ') : a.name)));
+      const restore = keepers.map((a) => {
+        if (a.tag !== 'crafted' || !a.mod) {
+          // Ключевой (носят ≥ KEY_PCT% или хороший тир) — потеря дорога; второстепенный — просто докрафтить заново.
+          const pct = a.mod ? Math.max(0, ...a.mod.lines.map((l) => want.get(l) || 0)) : 0;
+          return !a.mod || pct >= KEY_PCT || (a.tier && a.tier <= 2) ? null : 'minor';
+        }
+        const src = craftedSources.find((x) => templates(x.text.replace(/–/g, '-').replace(/ \/ /g, '\n')).some((l) => a.mod.lines.includes(l)));
+        return src ? src.name : null;
+      });
+      sides[side] = { J, K, restore, omen: `Omen of ${side === 'prefix' ? 'Sinistral' : 'Dextral'} Annulment` };
     }
     // Chaos + Omen of Whittling снимает мод с наименьшим уровнем — если лишний мод строго ниже всех остальных снимаемых
     // (desecrated уже снят), он уйдёт наверняка, но на его место встанет случайный мод.
@@ -915,7 +930,8 @@ function planGoal(mine, candidates, max, want, magic, magicFree = [], itemClass 
     // Самый низкоуровневый — нужный мод: Whittling снял бы его (показываем, почему Whittling тут не годится).
     const lowest = mine.filter((a) => a.tag !== 'fractured' && a.tag !== 'desecrated' && a.mod && a.mod.required_level === low);
     const whittleWrong = known && !whittle && lowest.length && !lowJunk.length ? { mod: lowest.map((a) => a.mod.lines.join(' / ')).join(', '), level: low } : null;
-    plan.push({ act: 'remove', mods: junk.map((x) => x.text), sides, whittle, whittleWrong,
+    const freeQuality = (junk.find((x) => x.spentQuality) || {}).text || null;
+    plan.push({ act: 'remove', mods: junk.map((x) => x.text), sides, whittle, whittleWrong, freeQuality,
       currencies: ['Orb of Annulment', 'Omen of Sinistral Annulment', 'Omen of Dextral Annulment', ...(whittle ? ['Chaos Orb', 'Omen of Whittling'] : [])] });
     for (const x of junk) filled[x.side]--;
   }
