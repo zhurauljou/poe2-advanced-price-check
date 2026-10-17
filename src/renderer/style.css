@@ -525,3 +525,5 @@ footer::before { bottom: 0; top: -12px; -webkit-backdrop-filter: blur(16px); bac
 .why > summary::before, .more-ways > summary::before { content: "▸ "; }
 .why[open] > summary::before, .more-ways[open] > summary::before { content: "▾ "; }
 .more-ways { padding-top: 6px; border-top: 1px solid var(--line2); }
+.gamble { border-left: 2px solid var(--bad); padding-left: 8px; }
+.gamble > .k { color: var(--bad); }

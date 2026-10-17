@@ -853,6 +853,15 @@ async function computeGoal(g) {
   if (box) { box.innerHTML = verdictHtml(g.plan); fit(); }
 }
 
+// «Рискованный финал»: порча и освящение — необратимо, шансы — оценки сообщества.
+function gambleHtml(g) {
+  const p = (n) => (craftPrices[n] != null ? ` · ${n} ≈ ${money(craftPrices[n])}` : '');
+  const list = (xs) => xs.map((h) => `<div class="craft-how">${esc(h)}</div>`).join('');
+  return `<div class="craft-sec gamble"><div class="k">⚠ ${esc(t('Risky final step: corruption and sanctification'))}</div>${list(g.how)}
+    <div class="craft-sub">${esc(t('Prices'))}${esc(p('Vaal Orb') + p('Omen of Sanctification'))}</div>
+    ${g.enchants.length ? `<details class="why"><summary>${esc(t('Possible corruption enchants ({n})', { n: g.enchants.length }))}</summary>${list(g.enchants)}</details>` : ''}</div>`;
+}
+
 function renderCraft(r) {
   craftGoal = r.goal || null;
   craftPrices = r.prices || {};
@@ -873,6 +882,7 @@ function renderCraft(r) {
       ${planHtml(r.goal.plan)}<details class="why"><summary>${t('Why this plan')}</summary>${goalHtml(r.goal)}</details></div>`);
   } else {
     top.push(`<div class="craft-sec plan-box"><div class="verdict">${esc(t('No clear upgrade for this item — selling as is is the simple choice'))}</div></div>`);
+    if (r.gamble) top.push(gambleHtml(r.gamble)); // улучшать нечего — рискованный финал на виду
   }
   const parts = [];
   for (const s of r.sections) {
@@ -910,6 +920,7 @@ function renderCraft(r) {
     top.splice(1, 0, `<div class="craft-theme" title="${t('Demand % below is among {n} builds that wear this item class with these modifiers', { n: r.themeBuilds })}">${t('Demand among builds using')} <b>${r.theme.map(esc).join('</b> + <b>')}</b></div>`);
   }
   if (r.chanceMeta) parts.push(`<div class="craft-warn">⚠ ${esc(t('Chances are rough estimates from {n} cheap trade listings ({date}) — PoE 2 game files have no modifier weights. Treat them as "common / rare", not exact odds.', { n: r.chanceMeta.items, date: r.chanceMeta.collected }))}</div>`);
+  if (r.gamble && r.goal && r.goal.plan && r.goal.plan.length) parts.push(gambleHtml(r.gamble)); // в конце, после всех безопасных способов
   parts.push(`<div class="craft-foot">${t(r.chanceMeta ? 'Mod pool: game files (RePoE).' : "Mod pool: game files (RePoE). Roll chances aren't shown — PoE 2 files have no modifier weights.")}<br>${t('% = share of those builds using the modifier (poe.ninja). «price?» — what your item would cost with it.')}</div>`);
   $('craft').innerHTML = head + top.join('')
     + `<details class="more-ways"><summary>${t('All methods and modifier options')}</summary>${parts.join('')}</details>`;

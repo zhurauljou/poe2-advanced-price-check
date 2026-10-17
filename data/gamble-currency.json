@@ -1,0 +1,707 @@
+{
+ "meta": {
+  "patch": "0.5.5",
+  "league": "Forbidden Rites",
+  "compiled": "2026-10-17",
+  "notes": "verified=true только для того, что подтверждено официальными патчноутами или текстом предмета (poe2db). Все проценты исходов Vaal — оценки сообщества, GGG их не публикует.",
+  "sources": [
+   {
+    "id": "PN050",
+    "source": "Official 0.5.0 patch notes — https://www.pathofexile.com/forum/view-thread/3932540"
+   },
+   {
+    "id": "PN054",
+    "source": "Official 0.5.4 patch notes — https://www.pathofexile.com/forum/view-thread/3975218"
+   },
+   {
+    "id": "PN055",
+    "source": "Official 0.5.5 patch notes — https://www.pathofexile.com/forum/view-thread/4000864"
+   },
+   {
+    "id": "DB_VAAL",
+    "source": "poe2db Vaal Orb (Corrupted Mods /125) — https://poe2db.tw/us/Vaal_Orb"
+   },
+   {
+    "id": "DB_OMEN",
+    "source": "poe2db Omen — https://poe2db.tw/us/Omen ; /Omen_of_Corruption ; /Omen_of_Sanctification ; /Omen_of_the_Blessed"
+   },
+   {
+    "id": "DB_CUR",
+    "source": "poe2db Stackable Currency — https://poe2db.tw/us/Stackable_Currency (Infusers, Architect's Orb, Orbs of Sacrifice, Crystallised Corruption, Vaal Cultivation Orb)"
+   },
+   {
+    "id": "DB_SAC",
+    "source": "poe2db Kopec's Orb of Sacrifice (Corrupted Upgrade Mods /190) — https://poe2db.tw/us/Kopecs_Orb_of_Sacrifice"
+   },
+   {
+    "id": "DB_MISC",
+    "source": "poe2db Hinekora's Lock / Fracturing Orb / Orb of Chance / Essence of Insanity / Architect's Orb — https://poe2db.tw/us/<Name>"
+   },
+   {
+    "id": "REPOE",
+    "source": "Local RePoE cache %APPDATA%/PoE 2 Price Checker/cache/repoe-mods.json + repoe-base-items.json (domain item|misc, generation_type corrupted)"
+   },
+   {
+    "id": "TS_VAAL",
+    "source": "Timesaver.gg Vaal Orb Guide (0.5), 22.07.2026 (commercial) — https://timesaver.gg/blog/poe2-vaal-orb-guide"
+   },
+   {
+    "id": "TS_SANCT",
+    "source": "Timesaver.gg Sanctify guide, 22.06/09.08.2026 (commercial) — https://timesaver.gg/blog/poe2-sanctified-omen-of-sanctification-guide"
+   },
+   {
+    "id": "TS_DC",
+    "source": "Timesaver.gg Double Corruption guide, 22.07/22.08.2026 (commercial) — https://timesaver.gg/blog/poe2-double-corruption-guide"
+   },
+   {
+    "id": "TS_LOCK",
+    "source": "Timesaver.gg Hinekora's Lock guide (0.5.4) — https://timesaver.gg/blog/poe2-hinekoras-lock-guide"
+   },
+   {
+    "id": "U4N",
+    "source": "U4N unique/jewel Vaal outcome articles (commercial, no patch stated) — https://www.u4n.com/news/poe-2-vaal-orb-unique-items-outcome-chances-explained.html ; https://www.u4n.com/news/poe-2-vaal-orb-jewel-corruption-outcomes-unique-nonunique-jewel-effects-explained.html"
+   },
+   {
+    "id": "MAXROLL",
+    "source": "Maxroll Corruption Outcomes (only search snippet; site not reachable) — https://maxroll.gg/poe2/resources/corruption-outcomes"
+   },
+   {
+    "id": "WIKI_INF",
+    "source": "poe2wiki Vaal Infuser (only search snippet; Anubis-blocked) — https://www.poe2wiki.net/wiki/Vaal_Infuser"
+   },
+   {
+    "id": "FORUM_SANCT",
+    "source": "Forum bug report 'Medved's Tending sanctify range bug', 10.07.2026 — https://www.pathofexile.com/forum/view-thread/3983437"
+   },
+   {
+    "id": "TRADE",
+    "source": "trade2 filters snapshot (misc filters: Corrupted, Sanctified, Twice Corrupted)"
+   },
+   {
+    "id": "PRICES",
+    "source": "poe2db 'US Realm Economy' 24h snapshot on item pages, fetched 2026-10-17 (league not stated)"
+   }
+  ]
+ },
+ "vaal": {
+  "name": "Vaal Orb",
+  "text": "Modifies an item unpredictably and Corrupts it\nRight click this item then left click an item to corrupt it. Corrupted items cannot be modified again.",
+  "source": "DB_VAAL",
+  "outcomes": [
+   {
+    "appliesTo": "Rare/Magic equipment",
+    "outcome": "No change (item only becomes Corrupted)",
+    "chance": "~25%",
+    "source": "TS_VAAL (cites Game8), TS_DC",
+    "verified": false
+   },
+   {
+    "appliesTo": "Rare/Magic equipment",
+    "outcome": "Adds a Corruption Enchantment (pool depends on item class, see corruptedEnchants)",
+    "chance": "~25%",
+    "source": "DB_VAAL, REPOE (pool); TS_VAAL (chance)",
+    "verified": false
+   },
+   {
+    "appliesTo": "Rare/Magic equipment",
+    "outcome": "Modifiers changed: 1–3 random 'reforge' steps (mods replaced/rerolled; can make the item much worse)",
+    "chance": "~25%",
+    "source": "TS_VAAL, TS_DC",
+    "verified": false
+   },
+   {
+    "appliesTo": "Armour (Body Armours, Helmets, Gloves, Boots, Shields, Bucklers, Foci) and martial weapons",
+    "outcome": "+1 Augment (rune) socket, can exceed the normal socket limit",
+    "chance": "~25%",
+    "source": "TS_VAAL, U4N",
+    "verified": false
+   },
+   {
+    "appliesTo": "Wands, Staves",
+    "outcome": "Instead of socket: quality raised (up to ~23%)",
+    "chance": "~25% (replaces socket outcome)",
+    "source": "TS_VAAL, TS_DC",
+    "verified": false
+   },
+   {
+    "appliesTo": "Amulets, Rings, Belts",
+    "outcome": "No socket outcome — effectively ~50% 'no change'",
+    "chance": "~50% no change",
+    "source": "search snippet; TS_VAAL",
+    "verified": false
+   },
+   {
+    "appliesTo": "Uniques",
+    "outcome": "No change",
+    "chance": "~25%",
+    "source": "U4N",
+    "verified": false
+   },
+   {
+    "appliesTo": "Uniques",
+    "outcome": "Adds a Corruption Enchantment",
+    "chance": "~25%",
+    "source": "U4N",
+    "verified": false
+   },
+   {
+    "appliesTo": "Uniques (weapons/armour)",
+    "outcome": "+1 socket beyond limit (jewellery: no effect)",
+    "chance": "~25%",
+    "source": "U4N",
+    "verified": false
+   },
+   {
+    "appliesTo": "Uniques",
+    "outcome": "Explicit modifier values multiplied from their CURRENT value (rule since 0.5.0); community range x0.78–x1.22, step 0.01, rounded",
+    "chance": "~25%",
+    "source": "PN050 (rule, official); MAXROLL, U4N, TS_DC (range)",
+    "verified": false
+   },
+   {
+    "appliesTo": "Jewels (rare/magic)",
+    "outcome": "No change / Corruption Enchantment / reroll up to 3 explicit mods / add or remove 1 explicit mod (may exceed normal affix limit)",
+    "chance": "~25% each",
+    "source": "U4N",
+    "verified": false
+   },
+   {
+    "appliesTo": "Unique Jewels",
+    "outcome": "No change (two 'no change' entries) / Corruption Enchantment / values x0.78–1.22",
+    "chance": "~25% each (no change ~50%)",
+    "source": "U4N",
+    "verified": false
+   },
+   {
+    "appliesTo": "Skill Gems",
+    "outcome": "No change / +1 level / −1 level / +1 or −1 support socket / quality shift (−7%..+3%, cap ~23%)",
+    "chance": "+1 lvl ~12.5%, −1 lvl ~12.5% (others not stated)",
+    "source": "TS_VAAL (cites Maxroll/Game8)",
+    "verified": false
+   },
+   {
+    "appliesTo": "Waystones",
+    "outcome": "No change / ±1 tier (T1–T16) / all affixes become prefixes or suffixes / extra random affixes on rare",
+    "chance": "not published",
+    "source": "TS_VAAL (cites Maxroll)",
+    "verified": false
+   },
+   {
+    "appliesTo": "Essence-imprisoned monsters",
+    "outcome": "More essences / reroll type / upgrade (to Greater, to Corrupted essence: Hysteria, Delirium, Horror, Insanity, Abyss, Breach)",
+    "chance": "not published",
+    "source": "gamerant (Apr 2025, old); docs/crafting-notes.md",
+    "verified": false
+   }
+  ],
+  "notes": "Официально (PN050): исход, который «рандомизирует значения модов за пределы обычного диапазона», с 0.5.0 умножает каждый мод от его текущего значения, а не перекатывает. Шансы ~25% — оценка сообщества (GGG не публикует). Omen of Corruption (убирает исход 'no change', id OmenOnVaalRemoveDoNothingOutcome) в лиге не добывается. Corrupted-вещь нельзя менять валютой; 9 мета-рун (Astrid's Creativity, Katla's Gloom, Kolr's Hunt, Medved's Tending, Raven-Touched Shard, Serle's Triumph, Thrud's Might, Uhtred's Sidereus, Vorana's Carnage) нельзя вставить в Corrupted/Sanctified вещь (PN054) — вставлять до коррупции.",
+  "price": "~1/56.6 Divine (PRICES)"
+ },
+ "infusers": [
+  {
+   "name": "Vaal Armourer's Infuser",
+   "text": "Improves the quality of an Armour,\nexceeding maximum quality by up to 10% with a chance of Corrupting it\nRight click this item then left click an armour to apply it. Can only be used on items at or above maximum quality.",
+   "requires": "Quality >= 20% (at or above maximum quality)",
+   "classes": [
+    "Body Armours",
+    "Helmets",
+    "Gloves",
+    "Boots",
+    "Shields",
+    "Bucklers",
+    "Foci"
+   ],
+   "price": "~1.39 Divine",
+   "source": "DB_CUR, PN050"
+  },
+  {
+   "name": "Vaal Blacksmith's Infuser",
+   "text": "Improves the quality of a Martial Weapon,\nexceeding maximum quality by up to 10% with a chance of Corrupting it",
+   "requires": "Quality >= 20%",
+   "classes": [
+    "Quarterstaves",
+    "Bows",
+    "Crossbows",
+    "Spears",
+    "One Hand Maces",
+    "Two Hand Maces",
+    "Talismans"
+   ],
+   "price": "~0.55 Divine",
+   "source": "DB_CUR, PN050"
+  },
+  {
+   "name": "Vaal Arcanist's Infuser",
+   "text": "Improves the quality of a wand, staff or sceptre,\nexceeding maximum quality by up to 10% with a chance of Corrupting it",
+   "requires": "Quality >= 20%",
+   "classes": [
+    "Wands",
+    "Staves",
+    "Sceptres"
+   ],
+   "price": "~0.27 Divine",
+   "source": "DB_CUR, PN050"
+  },
+  {
+   "name": "Vaal Catalysing Infuser",
+   "text": "Improves the quality of a ring or amulet,\nexceeding maximum quality by up to 10% with a chance of Corrupting it",
+   "requires": "Quality >= 20%",
+   "classes": [
+    "Amulets",
+    "Rings"
+   ],
+   "price": "~6.54 Divine",
+   "source": "DB_CUR, PN050 ('can be applied to Jewellery')",
+   "notes": "Качество на бижутерии — катализаторное (усиливает моды своего тега). Belts: в тексте предмета только ring/amulet, в патчноуте 'Jewellery' — не проверено."
+  }
+ ],
+ "infusersNotes": "Всегда добавляет качество (+1%, иногда +2%) до 30% (20+10). Коррупция ставит только тег Corrupted, без других изменений; шанс растёт с исходным качеством (~+5% за пункт выше 20%, первое применение на ровно 20% не коррумпирует — poe2wiki через сниппет, не проверено).",
+ "sanctify": {
+  "how": "Divine Orb + Omen of Sanctification",
+  "text": "Omen of Sanctification: While this item is active in your inventory your next Divine Orb used on a Rare item will Sanctify it. (Consumed when triggered.)",
+  "effect": "Каждое значение модов умножается от ТЕКУЩЕГО значения (официально, 0.5.0: 'Sanctifying an item now multiplies each modifier value based on the current value, instead of randomising values.'). Диапазон по сообществу x0.78–x1.22, шаг 0.01, независимо для каждого мода, округление вверх. Вещь получает тег Sanctified и дальше не модифицируется (как Corrupted); Corrupted-вещь нельзя Sanctify и наоборот (сообщество).",
+  "risk": "Каждый мод может упасть до −22%: на мод ~49% минус, ~2% без изменений, ~49% плюс, ~38% выше обычного максимума (если значение было максимальным). На вещи с 6 модами почти всегда смешанный итог. Сначала Divine до максимумов, потом Sanctify. Сообщался баг: мод руны Medved's Tending упал с 20% до 4% (FORUM_SANCT).",
+  "rareOnly": true,
+  "price": "Omen ~0.92 Divine + 1 Divine",
+  "source": "DB_OMEN, PN050, TS_SANCT, FORUM_SANCT",
+  "verified": "rule official; range/odds community"
+ },
+ "tainted": [],
+ "taintedNotes": "В PoE2 0.5 Tainted-валюты (Tainted Chaos/Exalted/Divine и т.п. из PoE1) нет: в poe2db Stackable Currency нет ни одного предмета 'Tainted'. Аналоги для corrupted-вещей в PoE2 — см. doubleCorruption.",
+ "doubleCorruption": [
+  {
+   "name": "Architect's Orb",
+   "text": "Modifies a Corrupted Equipment or Jewel item unpredictably or destroys it",
+   "effect": "Twice Corrupted: ~50% — второй corruption enchant (не из уже имеющейся группы), ~50% — вещь уничтожена (сообщество)",
+   "obtain": "Temple of Atziri (Corruption Chamber T3), Atziri's Vault",
+   "price": "~8.75 Divine",
+   "source": "DB_MISC, TS_DC",
+   "verified": false
+  },
+  {
+   "name": "Crystallised Corruption",
+   "text": "Modifies a Corrupted Skill Gem unpredictably or destroys it",
+   "price": "~5.37 Divine",
+   "source": "DB_CUR"
+  },
+  {
+   "name": "Vaal Cultivation Orb",
+   "text": "Replaces up to 2 modifiers on a Corrupted Vaal Unique\nReplaces other Uniques with a Corrupted Unique of the same Item Class",
+   "price": "~1.74 Divine",
+   "source": "DB_CUR, PN050"
+  },
+  {
+   "name": "Yaomac's Orb of Sacrifice",
+   "text": "Upgrades a Corruption Enchantment on a Rare Weapon or Quiver\nand removes a random Modifier",
+   "price": "~2 Exalted (тонкий рынок)",
+   "source": "DB_CUR, PN054"
+  },
+  {
+   "name": "Kopec's Orb of Sacrifice",
+   "text": "Upgrades a Corruption Enchantment on a Rare Armour\nand removes a random Modifier",
+   "price": "~2.86 Divine",
+   "source": "DB_CUR, PN054"
+  },
+  {
+   "name": "Kamasa's Orb of Sacrifice",
+   "text": "Upgrades a Corruption Enchantment on a Rare Amulet, Ring or Belt\nand removes a random Modifier",
+   "price": "~3 Divine",
+   "source": "DB_CUR, PN054"
+  },
+  {
+   "name": "Yugul's Orb of Sacrifice",
+   "text": "Upgrades a Corruption Enchantment on a Rare Jewel\nand removes a random Modifier",
+   "price": "нет данных",
+   "source": "DB_CUR, PN054"
+  }
+ ],
+ "omens": [
+  {
+   "name": "Omen of Corruption",
+   "text": "While this item is active in your inventory your next Vaal Orb will always result in change",
+   "obtainable": false,
+   "notes": "0.5.0: 'Omen of Corruption can no longer be obtained.' На Currency Exchange — только Standard.",
+   "source": "DB_OMEN, PN050"
+  },
+  {
+   "name": "Omen of Sanctification",
+   "text": "While this item is active in your inventory your next Divine Orb used on a Rare item will Sanctify it",
+   "obtainable": true,
+   "notes": "Ritual (Tribute/Favours).",
+   "source": "DB_OMEN"
+  },
+  {
+   "name": "Omen of the Blessed",
+   "text": "While this item is active in your inventory your next Divine Orb will only reroll Implicit Modifiers",
+   "obtainable": true,
+   "notes": "Только implicit; на Corrupted/Sanctified-вещи Divine неприменим. ~0.26 Divine.",
+   "source": "DB_OMEN"
+  },
+  {
+   "name": "Omen of Putrefaction",
+   "text": "While this item is active in your inventory your next Desecration attempt will replace all modifiers on the item creating an item with up to 6 Unrevealed modifiers and Corrupting the item",
+   "obtainable": true,
+   "source": "DB_OMEN"
+  },
+  {
+   "name": "Omen of Chance",
+   "text": "While this item is active in your inventory your next Orb of Chance will not destroy the Item",
+   "obtainable": true,
+   "source": "DB_OMEN"
+  },
+  {
+   "name": "Omen of the Ancients",
+   "text": "While this item is active in your inventory your next Orb of Chance will upgrade the Item to a random Unique of the same Item Class",
+   "obtainable": true,
+   "source": "DB_OMEN"
+  }
+ ],
+ "otherGambles": [
+  {
+   "name": "Essence of Insanity",
+   "text": "Removes a random modifier and augments a Rare item with a new guaranteed modifier\nBelt: On Corruption, Item gains two Enchantments",
+   "notes": "Только пояс; мод эссенции занимает crafted-слот; при Vaal пояс получает 2 enchant'а (что будет при исходе 'no change' — не проверено).",
+   "source": "DB_MISC"
+  },
+  {
+   "name": "Hinekora's Lock",
+   "text": "Allows an item to foresee the result of the next Currency item used on it\nModifying the item in any way removes the ability to foresee",
+   "notes": "По сообществу работает и с Vaal Orb (официально не подтверждено). Цена ~2000 Divine — только для зеркальных вещей.",
+   "source": "DB_MISC, TS_LOCK",
+   "verified": false
+  },
+  {
+   "name": "Fracturing Orb",
+   "text": "Fracture a random modifier on a rare item with at least 4 modifiers, locking it in place.",
+   "notes": "Риск — зафиксировать не тот мод (случайный из всех). ~6.67 Divine.",
+   "source": "DB_MISC"
+  },
+  {
+   "name": "Orb of Chance",
+   "text": "Unpredictably either upgrades a Normal item to Unique rarity or destroys it",
+   "notes": "Только Normal-вещи. Omen of Chance — без уничтожения; Omen of the Ancients — случайный уник того же класса.",
+   "source": "DB_MISC, DB_OMEN"
+  },
+  {
+   "name": "Archaic Corruption (Atlas)",
+   "text": "Монстры с эссенциями становятся Corrupted (больше corrupted-эссенций)",
+   "source": "PN055 (через docs/crafting-notes.md)"
+  }
+ ],
+ "corruptedEnchants": {
+  "Body Armours": [
+   "(15-25)% increased Armour (only str_armour bases)",
+   "(10-20)% reduced Attribute Requirements",
+   "(3-5)% additional Physical Damage Reduction",
+   "(10-20)% of Damage taken Recouped as Life",
+   "(10-20)% of Damage taken Recouped as Mana",
+   "+1% to all Maximum Elemental Resistances",
+   "+(30-40) to maximum Life",
+   "(40-50)% increased Thorns damage",
+   "+(13-19)% to Chaos Resistance",
+   "(15-25)% increased Evasion Rating (only dex_armour bases)",
+   "(15-25)% increased Energy Shield (only int_armour bases)",
+   "(15-25)% increased Armour and Evasion (only str_dex_armour bases)",
+   "(15-25)% increased Armour and Energy Shield (only str_int_armour bases)",
+   "(15-25)% increased Evasion and Energy Shield (only dex_int_armour bases)"
+  ],
+  "Helmets": [
+   "(15-25)% increased Armour (only str_armour bases)",
+   "(10-20)% reduced Attribute Requirements",
+   "+(1-3)% to Maximum Cold Resistance",
+   "+(20-30) to Spirit",
+   "+1 to Maximum Power Charges",
+   "+(50-100) to Accuracy Rating",
+   "(15-25)% increased Life Regeneration rate",
+   "(20-30)% increased Mana Regeneration Rate",
+   "+1 to Level of all Minion Skills",
+   "(15-25)% increased Evasion Rating (only dex_armour bases)",
+   "(15-25)% increased Energy Shield (only int_armour bases)",
+   "(15-25)% increased Armour and Evasion (only str_dex_armour bases)",
+   "(15-25)% increased Armour and Energy Shield (only str_int_armour bases)",
+   "(15-25)% increased Evasion and Energy Shield (only dex_int_armour bases)"
+  ],
+  "Gloves": [
+   "(15-25)% increased Armour (only str_armour bases)",
+   "(10-20)% reduced Attribute Requirements",
+   "Damage Penetrates (10-15)% Fire Resistance",
+   "Damage Penetrates (10-15)% Cold Resistance",
+   "Damage Penetrates (10-15)% Lightning Resistance",
+   "Break (10-15)% increased Armour",
+   "(5-10)% increased Quantity of Gold Dropped by Slain Enemies",
+   "+1 to Maximum Frenzy Charges",
+   "+1 to Level of all Melee Skills",
+   "(15-25)% increased Evasion Rating (only dex_armour bases)",
+   "(15-25)% increased Energy Shield (only int_armour bases)",
+   "(15-25)% increased Armour and Evasion (only str_dex_armour bases)",
+   "(15-25)% increased Armour and Energy Shield (only str_int_armour bases)",
+   "(15-25)% increased Evasion and Energy Shield (only dex_int_armour bases)"
+  ],
+  "Boots": [
+   "(15-25)% increased Armour (only str_armour bases)",
+   "(10-20)% reduced Attribute Requirements",
+   "+(20-25)% to Fire Resistance",
+   "+(20-25)% to Cold Resistance",
+   "+(20-25)% to Lightning Resistance",
+   "+(1-3)% to Maximum Lightning Resistance",
+   "(3-5)% increased Movement Speed",
+   "(20-30)% increased Stun Threshold",
+   "(20-30)% increased Freeze Threshold",
+   "(20-30)% reduced Slowing Potency of Debuffs on You",
+   "(15-25)% increased Evasion Rating (only dex_armour bases)",
+   "(15-25)% increased Energy Shield (only int_armour bases)",
+   "(15-25)% increased Armour and Evasion (only str_dex_armour bases)",
+   "(15-25)% increased Armour and Energy Shield (only str_int_armour bases)",
+   "(15-25)% increased Evasion and Energy Shield (only dex_int_armour bases)"
+  ],
+  "Shields": [
+   "(15-25)% increased Armour (only str_armour bases)",
+   "(10-20)% reduced Attribute Requirements",
+   "(40-50)% increased Thorns damage",
+   "(10-15)% increased Block chance",
+   "+3% to maximum Block chance",
+   "(20-25) Life gained when you Block",
+   "(10-15) Mana gained when you Block",
+   "(15-25)% increased Armour and Evasion (only str_dex_armour bases)",
+   "(15-25)% increased Armour and Energy Shield (only str_int_armour bases)"
+  ],
+  "Bucklers": [
+   "(15-25)% increased Evasion Rating",
+   "(10-20)% reduced Attribute Requirements",
+   "(40-50)% increased Thorns damage",
+   "(10-15)% increased Block chance",
+   "+3% to maximum Block chance",
+   "(20-25) Life gained when you Block",
+   "(10-15) Mana gained when you Block"
+  ],
+  "Foci": [
+   "(15-25)% increased Energy Shield",
+   "(10-20)% reduced Attribute Requirements",
+   "+(20-25) to maximum Mana",
+   "(20-30)% increased Spell Damage"
+  ],
+  "Quivers": [
+   "+(20-25) to maximum Mana",
+   "+(50-100) to Accuracy Rating",
+   "(20-30)% increased Damage",
+   "(4-6)% increased Skill Speed",
+   "(15-20)% increased Critical Damage Bonus",
+   "Gain (20-25) Life per enemy killed",
+   "Gain (10-15) Mana per enemy killed",
+   "(20-30)% chance to Pierce an Enemy",
+   "Projectiles have (10-20)% chance to Chain an additional time from terrain"
+  ],
+  "Amulets": [
+   "Leech 3% of Physical Attack Damage as Life",
+   "Leech 2% of Physical Attack Damage as Mana",
+   "+1% to all Maximum Elemental Resistances",
+   "+(5-10)% to all Elemental Resistances",
+   "(10-15)% increased Rarity of Items found",
+   "+1 to Level of all Skills",
+   "+(10-15) to Strength",
+   "+(10-15) to Dexterity",
+   "+(10-15) to Intelligence",
+   "Life Flasks gain (0.08-0.17) charges per Second",
+   "Mana Flasks gain (0.08-0.17) charges per Second",
+   "Charms gain (0.08-0.17) charges per Second"
+  ],
+  "Rings": [
+   "+(20-25) to maximum Mana",
+   "+(13-19)% to Chaos Resistance",
+   "(15-25)% increased Life Regeneration rate",
+   "(20-30)% increased Mana Regeneration Rate",
+   "+(5-10)% to all Elemental Resistances",
+   "(10-15)% increased Rarity of Items found",
+   "(20-30)% increased Damage",
+   "(4-6)% increased Skill Speed",
+   "(15-20)% increased Critical Damage Bonus",
+   "+(10-15) to Strength",
+   "+(10-15) to Dexterity",
+   "+(10-15) to Intelligence"
+  ],
+  "Belts": [
+   "+(30-40) to maximum Life",
+   "(15-25)% increased Armour",
+   "(15-25)% increased Evasion Rating",
+   "(15-25)% increased maximum Energy Shield",
+   "+(20-25)% to Fire Resistance",
+   "+(20-25)% to Cold Resistance",
+   "+(20-25)% to Lightning Resistance",
+   "+(1-3)% to Maximum Fire Resistance",
+   "+1 to Maximum Endurance Charges",
+   "+(10-15) to Strength",
+   "+(10-15) to Dexterity",
+   "+(10-15) to Intelligence"
+  ],
+  "Jewels": [
+   "+(4-6) to Strength",
+   "+(4-6) to Dexterity",
+   "+(4-6) to Intelligence",
+   "+(5-10)% to Fire Resistance",
+   "+(5-10)% to Cold Resistance",
+   "+(5-10)% to Lightning Resistance",
+   "+(3-7)% to Chaos Resistance",
+   "Immune to Maim",
+   "You cannot be Hindered",
+   "Corrupted Blood cannot be inflicted on you",
+   "Cannot be Blinded"
+  ],
+  "Wands": [
+   "(10-20)% reduced Attribute Requirements",
+   "+1 to Level of all Fire Spell Skills",
+   "+1 to Level of all Cold Spell Skills",
+   "+1 to Level of all Lightning Spell Skills",
+   "+1 to Level of all Chaos Spell Skills",
+   "+1 to Level of all Physical Spell Skills",
+   "(20-30)% increased Spell Damage",
+   "(20-30)% increased Flammability Magnitude",
+   "(20-30)% increased Freeze Buildup",
+   "(20-30)% increased chance to Shock",
+   "(20-30)% increased Critical Hit Chance for Spells",
+   "Gain (20-25) Life per enemy killed",
+   "Gain (10-15) Mana per enemy killed",
+   "(10-15)% increased Cast Speed"
+  ],
+  "Staves": [
+   "(10-20)% reduced Attribute Requirements",
+   "+1 to Level of all Fire Spell Skills",
+   "+1 to Level of all Cold Spell Skills",
+   "+1 to Level of all Lightning Spell Skills",
+   "+1 to Level of all Chaos Spell Skills",
+   "+1 to Level of all Physical Spell Skills",
+   "(40-60)% increased Spell Damage",
+   "(20-30)% increased Flammability Magnitude",
+   "(20-30)% increased Freeze Buildup",
+   "(20-30)% increased chance to Shock",
+   "(20-30)% increased Critical Hit Chance for Spells",
+   "Gain (20-25) Life per enemy killed",
+   "Gain (10-15) Mana per enemy killed",
+   "(10-15)% increased Cast Speed"
+  ],
+  "Sceptres": [
+   "(10-20)% reduced Attribute Requirements",
+   "(15-25)% increased Spirit",
+   "Allies in your Presence deal (20-30)% increased Damage",
+   "Allies in your Presence have (5-10)% increased Attack Speed",
+   "Allies in your Presence have (5-10)% increased Cast Speed",
+   "Allies in your Presence have (10-15)% increased Critical Damage Bonus"
+  ],
+  "Quarterstaves": [
+   "(10-20)% reduced Attribute Requirements",
+   "(15-25)% increased Physical Damage",
+   "Adds (13-20) to (21-31) Fire Damage",
+   "Adds (11-17) to (18-26) Cold Damage",
+   "Adds (1-3) to (41-61) Lightning Damage",
+   "Adds (10-16) to (17-25) Chaos damage",
+   "(6-8)% increased Attack Speed",
+   "+(5-10)% to Critical Damage Bonus",
+   "Causes (20-30)% increased Stun Buildup",
+   "(10-20)% increased Melee Strike Range with this weapon",
+   "(10-15)% chance to Poison on Hit with this weapon",
+   "Grants 1 Rage on Hit",
+   "(40-50)% increased Elemental Damage with Attacks"
+  ],
+  "Bows": [
+   "(10-20)% reduced Attribute Requirements",
+   "(15-25)% increased Physical Damage",
+   "Adds (9-14) to (15-22) Fire Damage",
+   "Adds (8-12) to (13-19) Cold Damage",
+   "Adds (1-2) to (29-43) Lightning Damage",
+   "Adds (7-11) to (12-18) Chaos damage",
+   "(6-8)% increased Attack Speed",
+   "+(5-10)% to Critical Damage Bonus",
+   "(10-15)% chance to Maim on Hit",
+   "(5-10)% chance to Blind Enemies on hit",
+   "(20-30)% increased Elemental Damage with Attacks",
+   "Bow Attacks fire an additional Arrow"
+  ],
+  "Crossbows": [
+   "(10-20)% reduced Attribute Requirements",
+   "(15-25)% increased Physical Damage",
+   "Adds (13-20) to (21-31) Fire Damage",
+   "Adds (11-17) to (18-26) Cold Damage",
+   "Adds (1-3) to (41-61) Lightning Damage",
+   "Adds (10-16) to (17-25) Chaos damage",
+   "(6-8)% increased Attack Speed",
+   "+(5-10)% to Critical Damage Bonus",
+   "(10-15)% chance to Maim on Hit",
+   "(5-10)% chance to Blind Enemies on hit",
+   "(40-50)% increased Elemental Damage with Attacks",
+   "Loads an additional bolt"
+  ],
+  "Spears": [
+   "(10-20)% reduced Attribute Requirements",
+   "(15-25)% increased Physical Damage",
+   "Adds (9-14) to (15-22) Fire Damage",
+   "Adds (8-12) to (13-19) Cold Damage",
+   "Adds (1-2) to (29-43) Lightning Damage",
+   "Adds (7-11) to (12-18) Chaos damage",
+   "(6-8)% increased Attack Speed",
+   "+(5-10)% to Critical Damage Bonus",
+   "Causes (20-30)% increased Stun Buildup",
+   "(10-20)% increased Melee Strike Range with this weapon",
+   "(10-15)% chance to Poison on Hit with this weapon",
+   "Grants 1 Rage on Hit",
+   "(20-30)% increased Elemental Damage with Attacks"
+  ],
+  "One Hand Maces": [
+   "(10-20)% reduced Attribute Requirements",
+   "(15-25)% increased Physical Damage",
+   "Adds (9-14) to (15-22) Fire Damage",
+   "Adds (8-12) to (13-19) Cold Damage",
+   "Adds (1-2) to (29-43) Lightning Damage",
+   "Adds (7-11) to (12-18) Chaos damage",
+   "(6-8)% increased Attack Speed",
+   "+(5-10)% to Critical Damage Bonus",
+   "Causes (20-30)% increased Stun Buildup",
+   "(10-20)% increased Melee Strike Range with this weapon",
+   "(10-15)% chance to cause Bleeding on Hit",
+   "Grants 1 Rage on Hit",
+   "(20-30)% increased Elemental Damage with Attacks"
+  ],
+  "Two Hand Maces": [
+   "(10-20)% reduced Attribute Requirements",
+   "(15-25)% increased Physical Damage",
+   "Adds (13-20) to (21-31) Fire Damage",
+   "Adds (11-17) to (18-26) Cold Damage",
+   "Adds (1-3) to (41-61) Lightning Damage",
+   "Adds (10-16) to (17-25) Chaos damage",
+   "(6-8)% increased Attack Speed",
+   "+(5-10)% to Critical Damage Bonus",
+   "Causes (20-30)% increased Stun Buildup",
+   "(10-20)% increased Melee Strike Range with this weapon",
+   "(10-15)% chance to cause Bleeding on Hit",
+   "Grants 1 Rage on Hit",
+   "(40-50)% increased Elemental Damage with Attacks"
+  ],
+  "Talismans": [
+   "(10-20)% reduced Attribute Requirements",
+   "(15-25)% increased Physical Damage",
+   "Adds (13-20) to (21-31) Fire Damage",
+   "Adds (11-17) to (18-26) Cold Damage",
+   "Adds (1-3) to (41-61) Lightning Damage",
+   "Adds (10-16) to (17-25) Chaos damage",
+   "(6-8)% increased Attack Speed",
+   "+(5-10)% to Critical Damage Bonus",
+   "(40-50)% increased Elemental Damage with Attacks"
+  ]
+ },
+ "corruptedEnchantsNotes": "Из RePoE (generation_type 'corrupted'; для Jewels — domain 'misc'). Все моды внутри класса равновероятны (вес 1). '(only X bases)' — только на базах с таким типом защиты (str/dex/int; на гибридных str_dex_int-базах защитного мода нет). Orbs of Sacrifice улучшают их до 'Corrupted Upgrade' версий (напр. Bow Attacks fire 2 additional Arrows, Loads 2 additional bolts, (6—9)% additional Physical Damage Reduction на Body Armour) — полный список на poe2db Kopecs_Orb_of_Sacrifice.",
+ "tradeFilters": [
+  "corrupted",
+  "sanctified",
+  "twice_corrupted"
+ ],
+ "unverified": [
+  "Все проценты исходов Vaal (~25% на ветку) — сообщество (Game8/Maxroll/Timesaver), не официально.",
+  "Диапазон x0.78–x1.22 и округление для Vaal-переролла уников и для Sanctify — сообщество (Maxroll, Timesaver, U4N); официально только 'multiplied based on current value'.",
+  "Исход 'reforge 1–3 раза' на rare/magic — описание Timesaver; точная механика не подтверждена.",
+  "Wands/Staves: качество до ~23% вместо гнезда — Timesaver 0.5; могло измениться, т.к. Artificer's Orb теперь работает на wand/staff.",
+  "Бижутерия: ~50% 'no change' — сниппет поиска, не проверено.",
+  "Hinekora's Lock с Vaal Orb — сообщество (Timesaver 0.5.4); официального подтверждения нет.",
+  "Architect's Orb 50/50 и 'не из той же группы' — Timesaver.",
+  "Шанс коррупции у Vaal Infusers (~+5% за пункт выше 20%) — poe2wiki через сниппет.",
+  "Vaal Catalysing Infuser на Belts — текст предмета говорит 'ring or amulet', патчноут — 'Jewellery'.",
+  "Цены — снимок poe2db на 2026-10-17, лига не указана."
+ ]
+}

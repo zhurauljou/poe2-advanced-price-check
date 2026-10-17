@@ -100,6 +100,32 @@ function guaranteedFor(itemClass) {
   return out;
 }
 
+// «Рискованный финал»: порча и освящение (docs/corruption-sanctification.md, data/gamble-currency.json).
+// Шансы — оценки сообщества, GGG их не публикует. Показываем с дисклеймерами.
+let gambleData;
+function gambleFor(item, tags) {
+  if (gambleData === undefined) {
+    try { gambleData = JSON.parse(fsW.readFileSync(pathW.join(__dirname, '..', '..', 'data', 'gamble-currency.json'), 'utf8')); } catch { gambleData = null; }
+  }
+  const jewellery = tags.includes('ring') || tags.includes('amulet') || tags.includes('belt');
+  const caster = tags.includes('wand') || tags.includes('staff');
+  const how = [t('Irreversible. Odds are community estimates — GGG does not publish them.')];
+  if (tags.includes('jewel')) how.push(t('Vaal Orb — nothing, a corruption enchant or rerolled modifiers (odds for jewels unverified); the item becomes unmodifiable'));
+  else if (jewellery) how.push(t('Vaal Orb — ~50% nothing, ~25% corruption enchant, ~25% modifiers rerolled (often ruins the item); the item becomes unmodifiable'));
+  else if (caster) how.push(t('Vaal Orb — ~25% each: nothing, corruption enchant, modifiers rerolled (often ruins the item), quality up to ~23%; the item becomes unmodifiable'));
+  else how.push(t('Vaal Orb — ~25% each: nothing, corruption enchant, modifiers rerolled (often ruins the item), +1 augment socket beyond the limit; the item becomes unmodifiable'));
+  how.push(t('Before corrupting: Divine Orb, quality and runes — meta-crafting runes cannot be socketed into corrupted or sanctified items'));
+  if (item.rarity === 'Rare') how.push(t('Sanctify (Divine Orb + Omen of Sanctification) — every modifier ×0.78–1.22 of its current value, the item becomes unmodifiable and can no longer be corrupted; only for a near-perfect item, Divine to high rolls first'));
+  const inf = gambleData && (gambleData.infusers || []).find((x) => (x.classes || []).includes(item.itemClass));
+  if (inf && (item.quality || 0) >= 20) how.push(t('{infuser} — up to +10% quality above the maximum (needs 20% quality); may only add the Corrupted tag', { infuser: inf.name }));
+  how.push(t('Omen of Corruption (a guaranteed change) is not obtainable this league'));
+  // «(only str_armour bases)» — только для баз с таким тегом; остальные не показываем.
+  const enchants = ((gambleData && gambleData.corruptedEnchants && gambleData.corruptedEnchants[item.itemClass]) || [])
+    .filter((e) => { const m = e.match(/\(only (\w+) bases\)/); return !m || tags.includes(m[1]); })
+    .map((e) => e.replace(/\s*\(only \w+ bases\)/, ''));
+  return { how, enchants };
+}
+
 // Вес мода на базе: первый тег из spawn_weights, который есть у базы (в PoE 2 — только 0 или 1).
 function canRoll(mod, tags) {
   for (const sw of mod.spawn_weights || []) if (tags.includes(sw.tag)) return sw.weight > 0;
@@ -375,7 +401,8 @@ async function advise(item, demandMods, cached) {
   }
 
   const goal = planGoal(mine, normal, max, want, magic, magicFree);
-  return { open, max, sections, goal, chanceMeta, source: 'RePoE (game files) · demand: poe.ninja' };
+  const gamble = gambleFor(item, tags);
+  return { open, max, sections, goal, gamble, chanceMeta, source: 'RePoE (game files) · demand: poe.ninja' };
 }
 
 // Доля «типов баз» класса (по набору тегов: str_armour, dex_int_armour…), на которых семейство мода может выпасть.
