@@ -2,10 +2,10 @@
 :root {
   /* --g-mod чуть светлее игрового #8888ff: на тёмно-синем фоне оригинал читается плохо */
   color-scheme: dark;
-  --bg: #0b1017; --panel: #0e131b; --panel2: #131a24; --line: #4a3f2c; --line2: #1c222c; --hover: #161d28;
+  --bg: #0b1017; --line2: #1c222c; --hover: #161d28;
   --text: #b6b6b6; --muted: #8c8c8c; --gold: #dac18e; --cream: #f1e4c2; --bronze: #837053; --label: #a99a7c;
   --good: #6fcf7a; --bad: #e0675a; --warn: #e0b35a;
-  --input: #07090d; --input-line: #2c2f35; --chip-line: #7d6a46;
+  --input: #07090d; --input-line: #2c2f35;
   /* цвета игры */
   --r-normal: #c8c8c8; --r-magic: #8888ff; --r-rare: #ffff77; --r-unique: #af6025; --r-gem: #1ba29b; --r-currency: #aa9e82;
   --g-mod: #9a9aff; --g-rune: #9dc2e6; --g-crafted: #b4b4ff; --g-desecrated: #5fd16a; --g-fractured: #c9a85c;
@@ -14,11 +14,11 @@
   --body: "Alegreya Sans", "Segoe UI", sans-serif;
   --game: "Fontin SmallCaps", "Cormorant SC", Georgia, serif;
   --sc: "Cormorant SC", Georgia, serif;
-  --title: var(--sc); /* три шрифта: --body, --game, --sc */
 }
 
 * { box-sizing: border-box; }
-html, body { margin: 0; overflow: hidden; }
+html, body { margin: 0; height: 100%; }
+html { overflow: hidden; }
 /* Сверху — лёгкое затемнение (под всем содержимым, тексты не трогает), под ним — прежнее синее свечение. */
 body { background: linear-gradient(rgba(0, 0, 0, .45), rgba(0, 0, 0, .18) 70px, transparent 140px) no-repeat,
                    radial-gradient(ellipse 600px 260px at 50% -120px, #1d2836, transparent 70%) no-repeat, var(--bg);
@@ -93,11 +93,9 @@ body { background: linear-gradient(rgba(0, 0, 0, .45), rgba(0, 0, 0, .18) 70px, 
 .banner.Currency { color: var(--r-currency); --hdr-filter: grayscale(.75) sepia(.35); }
 
 /* ---- поля и кнопки ---- */
-input, select, button { font: inherit; font-size: 15px; color: var(--cream); background: var(--input); border: 1px solid var(--input-line);
+input, button { font: inherit; font-size: 15px; color: var(--cream); background: var(--input); border: 1px solid var(--input-line);
                         border-radius: 2px; padding: 4px 8px; }
-select { max-width: 190px; font-family: var(--sc); font-weight: 700; color: var(--gold); appearance: none; padding: 3px 26px 3px 10px;
-         background: var(--input) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 12 8'%3E%3Cpath d='M1 1.5l5 5 5-5' fill='none' stroke='%23dac18e' stroke-width='1.6'/%3E%3C/svg%3E") no-repeat right 8px center / 10px 7px; }
-input:focus, select:focus { outline: none; border-color: #b08a45; }
+input:focus { outline: none; border-color: #b08a45; }
 button { cursor: pointer; background: linear-gradient(#2b2013, #17110a); border-color: #6b5228; color: #e6dcc4; font-weight: 700;
          box-shadow: inset 0 1px 0 rgba(255, 224, 138, .12); }
 button:hover { background: linear-gradient(#3a2a14, #20170b); border-color: #b08a45; color: #fff4b4; }
@@ -149,10 +147,9 @@ footer { display: flex; justify-content: space-between; gap: 8px; padding: 6px 1
 .hero { text-align: center; padding: 12px 10px 10px; border: 1px solid #2c2a25; border-radius: 4px;
         background: radial-gradient(ellipse 80% 70% at 50% 0%, rgba(218, 193, 142, .07), transparent 70%), linear-gradient(#13161b, #0c0e12); }
 .hero .k { font: 700 14px var(--sc); letter-spacing: .6px; color: var(--label); }
-.hero .big { display: inline-flex; align-items: center; gap: 10px; margin: 2px 0; font: 700 32px/1.15 var(--title); color: var(--gold);
+.hero .big { display: inline-flex; align-items: center; gap: 10px; margin: 2px 0; font: 700 32px/1.15 var(--sc); color: var(--gold);
              font-variant-numeric: tabular-nums; text-shadow: 0 0 14px rgba(255, 190, 80, .3), 0 2px 0 #000; }
 .hero .big img { width: 40px; height: 40px; filter: drop-shadow(0 0 8px rgba(255, 200, 90, .25)); }
-.hero .big.wait { color: var(--muted); text-shadow: none; animation: pulse 1.2s ease-in-out infinite; }
 @keyframes pulse { 50% { opacity: .4; } }
 .hero .alt { color: var(--muted); font-size: 14px; }
 /* Надёжность оценки: ●●● Reliable / ●●○ Some data / ●○○ Few listings */
@@ -175,7 +172,7 @@ footer { display: flex; justify-content: space-between; gap: 8px; padding: 6px 1
 .grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 4px 10px; margin-top: 10px; padding-top: 10px;
         border-top: 1px solid var(--line2); text-align: left; }
 .grid > div { min-width: 0; }
-.grid .k { display: block; font: 500 13.5px var(--body); color: var(--muted); letter-spacing: 0; }
+.grid .k { display: block; font: 400 13.5px var(--body); color: var(--muted); letter-spacing: 0; }
 .grid .v { display: flex; align-items: center; gap: 6px; color: var(--cream); font-weight: 700; font-variant-numeric: tabular-nums; white-space: nowrap; }
 .up { color: var(--good); } .down { color: var(--bad); }
 /* График тренда — как во флиппере: пунктир нуля, выше зелёный, ниже красный. */
@@ -201,10 +198,9 @@ footer { display: flex; justify-content: space-between; gap: 8px; padding: 6px 1
 .tabs .ticon { width: 16px; height: 16px; opacity: .85; }
 /* Бейдж на вкладке Demand: доля билдов, носящих такой предмет (🔥 — если что-то почти у всех). */
 /* Контуром, без заливки: High — золотой, Med — бронзовый, Low — серый. */
-.tabs .badge { padding: 0 7px; border: 1px solid #dac18e; border-radius: 9px; font: 700 12px/1.4 var(--body); letter-spacing: 0;
+.tabs .badge { padding: 0 7px; border: 1px solid #dac18e; border-radius: 9px; font: 700 12px/1.4 var(--body); letter-spacing: 0; white-space: nowrap;
                color: #f1d79a; background: none; text-shadow: 0 0 8px rgba(255, 190, 80, .4); box-shadow: 0 0 8px rgba(255, 190, 80, .2); }
 .tabs .badge:empty { display: none; }
-.tabs .badge { white-space: nowrap; }
 .tabs .badge.med { color: #c9b48a; border-color: #7d6a46; text-shadow: none; box-shadow: none; }
 .tabs .badge.low { color: var(--muted); border-color: #3a3f48; text-shadow: none; box-shadow: none; }
 .tabs button.on::after { content: ""; position: absolute; left: 50%; bottom: -4px; width: 22px; height: 7px; margin-left: -11px;
@@ -230,9 +226,9 @@ body.cmp-page { background: #0a0d12; }
 .cmp .banner.mini { height: 48px; margin: 0; padding: 0 50px; }
 .cmp .banner.mini.single { height: 36px; }
 .cmp .banner.mini .bn-name, .cmp .banner.mini .bn-base { font-size: 16px; }
-.cmp-body { padding: 6px 8px 0; text-align: center; font: 15px/1.35 var(--game); color: var(--g-mod); }
-/* Значок ▲▼+ — в левом поле строки; справа такое же поле, чтобы текст оставался по центру и не наезжал на значок. */
-.cm { position: relative; padding: 0 18px; }
+.cmp-body { padding: 6px 12px 0; text-align: left; font: 15px/1.35 var(--game); color: var(--g-mod); }
+/* Значок ▲▼+ — в левом поле строки; моды по левому краю, как в фильтрах. */
+.cm { position: relative; padding: 0 0 0 18px; }
 .cm i { position: absolute; left: 0; top: 0; width: 14px; text-align: center; font-style: normal; font: 700 12px/1.6 var(--body); }
 .cm b { font-weight: normal; color: var(--cream); }
 .cmp-body > .cm:not([class*="d-"]) { color: var(--g-prop); }
@@ -307,14 +303,14 @@ body.cmp-page { background: #0a0d12; }
 .mod.t-rune label { color: var(--g-rune); }
 .mod.t-desecrated label { color: var(--g-desecrated); }
 .mod.t-fractured label { color: var(--g-fractured); }
-.mod.t-pseudo label, .mod.t-prop label { color: var(--cream); }
+.mod.t-pseudo label { color: var(--cream); }
 .mod.off label { color: #7d7d8a; }
 .mod.nomatch label { color: #696973; cursor: default; }
 .mod input[type=number] { width: 56px; height: 24px; padding: 1px 4px; }
 .tag { font: 700 10.5px/1.5 var(--body); text-transform: uppercase; letter-spacing: .4px; color: var(--bronze); border: 1px solid #2c2a25;
        border-radius: 2px; padding: 0 4px; flex: none; }
 .tag.tier { min-width: 23px; text-align: center; }
-.tag.tier.top, .tag.pseudo { color: var(--gold); border-color: #6b5a3a; }
+.tag.tier.top { color: var(--gold); border-color: #6b5a3a; }
 /* Тег — в цвет своего мода, с лёгкой подложкой того же цвета. */
 .tag.implicit { --c: var(--g-mod); } .tag.crafted { --c: var(--g-crafted); } .tag.enchant { --c: var(--g-enchant); }
 .tag.rune { --c: var(--g-rune); } .tag.desecrated { --c: var(--g-desecrated); } .tag.fractured { --c: var(--g-fractured); }
@@ -344,11 +340,10 @@ body.cmp-page { background: #0a0d12; }
 .seg button.on { position: relative; color: var(--cream); background: linear-gradient(#2a2620, #17150f); border-color: #6b5a3a; }
 #search { width: 100%; height: 36px; margin: 8px 0 0; font: 700 17px var(--sc); letter-spacing: .6px; color: var(--gold); }
 .note { white-space: pre-line; padding: 6px 10px; border-left: 2px solid #b08a45; background: rgba(218, 193, 142, .06); color: var(--label); font-size: 14px; }
-.empty { padding: 6px; text-align: center; color: var(--muted); }
 
 /* ---- лоты ---- */
 .lots { border: 1px solid #3d3a33; background: rgba(10, 13, 18, .92); }
-.lot { display: grid; grid-template-columns: auto 1fr minmax(0, 130px) 34px; align-items: center; gap: 8px; padding: 5px 8px;
+.lot { display: grid; grid-template-columns: auto 1fr minmax(0, 130px) 34px 38px; align-items: center; gap: 8px; padding: 5px 8px;
        border-bottom: 1px solid var(--line2); cursor: pointer; }
 .lot:last-child { border-bottom: 0; }
 .lot:hover { background: var(--hover); }
@@ -414,9 +409,10 @@ body.upd-page { height: auto; }
 .void .va button { padding: 3px 12px; font-size: 13.5px; }
 
 /* Цены для выставления — в сетке под оценкой; цифра кликабельна (копирует «~price N currency»), без рамок */
-.grid.sell .v.copy { cursor: pointer; width: fit-content; text-decoration: underline dotted #6b5a3a; text-underline-offset: 3px; }
+.grid.sell { text-align: center; }
+.grid.sell .v.copy { position: relative; margin: 0 auto; cursor: pointer; width: fit-content; text-decoration: underline dotted #6b5a3a; text-underline-offset: 3px; }
 .grid.sell .v.copy:hover { color: #fff4b4; text-decoration-color: var(--gold); }
-.grid.sell .v.copy::after { content: "⧉"; font-size: 11px; color: var(--bronze); opacity: 0; transition: opacity .12s; }
+.grid.sell .v.copy::after { position: absolute; left: 100%; margin-left: 4px; content: "⧉"; font-size: 11px; color: var(--bronze); opacity: 0; transition: opacity .12s; }
 .grid.sell .v.copy:hover::after { opacity: 1; }
 .sect .cnt { margin-left: 6px; padding: 0 6px; border: 1px solid #3d3a33; border-radius: 8px; font: 700 11.5px/1.5 var(--body);
              letter-spacing: 0; color: var(--cream); vertical-align: 1px; }
@@ -433,19 +429,12 @@ body.upd-page { height: auto; }
 .cpr.up { color: var(--good); } .cpr.down { color: var(--bad); }
 #craft .bname { white-space: normal; } /* у кандидатов крафта текст + тир + цена — переносим, а не обрезаем */
 /* Цены для выставления — по центру своих колонок */
-.grid.sell { text-align: center; }
-.grid.sell .v.copy { margin: 0 auto; }
-.grid.sell .v.copy { position: relative; }
-.grid.sell .v.copy::after { position: absolute; left: 100%; margin-left: 4px; }
 /* Карточка конкурента — моды по левому краю, как в фильтрах: так проще сопоставлять построчно */
-.cmp-body { text-align: left; padding-left: 12px; padding-right: 12px; }
-.cmp-body .cm { padding-right: 0; }
 .cmp-body .tt, .cmp-miss, .cmp-legend { text-align: center; }
 .cm .yours { margin-left: 6px; font: 12px var(--body); color: var(--muted); white-space: nowrap; }
 .ess { margin-left: 6px; font: 700 11.5px var(--body); color: #c9a0e8; white-space: nowrap; } /* эссенция гарантирует мод */
 .hero .ninja-u { margin-top: 4px; font-size: 13.5px; color: var(--label); } .hero .ninja-u b { color: var(--cream); } .hero .ninja-u:empty { display: none; }
 /* Действия у лота: шёпот в игре и переход на трейд — проявляются при наведении */
-.lot { grid-template-columns: auto 1fr minmax(0, 130px) 34px 38px; }
 .lot .acts { display: flex; justify-content: flex-end; gap: 6px; opacity: 0; transition: opacity .12s; }
 .lot:hover .acts { opacity: 1; }
 .lot .acts i { font-style: normal; font-size: 13px; color: var(--bronze); cursor: pointer; }
@@ -480,13 +469,12 @@ body.upd-page { height: auto; }
 .chance.unknown { color: var(--muted); font-weight: 400; }
 
 /* ---- окно выше экрана: прокрутка, шапка и футер закреплены (как во флиппере — прогрессивное размытие) ---- */
-html, body { height: 100%; }
 body { overflow-x: hidden; overflow-y: auto; }
 .head, footer { position: sticky; z-index: 40; isolation: isolate; --shade: 11, 16, 23; }
 .head { top: 0; }
 footer { bottom: 0; background: none; }
 /* Сильное размытие с градиентом в прозрачность + узкая полоса лёгкого размытия на краю: содержимое плавно «уходит» под шапку. */
-.head::before, .head::after, footer::before, footer::after { content: ""; position: absolute; left: 0; right: 0; z-index: -2; pointer-events: none; }
+.head::before, .head::after, footer::before { content: ""; position: absolute; left: 0; right: 0; z-index: -2; pointer-events: none; }
 .head::before { top: 0; bottom: -14px; -webkit-backdrop-filter: blur(16px); backdrop-filter: blur(16px);
   background: linear-gradient(rgba(var(--shade), .97) 0%, rgba(var(--shade), .9) 60%, rgba(var(--shade), .55) 85%, rgba(var(--shade), 0) 100%);
   -webkit-mask-image: linear-gradient(#000 0%, #000 70%, transparent 100%); mask-image: linear-gradient(#000 0%, #000 70%, transparent 100%); }
@@ -495,7 +483,6 @@ footer { bottom: 0; background: none; }
 footer::before { bottom: 0; top: -12px; -webkit-backdrop-filter: blur(16px); backdrop-filter: blur(16px);
   background: linear-gradient(rgba(var(--shade), 0) 0%, rgba(var(--shade), .7) 25%, rgba(var(--shade), .97) 55%);
   -webkit-mask-image: linear-gradient(transparent 0%, #000 35%); mask-image: linear-gradient(transparent 0%, #000 35%); }
-footer::after { display: none; }
 /* Варианты крафта по приросту цены */
 .cprice-all { display: block; margin: 2px 0 4px auto; font-size: 12.5px; }
 .cpr b { font-size: 13px; }

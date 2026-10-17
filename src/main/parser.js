@@ -106,7 +106,6 @@ function parseItem(text) {
     sockets: 0,
     affixes: [], // аффиксы из расширенного формата: { side: prefix|suffix, name: «Divine», tag, tier }
     modLines: [], // { text, tag } — сырые строки, сопоставление со статами трейда делает stats.js
-    raw: text,
   };
 
   const names = head.filter((l) => !l.startsWith('Item Class:') && !l.startsWith('Rarity:'));

@@ -1,7 +1,7 @@
 {
   "name": "poe2-price-checker",
   "productName": "PoE 2 Price Checker",
-  "version": "0.3.41",
+  "version": "0.3.42",
   "description": "Оверлей для оценки предметов Path of Exile 2 по горячей клавише",
   "main": "src/main/main.js",
   "private": true,
@@ -34,7 +34,11 @@
       "package.json",
       "data/**/*",
       "!data/*.partial.json",
-      "!data/*.log"
+      "!data/*.log",
+      "!assets/icon.ico",
+      "!node_modules/uiohook-napi/{libuiohook,src}/**",
+      "!node_modules/uiohook-napi/prebuilds/{darwin-*,linux-*,win32-arm64}/**",
+      "!**/*.{map,d.ts}"
     ],
     "win": {
       "target": "nsis",

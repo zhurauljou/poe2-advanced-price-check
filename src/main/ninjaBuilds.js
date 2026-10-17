@@ -147,7 +147,6 @@ async function search(snap, params, timeMachine, fetchBuffer) {
   if (hit && Date.now() - hit.at < SEARCH_TTL) return hit.data;
 
   const res = decodeSearch(Buffer.from(await fetchBuffer(url)));
-  const refs = new Map(res.dictionaries.map((d) => [d.id, d]));
   const values = {}, props = {};
   await Promise.all(res.dictionaries.map(async (d) => {
     values[d.id] = await getDict(d.hash, fetchBuffer, false);
@@ -159,7 +158,7 @@ async function search(snap, params, timeMachine, fetchBuffer) {
     dims[d.id] = d.counts.map((c) => ({ name: names[c.key], count: c.count }))
       .filter((x) => x.name != null).sort((a, b) => b.count - a.count);
   }
-  const data = { url, total: res.total, dims, values, props, refs };
+  const data = { url, total: res.total, dims, values, props };
   if (searchCache.size > 200) searchCache.clear();
   searchCache.set(url, { at: Date.now(), data });
   return data;

@@ -286,7 +286,6 @@ document.addEventListener('click', (e) => {
   if (act === 'trade' && state.tradeUrl) window.pc.openUrl(state.tradeUrl);
   if (act === 'price') setTab('price');
   if (act === 'impact') runImpact();
-  if (act === 'ninja') window.pc.openUrl(b.dataset.url || 'https://poe.ninja/poe2/builds');
 });
 
 // Пока ищем — заглушки той же формы, что и результат: окно не прыгает, когда приходят цены.
@@ -319,6 +318,8 @@ function confidence(total, head, cheapest = []) {
 }
 
 // Сколько дней назад лот выставлен или переоценён (трейд: listing.indexed).
+// Медиана отсортированного списка (из чётного числа — нижняя из двух средних).
+const mid = (a) => a[Math.floor((a.length - 1) / 2)];
 const ageDays = (iso) => (iso ? (Date.now() - new Date(iso).getTime()) / 86400e3 : 99);
 
 // Строка про возраст лотов: свежие за сутки, залежавшийся самый дешёвый, тренд «свежие дешевле/дороже».
@@ -331,7 +332,6 @@ function ageSummary(priced, usedFresh) {
   const newer = priced.filter((l) => l.age <= 3).map((l) => l.div);
   const older = priced.filter((l) => l.age > 3).map((l) => l.div);
   if (newer.length >= 2 && older.length >= 2) {
-    const mid = (a) => a[Math.floor((a.length - 1) / 2)];
     const k = mid(newer) / mid(older);
     if (k < 0.85) bits.push(`<span class="down">↓ ${t('newer listings are cheaper')}</span>`);
     else if (k > 1.15) bits.push(`<span class="up">↑ ${t('newer listings are pricier')}</span>`);
@@ -360,18 +360,15 @@ function renderTradeHero(r) {
   const fresh = pool.filter((l) => l.age <= 3);
   const basis = mostlyStronger && pool.length < 2 ? [priced[0].div] : fresh.length >= 3 ? fresh.map((l) => l.div) : pool.map((l) => l.div);
   const head = basis.slice(0, 5);
-  const est = head[Math.floor((head.length - 1) / 2)];
-  const median = divs[Math.floor((divs.length - 1) / 2)];
+  const est = mid(head);
+  const median = mid(divs);
   const ageHtml = ageSummary(priced, fresh.length >= 3 && fresh.length < priced.length)
     + (mostlyStronger ? `<div class="ages"><span class="warn-t">${esc(t('Most listings are stronger than your item (more ▲ than ▼) — estimated from the weaker ones; your item is likely worth less than the list suggests'))}</span></div>` : '');
   // Вторая цена: те же моды с любым роллом своего тира — сколько рынок доплачивает за ваши роллы.
   let floorHtml = '';
   const fl = r.floor;
   if (fl && fl.divs.length) {
-    // То же правило, что и для основной цены: хватает свежих (≤ 3 дней) — по ним.
-    const ffresh = (fl.lots || []).filter((l) => ageDays(l.indexed) <= 3).map((l) => l.div);
-    const fh = (ffresh.length >= 3 ? ffresh : fl.divs).slice(0, 5);
-    const fest = fh[Math.floor((fh.length - 1) / 2)];
+    const fest = fl.lots ? estimate(fl.lots) : mid(fl.divs.slice(0, 5)); // то же правило, что у основной цены
     const premium = fest > 0 ? Math.round((est / fest - 1) * 100) : 0;
     floorHtml = `<div class="floor" title="${t('Same modifiers with any roll of the same tier')}">
       ${t('Any roll in tier:')} <b>${money(fest)}</b> · ${t('{n} listed', { n: fl.total })}
@@ -428,7 +425,7 @@ function estimate(lots) {
   const sorted = (lots || []).filter((l) => l.div != null).sort((a, b) => a.div - b.div);
   const fresh = sorted.filter((l) => ageDays(l.indexed) <= 3);
   const head = (fresh.length >= 3 ? fresh : sorted).slice(0, 5).map((l) => l.div);
-  return head.length ? head[Math.floor((head.length - 1) / 2)] : null;
+  return head.length ? mid(head) : null;
 }
 
 // Цена для выставления — круглая, в валюте, которой так торгуют: от 1 div — div, дешевле — chaos, совсем дёшево — ex.
@@ -641,7 +638,6 @@ async function loadCraft() {
   fit();
 }
 
-const SIDE = { prefix: 'prefix', suffix: 'suffix' };
 // Кандидаты крафта по ключу кнопки «price?»: сколько будет стоить вещь, если этот мод встанет (нижний ролл тира).
 const craftCands = new Map();
 function craftRows(list) {
@@ -662,7 +658,12 @@ async function priceAll(btn) {
   const list = btn.closest('.clist');
   btn.disabled = true;
   btn.textContent = t('pricing…');
-  for (const b of [...list.querySelectorAll('[data-ck]')]) await priceCraft(b);
+  // Сменили вещь посреди оценки — дальше не ищем (кнопки уже от старой вещи, лимит трейда не тратим).
+  const mine = state;
+  for (const b of [...list.querySelectorAll('[data-ck]')]) {
+    if (state !== mine || !list.isConnected) return;
+    await priceCraft(b);
+  }
   const rows = [...list.querySelectorAll('.brow')];
   const val = (r) => (r.dataset.delta == null || r.dataset.delta === '' ? -1e9 : Number(r.dataset.delta));
   rows.sort((a, b) => val(b) - val(a)).forEach((r) => list.appendChild(r));
@@ -679,13 +680,7 @@ async function priceCraft(b) {
   if (!c || !state) return;
   b.disabled = true;
   b.textContent = '…';
-  const f = JSON.parse(JSON.stringify(state.filters));
-  for (const s of c.stats) {
-    const same = f.mods.find((m) => m.statId === s.statId);
-    if (same) { same.enabled = true; same.min = Math.max(Number(same.min) || 0, (same.value || 0) + s.min); }
-    else f.mods.push({ statId: s.statId, enabled: true, min: s.min, importance: 3, tag: 'explicit', text: c.text });
-    for (const x of f.exclude || []) if (x.statId === s.statId) x.enabled = false; // добавляем этот мод — исключать его нельзя
-  }
+  const f = withMods(JSON.parse(JSON.stringify(state.filters)), [c]);
   try {
     // Магическая вещь после Regal Orb — уже редкая: ищем среди редких.
     const it = state.item.rarity === 'Magic' ? { ...state.item, rarity: 'Rare' } : state.item;
@@ -787,12 +782,12 @@ function renderCraft(r) {
   if (r.goal) parts.push(goalHtml(r.goal)); // цель — первой: к чему ведут все шаги ниже
   for (const s of r.sections) {
     if (s.kind === 'open') {
-      parts.push(`<div class="craft-sec"><div class="k">${t(`{n} free ${SIDE[s.side]}es`, { n: s.count })}</div>${how(s.how)}
-        ${s.candidates.length ? `<div class="craft-sub">${t(`Popular ${SIDE[s.side]}es that can roll here (best tier for this item level):`)}</div>${craftRows(s.candidates)}`
+      parts.push(`<div class="craft-sec"><div class="k">${t(`{n} free ${s.side}es`, { n: s.count })}</div>${how(s.how)}
+        ${s.candidates.length ? `<div class="craft-sub">${t(`Popular ${s.side}es that can roll here (best tier for this item level):`)}</div>${craftRows(s.candidates)}`
           : `<div class="craft-sub">${t('No popular modifiers left for this side.')}</div>`}</div>`);
     } else if (s.kind === 'replace') {
       const w = s.weak;
-      parts.push(`<div class="craft-sec"><div class="k">${t(`Full — replace the weakest ${SIDE[w.side]}`)}</div>
+      parts.push(`<div class="craft-sec"><div class="k">${t(`Full — replace the weakest ${w.side}`)}</div>
         <div class="craft-weak">${esc(w.text)} <span class="craft-tier">${w.tier ? `T${w.tier}` : ''}${w.pct ? ` · ${t('{pct}% builds', { pct: fmt(w.pct) })}` : ''}</span></div>${how(s.how)}
         ${s.candidates.length ? `<div class="craft-sub">${t('Could become:')}</div>${craftRows(s.candidates)}` : ''}</div>`);
     } else if (s.kind === 'desecrate') {
@@ -867,8 +862,6 @@ function renderBuilds(b) {
 }
 
 // ---- фильтры ----
-const TAG_LABEL = { pseudo: 'total', rune: 'rune', implicit: 'implicit', crafted: 'crafted', desecrated: 'desecrated',
-  fractured: 'fractured', enchant: 'enchant' };
 
 // Шкала важности мода для цены: 0–3 деления (ключевой для слота × качество тира). Ключевые — золотом.
 const IMPACT = ['minor', 'low', 'medium', 'high'];
@@ -901,7 +894,7 @@ function modRow(m, i) {
     : `<span class="tcol">${m.tier ? `<span class="tag tier${m.tier <= 2 ? ' top' : ''}">T${m.tier}</span>` : ''}</span>`;
   // Одинаковые моды — каждый своей строкой, фильтр общий: трейд ищет по сумме.
   const from = m.parts ? ` title="${esc(m.parts.map((p) => `${p.text}${p.tier ? ` (T${p.tier})` : ''}`).join('\n'))}"` : '';
-  const cat = (m.tag !== 'explicit' && m.tag !== 'pseudo' ? ` <span class="tag ${esc(m.tag)}">${esc(t(TAG_LABEL[m.tag] || m.tag))}</span>` : '')
+  const cat = (m.tag !== 'explicit' && m.tag !== 'pseudo' ? ` <span class="tag ${esc(m.tag)}">${esc(t(m.tag))}</span>` : '')
     // Спрос с poe.ninja: массовый мод — повод включить его, даже если тир слабый.
     + (m.demand >= 30 ? ` <span class="dem${m.demand >= 60 ? ' hot' : ''}" title="${t('{pct}% of level {lvl}+ builds wearing this item class have this modifier (poe.ninja)', { pct: fmt(m.demand), lvl: demandLevel })}">${m.demand >= 60 ? '🔥 ' : ''}${t('{pct}% builds', { pct: fmt(m.demand) })}</span>` : '');
   const text = m.tag === 'pseudo' ? m.text.replace(/^Σ /, '') : m.text;
@@ -1077,18 +1070,7 @@ function cmpCounts(l) {
 }
 
 function cmpBadge(l) {
-  if (!l.tip || !state || !state.filters) return '';
-  const { classify, key } = compareModel(l.tip);
-  const seen = new Set(); // одинаковые моды на трейде — одна сумма, считаем один раз
-  let better = 0;
-  let worse = 0;
-  for (const m of l.tip.mods) {
-    if (!m.statId || seen.has(key(m.statId))) continue;
-    seen.add(key(m.statId));
-    const c = classify(m);
-    if (c === 'better') better++;
-    else if (c === 'worse') worse++;
-  }
+  const { better, worse } = cmpCounts(l);
   if (!better && !worse) return '';
   return `<span class="cmpc" title="${t('Modifiers better / worse than yours')}">${better ? `<i class="b">▲${better}</i>` : ''}${worse ? `<i class="w">▼${worse}</i>` : ''}</span>`;
 }
@@ -1211,6 +1193,7 @@ async function runSearch(relax = false) {
 }
 
 window.pc.onItem((data) => {
+  impactSeq++; // недосчитанный «вклад модов» прежней вещи не должен писать в новую
   state = data;
   rates = data.rates || {};
   openSums.clear();

@@ -22,8 +22,15 @@ const REPOE = 'https://repoe-fork.github.io/poe2';
 
 let data = null; // { bases: Map name→base, pool: [...] }
 
-async function load(cached) {
-  if (data) return data;
+// Пул модов грузим один раз: initData и первый запрос Craft не должны разбирать RePoE параллельно.
+let loading = null;
+function load(cached) {
+  if (data) return Promise.resolve(data);
+  if (!loading) loading = loadData(cached).finally(() => { loading = null; });
+  return loading;
+}
+
+async function loadData(cached) {
   const [mods, bases] = await Promise.all([
     cached('repoe-mods.json', `${REPOE}/mods.min.json`, 24 * 7),
     cached('repoe-base-items.json', `${REPOE}/base_items.min.json`, 24 * 7),
@@ -379,12 +386,12 @@ function eligibleShare(d, base) {
 }
 
 // Частоты семейств модов для оценки шансов.
-// Новый формат (raw — моды каждой вещи): на каждой вещи не считаем «причину продажи» — самый востребованный мод, если его
-// носят ≥ SALE_REASON% билдов: вещь выставили ради него, а остальные её моды выпали случайно. Старый — готовые счётчики.
+// По модам каждой вещи (raw): на каждой вещи не считаем «причину продажи» — самый востребованный мод, если его
+// носят ≥ SALE_REASON% билдов: вещь выставили ради него, а остальные её моды выпали случайно.
 const SALE_REASON = 30;
 const SMOOTH = 1; // +1 к каждому семейству: единичные находки не раздуваются, ненайденные не уходят в ноль
 function familyCounts(wc, pctOf) {
-  if (!wc.raw) return Object.fromEntries(Object.entries(wc.families || {}).map(([type, x]) => [type, x.n]));
+  if (!wc.raw) return {};
   const kept = {}, raw = {};
   for (const row of wc.raw) {
     let drop = -1, best = SALE_REASON - 1;

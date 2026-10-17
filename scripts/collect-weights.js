@@ -170,7 +170,7 @@ async function main() {
     fs.writeFileSync(PARTIAL, JSON.stringify(data));
     say(`${cls}: ${c.items} items, ${c.types.length} modifier families, ${c.unmatched} unmatched affixes`);
   }
-  fs.writeFileSync(OUT, JSON.stringify(data, null, 1));
+  fs.writeFileSync(OUT, JSON.stringify(data));
   say(`Saved ${OUT}`);
 }
 

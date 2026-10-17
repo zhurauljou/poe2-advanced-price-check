@@ -219,8 +219,12 @@ async function fetchUniques(league) {
 // Цена уника на poe.ninja: { divine, listings, change } или null.
 async function uniquePrice(league, name, baseType) {
   if (uniques.league !== league || Date.now() - uniques.at > 15 * 60e3) {
-    if (!uniques.loading) uniques.loading = fetchUniques(league).finally(() => { uniques.loading = null; });
-    await uniques.loading;
+    // Загрузка — своя для каждой лиги: запрос другой лиги не должен получить цены первой.
+    if (!uniques.loading || uniques.loading.league !== league) {
+      const promise = fetchUniques(league).finally(() => { if (uniques.loading && uniques.loading.promise === promise) uniques.loading = null; });
+      uniques.loading = { league, promise };
+    }
+    await uniques.loading.promise;
   }
   return uniques.map.get(`${name}|${baseType}`) || null;
 }
