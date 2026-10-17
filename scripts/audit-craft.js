@@ -35,7 +35,8 @@ const CLASS_OF = { 'Body Armours': 'Body Armour', Helmets: 'Helmet', Gloves: 'Gl
   Quivers: 'Quiver', Rings: 'Ring', Amulets: 'Amulet', Belts: 'Belt', Wands: 'Wand', Staves: 'Staff', Sceptres: 'Sceptre', Quarterstaves: 'Warstaff',
   Bows: 'Bow', Crossbows: 'Crossbow', Spears: 'Spear', 'One Hand Maces': 'One Hand Mace', 'Two Hand Maces': 'Two Hand Mace', Talismans: 'Talisman' };
 const tpl = (t) => clean(t).replace(/\((-?[\d.]+)-(-?[\d.]+)\)/g, '#').replace(/-?\d+(?:\.\d+)?/g, '#').replace(/\+#/g, '#').toLowerCase().split('\n').join(' / ');
-const canRoll = (m, tags) => { for (const sw of m.spawn_weights || []) if (tags.includes(sw.tag)) return sw.weight > 0; return false; };
+const NO_SPELL = /^no_\w+_spell_mods$/; // в игре не применяются (см. craft.js loadData)
+const canRoll = (m, tags0) => { const tags = tags0.filter((t) => !NO_SPELL.test(t)); for (const sw of m.spawn_weights || []) if (tags.includes(sw.tag)) return sw.weight > 0; return false; };
 const clean = (t) => String(t).replace(/\[(?:[^|\]]*\|)?([^\]]*)\]/g, '$1');
 // текст мода как в игре (расширенный формат): «+48(47-50) to Spirit»
 const rollText = (t) => clean(t).replace(/\((-?[\d.]+)-(-?[\d.]+)\)/g, (s, a, b) => {

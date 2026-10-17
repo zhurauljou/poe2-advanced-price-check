@@ -40,6 +40,11 @@ async function loadData(cached) {
   ]);
   const byName = new Map();
   for (const b of Object.values(bases)) if (b.name && !byName.has(b.name)) byName.set(b.name, b);
+  // Теги no_fire/cold/lightning/chaos/physical_spell_mods (на базах посохов и палочек и в adds_tags модов стихий) игра
+  // не применяет: на трейде есть Ashen Staff (база огня) с increased Cold Damage. Убираем — иначе советы теряют моды.
+  const NO_SPELL = /^no_\w+_spell_mods$/;
+  for (const b of byName.values()) b.tags = (b.tags || []).filter((t) => !NO_SPELL.test(t));
+  for (const m of Object.values(mods)) if (m.adds_tags) m.adds_tags = m.adds_tags.filter((t) => !NO_SPELL.test(t));
   // Строки implicit'ов базы (Spirit у скипетра и т.п.) — их нет в пуле крафта, но в спросе poe.ninja они бывают.
   for (const b of byName.values()) b.implicitLines = (b.implicits || []).flatMap((id) => (mods[id] ? templates(radiusText(mods[id])) : []));
   // Моды самоцветов лежат в домене 'misc' — для крафта это те же «обычные» моды, что и 'item'.

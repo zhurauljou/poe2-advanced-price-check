@@ -234,8 +234,9 @@ test('палочка с руной Astrid\'s Creativity: два crafted-слот
   assert.equal(one.steps.filter((s, i) => s.act === 'add' && one.cost[i].k === 'essence').length, 1);
 });
 
-test('посох с +Fire Spell Skills: моды других стихий (adds_tags no_cold_spell_mods…) не предлагаются ни в цели, ни в списках', { skip }, async () => {
+test('посох огня (Ashen Staff, +Fire Spell Skills): моды других стихий не запрещены — теги no_*_spell_mods игра не применяет (на трейде есть Ashen Staff с increased Cold Damage)', { skip }, async () => {
+  await init();
+  assert.ok(craft.canAppear('Ashen Staff', '#% increased Cold Damage'), 'increased Cold Damage может быть на Ashen Staff');
   const p = await plan('staff-fire');
-  const texts = [...p.goal.add.map((a) => a.text), ...p.r.sections.flatMap((s) => (s.candidates || []).map((c) => c.text))];
-  for (const t of texts) assert.ok(!/^#% increased (cold|lightning|chaos) damage$/.test(t), `запрещённый мод в советах: ${t}`);
+  assert.ok(p.goal, 'план есть');
 });
