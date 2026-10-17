@@ -135,6 +135,7 @@ function gambleFor(item, tags) {
   if (item.rarity === 'Rare') how.push(t('Sanctify (Divine Orb + Omen of Sanctification) — every modifier ×0.78–1.22 of its current value, the item becomes unmodifiable and can no longer be corrupted; only for a near-perfect item, Divine to high rolls first'));
   const inf = gambleData && (gambleData.infusers || []).find((x) => (x.classes || []).includes(item.itemClass));
   if (inf && (item.quality || 0) >= 20) how.push(t('{infuser} — up to +10% quality above the maximum (needs 20% quality); may only add the Corrupted tag', { infuser: inf.name }));
+  if (item.rarity === 'Rare' && bonesFor(tags, item.ilvl || 100).length) how.push(t('Omen of Putrefaction + a bone: all modifiers become 6 unrevealed ones (3 prefixes + 3 suffixes), each revealed from 3 options, and the item becomes corrupted — a «slot machine» for cheap bases (quivers, armour)'));
   how.push(t('Omen of Corruption (a guaranteed change) is not obtainable this league'));
   // «(only str_armour bases)» — только для баз с таким тегом; остальные не показываем.
   const enchants = ((gambleData && gambleData.corruptedEnchants && gambleData.corruptedEnchants[item.itemClass]) || [])
@@ -346,6 +347,18 @@ async function advise(item, demandMods, cached) {
     // Гарантированный мод через crafted-слот: Perfect- и порченые эссенции («снимают случайный мод и добавляют свой»).
     const lines = c.text.split(' / ');
     c.crafted = craftedSources.filter((x) => templates(x.text.replace(/–/g, '-')).some((l) => lines.includes(l))).map((x) => x.name);
+    // Блокер (docs/crafting-tricks.md T-08, D-5): на стороне есть частое ненужное семейство — дешёвый мод этой группы
+    // (например, выбранный при раскрытии desecrate) закрывает её для следующих Exalted; потом его снимают.
+    if (nOf) {
+      const isWanted = (type) => normal.some((x) => x.type === type && x.side === c.side);
+      let sum = 0, junk = null;
+      for (const type of lv.keys()) {
+        const w = nOf(type);
+        sum += w;
+        if (type !== c.type && !isWanted(type) && (!junk || w > junk.w)) junk = { type, w };
+      }
+      if (junk && junk.w / sum >= 0.12) c.blocker = { text: (d.typeLines.get(junk.type) || [junk.type]).join(' / '), share: junk.w / sum };
+    }
   }
   for (const c of normal) c.essence = essenceFor(c.text, item.itemClass);
   if (item.rarity === 'Normal') return { normal: transmuteOptions(normal, sidePool, nOf, ilvl, jewel), popular: normal.slice(0, 8), chanceMeta };
@@ -482,6 +495,10 @@ async function advise(item, demandMods, cached) {
   if (armourOrWeapon && (item.quality || 0) < 20) cheap.push(t('Quality to 20% (currently {n}%) — {currency}', { n: item.quality || 0, currency: qualityCurrency(tags) }));
   if ((tags.includes('ring') || tags.includes('amulet')) && !item.quality) cheap.push(t('Catalyst — quality on rings and amulets boosts matching modifiers (life, minion, caster…); Omen of Catalysing Exaltation makes the next Exalted Orb consume all catalyst quality to favour that type — re-apply the catalyst afterwards'));
   if (jewel && !item.quality) cheap.push(t('Refined Catalyst — quality on jewels boosts matching modifiers'));
+  // +3 к уровню умений на бижутерии при качестве 34%+ становится +4 (3 × 1.34); Essence of the Breach поднимает
+  // потолок качества на 20% (docs/crafting-tricks.md T-11, по данным сообщества).
+  const plus3 = (tags.includes('ring') || tags.includes('amulet')) && (item.modLines || []).find((l) => /^\+3 to Level of all .*Skills$/.test(l.text));
+  if (plus3 && (item.quality || 0) < 34) cheap.push(t('Quality 34%+ turns «{mod}» into +4: a matching catalyst, and Essence of the Breach raises the quality cap by 20% (community finding, not verified)', { mod: plus3.text }));
   const total = mine.length;
   if (cheap.length) sections.push({ kind: 'cheap', how: cheap });
   // Fracturing — не «дёшево и без риска»: в 0.5 редкий (только атлас) и фиксирует СЛУЧАЙНЫЙ мод.
@@ -685,6 +702,7 @@ function planGoal(mine, candidates, max, want, magic, magicFree = []) {
       // Perfect/порченая эссенция с этим модом: жертвенный Exalted на сторону → Crystallisation стороны + эссенция.
       crafted: craftedFree && c.crafted && c.crafted.length ? c.crafted : null,
       crystal: `Omen of ${S} Crystallisation`,
+      blocker: c.blocker || null,
       currencies: [...Object.keys(c.exalt || { base: 1 }).map((k) => EXALT_NAME[k]), ...(sideOmen ? [sideOmen] : []),
         ...(desFree && c.desecrate ? [...Object.keys(c.desecrate), `Omen of ${S} Necromancy`, 'Omen of Abyssal Echoes', 'Omen of Light'] : []),
         ...(craftedFree && c.crafted ? [...c.crafted, `Omen of ${S} Crystallisation`, 'Exalted Orb'] : [])] });

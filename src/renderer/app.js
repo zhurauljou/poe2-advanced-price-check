@@ -785,6 +785,8 @@ const EXALT_NAME = { base: 'Exalted Orb', greater: 'Greater Exalted Orb', perfec
 // из них Σ K/j заденут нужный мод — его придётся добавлять снова (restoreCost — цена одного такого добавления).
 // Попадание в другой лишний мод — не промах, а прогресс. Сравниваем: Annulment по всей вещи или с оменом стороны.
 let restoreCost = null;
+// Цена потери нужного мода: его добавление, но не меньше четверти цены цели — без ключевого мода вещь почти ничего не стоит.
+const restoreValue = () => Math.max(restoreCost ?? (craftPrices['Orb of Annulment'] ?? 0) * 10, goalValue ? goalValue / 4 : 0);
 function removeCost(s) {
   const p = (n) => craftPrices[n];
   const ann = p('Orb of Annulment');
@@ -792,7 +794,7 @@ function removeCost(s) {
   const run = (J, K) => { let tries = 0, hits = 0; for (let j = J; j >= 1; j--) { tries += (j + K) / j; hits += K / j; } return { tries, hits }; };
   // Задетый нужный мод: вернуть его стоит как его добавление, но не меньше четверти цены цели — без ключевого мода
   // вещь почти ничего не стоит.
-  const restore = Math.max(restoreCost ?? ann * 10, goalValue ? goalValue / 4 : 0);
+  const restore = restoreValue();
   const opts = [];
   const sides = Object.values(s.sides);
   const all = run(sides.reduce((a, x) => a + x.J, 0), sides.reduce((a, x) => a + x.K, 0));
@@ -864,7 +866,7 @@ function addCost(s, rolls, s2) {
       if (cur.some((n) => p(n) == null)) continue;
       const per = cur.reduce((a, n) => a + p(n), 0);
       // Промах: эссенция сняла нужный мод (мод эссенции всё равно встал) — вернуть его и снять жертву.
-      const cost = per + (1 - P) * ((restoreCost ?? 0) + (p('Orb of Annulment') ?? 0));
+      const cost = per + (1 - P) * (restoreValue() + (p('Orb of Annulment') ?? 0));
       opts.push({ k: 'essence', essence: name, currencies: cur, chances: [P], pool: 0, cost, per, slam: per / P });
     }
   }
@@ -993,6 +995,10 @@ function planHtml(plan) {
       notes.push(t('A miss → Orb of Annulment + Omen of Light removes it ({cost})', { cost: money((craftPrices['Orb of Annulment'] || 0) + (craftPrices['Omen of Light'] || 0)) }));
     }
     if (EXALT_WHY[c.k]) notes.push(t(EXALT_WHY[c.k]));
+    if (s.blocker && c.k !== 'essence' && c.k !== 'desecrate') {
+      const better = c.chance && !c.lottery ? oneIn(Math.min(1, c.chance / (1 - s.blocker.share))) : null;
+      notes.push(t('Blocker: first add a cheap «{mod}» (≈{pct}% of rolls here; e.g. pick it in a desecrate reveal) — its group can no longer roll{odds}; remove it afterwards', { mod: s.blocker.text, pct: Math.round(s.blocker.share * 100), odds: better ? ` (${better})` : '' }));
+    }
     if (s.act !== 'remove' && c.k !== 'desecrate' && s.sideOmen && !c.currencies.includes(s.sideOmen)) notes.push(t('without a side omen half the rolls land on the other side'));
     const altText = (o) => o.k === 'essence'
       ? `${o.currencies.join(' + ')} · ${oneIn(o.chances[0])} · ${t('≈ {cost} on average', { cost: money(o.cost) })}`
@@ -1215,7 +1221,7 @@ function gambleHtml(g) {
   const p = (n) => (craftPrices[n] != null && (n !== 'Omen of Sanctification' || state.item.rarity === 'Rare') ? ` · ${n} ≈ ${money(craftPrices[n])}` : '');
   const list = (xs) => xs.map((h) => `<div class="craft-how">${esc(h)}</div>`).join('');
   return `<div class="craft-sec gamble"><div class="k">⚠ ${esc(t('Risky final step: corruption and sanctification'))}</div>${list(g.how)}
-    <div class="craft-sub">${esc(t('Prices'))}${esc(p('Vaal Orb') + p('Omen of Sanctification'))}</div>
+    <div class="craft-sub">${esc(t('Prices'))}${esc(p('Vaal Orb') + p('Omen of Sanctification') + p('Omen of Putrefaction'))}</div>
     ${g.enchants.length ? `<details class="why"><summary>${esc(t('Possible corruption enchants ({n})', { n: g.enchants.length }))}</summary>${list(g.enchants)}</details>` : ''}</div>`;
 }
 
