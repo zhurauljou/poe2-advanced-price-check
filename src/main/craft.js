@@ -233,6 +233,19 @@ async function advise(item, demandMods, cached) {
   const normal = candidates('item');
   // Примерный шанс, что следующий мод на этой стороне (Exalted + омен стороны) — именно этот: частота семейства среди всех,
   // что могут встать сюда (без уже занятых групп), по собранной статистике. Семейства без данных считаем как самые редкие.
+  // Что может добавить Exalted на каждую сторону: семейство → уровни его тиров на этой вещи (без занятых групп).
+  const sidePool = {};
+  for (const side of ['prefix', 'suffix']) {
+    const lv = new Map();
+    for (const m of onBase) {
+      if (m.domain !== 'item' || m.generation_type !== side || m.is_essence_only || m.required_level > ilvl
+        || (m.groups || []).some((g) => present.has(g))) continue;
+      if (!lv.has(m.type)) lv.set(m.type, []);
+      lv.get(m.type).push(m.required_level);
+    }
+    sidePool[side] = lv;
+  }
+  let nOf = null; // частота семейства по собранной статистике (если есть)
   const W = weights();
   const wc = W && W.classes[item.itemClass];
   let chanceMeta = null;
@@ -243,10 +256,10 @@ async function advise(item, demandMods, cached) {
     // Делим частоту на долю «типов баз» класса, где семейство вообще может выпасть: оценка веса, как если бы оно было везде.
     const share = eligibleShare(d, base);
     for (const type of Object.keys(counts)) counts[type] /= Math.max(share(type), 0.1);
+    const n = (type) => (counts[type] || 0) + SMOOTH;
+    nOf = n;
     for (const side of ['prefix', 'suffix']) {
-      const types = new Set(onBase.filter((m) => m.domain === 'item' && m.generation_type === side && !m.is_essence_only
-        && m.required_level <= ilvl && !(m.groups || []).some((g) => present.has(g))).map((m) => m.type));
-      const n = (type) => (counts[type] || 0) + SMOOTH;
+      const types = new Set(sidePool[side].keys());
       const total = [...types].reduce((s, type) => s + n(type), 0);
       // Ценные моды (≥ SALE_REASON% билдов) по трейду честно не оценить: без потолка цены они завышены (такие вещи охотнее
       // выставляют), с потолком — занижены (такие вещи дороже). Шанс для них не показываем.
@@ -254,6 +267,26 @@ async function advise(item, demandMods, cached) {
         if (c.pct >= SALE_REASON) c.chance = null, c.chanceUnknown = true;
         else if (total && types.has(c.type)) c.chance = n(c.type) / total;
       }
+    }
+  }
+  // Exalted / Greater (моды 35+) / Perfect (50+): шанс, что следующий мод — это семейство в одном из двух лучших тиров
+  // (цель крафта считается по лучшему тиру). Веса тиров внутри семейства неизвестны — считаем равными.
+  // chance — по статистике (null у ценных модов и без данных), guess — как если бы все семейства были равновероятны:
+  // им окно выбирает валюту, когда шанс неизвестен. pool — сколько семейств вообще может выпасть.
+  for (const c of normal) {
+    const lv = sidePool[c.side];
+    const mineLv = lv.get(c.type);
+    if (!mineLv) continue;
+    const top = [...mineLv].sort((a, b) => b - a).slice(0, 2).pop();
+    c.exalt = {};
+    for (const [k, L] of Object.entries(EXALT_MIN)) {
+      if (L && tags.includes('jewel')) continue; // у самоцветов один тир — дорогие Exalted ничего не дают
+      const share = (type) => lv.get(type).filter((x) => x >= L).length / lv.get(type).length;
+      if (!share(c.type)) continue;
+      const good = mineLv.filter((x) => x >= L && x >= top).length / mineLv.filter((x) => x >= L).length;
+      const odds = (w) => w(c.type) / [...lv.keys()].reduce((s, type) => s + w(type), 0) * good;
+      c.exalt[k] = { pool: [...lv.keys()].filter((type) => share(type) > 0).length, guess: odds(share),
+        chance: nOf && !c.chanceUnknown ? odds((type) => nOf(type) * share(type)) : null };
     }
   }
   for (const c of normal) c.essence = essenceFor(c.text, item.itemClass);
@@ -455,6 +488,8 @@ function familyCounts(wc, pctOf) {
 // ценность = спрос (% билдов) × качество тира; кандидату засчитываем средний тир (что выпадет — неизвестно).
 // Fractured снять нельзя — остаются всегда. Возвращает { keep, remove, add } или null, если улучшать нечего.
 const TIER_VALUE = [0, 1, 0.85, 0.7, 0.6];
+const EXALT_MIN = { base: 0, greater: 35, perfect: 50 }; // Greater / Perfect Exalted Orb — только моды этого уровня и выше
+const EXALT_NAME = { base: 'Exalted Orb', greater: 'Greater Exalted Orb', perfect: 'Perfect Exalted Orb' };
 const KEY_PCT = 30; // мод, который носит столько % билдов, на другой не меняем
 const KEEP_BONUS = 1.5;
 function planGoal(mine, candidates, max, want, magic, magicFree = []) {
@@ -487,15 +522,11 @@ function planGoal(mine, candidates, max, want, magic, magicFree = []) {
     const ess = add.find((c) => c.essence);
     plan.push(ess ? { act: 'essence', mod: ess.text, currencies: [ess.essence.name], chance: 1 } : { act: 'regal', currencies: ['Regal Orb'], chance: 1 });
   }
-  // Шаги: сначала — убрать лишнее и вставить самый востребованный мод.
-  const steps = [];
-  if (magicFree.length) steps.push(t('Orb of Augmentation — first fill the free {side} while it is magic (cheap)', { side: t(magicFree[0]) }));
-  if (magic) {
-    const ess = add.find((c) => c.essence);
-    steps.push(ess ? t('{essence} — makes it rare with {mod}', { essence: ess.essence.name, mod: ess.text }) + ' · ' + t("An essence uses the item's only crafted-modifier slot: no Perfect Essence or Alloy later") : t('Regal Orb — makes it rare (random modifier)'));
-  }
   // Сначала сторона, где самый востребованный мод (ключевой) — он сильнее всего поднимает цену.
   const top = (side) => Math.max(0, ...add.filter((c) => c.side === side).map((c) => c.pct));
+  // Сколько модов на стороне сейчас — меняется по ходу плана (омен стороны нужен, только пока на другой есть место).
+  const filled = { prefix: 0, suffix: 0 };
+  for (const a of mine) filled[a.side]++;
   for (const side of ['prefix', 'suffix'].sort((x, y) => top(y) - top(x))) {
     const out = remove.filter((r) => r.side === side);
     const into = add.filter((c) => c.side === side);
@@ -509,18 +540,27 @@ function planGoal(mine, candidates, max, want, magic, magicFree = []) {
       // Desecrated снимается прицельно: Annulment + Omen of Light убирает только desecrated-мод — гарантированно.
       if (r.tag === 'desecrated') plan.push({ act: 'remove', side, mod: r.text, currencies: ['Orb of Annulment', 'Omen of Light'], chance: 1, targeted: true });
       else plan.push({ act: 'remove', side, mod: r.text, currencies: ['Orb of Annulment', `Omen of ${S} Annulment`], chance: 1 / Math.max(1, sideMods), chanceAll: 1 / Math.max(1, allMods) });
+      filled[side]--;
     }
-    // Есть ли место на другой стороне: если нет, Exalted и без омена ляжет сюда.
+    // Есть ли место на другой стороне: если нет, Exalted и без омена ляжет сюда — омен стороны не нужен.
     const other = side === 'prefix' ? 'suffix' : 'prefix';
-    const otherOpen = max[other] - mine.filter((a) => a.side === other).length + remove.filter((r) => r.side === other).length > 0;
-    for (const c of into) {
-      plan.push({ act: 'add', side, mod: c.text, pct: c.pct, currencies: ['Exalted Orb', `Omen of ${S} Exaltation`],
-        chance: c.chanceUnknown ? null : c.chance || null, otherOpen, retry: ['Orb of Annulment'] });
+    const otherOpen = max[other] - filled[other] > 0;
+    const sideOmen = otherOpen ? `Omen of ${S} Exaltation` : null;
+    // Какой Exalted взять (обычный / Greater / Perfect) и с какими оменами — выбирает окно по ценам валюты.
+    const step = (c) => ({ act: 'add', side, mod: c.text, pct: c.pct, exalt: c.exalt || { base: { chance: c.chanceUnknown ? null : c.chance || null } },
+      sideOmen, otherOpen, currencies: [...Object.keys(c.exalt || { base: 1 }).map((k) => EXALT_NAME[k]), ...(sideOmen ? [sideOmen] : [])],
+      retry: ['Orb of Annulment'] });
+    // Два мода на одну сторону — можно одним Exalted с Omen of Greater Exaltation (если дешевле, окно так и предложит).
+    for (let i = 0; i < into.length; i += 2) {
+      if (i + 1 < into.length) {
+        const pair = [step(into[i]), step(into[i + 1])];
+        plan.push({ act: 'add2', side, steps: pair, sideOmen, otherOpen, retry: ['Orb of Annulment'],
+          currencies: [...new Set([...pair[0].currencies, ...pair[1].currencies, 'Omen of Greater Exaltation'])] });
+      } else plan.push(step(into[i]));
     }
-    if (out.length) steps.push(t('Remove {mods}: Orb of Annulment + Omen of {S} Annulment (random {side}), or Chaos Orb + Omen of Whittling if it is the lowest-level modifier', { mods: out.map((r) => r.text).join(', '), S, side: t(side) }));
-    steps.push(t('Add {mods}: Exalted Orb + Omen of {S} Exaltation', { mods: into.map((c) => c.text).join(', '), S }) + (into.length > 1 ? t(' (Omen of Greater Exaltation adds two)') : ''));
+    filled[side] += into.length;
   }
-  return { keep, remove, add: add.map(({ side, text, pct, tier, tiers, range, stats, essence, chance, chanceUnknown }) => ({ side, text, pct, tier, tiers, range, stats, essence, chance, chanceUnknown })), steps, plan };
+  return { keep, remove, add: add.map(({ side, text, pct, tier, tiers, range, stats, essence, chance, chanceUnknown }) => ({ side, text, pct, tier, tiers, range, stats, essence, chance, chanceUnknown })), plan };
 }
 
 // Может ли мод (шаблон poe.ninja: «# to Level of all Spell Skills») встать на эту базу. null — пул модов ещё не загружен.

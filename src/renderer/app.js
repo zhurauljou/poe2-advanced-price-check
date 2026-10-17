@@ -773,19 +773,56 @@ function stepCost(s) {
     const useOmen = b != null && (a == null || b < a);
     return { cost: useOmen ? b : a, chance: useOmen ? s.chance : s.chanceAll, currencies: useOmen ? s.currencies : ['Orb of Annulment'], risky: true };
   }
-  if (s.act === 'add') {
-    if (s.chance == null) return { cost: null, chance: null, currencies: s.currencies, lottery: true };
-    const ex = p('Exalted Orb');
-    const omen = p(s.currencies[1]);
-    const retry = p('Orb of Annulment') || 0; // неудачный мод надо убрать — грубо: Annulment за каждый промах
-    const variant = (per, pc) => (per + (1 - pc) * retry) / pc;
-    const plain = ex == null ? null : variant(ex, s.otherOpen ? s.chance / 2 : s.chance);
-    const withOmen = ex == null || omen == null || !s.otherOpen ? null : variant(ex + omen, s.chance);
-    const useOmen = withOmen != null && (plain == null || withOmen < plain);
-    return { cost: useOmen ? withOmen : plain, chance: useOmen || !s.otherOpen ? s.chance : s.chance / 2, currencies: useOmen ? s.currencies : ['Exalted Orb'] };
+  if (s.act === 'add') return addCost(s, 1);
+  if (s.act === 'add2') {
+    // Omen of Greater Exaltation: один Exalted — два мода; каждый бросок стоит половину (Exalted + омены).
+    const g = addCost(s.steps[0], 2, s.steps[1]);
+    return { ...g, two: true };
   }
   const cost = sum(s.currencies);
   return { cost, chance: 1, currencies: s.currencies };
+}
+
+// Добавить мод: перебираем Exalted / Greater / Perfect (с оменом стороны и без) и берём самый дешёвый в среднем.
+// Шанс — попасть в нужное семейство в T1–T2; промах убираем Annulment'ом. rolls = 2 — с Omen of Greater Exaltation
+// (тогда s2 — второй мод пары). Шанс неизвестен (ценный мод) — выбираем по guess (все семейства равновероятны), цену не пишем.
+const EXALT_NAME = { base: 'Exalted Orb', greater: 'Greater Exalted Orb', perfect: 'Perfect Exalted Orb' };
+function addCost(s, rolls, s2) {
+  const p = (n) => craftPrices[n];
+  const retry = p('Orb of Annulment') || 0;
+  const lottery = [s, s2].some((x) => x && Object.values(x.exalt).every((o) => o.chance == null));
+  const opts = [];
+  for (const k of Object.keys(EXALT_NAME)) {
+    const os = [s, s2].filter(Boolean).map((x) => x.exalt[k]);
+    if (os.some((o) => !o) || p(EXALT_NAME[k]) == null) continue;
+    for (const omen of s.sideOmen ? [true, false] : [false]) {
+      if (rolls === 2 && s.otherOpen && !omen) continue; // два мода на одну сторону — только с оменом стороны
+      const cur = [EXALT_NAME[k], ...(rolls === 2 ? ['Omen of Greater Exaltation'] : []), ...(omen ? [s.sideOmen] : [])];
+      if (cur.some((n) => p(n) == null)) continue;
+      const per = cur.reduce((a, n) => a + p(n), 0) / rolls;
+      const odds = (o) => { const c = lottery ? o.guess : o.chance; return s.otherOpen && !omen ? c / 2 : c; };
+      const cost = os.reduce((a, o) => { const pc = odds(o); return a + (per + (1 - pc) * retry) / pc; }, 0);
+      opts.push({ k, currencies: cur, chances: os.map((o) => (lottery ? null : odds(o))), pool: os[0].pool, cost });
+    }
+  }
+  if (!opts.length) return { cost: null, chance: null, currencies: ['Exalted Orb'], lottery: true };
+  opts.sort((a, b) => a.cost - b.cost);
+  const best = opts[0];
+  // Другие Exalted — для сравнения (по одному лучшему варианту каждого).
+  const alts = opts.filter((o, i) => o.k !== best.k && opts.findIndex((x) => x.k === o.k) === i);
+  return { cost: lottery ? null : best.cost, chance: best.chances[0], chances: best.chances, currencies: best.currencies,
+    lottery, pool: best.pool, k: best.k, alts: lottery ? [] : alts };
+}
+
+// add2, если два отдельных Exalted выходят дешевле, — разворачиваем обратно в два шага.
+function expandPlan(plan) {
+  return plan.flatMap((s) => {
+    if (s.act !== 'add2') return [s];
+    const two = stepCost(s);
+    const one = s.steps.map(stepCost);
+    const sep = one.every((c) => c.cost != null) ? one[0].cost + one[1].cost : null;
+    return two.cost != null && sep != null && sep < two.cost ? s.steps : [s];
+  });
 }
 
 const STEP_LABEL = {
@@ -794,21 +831,38 @@ const STEP_LABEL = {
   essence: (s) => t('Make it rare with {mod}', { mod: s.mod }),
   remove: (s) => t('Remove {mod}', { mod: s.mod }),
   add: (s) => t('Add {mod}', { mod: s.mod }),
+  add2: (s) => t('Add {a} and {b}', { a: s.steps[0].mod, b: s.steps[1].mod }),
+};
+
+const oneIn = (c) => t('1 in {n}', { n: Math.round(1 / c) });
+const EXALT_WHY = {
+  greater: 'only modifiers of level 35+: no low tiers, fewer other modifiers ({n} possible)',
+  perfect: 'only modifiers of level 50+: top tiers only, fewer other modifiers ({n} possible)',
 };
 
 function planHtml(plan) {
-  return `<ol class="plan">${plan.map((s) => {
+  return `<ol class="plan">${expandPlan(plan).map((s) => {
     const c = stepCost(s);
-    const odds = c.chance == null ? t('chance unknown — valuable modifier') : c.chance >= 1 ? t('guaranteed') : t('1 in {n}', { n: Math.round(1 / c.chance) });
+    let odds;
+    if (c.lottery) odds = t('chance unknown — valuable modifier');
+    else if (c.chances) odds = t('{odds} at T1–T2', { odds: c.chances.map(oneIn).join(' / ') });
+    else odds = c.chance >= 1 ? t('guaranteed') : oneIn(c.chance);
+    const notes = [];
+    if (c.two) notes.push(t('one Exalted Orb adds both modifiers'));
+    if (EXALT_WHY[c.k]) notes.push(t(EXALT_WHY[c.k], { n: c.pool }));
+    if (s.act !== 'remove' && s.sideOmen && !c.currencies.includes(s.sideOmen)) notes.push(t('without a side omen half the rolls land on the other side'));
+    const alts = (c.alts || []).map((o) => `${o.currencies[0]} · ${t('≈ {cost} on average', { cost: money(o.cost) })}`);
     return `<li><div class="ps-what">${esc(STEP_LABEL[s.act](s))}</div>
       <div class="ps-how"><span class="game">${esc(c.currencies.join(' + '))}</span> · ${esc(odds)}${c.cost != null ? ` · <b>≈ ${money(c.cost)}</b>` : ''}</div>
+      ${notes.length ? `<div class="ps-note">${esc(notes.join(' · '))}</div>` : ''}
+      ${alts.length ? `<div class="ps-note">${esc(t('Instead: {list}', { list: alts.join('; ') }))}</div>` : ''}
       ${c.risky && c.chance < 1 ? `<div class="ps-risk">${esc(t('A miss removes a good modifier instead'))}</div>` : ''}</li>`;
   }).join('')}</ol>`;
 }
 
 // Вердикт: продать как есть или крафтить (цена цели − затраты на валюту).
 function verdictHtml(plan) {
-  const costs = plan.map(stepCost);
+  const costs = expandPlan(plan).map(stepCost);
   const known = costs.filter((c) => c.cost != null).reduce((a, c) => a + c.cost, 0);
   const lottery = costs.some((c) => c.cost == null);
   const risky = costs.some((c) => c.risky && c.chance < 1);

@@ -520,6 +520,7 @@ footer::before { bottom: 0; top: -12px; -webkit-backdrop-filter: blur(16px); bac
 .ps-how { font-size: 13px; color: var(--muted); }
 .ps-how b { color: var(--gold); }
 .ps-risk { font-size: 12.5px; color: var(--warn); }
+.ps-note { font-size: 12.5px; color: var(--muted); opacity: .85; }
 .why, .more-ways { margin-top: 6px; }
 .why > summary, .more-ways > summary { cursor: pointer; font: 700 13px var(--body); color: var(--gold); list-style: none; }
 .why > summary::before, .more-ways > summary::before { content: "▸ "; }
