@@ -1435,7 +1435,7 @@ function modRow(m, i) {
   return `<div class="mod t-${esc(m.tag)}${m.enabled ? '' : ' off'}" data-i="${i}">
       <label><input type="checkbox" data-k="enabled"${m.enabled ? ' checked' : ''}>${meter(m) || '<span class="imp"></span>'}${tier}
         <span class="txt"${from}>${esc(text)}${m.merged ? `<span class="sum-v"> = ${fmt(m.value)}</span>` : ''}${cat}${rollInfo(m)}${driveChip(i)}</span></label>
-      ${m.option ? '' : `<input type="number" data-k="min" step="any" placeholder="${t('min')}" value="${m.min == null ? '' : m.min}">`}
+      ${m.option ? '' : `<span class="range-in"><input type="number" data-k="min" step="any" placeholder="${t('min')}" value="${m.min == null ? '' : m.min}"><input type="number" class="max${m.max == null ? ' empty' : ''}" data-k="max" step="any" placeholder="${t('max')}" title="${esc(t('Upper limit (optional): e.g. exactly +4, so +5 items do not count'))}" value="${m.max == null ? '' : m.max}"></span>`}
     </div>`;
 }
 
@@ -1603,8 +1603,11 @@ function cmpCounts(l) {
     if (!m.statId || seen.has(key(m.statId))) continue;
     seen.add(key(m.statId));
     const c = classify(m);
-    if (c === 'better') better++;
-    else if (c === 'worse') worse++;
+    // Ключевой мод (уровни умений, главный мод слота) весит вдвое: +5 против ваших +4 — уже другая вещь.
+    const ours = state.filters.mods.find((x) => x.statId && key(x.statId) === key(m.statId));
+    const w = ours && ours.key ? 2 : 1;
+    if (c === 'better') better += w;
+    else if (c === 'worse') worse += w;
   }
   return { better, worse };
 }
@@ -1852,6 +1855,9 @@ $('mods').addEventListener('input', (e) => {
     if (m.option) renderFilters(); // пересчитать «Match ≥ N of M»
   } else if (e.target.dataset.k === 'min') {
     m.min = e.target.value === '' ? null : Number(e.target.value);
+  } else if (e.target.dataset.k === 'max') {
+    m.max = e.target.value === '' ? null : Number(e.target.value);
+    e.target.classList.toggle('empty', m.max == null);
   }
 });
 

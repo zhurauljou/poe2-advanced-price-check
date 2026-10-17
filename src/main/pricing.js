@@ -242,6 +242,8 @@ function prepare(item, demand, rollsOn) {
         && ['explicit', 'fractured', 'desecrated', 'crafted'].includes(m.tag)
         && w.importance >= ENABLE_FROM && !covered.some((re) => re.test(m.template))),
       option,
+      // «до»: уровни умений — ровно своё значение (+5 и +4 — разные товары, особенно на магической базе).
+      max: !option && m.value != null && Number.isInteger(m.value) && LEVELS.test(m.template || '') ? m.value : null,
       forged: !!m.forged,
       // Вариант с текстовым диапазоном (размер кольца) — порядковый «ролл»: окно учитывает его при Divine.
       ...((o) => (o ? { ordinal: o } : {}))(option ? stats.ordinal(m.statId, m.template, m.textRange) : null),
@@ -329,6 +331,8 @@ function buildQuery(item, f) {
   const flt = (m) => {
     const v = {};
     if (m.min != null && m.min !== '') v.min = Number(m.min);
+    // «+# to Level of all … Skills»: +1 меняет цену в разы — ищем ровно своё значение, а не «и выше».
+    if (m.max != null && m.max !== '') v.max = Number(m.max);
     return { id: m.statId, value: v };
   };
   const regular = f.mods.filter((m) => m.enabled && m.statId && !m.option);
@@ -404,6 +408,8 @@ function flagFilters(item) {
 }
 
 // Второстепенный мод: не сумма, не вариант и не важный (ключевой хорошего тира держим обязательным).
+const LEVELS = /^\+?# to Level of all .*Skills$/i;
+
 function isMinor(m) {
   return m.tag !== 'pseudo' && !m.option && !m.key && !m.forged && (m.importance == null || m.importance < 2.4);
 }

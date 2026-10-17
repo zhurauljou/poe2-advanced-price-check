@@ -539,3 +539,7 @@ footer::before { bottom: 0; top: -12px; -webkit-backdrop-filter: blur(16px); bac
 .ps-how .cur.bone { color: #ff9b8a; border-color: rgba(255, 155, 138, .45); background: rgba(255, 155, 138, .08); }
 .ps-how .cur.essence { color: #7fd8d0; border-color: rgba(127, 216, 208, .45); background: rgba(127, 216, 208, .08); }
 .ps-how .plus { margin: 0 3px; color: var(--muted); }
+.range-in { display: inline-flex; gap: 3px; flex-shrink: 0; }
+.mod .range-in input.max { width: 44px; }
+.mod .range-in input.max.empty { opacity: .45; }
+.mod:hover .range-in input.max.empty, .mod .range-in input.max:focus { opacity: 1; }
