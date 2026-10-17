@@ -907,9 +907,117 @@ async function computeGoal(g) {
   if (box) { box.innerHTML = verdictHtml(g.plan); fit(); }
 }
 
+// ---- уник: Divine перекатывает значения всех модов разом (сами моды не меняются) ----
+const TOP_Q = 0.75; // «хорошие роллы» — верхняя четверть диапазона
+let uniqueTop; // цена с хорошими роллами: undefined — считаем, null — не нашли
+const uniqueRolls = () => (state.filters.mods || []).filter((m) => m.tag === 'explicit' && m.range && m.range.hi > m.range.lo && m.roll != null);
+
+// Моды, ради которых уник берут: по poe.ninja их носят ≥ 10% билдов с этим уником (нет данных — все).
+// Роллы остальных на цену почти не влияют — «хорошие роллы» требуем только у ключевых.
+function keyRolls(rolls) {
+  const pct = new Map(((lastBuilds && lastBuilds.mods) || []).map((r) => [modKey(r.name), r.pct]));
+  const of = (m) => Math.max(pct.get(modKey(m.template)) || 0, ...String(m.text).split('\n').map((l) => pct.get(modKey(l)) || 0));
+  const key = rolls.filter((m) => of(m) >= 10);
+  return pct.size && key.length ? key : rolls;
+}
+
+// Шанс, что после Divine сумма роллов станет больше нынешней (значения независимы и равномерны в диапазоне).
+function betterOdds(qs) {
+  const N = 20000;
+  const now = qs.reduce((a, q) => a + q, 0);
+  let win = 0;
+  for (let i = 0; i < N; i++) {
+    let s = 0;
+    for (let k = 0; k < qs.length; k++) s += Math.random();
+    if (s > now) win++;
+  }
+  return win / N;
+}
+
+function renderUniqueCraft(r, head) {
+  craftGoal = null;
+  uniqueTop = undefined;
+  craftPrices = r.prices || {};
+  const rolls = uniqueRolls();
+  const top = [];
+  if (!rolls.length) {
+    const noRanges = state.item.mods && state.item.mods.some((m) => m.tag === 'explicit' && m.statId && !m.range && /\d/.test(m.text));
+    top.push(`<div class="craft-sec"><div class="craft-how">${esc(noRanges
+      ? t('No roll ranges in the copied text — turn on "Advanced Mod Descriptions" (or copy with Ctrl+Alt+C) to see how good the rolls are')
+      : t('This unique has no variable values — Divine Orb changes nothing'))}</div></div>`);
+  } else {
+    const qs = rolls.map((m) => m.roll);
+    const key = keyRolls(rolls);
+    const low = key.filter((m) => m.roll < TOP_Q).length;
+    const tries = Math.round(1 / Math.pow(1 - TOP_Q, low));
+    const rows = rolls.map((m) => `<div class="brow${key.includes(m) ? '' : ' cold'}"${key.includes(m) ? '' : ` title="${esc(t('Few builds use it — its roll barely affects the price'))}"`}><span class="bname">${esc(m.text.split('\n')[0])} <span class="craft-tier">${fmt(m.range.lo)}–${fmt(m.range.hi)}</span></span><span class="bpct">${Math.round(m.roll * 100)}%</span>
+      <span class="bbar"><i data-w="${Math.round(m.roll * 100)}%"></i></span></div>`).join('');
+    top.push(`<div class="craft-sec plan-box"><div class="k">Divine Orb</div>
+      <div class="craft-how">${esc(t('Rerolls the values of all modifiers at once — the modifiers themselves stay'))}</div>
+      <div class="dcol"><div class="k">${esc(t('How good the rolls are'))}</div>${rows}</div>
+      <div class="craft-how">${esc(t('Chance the rolls get better overall: {pct}%', { pct: Math.round(betterOdds(qs) * 100) }))}</div>
+      <div class="craft-how">${esc(low
+        ? t(key.length < rolls.length ? 'Key modifiers in the top quarter: about 1 in {n}' : 'All modifiers in the top quarter: about 1 in {n}', { n: tries })
+        : t('All rolls are already in the top quarter — a Divine is more likely to make it worse'))}</div>
+      ${low ? `<div class="verdict-box">${uniqueVerdictHtml(tries)}</div>` : ''}</div>`);
+  }
+  if (r.gamble) top.push(gambleHtml(r.gamble));
+  $('craft').innerHTML = head + top.join('');
+  if (rolls.length && keyRolls(rolls).some((m) => m.roll < TOP_Q)) computeUniqueTop(keyRolls(rolls));
+}
+
+function uniqueVerdictHtml(tries) {
+  const now = state.est;
+  const div = craftPrices['Divine Orb'];
+  const cost = div != null ? tries * div : null;
+  const rows = [
+    `<div><span>${esc(t('Sell as is'))}</span><b>${now != null ? money(now) : '—'}</b></div>`,
+    `<div><span>${esc(t('With top-quarter key rolls'))}</span><b>${uniqueTop === undefined ? '…' : uniqueTop == null ? t('none listed') : money(uniqueTop)}</b></div>`,
+    `<div><span>${esc(t('Divine Orbs, on average'))}</span><b>${cost != null ? `${tries} · ${money(cost)}` : tries}</b></div>`,
+  ];
+  let verdict = '';
+  if (uniqueTop != null && now != null && cost != null) {
+    const gain = uniqueTop - now - cost;
+    const good = gain > Math.max(now * 0.15, cost * 0.5);
+    verdict = `<div class="verdict ${good ? 'good' : 'bad'}">${good
+      ? `✅ ${esc(t('Divine: ≈ {gain} more than selling as is', { gain: money(gain) }))}`
+      : `✖ ${esc(t('Selling as is is better'))}`}<small>${esc(t('Each Divine can also make the rolls worse — this is the average over many tries'))}</small></div>`;
+  } else if (now == null) {
+    verdict = `<div class="verdict">${esc(t('Price this item on the Price tab first'))}</div>`;
+  }
+  return `<div class="profit">${rows.join('')}</div>${verdict}`;
+}
+
+// Цена такого же уника с роллами в верхней четверти (не ниже наших) — один поиск на трейде.
+async function computeUniqueTop(rolls) {
+  const mine = state;
+  uniqueTop = undefined;
+  const f = JSON.parse(JSON.stringify(state.filters));
+  state.filters.mods.forEach((m, i) => {
+    if (!rolls.includes(m)) return;
+    const x = f.mods[i];
+    const want = m.range.lo + TOP_Q * (m.range.hi - m.range.lo);
+    const v = Number.isInteger(m.range.lo) && Number.isInteger(m.range.hi) ? Math.ceil(want) : Math.round(want * 100) / 100;
+    x.enabled = true;
+    x.min = Math.max(Number(x.min) || m.range.lo, v);
+  });
+  try {
+    const q = await window.pc.quickPrice(state.item, f);
+    if (mine !== state) return;
+    uniqueTop = estimate(q.lots);
+  } catch (e) {
+    if (mine !== state) return;
+    uniqueTop = null;
+    setStatus(errText(e), true);
+  }
+  const box = document.querySelector('#craft .verdict-box');
+  const low = rolls.filter((m) => m.roll < TOP_Q).length;
+  if (box) { box.innerHTML = uniqueVerdictHtml(Math.round(1 / Math.pow(1 - TOP_Q, low))); fit(); }
+}
+
 // «Рискованный финал»: порча и освящение — необратимо, шансы — оценки сообщества.
 function gambleHtml(g) {
-  const p = (n) => (craftPrices[n] != null ? ` · ${n} ≈ ${money(craftPrices[n])}` : '');
+  const p = (n) => (craftPrices[n] != null && (n !== 'Omen of Sanctification' || state.item.rarity === 'Rare') ? ` · ${n} ≈ ${money(craftPrices[n])}` : '');
   const list = (xs) => xs.map((h) => `<div class="craft-how">${esc(h)}</div>`).join('');
   return `<div class="craft-sec gamble"><div class="k">⚠ ${esc(t('Risky final step: corruption and sanctification'))}</div>${list(g.how)}
     <div class="craft-sub">${esc(t('Prices'))}${esc(p('Vaal Orb') + p('Omen of Sanctification'))}</div>
@@ -927,6 +1035,7 @@ function renderCraft(r) {
     return;
   }
   if (r.note) { $('craft').innerHTML = head + voidState('◇', t('No craft tips'), esc(r.note)); return; }
+  if (r.unique) { renderUniqueCraft(r, head); return; }
   const how = (list) => list.map((h) => `<div class="craft-how">${esc(h)}</div>`).join('');
   // Сверху — коротко для новичка: места на вещи, «продать или крафтить», план по шагам с затратами.
   // Всё остальное (все способы, варианты модов) — свёрнуто ниже.

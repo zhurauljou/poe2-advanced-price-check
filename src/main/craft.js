@@ -110,11 +110,16 @@ function gambleFor(item, tags) {
   const jewellery = tags.includes('ring') || tags.includes('amulet') || tags.includes('belt');
   const caster = tags.includes('wand') || tags.includes('staff');
   const how = [t('Irreversible. Odds are community estimates — GGG does not publish them.')];
-  if (tags.includes('jewel')) how.push(t('Vaal Orb — nothing, a corruption enchant or rerolled modifiers (odds for jewels unverified); the item becomes unmodifiable'));
+  if (item.rarity === 'Unique') {
+    // У уников вместо переката — значения модов ×0.78–1.22 от текущих (могут выйти за обычный диапазон).
+    if (tags.includes('jewel') || jewellery) how.push(t('Vaal Orb — ~50% nothing, ~25% corruption enchant, ~25% modifier values ×0.78–1.22 of the current ones (can go beyond the normal range); the item becomes unmodifiable'));
+    else how.push(t('Vaal Orb — ~25% each: nothing, corruption enchant, modifier values ×0.78–1.22 of the current ones (can go beyond the normal range), +1 augment socket beyond the limit; the item becomes unmodifiable'));
+    how.push(t('Divine to good rolls first: after corruption the values can no longer be rerolled, and ×1.22 of a high roll is worth the most'));
+  } else if (tags.includes('jewel')) how.push(t('Vaal Orb — nothing, a corruption enchant or rerolled modifiers (odds for jewels unverified); the item becomes unmodifiable'));
   else if (jewellery) how.push(t('Vaal Orb — ~50% nothing, ~25% corruption enchant, ~25% modifiers rerolled (often ruins the item); the item becomes unmodifiable'));
   else if (caster) how.push(t('Vaal Orb — ~25% each: nothing, corruption enchant, modifiers rerolled (often ruins the item), quality up to ~23%; the item becomes unmodifiable'));
   else how.push(t('Vaal Orb — ~25% each: nothing, corruption enchant, modifiers rerolled (often ruins the item), +1 augment socket beyond the limit; the item becomes unmodifiable'));
-  how.push(t('Before corrupting: Divine Orb, quality and runes — meta-crafting runes cannot be socketed into corrupted or sanctified items'));
+  if (!tags.includes('jewel')) how.push(t('Before corrupting: Divine Orb, quality and runes — meta-crafting runes cannot be socketed into corrupted or sanctified items'));
   if (item.rarity === 'Rare') how.push(t('Sanctify (Divine Orb + Omen of Sanctification) — every modifier ×0.78–1.22 of its current value, the item becomes unmodifiable and can no longer be corrupted; only for a near-perfect item, Divine to high rolls first'));
   const inf = gambleData && (gambleData.infusers || []).find((x) => (x.classes || []).includes(item.itemClass));
   if (inf && (item.quality || 0) >= 20) how.push(t('{infuser} — up to +10% quality above the maximum (needs 20% quality); may only add the Corrupted tag', { infuser: inf.name }));
@@ -157,9 +162,15 @@ const range = (text) => {
 
 // item — разобранный предмет (item.affixes из расширенного формата), demandMods — [{ name, pct }] с poe.ninja.
 async function advise(item, demandMods, cached) {
-  if (item.rarity !== 'Rare' && item.rarity !== 'Magic') return { note: t('Craft tips are for rare and magic items.') };
+  if (item.rarity !== 'Rare' && item.rarity !== 'Magic' && item.rarity !== 'Unique') return { note: t('Craft tips are for rare, magic and unique items.') };
   if (item.corrupted || item.mirrored || item.sanctified) {
     return { blocked: item.corrupted ? 'Corrupted' : item.mirrored ? 'Mirrored' : 'Sanctified' };
+  }
+  // Уник: моды не меняются — только значения (Divine) и рискованный финал (Vaal). Роллы окно считает по фильтрам.
+  if (item.rarity === 'Unique') {
+    const d = await load(cached);
+    const base = d.bases.get(item.baseType);
+    return { unique: true, gamble: gambleFor(item, (base && base.tags) || []) };
   }
   if (!item.affixes || !item.affixes.length) {
     return { note: t('Turn on "Advanced Mod Descriptions" in the game options (or copy with Ctrl+Alt+C) to get craft tips.') };
