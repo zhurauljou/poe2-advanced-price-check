@@ -194,12 +194,16 @@ function prepare(item, demand, rollsOn) {
   const searchMods = item.rarity === 'Rare' || item.rarity === 'Magic';
   const props = propFilters(item);
   const covered = props.filter((p) => p.enabled).map((p) => LOCAL_COVERED[p.covers]).filter(Boolean);
+  // Ниша вещи: 2+ мода одной темы — они ключевые независимо от спроса по всему классу.
+  const NICHES = [/\bMinions?\b/, /\bTotems?\b/, /\bCompanions?\b/];
+  const niche = searchMods ? NICHES.find((re) => item.mods.filter((m) => m.statId && m.tag !== 'implicit' && re.test(m.text)).length >= 2) || null : null;
   const mods = item.mods.map((m) => {
     const dp = demandOf(m.template);
     // Спрос загружен (топ-80 модов класса), а этого мода в нём нет — почти никто не носит: для важности это 0%.
     const searchable = ['explicit', 'fractured', 'desecrated', 'crafted'].includes(m.tag);
     const w = weight(item.itemClass, m.template, m.tier, dp ?? (searchMods && searchable && demandPct.size >= 40 ? 0 : undefined));
     // Случайный мод уника, который носит заметная часть билдов с этим уником, — ключевой: без него вещь другая.
+    if (niche && niche.test(m.text) && ['explicit', 'fractured', 'desecrated', 'crafted'].includes(m.tag)) { w.key = true; w.importance = Math.max(w.importance, 2.4); }
     if (item.rarity === 'Unique' && m.tag === 'desecrated' && dp >= UNIQUE_KEY) { w.key = true; w.importance = Math.max(w.importance, 2.4); } // и не снимается ослаблением
     // Мод-вариант (Legacy of … у Mageblood) у уника и есть то, за что платят, — ищем по нему сразу.
     const option = !!m.statId && m.statId.includes('|');

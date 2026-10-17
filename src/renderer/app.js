@@ -511,7 +511,7 @@ function buildsQuery() {
   if (!f) return null;
   if (item.rarity === 'Unique' && f.useName) return { uniqueName: item.name };
   if (!['Rare', 'Magic', 'Normal'].includes(item.rarity) || !f.category) return null;
-  const mods = f.mods.filter((m) => m.enabled && m.statId && m.tag !== 'pseudo')
+  const mods = f.mods.filter((m) => m.enabled && m.statId && m.tag !== 'pseudo' && m.tag !== 'implicit')
     .sort((a, b) => (b.importance || 0) - (a.importance || 0)).slice(0, 3).map((m) => m.text.split('\n')[0]);
   // Белые и магические вещи — заготовки: носят их уже редкими, поэтому спрос — по редким (магических почти никто не носит).
   return { itemClass: item.itemClass, rarity: 'Rare', baseType: f.useType ? item.baseType : undefined, mods };
