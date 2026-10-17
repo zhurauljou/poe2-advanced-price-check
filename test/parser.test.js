@@ -139,3 +139,33 @@ test('неопознанная вещь: без модов, флаг unidentifie
   assert.ok(it.unidentified);
   assert.equal(it.modLines.length, 0);
 });
+
+test('русский клиент: строки модов переводятся в английские (справочник трейда, числа и диапазоны — со строки)', async () => {
+  const stats = require('../src/main/stats');
+  const cl = require('../src/main/clientLang');
+  const sample = JSON.parse(fs.readFileSync(path.join(__dirname, 'fixtures', 'stats-sample.json'), 'utf8'));
+  stats.build(sample.en);
+  stats.buildLocal(sample.ru);
+  try {
+    assert.equal(stats.localToEnglish('+1 допустимых свойств-префиксов'), '+1 Prefix Modifier allowed');
+    assert.equal(stats.localToEnglish('Может иметь дополнительных ремесленных свойств: 1'), 'Can have 1 additional Crafted Modifier');
+    assert.equal(stats.localToEnglish('Позволяет получать свойства Разрушения'), 'Can roll Destruction modifiers');
+    assert.equal(stats.localToEnglish('35% уменьшение требований к характеристикам'), '35% reduced Attribute Requirements');
+    assert.equal(stats.localToEnglish('+12 к отклонению за каждые 50 недостающего энергетического щита'), '+12 to Deflection Rating per 50 missing Energy Shield');
+    assert.equal(stats.localToEnglish('Добавляет от 3(2-4) до 7(6-8) урона от огня'), 'Adds 3(2-4) to 7(6-8) Fire Damage');
+    assert.equal(stats.localToEnglish('Неизвестная строка флейвора'), null);
+
+    const ee2 = path.join(__dirname, 'fixtures', 'ee2-ru-items-sample.ndjson');
+    const dir = fs.mkdtempSync(path.join(require('os').tmpdir(), 'cl-'));
+    fs.mkdirSync(path.join(dir, 'cache'));
+    fs.copyFileSync(ee2, path.join(dir, 'cache', 'ee2-ru-items.ndjson'));
+    await cl.load('ru', dir, null);
+    const ru = parseItem(cl.toEnglish(fs.readFileSync(path.join(__dirname, 'fixtures', 'ru-rare-armour-advanced.txt'), 'utf8'), 'ru'));
+    const en = fixture('rare-armour-advanced.txt');
+    // Те же строки и пометки, что у английского клиента; имена аффиксов остаются русскими (крафт ищет мод по строкам).
+    assert.deepEqual(ru.modLines, en.modLines);
+    assert.deepEqual(ru.affixes.map((a) => [a.side, a.tag, a.tier, a.lines]), en.affixes.map((a) => [a.side, a.tag, a.tier, a.lines]));
+  } finally {
+    stats.buildLocal(null);
+  }
+});

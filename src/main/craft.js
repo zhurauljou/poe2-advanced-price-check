@@ -270,10 +270,30 @@ async function advise(item, demandMods, cached) {
   const findMod = (a, pool) => {
     let same = pool.filter((m) => m.name === a.name && m.generation_type === a.side);
     if (!same.length) same = d.pool.filter((m) => m.name === a.name && m.generation_type === a.side && m.domain !== 'desecrated' === (a.tag !== 'desecrated'));
+    // Имя не латиницей — клиент не на английском: ищем по строкам. Английское имя, которого нет в RePoE (устарело), —
+    // мод неизвестен, как и раньше (план его не трогает).
+    if (!same.length) return /[^\x00-\x7F]/.test(a.name || '') ? findByLines(a, pool) : null;
     if (same.length > 1 && !(a.lines || []).length) return null;
     if (same.length <= 1 || !(a.lines || []).length) return same[0] || null;
     const lines = new Set((a.lines || []).flatMap((l) => templates(l)));
     return same.find((m) => m.lines.length && m.lines.every((l) => lines.has(l))) || same.find((m) => m.lines.some((l) => lines.has(l))) || null;
+  };
+  // Клиент не на английском («Божественный»): строки clientLang уже перевёл, ищем мод по ним.
+  // Семейство — моды стороны с теми же строками; тир — по номеру из заголовка (T1 — самый высокий из тех, что
+  // могут встать на эту базу), без номера — лучший по item level.
+  const findByLines = (a, pool) => {
+    const lines = new Set((a.lines || []).flatMap((l) => templates(l)));
+    if (!lines.size) return null;
+    // Desecrated на вещи — чаще обычный мод (в RePoE domain item), реже свой (domain desecrated: моды личей и т.п.).
+    const fits = (m) => m.generation_type === a.side && m.lines.length === lines.size && m.lines.every((l) => lines.has(l));
+    let same = pool.filter(fits);
+    if (!same.length) same = d.pool.filter(fits);
+    if (!same.length) return null;
+    const own = same.filter((m) => (m.domain === 'desecrated') === (a.tag === 'desecrated'));
+    const type = (own[0] || same[0]).type;
+    const tiers = same.filter((m) => m.type === type).sort((x, y) => y.required_level - x.required_level);
+    if (a.tier && tiers[a.tier - 1]) return tiers[a.tier - 1];
+    return tiers.find((m) => m.required_level <= (item.ilvl || 100)) || tiers[tiers.length - 1];
   };
   // Моды вещи добавляют ей теги (adds_tags): «+# to Level of all Fire Spell Skills» — no_cold_spell_mods и т.п. (на посох
   // уже не выпадут Cold / Lightning / Chaos Damage), genesis_tree_minion — минионские моды колец. Пул — с учётом этих тегов.

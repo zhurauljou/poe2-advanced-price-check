@@ -46,7 +46,7 @@ function buildLocal(statsJson) {
     for (const e of g.entries) {
       const key = norm(e.text.replace(LOCAL_TAG, ''));
       if (!localIndex.has(key)) localIndex.set(key, []);
-      localIndex.get(key).push({ id: e.id, group: g.id, text: enById.get(e.id) || e.text, variant: LOCAL_TAG.test(e.text) ? 'Local' : null });
+      localIndex.get(key).push({ id: e.id, group: g.id, text: enById.get(e.id) || e.text, local: e.text, variant: LOCAL_TAG.test(e.text) ? 'Local' : null });
     }
   }
 }
@@ -69,7 +69,37 @@ function lookup(text, idx = localIndex || index) {
   if (!cands) return null;
   // «Adds 3 to 5 X» на трейде фильтруется по среднему.
   const value = values.length ? (sign * values.reduce((s, v) => s + v, 0)) / values.length : null;
-  return { cands, value };
+  return { cands, value, flipped: sign < 0 };
+}
+
+// Строка из буфера: справочник языка клиента, не нашли — английский (строки, которые clientLang уже перевёл).
+const lookupAny = (text) => (localIndex && lookup(text, localIndex)) || lookup(text, index);
+
+// Строка мода клиента не на английском → как её написал бы английский клиент: текст — английский текст того же стата
+// трейда (id у всех языков общие), числа и диапазоны тира — с исходной строки. Тогда крафт, спрос poe.ninja и правила
+// по тексту («+1 Prefix Modifier allowed», «Can roll Destruction modifiers») работают как с английским клиентом.
+// text — одна строка или две через перевод строки (мод в две строки). Не нашли в справочнике — null.
+const RANGE = /([^\s(])\([^()\s]+-[^()\s]+\)/g;
+const NUM_WITH_RANGE = /[+-]?\d+(?:\.\d+)?(?:\([^()\s]+-[^()\s]+\))?/g;
+function localToEnglish(text) {
+  if (!localIndex || !index) return null;
+  const m = lookup(text.replace(RANGE, '$1'), localIndex);
+  if (!m) return null;
+  const c = m.cands.find((x) => x.group === 'explicit' && enById.has(x.id)) || m.cands.find((x) => enById.has(x.id));
+  if (!c) return null;
+  let en = enById.get(c.id).replace(VARIANT, '');
+  // «35% уменьшение требований» нашлось как «увеличение» с минусом — по-английски «reduced».
+  if (m.flipped) en = en.replace(/\bincreased\b/, 'reduced').replace(/\bmore\b/, 'less');
+  // Числа строки, которые в шаблоне — «#» (числа самого текста, «за каждые 50 …», пропускаем), по порядку.
+  const tpl = (c.local.replace(LOCAL_TAG, '').match(/#|[+-]?\d+(?:\.\d+)?/g) || []);
+  const nums = text.match(NUM_WITH_RANGE) || [];
+  const vals = nums.filter((_, i) => tpl[i] == null || tpl[i] === '#');
+  let i = 0;
+  return en.replace(/(\+?)#/g, (all, plus) => {
+    const v = vals[i++];
+    if (v == null) return all;
+    return plus && !/^[+-]/.test(v) ? `+${v}` : v;
+  });
 }
 
 const TAG_GROUP = { explicit: 'explicit', implicit: 'implicit', enchant: 'enchant', rune: 'rune',
@@ -101,7 +131,7 @@ function matchMods(item) {
     // Моды в три строки (Undying Hate: «Glorifying … / Passives in radius are Conquered … / Desecration makes …»).
     if (i + 2 < ls.length && ls[i + 1].tag === l.tag && ls[i + 2].tag === l.tag) {
       const text3 = [l.text, ls[i + 1].text, ls[i + 2].text].join('\n');
-      const joined3 = lookup(text3);
+      const joined3 = lookupAny(text3);
       const c3 = joined3 && pick(joined3.cands, l.tag, localItem);
       if (c3) {
         out.push({ text: text3, tag: l.tag, tier: l.tier, statId: c3.id, template: c3.text, value: joined3.value, range: l.range });
@@ -110,7 +140,7 @@ function matchMods(item) {
       }
     }
     if (i + 1 < ls.length && ls[i + 1].tag === l.tag) {
-      const joined = lookup(l.text + '\n' + ls[i + 1].text);
+      const joined = lookupAny(l.text + '\n' + ls[i + 1].text);
       if (joined) {
         const c = pick(joined.cands, l.tag, localItem);
         if (c) {
@@ -126,7 +156,7 @@ function matchMods(item) {
       out.push({ text: l.text, tag: 'rune', statId: rune.id, template: rune.text, value: null, forged: true });
       continue;
     }
-    const m = lookup(l.text);
+    const m = lookupAny(l.text);
     const c = m && pick(m.cands, l.tag, localItem);
     // Несопоставленное показываем серым, без галочки: видно, что мод есть, но искать по нему нельзя.
     out.push(c ? { text: l.text, tag: l.tag, tier: l.tier, statId: c.id, template: c.text, value: m.value, range: l.range, textRange: l.textRange }
@@ -231,4 +261,4 @@ function optionCount(statId) {
   return ids.size;
 }
 
-module.exports = { build, buildLocal, matchMods, find, statFor, ordinal, optionCount };
+module.exports = { build, buildLocal, matchMods, find, statFor, ordinal, optionCount, localToEnglish };

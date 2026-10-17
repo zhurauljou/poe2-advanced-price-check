@@ -1,10 +1,11 @@
 // Клиент игры не на английском: текст предмета из буфера → английский эквивалент для остального разбора (parser.js).
 // Служебные слова — таблица ниже (по client_strings из Exiled Exchange 2, MIT, github.com/Kvan7/Exiled-Exchange-2);
-// названия баз, уников и камней — items.ndjson того же проекта. Строки модов остаются на языке клиента:
-// их сопоставляет stats.js по справочнику трейда этого языка (id статов у всех языков общие).
+// названия баз, уников и камней — items.ndjson того же проекта. Строки модов переводятся по справочнику трейда этого
+// языка (stats.localToEnglish: id статов у всех языков общие); не нашлась строка — остаётся как есть.
 
 const fs = require('fs');
 const path = require('path');
+const stats = require('./stats');
 
 const EE2 = 'https://raw.githubusercontent.com/Kvan7/Exiled-Exchange-2/master/renderer/public/data';
 
@@ -133,7 +134,9 @@ function toEnglish(text, lang) {
   const classRu = lines[0].slice(L.itemClass.length).trim();
   const out = [`Item Class: ${category ? plural(category) : classRu}`, `Rarity: ${rarity}`, ...enNames];
 
-  for (const raw of lines.slice(sepAt < 0 ? lines.length : sepAt)) {
+  const rest = lines.slice(sepAt < 0 ? lines.length : sepAt);
+  for (let i = 0; i < rest.length; i++) {
+    const raw = rest[i];
     const l = raw.trim();
     if (L.flags[l]) { out.push(L.flags[l]); continue; }
     const h = l.match(/^\{ (.*) \}$/);
@@ -155,9 +158,33 @@ function toEnglish(text, lang) {
       out.push(`${p[1]}: ${v}`);
       continue;
     }
+    // Строка мода → английская (справочник трейда этого языка, stats.localToEnglish). Не нашлась одна — пробуем вместе
+    // со следующей (мод в две строки). Не нашлась и так — остаётся как есть (stats.js сопоставит её по справочнику языка).
+    const mod = modBody(l, L);
+    if (mod) {
+      let en = stats.localToEnglish(mod.body);
+      if (en) { out.push(mod.wrap(en)); continue; }
+      const next = i + 1 < rest.length && modBody(rest[i + 1].trim(), L);
+      en = next && next.tag === mod.tag && stats.localToEnglish(`${mod.body}\n${next.body}`);
+      const two = en && en.split('\n');
+      if (two && two.length === 2) { out.push(mod.wrap(two[0]), next.wrap(two[1])); i++; continue; }
+    }
     out.push(raw.replace(L.unscalable, ' — Unscalable Value'));
   }
   return out.join('\n');
+}
+
+// Строка, похожая на мод: без пометок «(rune)», « — Неизменяемое значение» — их возвращает wrap. Разделители,
+// заголовки и пустые строки — null.
+const MOD_TAG = / \((implicit|enchant|rune|crafted|fractured|desecrated)\)$/;
+function modBody(l, L) {
+  if (!l || l === '--------' || /^\{.*\}$/.test(l)) return null;
+  const unscalable = l.endsWith(L.unscalable);
+  let body = unscalable ? l.slice(0, -L.unscalable.length) : l;
+  const tag = body.match(MOD_TAG);
+  if (tag) body = body.slice(0, -tag[0].length);
+  return { body, tag: tag ? tag[1] : null,
+    wrap: (en) => `${en}${tag ? tag[0] : ''}${unscalable ? ' — Unscalable Value' : ''}` };
 }
 
 module.exports = { LANGS, load, toEnglish };
