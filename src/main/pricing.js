@@ -148,12 +148,14 @@ function pseudoFilters(mods) {
   };
   const add = (id, text, value, group, perMod = () => 1) => {
     if (!group.length) return;
+    // Сумма включена, если включилась бы хоть одна её часть (по важности и спросу) — иначе это мод, за который не платят.
+    const on = group.some((m) => m.enabled);
     // Части суммы выключаем (их заменяет сумма) и помечаем — в окне они прячутся под «▸ N mods» у суммы.
     group.forEach((m) => { m.enabled = false; m.inSum = id; });
     const range = group.every((m) => m.range)
       ? group.reduce((s, m) => ({ lo: s.lo + m.range.lo * perMod(m), hi: s.hi + m.range.hi * perMod(m) }), { lo: 0, hi: 0 })
       : null;
-    out.push({ statId: id, text, tag: 'pseudo', value, enabled: true, range, roll: rollQuality(value, range),
+    out.push({ statId: id, text, tag: 'pseudo', value, enabled: on, range, roll: rollQuality(value, range),
       min: minFor(value, range, 2) });
   };
   const eleSum = ele.Fire + ele.Cold + ele.Lightning;
@@ -194,7 +196,9 @@ function prepare(item, demand, rollsOn) {
   const covered = props.filter((p) => p.enabled).map((p) => LOCAL_COVERED[p.covers]).filter(Boolean);
   const mods = item.mods.map((m) => {
     const dp = demandOf(m.template);
-    const w = weight(item.itemClass, m.template, m.tier, dp);
+    // Спрос загружен (топ-80 модов класса), а этого мода в нём нет — почти никто не носит: для важности это 0%.
+    const searchable = ['explicit', 'fractured', 'desecrated', 'crafted'].includes(m.tag);
+    const w = weight(item.itemClass, m.template, m.tier, dp ?? (searchMods && searchable && demandPct.size >= 40 ? 0 : undefined));
     // Случайный мод уника, который носит заметная часть билдов с этим уником, — ключевой: без него вещь другая.
     if (item.rarity === 'Unique' && m.tag === 'desecrated' && dp >= UNIQUE_KEY) { w.key = true; w.importance = Math.max(w.importance, 2.4); } // и не снимается ослаблением
     // Мод-вариант (Legacy of … у Mageblood) у уника и есть то, за что платят, — ищем по нему сразу.

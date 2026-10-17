@@ -63,9 +63,13 @@ function weight(itemClass, template, tier, demandPct) {
     key = true;
     base = 3;
     factor = Math.max(factor, 0.6);
-  } else if (demandPct >= DEMAND_HIGH) {
+  } else if (demandPct >= DEMAND_HIGH && !WEAK.test(t)) {
+    // Малоценные (Stun Threshold на ботинках — 33%) часто есть «за компанию», за них не платят — их поднимает только DEMAND_KEY.
     base = Math.max(base, 2.5);
     factor = Math.max(factor, 0.5);
+  } else if (demandPct != null && !key) {
+    // Спрос известен и невысок (жизнь на ботинках — 26% билдов против 50% у сопротивлений): по умолчанию не включаем.
+    base = Math.min(base, 1);
   }
   return { importance: Math.round(base * factor * 100) / 100, key };
 }
