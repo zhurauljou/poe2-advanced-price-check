@@ -221,14 +221,16 @@ function prepare(item, demand, rollsOn) {
       importance: w.importance,
       demand: dp != null ? dp : null, // % билдов с этим модом на вещах этого класса
       key: w.key,
-      enabled: (option && m.tag === 'explicit') || rolls || uniqueRandom || hotImplicit || (!!m.statId && searchMods
+      // Руна Альдура (не вынуть) — сравниваем с такими же вещами.
+      enabled: !!m.forged || (option && m.tag === 'explicit') || rolls || uniqueRandom || hotImplicit || (!!m.statId && searchMods
         && ['explicit', 'fractured', 'desecrated', 'crafted'].includes(m.tag)
         && w.importance >= ENABLE_FROM && !covered.some((re) => re.test(m.template))),
       option,
+      forged: !!m.forged,
       range: m.range || null,
       roll: rollQuality(m.value, m.range),
       // Вариант с числом («Glorifying … # souls» — сид timeless, «+# to Level of all X Skills») ищем и по числу.
-      min: option ? (m.value != null && /#/.test(m.template || '') ? m.value : null) : hotImplicit ? (m.range ? Math.ceil(m.range.lo) : minOf(m.value)) : minFor(m.value, m.range, rolls ? Math.max(w.importance, 1.2) : w.importance),
+      min: m.forged ? null : option ? (m.value != null && /#/.test(m.template || '') ? m.value : null) : hotImplicit ? (m.range ? Math.ceil(m.range.lo) : minOf(m.value)) : minFor(m.value, m.range, rolls ? Math.max(w.importance, 1.2) : w.importance),
     };
   });
   const pseudo = searchMods ? pseudoFilters(mods) : [];
@@ -383,7 +385,7 @@ function flagFilters(item) {
 
 // Второстепенный мод: не сумма, не вариант и не важный (ключевой хорошего тира держим обязательным).
 function isMinor(m) {
-  return m.tag !== 'pseudo' && !m.option && !m.key && (m.importance == null || m.importance < 2.4);
+  return m.tag !== 'pseudo' && !m.option && !m.key && !m.forged && (m.importance == null || m.importance < 2.4);
 }
 
 function toDivine(amount, currency) {

@@ -111,3 +111,9 @@ test('русский клиент: текст переводится в англ
   assert.equal(it.modLines.length, 8); // руна + 7 аффиксных строк
   assert.deepEqual(it.affixes.map((a) => [a.side, a.tag, a.tier]).slice(2, 3), [['prefix', 'desecrated', 2]]);
 });
+
+test('руна Альдура в гнезде — отдельная строка-мод с тегом rune', () => {
+  const it = parseItem(fs.readFileSync(path.join(__dirname, 'fixtures', 'rare-wand-aldur-rune.txt'), 'utf8'));
+  assert.deepEqual(it.modLines[0], { text: 'Forged by the Breath of Aldur', tag: 'rune', tier: null, range: null });
+  assert.equal(it.modLines.length, 6);
+});

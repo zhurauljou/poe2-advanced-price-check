@@ -121,6 +121,11 @@ function matchMods(item) {
         }
       }
     }
+    const rune = forged(l.text);
+    if (rune) {
+      out.push({ text: l.text, tag: 'rune', statId: rune.id, template: rune.text, value: null, forged: true });
+      continue;
+    }
     const m = lookup(l.text);
     const c = m && pick(m.cands, l.tag, localItem);
     // Несопоставленное показываем серым, без галочки: видно, что мод есть, но искать по нему нельзя.
@@ -128,6 +133,19 @@ function matchMods(item) {
       : { text: l.text, tag: l.tag, tier: l.tier, statId: null });
   }
   return mergeSame(out);
+}
+
+// «Forged by the Breath of Aldur» — в гнезде руна Альдура: её не вынуть, а Fire/Lightning моды навсегда стали Cold.
+// Трейд ищет такую вещь по стату руны «When socketed, transforms all Fire and Lightning modifiers to equivalent Cold modifiers».
+const ALDUR = { Breath: 'Cold', Passion: 'Fire', Ire: 'Lightning', Betrayal: 'Chaos' };
+function forged(text) {
+  const m = String(text).match(/^Forged by the (\w+) of Aldur$/);
+  const el = m && ALDUR[m[1]];
+  if (!el || !index) return null;
+  for (const list of index.values()) {
+    for (const c of list) if (c.group === 'rune' && c.text.includes(`to equivalent ${el} modifiers`)) return c;
+  }
+  return null;
 }
 
 // Трейд хранит одинаковые статы одной суммой: «+30 to maximum ES» и «+77 to maximum ES» с разных

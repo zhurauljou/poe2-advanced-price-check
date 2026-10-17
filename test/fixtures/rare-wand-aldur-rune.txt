@@ -1,0 +1,23 @@
+Item Class: Wands
+Rarity: Rare
+Victory Needle
+Siphoning Wand
+--------
+Requires: Level 78, 125 Int
+--------
+Sockets: S 
+--------
+Item Level: 81
+--------
+Forged by the Breath of Aldur
+--------
+{ Prefix Modifier "Frosted" (Tier: 3) — Mana }
++120(105-124) to maximum Mana
+{ Prefix Modifier "of Ice" (Tier: 1) — Elemental, Cold }
+Gain 29(28-30)% of Damage as Extra Cold Damage
+{ Prefix Modifier "Runic" (Tier: 2) — Caster }
+100(90-104)% increased Spell Damage
+{ Suffix Modifier "of Unmaking" (Tier: 3) — Caster, Critical }
+49(47-53)% increased Critical Hit Chance for Spells
+{ Suffix Modifier "of the Glacier" (Tier: 2) — Caster, Gem }
++4 to Level of all Cold Spell Skills

@@ -192,6 +192,8 @@ function parseItem(text) {
         }
         const l = boostLine(raw.replace(RANGE, '$1').replace(/ — Unscalable Value$/, '').replace(/(\S)\([^()]*\)$/, '$1') /* «()» и текстовый диапазон «Massive Ring(Very Small-Massive Ring)» */, head ? head.boost : 0);
         const t = l.match(TAGGED);
+        // Руна Альдура в гнезде — без заголовка { … }, но это свойство вещи (stats.forged), а не флейвор.
+        if (/^Forged by the \w+ of Aldur$/.test(l)) { item.modLines.push({ text: l, tag: 'rune', tier: null, range: null }); continue; }
         if (advanced && !head && !t) continue;
         const tier = head ? head.tier : null;
         const range = tierRange(raw, head ? head.boost : 0);
