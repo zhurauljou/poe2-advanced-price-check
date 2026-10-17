@@ -25,6 +25,7 @@ const ICON = path.join(__dirname, '../../assets/icon.png');
 
 let win = null;
 let tray = null;
+let pinned = false; // пошаговый крафт: окно не прячется при клике в игру
 let interacted = false; // окно получало фокус (кликнули в него) — тогда клик обратно в игру его прячет
 let leagues = [];
 let ready = null; // промис загрузки справочников
@@ -95,7 +96,7 @@ function createOverlay() {
   win.setVisibleOnAllWorkspaces(true);
   win.loadFile(path.join(__dirname, '../renderer/index.html'));
   win.on('focus', () => { interacted = true; });
-  win.on('blur', () => { if (interacted) hide(); });
+  win.on('blur', () => { if (interacted && !pinned) hide(); });
   // Пользователь перетащил окно — запоминаем место, дальше открываемся там же.
   win.on('moved', () => {
     if (positioning || !win.isVisible()) return;
@@ -320,7 +321,7 @@ async function priceCheck(text) {
   // Тема вещи для советов по крафту: два самых важных включённых мода (без сумм).
   lastThemeMods = prepared.filters.mods.filter((m) => m.enabled && m.statId && m.tag !== 'pseudo' && m.tag !== 'implicit' && m.tag !== 'rune' && !m.option)
     .sort((a, b) => (b.importance || 0) - (a.importance || 0)).slice(0, 2).map((m) => m.text.split('\n')[0]);
-  send('item', { ...prepared, league, leagues, priceCurrency: settings.get().priceCurrency || 'any' });
+  send('item', { ...prepared, league, leagues, priceCurrency: settings.get().priceCurrency || 'any', hotkey: hotkeyLabel() });
   show();
 }
 
@@ -568,6 +569,7 @@ app.whenReady().then(singleInstance).then((ok) => {
     if (updWin && !updWin.isDestroyed()) updWin.setContentSize(380, Math.min(Math.ceil(h) + 2, 400));
   });
   ipcMain.handle('hide', () => hide());
+  ipcMain.handle('pin', (_e, on) => { pinned = !!on; });
   ipcMain.handle('compare-show', (_e, html, y) => {
     cmpY = win.getBounds().y + y;
     cmpWin.webContents.send('compare', html);

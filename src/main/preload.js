@@ -24,6 +24,7 @@ contextBridge.exposeInMainWorld('pc', {
   copy: (text) => ipcRenderer.invoke('copy', text),
   openUrl: (url) => ipcRenderer.invoke('open-url', url),
   hide: () => ipcRenderer.invoke('hide'),
+  pin: (on) => ipcRenderer.invoke('pin', on),
   fit: (height) => ipcRenderer.invoke('fit', height),
   // карточка конкурента в окне сбоку
   compareShow: (html, y) => ipcRenderer.invoke('compare-show', html, y),

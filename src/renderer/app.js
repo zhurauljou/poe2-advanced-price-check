@@ -286,8 +286,8 @@ document.addEventListener('click', (e) => {
   if (act === 'trade' && state.tradeUrl) window.pc.openUrl(state.tradeUrl);
   if (act === 'price') setTab('price');
   if (act === 'impact') runImpact();
-  if (act === 'session') { startSession(); craftFor = null; loadCraft(); }
-  if (act === 'session-stop') { craftSession = null; craftFor = null; loadCraft(); }
+  if (act === 'session') { startSession(); window.pc.pin(true); craftFor = null; loadCraft(); }
+  if (act === 'session-stop') { craftSession = null; window.pc.pin(false); craftFor = null; loadCraft(); }
 });
 
 // Пока ищем — заглушки той же формы, что и результат: окно не прыгает, когда приходят цены.
@@ -858,7 +858,10 @@ function verdictHtml(plan) {
   // Снятие лишнего Annulment'ами в среднем заденет нужные моды — на такой вещи это почти всегда невыгодно.
   const hits = Math.max(0, ...costs.map((c) => c.hits || 0));
   const hitNote = hits >= 1 ? `<small>${esc(t('Removing the unwanted modifiers would hit ≈{n} needed ones on average — on an item like this it is rarely worth it', { n: fmt(Math.round(hits * 10) / 10) }))}</small>` : '';
-  if (goalValue === null && now != null) {
+  // Валюта дороже готовой цели — крафт не окупится при любой цене вещи (цена вещи может быть ещё не посчитана).
+  if (goalValue != null && known >= goalValue) {
+    verdict = `<div class="verdict bad">✖ ${esc(t(goalBasis === 'partial' ? 'Probably not worth it: the currency alone (≈ {cost}) costs more than the lower bound of the goal (≥ {goal})' : 'Not worth it: the currency alone (≈ {cost}) costs more than the finished goal (≈ {goal})', { cost: money(known), goal: money(goalValue) }))}${hitNote}</div>`;
+  } else if (goalValue === null && now != null) {
     // Готовых аналогов на трейде нет — цена цели неизвестна. Затраты уже не меньше цены вещи — проще продать.
     verdict = known >= now * 0.5
       ? `<div class="verdict bad">✖ ${esc(t('Selling as is is better: the currency alone costs ≈ {cost}, the item sells for ≈ {now}', { cost: money(known), now: money(now) }))}<small>${esc(t('No finished items like the goal are listed — its price is unknown'))}</small>${hitNote}</div>`
@@ -968,7 +971,8 @@ function sessionHtml(r) {
   const done = s.goal.add.every((a) => has(a.text)) && s.goal.remove.every((x) => !has(x.text));
   const next = r.goal && r.goal.plan && r.goal.plan.length ? expandPlan(r.goal.plan)[0] : null;
   return `<div class="craft-sec session"><div class="k">${esc(t('Crafting step by step'))} <button class="link" data-act="session-stop">■ ${esc(t('Stop'))}</button></div>
-    ${news.length ? `<div class="ss-news">${esc(t('Since the last copy:'))}${news.join('')}</div>` : `<div class="muted small">${esc(t('Do the next step and copy the item again (Ctrl+C)'))}</div>`}
+    <div class="ss-how">📌 ${esc(t('The window stays open while you craft. Do a step in the game, hover the item and press'))} <kbd>${esc(state.hotkey || 'Ctrl+E')}</kbd></div>
+    ${news.length ? `<div class="ss-news">${esc(t('Since the last check:'))}${news.join('')}</div>` : ''}
     <div class="ss-list">${rows.join('')}</div>
     ${done ? `<div class="verdict good">🎉 ${esc(t('Goal reached — check the price on the Price tab'))}</div>` : next ? `<div class="ss-next">${esc(t('Next: {step}', { step: STEP_LABEL[next.act](next) }))}</div>` : ''}</div>`;
 }
@@ -1162,7 +1166,7 @@ function renderCraft(r) {
   const inSession = craftSession && sessionMatches();
   if (inSession) top.unshift(sessionHtml(r));
   if (r.goal && r.goal.plan && r.goal.plan.length) {
-    top.push(`<div class="craft-sec plan-box"><div class="k">${t('Plan')}${inSession ? '' : ` <button class="link session-btn" data-act="session" title="${esc(t('Do a step, copy the item again (Ctrl+C) — the window shows what you got and the next step'))}">▶ ${esc(t('Craft step by step'))}</button>`}</div><div class="verdict-box">${verdictHtml(r.goal.plan)}</div>
+    top.push(`<div class="craft-sec plan-box"><div class="k">${t('Plan')}${inSession ? '' : ` <button class="link session-btn" data-act="session" title="${esc(t('Do a step, check the item again with the hotkey — the window stays open and shows what you got and the next step'))}">▶ ${esc(t('Craft step by step'))}</button>`}</div><div class="verdict-box">${verdictHtml(r.goal.plan)}</div>
       ${planHtml(r.goal.plan)}<details class="why"><summary>${t('Why this plan')}</summary>${goalHtml(r.goal)}</details></div>`);
   } else {
     top.push(`<div class="craft-sec plan-box"><div class="verdict">${esc(t('No clear upgrade for this item — selling as is is the simple choice'))}</div></div>`);
