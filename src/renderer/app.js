@@ -61,7 +61,9 @@ function spark(vals, { w = 96, h = 26 } = {}) {
 const pct1 = (v) => `${v > 0 ? '+' : ''}${v.toFixed(1)}%`;
 
 function fit() {
-  requestAnimationFrame(() => window.pc.fit(document.body.scrollHeight + 2));
+  // Высота содержимого (шапка + main + футер), а не body: body растянут на всё окно ради прокрутки, и по нему
+  // окно никогда бы не уменьшалось.
+  requestAnimationFrame(() => window.pc.fit([...document.body.children].reduce((s, el) => s + el.offsetHeight, 0) + 2));
 }
 
 function setStatus(text, error) {
