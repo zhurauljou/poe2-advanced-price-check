@@ -1,0 +1,15 @@
+Item Class: Jewels
+Rarity: Rare
+Grim Bauble
+Time-Lost Sapphire
+--------
+Item Level: 82
+--------
+{ Prefix Modifier "Grand" }
+Upgrades Radius to Large
+{ Prefix Modifier "Mystic" (Tier: 1) — Damage, Caster }
+Small Passive Skills in Radius also grant 2(1-2)% increased Spell Damage
+{ Suffix Modifier "of Enchanting" (Tier: 1) — Caster, Speed }
+Notable Passive Skills in Radius also grant 2(1-2)% increased Cast Speed
+--------
+Place into an allocated Jewel Socket on the Passive Skill Tree. Right click to remove from the Socket.

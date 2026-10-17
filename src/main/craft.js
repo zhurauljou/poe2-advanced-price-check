@@ -34,12 +34,26 @@ async function load(cached) {
   const pool = Object.entries(mods)
     .filter(([, m]) => (m.domain === 'item' || m.domain === 'misc' || m.domain === 'desecrated')
       && (m.generation_type === 'prefix' || m.generation_type === 'suffix'))
-    .map(([id, m]) => ({ id, ...m, domain: m.domain === 'misc' ? 'item' : m.domain, lines: templates(m.text) }));
+    .map(([id, m]) => { const text = radiusText(m); return { id, ...m, text, domain: m.domain === 'misc' ? 'item' : m.domain, lines: templates(text) }; });
   // Строки модов по семейству — чтобы знать спрос семейства (для «причины продажи» в оценке шансов).
   const typeLines = new Map();
   for (const m of pool) if (!typeLines.has(m.type)) typeLines.set(m.type, m.lines);
   data = { bases: byName, pool, typeLines };
   return data;
+}
+
+// Моды Time-Lost самоцветов (radius_jewel) в RePoE записаны без «Small/Notable Passive Skills in Radius also grant» —
+// только эффект («(2-3)% increased [Armour]»), и по такому тексту находится обычный глобальный стат. Подставляем ту
+// формулировку, которая есть на трейде (у каждого мода подходит ровно одна).
+function radiusText(m) {
+  const radius = (m.spawn_weights || []).some((w) => w.weight > 0 && /radius_jewel$/.test(w.tag));
+  if (!radius || !m.text || /^Upgrades Radius/.test(m.text)) return m.text;
+  const plain = (l) => l.replace(/\[(?:[^|\]]*\|)?([^\]]*)\]/g, '$1').replace(/\((-?[\d.]+)--?[\d.]+\)/g, '$1');
+  for (const kind of ['Notable', 'Small']) {
+    const lines = m.text.split('\n').map((l) => `${kind} Passive Skills in Radius also grant ${l}`);
+    if (lines.every((l) => stats.statFor(plain(l), 'explicit', 'Jewels'))) return lines.join('\n');
+  }
+  return m.text;
 }
 
 // «(39-42)% increased [EnergyShield|Energy Shield]» → «#% increased energy shield» — как моды у poe.ninja.

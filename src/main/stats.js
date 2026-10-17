@@ -19,14 +19,18 @@ let index = null; // norm(text) -> [{ id, group, text, local }]
 let localIndex = null; // то же по текстам клиента не на английском; text — английский (по id), для шаблонов и спроса
 let enById = new Map();
 
+// Вариант стата: «(Local)» — у брони/оружия на самой вещи, «(Jewel)» — у самоцветов свой стат (мана за убийство и т.п.).
+const VARIANT = / \((Local|Jewel)\)$/;
+const variantOf = (itemClass) => (itemClass === 'Jewels' ? 'Jewel' : LOCAL_CLASSES.has(itemClass) ? 'Local' : null);
+
 function build(statsJson) {
   index = new Map();
   for (const g of statsJson.result) {
     for (const e of g.entries) {
-      const local = / \(Local\)$/.test(e.text);
-      const key = norm(e.text.replace(/ \(Local\)$/, ''));
+      const v = e.text.match(VARIANT);
+      const key = norm(e.text.replace(VARIANT, ''));
       if (!index.has(key)) index.set(key, []);
-      index.get(key).push({ id: e.id, group: g.id, text: e.text, local });
+      index.get(key).push({ id: e.id, group: g.id, text: e.text, variant: v ? v[1] : null });
       enById.set(e.id, e.text);
     }
   }
@@ -42,7 +46,7 @@ function buildLocal(statsJson) {
     for (const e of g.entries) {
       const key = norm(e.text.replace(LOCAL_TAG, ''));
       if (!localIndex.has(key)) localIndex.set(key, []);
-      localIndex.get(key).push({ id: e.id, group: g.id, text: enById.get(e.id) || e.text, local: LOCAL_TAG.test(e.text) });
+      localIndex.get(key).push({ id: e.id, group: g.id, text: enById.get(e.id) || e.text, variant: LOCAL_TAG.test(e.text) ? 'Local' : null });
     }
   }
 }
@@ -71,7 +75,7 @@ function lookup(text, idx = localIndex || index) {
 const TAG_GROUP = { explicit: 'explicit', implicit: 'implicit', enchant: 'enchant', rune: 'rune',
   crafted: 'crafted', fractured: 'fractured', desecrated: 'desecrated', corrupted: 'implicit' };
 
-function pick(cands, tag, localItem) {
+function pick(cands, tag, variant) {
   const group = TAG_GROUP[tag] || 'explicit';
   let pool = cands.filter((c) => c.group === group);
   // Моды от Vaal Orb («зачарования») трейд держит в группе enchant; если там нет — как имплицит.
@@ -81,7 +85,7 @@ function pick(cands, tag, localItem) {
   }
   if (!pool.length) pool = cands.filter((c) => c.group === 'explicit');
   if (!pool.length) return null;
-  const pref = pool.filter((c) => c.local === localItem);
+  const pref = pool.filter((c) => c.variant === variant);
   return (pref.length ? pref : pool)[0];
 }
 
@@ -89,7 +93,7 @@ function pick(cands, tag, localItem) {
 // многострочные моды склеиваются.
 function matchMods(item) {
   if (!index) return [];
-  const localItem = LOCAL_CLASSES.has(item.itemClass);
+  const localItem = variantOf(item.itemClass);
   const out = [];
   const ls = item.modLines;
   for (let i = 0; i < ls.length; i++) {
@@ -166,7 +170,7 @@ function find(text, group) {
 function statFor(text, tag, itemClass) {
   if (!index) return null;
   const m = lookup(text, index);
-  const c = m && pick(m.cands, tag, LOCAL_CLASSES.has(itemClass));
+  const c = m && pick(m.cands, tag, variantOf(itemClass));
   return c ? { statId: c.id, value: m.value } : null;
 }
 
