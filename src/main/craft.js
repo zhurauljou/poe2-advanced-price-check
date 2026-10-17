@@ -260,20 +260,22 @@ async function advise(item, demandMods, cached) {
   // Руна влияния в гнезде («Can roll Destruction modifiers») открывает вещи свой пул модов — добавляем его тег.
   const hasInf = (item.modLines || []).map((l) => l.text.match(/^Can roll (\w+) modifiers$/)).filter(Boolean).map((m) => INF_TAG[m[1]]).filter(Boolean);
   // Моды, которые могут встать на эту базу, и наши аффиксы среди них (по имени и стороне).
-  const onBase = d.pool.filter((m) => canRoll(m, [...tags, ...hasInf]));
-  const mine = item.affixes.map((a) => ({
-    // Название аффикса не уникально (у модов личей — «of Kurgal», «Amanamu's» на десятки модов): при нескольких
-    // совпадениях выбираем мод по тексту строк.
-    ...a, mod: (() => {
-      // Моды эссенций (Essences) не выпадают сами — их нет в пуле базы; ищем и среди всех модов.
-      let same = onBase.filter((m) => m.name === a.name && m.generation_type === a.side);
-      if (!same.length) same = d.pool.filter((m) => m.name === a.name && m.generation_type === a.side && m.domain !== 'desecrated' === (a.tag !== 'desecrated'));
-      if (same.length > 1 && !(a.lines || []).length) return null;
-      if (same.length <= 1 || !(a.lines || []).length) return same[0] || null;
-      const mine = new Set((a.lines || []).flatMap((l) => templates(l)));
-      return same.find((m) => m.lines.length && m.lines.every((l) => mine.has(l))) || same.find((m) => m.lines.some((l) => mine.has(l))) || null;
-    })(),
-  }));
+  // Мод вещи по аффиксу: название не уникально (у модов личей — «of Kurgal», «Amanamu's» на десятки модов) — при нескольких
+  // совпадениях выбираем по тексту строк; моды эссенций (Essences) в пул выпадения не входят — ищем и среди всех модов.
+  const findMod = (a, pool) => {
+    let same = pool.filter((m) => m.name === a.name && m.generation_type === a.side);
+    if (!same.length) same = d.pool.filter((m) => m.name === a.name && m.generation_type === a.side && m.domain !== 'desecrated' === (a.tag !== 'desecrated'));
+    if (same.length > 1 && !(a.lines || []).length) return null;
+    if (same.length <= 1 || !(a.lines || []).length) return same[0] || null;
+    const lines = new Set((a.lines || []).flatMap((l) => templates(l)));
+    return same.find((m) => m.lines.length && m.lines.every((l) => lines.has(l))) || same.find((m) => m.lines.some((l) => lines.has(l))) || null;
+  };
+  // Моды вещи добавляют ей теги (adds_tags): «+# to Level of all Fire Spell Skills» — no_cold_spell_mods и т.п. (на посох
+  // уже не выпадут Cold / Lightning / Chaos Damage), genesis_tree_minion — минионские моды колец. Пул — с учётом этих тегов.
+  const basePool = d.pool.filter((m) => canRoll(m, [...tags, ...hasInf]));
+  const addedTags = new Set(item.affixes.flatMap((a) => ((findMod(a, basePool) || {}).adds_tags || [])));
+  const onBase = addedTags.size ? d.pool.filter((m) => canRoll(m, [...tags, ...hasInf, ...addedTags])) : basePool;
+  const mine = item.affixes.map((a) => ({ ...a, mod: findMod(a, onBase) }));
   const present = new Set(mine.flatMap((a) => (a.mod ? a.mod.groups || [] : [])));
 
   // Сколько мест: у редкой 3+3 (у самоцветов 2+2 — всего 4 мода), у магической 1+1;
@@ -992,7 +994,7 @@ function planGoal(mine, candidates, max, want, magic, magicFree = [], itemClass 
     plan.splice(-2, 2, { act: 'add2', cross: true, side: null, steps: last.map(bare), sideOmen: null, otherOpen: false, alt: last,
       retry: [...new Set(last.flatMap((s) => s.retry))], currencies: [...new Set([...last.flatMap((s) => s.currencies), 'Omen of Greater Exaltation'])] });
   }
-  return { keep, remove, add: add.map(({ side, text, pct, tier, tiers, range, stats, essence, chance, chanceUnknown, needs, desecrateOnly }) => ({ side, text, pct, tier, tiers, range, stats, essence, chance, chanceUnknown, needs, desecrateOnly })), plan };
+  return { keep, remove, add: add.map(({ side, text, pct, tier, tiers, range, stats, essence, chance, chanceUnknown, needs, desecrateOnly, craftedOnly }) => ({ side, text, pct, tier, tiers, range, stats, essence, chance, chanceUnknown, needs, desecrateOnly, craftedOnly })), plan };
 }
 
 // Может ли мод (шаблон poe.ninja: «# to Level of all Spell Skills») встать на эту базу. null — пул модов ещё не загружен.

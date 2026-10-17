@@ -34,6 +34,7 @@ const CLASSES = ['Body Armours', 'Helmets', 'Gloves', 'Boots', 'Shields', 'Buckl
 const CLASS_OF = { 'Body Armours': 'Body Armour', Helmets: 'Helmet', Gloves: 'Gloves', Boots: 'Boots', Shields: 'Shield', Bucklers: 'Buckler', Foci: 'Focus',
   Quivers: 'Quiver', Rings: 'Ring', Amulets: 'Amulet', Belts: 'Belt', Wands: 'Wand', Staves: 'Staff', Sceptres: 'Sceptre', Quarterstaves: 'Warstaff',
   Bows: 'Bow', Crossbows: 'Crossbow', Spears: 'Spear', 'One Hand Maces': 'One Hand Mace', 'Two Hand Maces': 'Two Hand Mace', Talismans: 'Talisman' };
+const tpl = (t) => clean(t).replace(/\((-?[\d.]+)-(-?[\d.]+)\)/g, '#').replace(/-?\d+(?:\.\d+)?/g, '#').replace(/\+#/g, '#').toLowerCase().split('\n').join(' / ');
 const canRoll = (m, tags) => { for (const sw of m.spawn_weights || []) if (tags.includes(sw.tag)) return sw.weight > 0; return false; };
 const clean = (t) => String(t).replace(/\[(?:[^|\]]*\|)?([^\]]*)\]/g, '$1');
 // текст мода как в игре (расширенный формат): «+48(47-50) to Spirit»
@@ -62,19 +63,21 @@ const rollText = (t) => clean(t).replace(/\((-?[\d.]+)-(-?[\d.]+)\)/g, (s, a, b)
       const base = pick(bases);
       const tags = base.tags || [];
       const ilvl = 75 + Math.floor(rnd() * 8);
-      const pool = all.filter((m) => m.required_level <= ilvl && canRoll(m, tags));
+      const live = [...tags]; // + adds_tags выбранных модов (запреты других стихий и т.п.)
+      const pool0 = all.filter((m) => m.required_level <= ilvl);
       const used = new Set();
       const chosen = [];
       let des = 0;
       for (const side of ['prefix', 'suffix']) {
         const n = 1 + Math.floor(rnd() * 3);
         for (let i = 0; i < n; i++) {
-          const cand = pool.filter((m) => m.generation_type === side && !(m.groups || []).some((g) => used.has(g)) && (m.domain !== 'desecrated' || !des));
+          const cand = pool0.filter((m) => canRoll(m, live)).filter((m) => m.generation_type === side && !(m.groups || []).some((g) => used.has(g)) && (m.domain !== 'desecrated' || !des));
           if (!cand.length) break;
           const m = pick(cand);
           (m.groups || []).forEach((g) => used.add(g));
+          live.push(...(m.adds_tags || []));
           if (m.domain === 'desecrated') des++;
-          const fam = pool.filter((x) => x.type === m.type && x.domain === m.domain).sort((a, b) => b.required_level - a.required_level);
+          const fam = pool0.filter((x) => canRoll(x, tags)).filter((x) => x.type === m.type && x.domain === m.domain).sort((a, b) => b.required_level - a.required_level);
           chosen.push({ m, tier: fam.indexOf(m) + 1 });
         }
       }
@@ -118,6 +121,13 @@ const rollText = (t) => clean(t).replace(/\((-?[\d.]+)-(-?[\d.]+)\)/g, (s, a, b)
       // 5. одна desecration и один crafted-слот на план
       const des2 = steps.filter((s) => s.act === 'add' && s.useDes).length;
       if (des2 > 1) flag('две desecration в плане', cls);
+      // 7. предлагается мод, который на этой вещи не может выпасть (adds_tags модов вещи его запрещают)
+      const keptTags = [...tags, ...chosen.filter(({ m }) => !r.goal.remove.some((x) => x.text === tpl(m.text))).flatMap(({ m }) => m.adds_tags || [])];
+      for (const a of r.goal.add) {
+        if (a.craftedOnly || a.needs || a.desecrateOnly) continue;
+        const fams = all.filter((m) => tpl(m.text) === a.text);
+        if (fams.length && !fams.some((m) => canRoll(m, keptTags) || canRoll(m, [...keptTags, 'breach_desecration']))) flag('предлагается запрещённый на вещи мод', `${cls}: ${a.text}`);
+      }
       // 6. добавляется то, что уже есть на вещи
       for (const a of r.goal.add) if (r.goal.keep.some((x) => x.text === a.text)) { flag('добавляется мод, который уже есть', `${cls}: ${a.text}`); if (process.env.DUMP) fs.writeFileSync(process.env.DUMP, text); }
     }

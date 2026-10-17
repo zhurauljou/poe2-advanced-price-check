@@ -1,0 +1,21 @@
+Item Class: Staves
+Rarity: Rare
+Apocalypse Bane
+Ashen Staff
+--------
+Requires: Level 28
+--------
+Item Level: 38
+--------
+Grants Skill: Level 10 Firebolt
+--------
+{ Prefix Modifier "Scholar's" (Tier: 4) — Caster, Damage }
+96(89-108)% increased Spell Damage
+{ Prefix Modifier "Sapphire" (Tier: 6) — Mana }
++73(69-108) to maximum Mana
+{ Suffix Modifier "of Flames" (Tier: 3) — Caster, Gem }
++4 to Level of all Fire Spell Skills
+{ Suffix Modifier "of Nimbleness" (Tier: 5) — Caster, Speed }
+23(20-25)% increased Cast Speed
+{ Suffix Modifier "of the Prodigy" (Tier: 6) — Attribute }
++16(13-16) to Intelligence
