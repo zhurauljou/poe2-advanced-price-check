@@ -63,10 +63,14 @@
   // removal — [{ a: цена снятия, q: шанс задеть нужный мод }]. Задетый нужный мод придётся добавлять снова (≈ та же
   // стоимость E): E = (per + (1−pc)·a) / (pc − (1−pc)·q). Знаменатель ≤ 0 — путь безнадёжен (Infinity).
   function tries(per, pc, removal) {
-    let best = Infinity;
+    return bestRemoval(per, pc, removal).cost;
+  }
+  // То же, но с выбранным способом снятия промаха ({ a, q }) — для симуляции.
+  function bestRemoval(per, pc, removal) {
+    let best = { cost: Infinity, a: 0, q: 0 };
     for (const { a, q } of removal) {
       const den = pc - (1 - pc) * q;
-      if (den > 0) best = Math.min(best, (per + (1 - pc) * a) / den);
+      if (den > 0) { const cost = (per + (1 - pc) * a) / den; if (cost < best.cost) best = { cost, a, q }; }
     }
     return best;
   }
@@ -95,7 +99,8 @@
         const per = cur.reduce((a, n) => a + p(n), 0) / rolls;
         const odds = (o) => { const c = lottery ? o.guess : o.chance; return s.otherOpen && !omen ? c / 2 : c; };
         const cost = os.reduce((a, o) => a + tries(per, odds(o), removal), 0);
-        opts.push({ k, currencies: cur, chances: os.map((o) => (lottery ? null : odds(o))), pool: os[0].pool, cost, per: per * rolls, slam: per / odds(os[0]), p: os.reduce((a, o) => a * odds(o), 1) });
+        const rem = bestRemoval(per, odds(os[0]), removal);
+        opts.push({ k, currencies: cur, chances: os.map((o) => (lottery ? null : odds(o))), pool: os[0].pool, cost, per: per * rolls, slam: per / odds(os[0]), p: os.reduce((a, o) => a * odds(o), 1), ps: os.map(odds), rem });
       }
     }
     // Desecrate (только для шага, которому окно его отдало: одна desecration на вещь). Кость + Necromancy на сторону
@@ -111,7 +116,7 @@
         const per = cur.reduce((a, n) => a + p(n), 0);
         // Промах: эссенция сняла нужный мод (мод эссенции всё равно встал) — вернуть его и снять жертву.
         const cost = per + (1 - P) * (restoreValue() + (p('Orb of Annulment') ?? 0));
-        opts.push({ k: 'essence', essence: name, currencies: cur, chances: [P], pool: 0, cost, per, slam: per / P, p: P });
+        opts.push({ k: 'essence', essence: name, currencies: cur, chances: [P], pool: 0, cost, per, slam: per / P, p: P, ps: [P] });
       }
     }
     if (rolls === 1 && s.useDes && s.desecrate) {
@@ -124,7 +129,7 @@
           // Подходящих модов на стороне ≤ 3 — нужный гарантированно среди вариантов (остаётся только тир).
           const pc = o.pool <= 3 ? o.good : 1 - Math.pow(1 - one, echo ? 6 : 3);
           const per = cur.reduce((a, n) => a + p(n), 0);
-          opts.push({ k: 'desecrate', bone, echo, currencies: cur, chances: [lottery ? null : pc], pool: o.pool, cost: tries(per, pc, [{ a: desRetry, q: 0 }]), per, slam: per / pc, p: pc });
+          opts.push({ k: 'desecrate', bone, echo, currencies: cur, chances: [lottery ? null : pc], pool: o.pool, cost: tries(per, pc, [{ a: desRetry, q: 0 }]), per, slam: per / pc, p: pc, ps: [pc], rem: { a: desRetry, q: 0 } });
         }
       }
     }
@@ -145,7 +150,7 @@
     const hopeless = !Number.isFinite(best.cost);
     // Эссенция ставит мод наверняка — её цена известна, даже если шанс Exalted для этого мода неизвестен.
     const lot = lottery && best.k !== 'essence';
-    return { hopeless, perTry: best.per, cost: lot || hopeless ? null : best.cost, score: best.cost, chance: best.chances[0], chances: best.chances, currencies: best.currencies,
+    return { hopeless, perTry: best.per, ps: best.ps, rem: best.rem, cost: lot || hopeless ? null : best.cost, score: best.cost, chance: best.chances[0], chances: best.chances, currencies: best.currencies,
       lottery: lot, pool: best.pool, k: best.k, echo: best.echo, bone: best.bone, alts: lottery ? [] : alts, desAlt };
   }
 
@@ -213,7 +218,68 @@
     });
   }
 
-    return { stepCost, addCost, removeCost, expandPlan, withDesecrate, EXALT_NAME };
+    // Симуляция всего плана (Монте-Карло): каждый шаг «проигрывается» по нашим шансам. Шаг «до победы» повторяется,
+    // промах снимается (с шансом q заденет нужный мод); «одна попытка» попадает или оставляет промах на вещи;
+    // эссенция ставит свой мод наверняка, но может снять нужный. Итог — затраты и цена вещи: между ценой сейчас и
+    // ценой цели по доле достигнутых модов (по их ценности), минус потерянные нужные моды.
+    // info: { keep: сколько нужных модов на вещи }. → null, если нет цены цели или вещи.
+    function simulate(plan, info = {}, runs = 2000) {
+      const { goalValue: goal, est, prices } = C();
+      if (goal == null || est == null) return null;
+      const steps = expandPlan(plan);
+      const costs = steps.map(stepCost);
+      const targets = steps.flatMap((s) => (s.act === 'add2' ? s.steps : s.act === 'add' ? [s] : []));
+      const totalWorth = targets.reduce((a, s) => a + (s.worth || s.pct || 1), 0) || 1;
+      const lossPer = Math.max(goal, est) / Math.max(1, (info.keep || 0) + targets.length);
+      const ann = prices['Orb of Annulment'] || 0;
+      const poisson = (x) => Math.floor(x) + (Math.random() < x % 1 ? 1 : 0);
+      const out = [];
+      for (let r = 0; r < runs; r++) {
+        let spent = 0, got = 0, lost = 0;
+        steps.forEach((s, i) => {
+          const c = costs[i];
+          if (s.act === 'remove' && s.mods) { spent += c.spent || 0; lost += poisson(c.hits || 0); return; }
+          if (s.act !== 'add' && s.act !== 'add2') { spent += c.cost || 0; return; }
+          const parts = s.act === 'add2' ? s.steps : [s];
+          const ps = c.ps || [];
+          const per = c.perTry || 0;
+          if (c.k === 'essence') { // мод ставится наверняка; жертва снимается с шансом P, иначе — нужный мод
+            spent += per; got += s.worth || s.pct || 1;
+            if (Math.random() > (ps[0] || 1)) { lost++; spent += ann; }
+            return;
+          }
+          const loop = c.cost != null && Number.isFinite(c.score) && !c.lottery;
+          parts.forEach((x, j) => {
+            const p = ps[j] != null ? ps[j] : ps[0] || 0;
+            const w = x.worth || x.pct || 1;
+            if (!loop) { // одна попытка: попал — мод есть, нет — промах остаётся
+              spent += j === 0 ? per : 0;
+              if (Math.random() < p) got += w;
+              return;
+            }
+            for (let k = 0; k < 200; k++) { // до победы: каждый промах снимается (rem.a), иногда вместе с нужным модом
+              spent += per / parts.length;
+              if (Math.random() < p) { got += w; return; }
+              spent += (c.rem && c.rem.a) || 0;
+              if (Math.random() < ((c.rem && c.rem.q) || 0)) lost++;
+            }
+          });
+        });
+        const value = Math.max(0, est + (goal - est) * Math.min(1, got / totalWorth) - lost * lossPer);
+        out.push({ spent, value, net: value - spent, full: got >= totalWorth * 0.999 && !lost });
+      }
+      const q = (arr, f) => arr[Math.min(arr.length - 1, Math.floor(f * arr.length))];
+      const vals = out.map((o) => o.value).sort((a, b) => a - b);
+      const spends = out.map((o) => o.spent).sort((a, b) => a - b);
+      return {
+        runs, value: { p10: q(vals, 0.1), p50: q(vals, 0.5), p90: q(vals, 0.9) },
+        spent: { mean: spends.reduce((a, b) => a + b, 0) / runs, p50: q(spends, 0.5), p90: q(spends, 0.9) },
+        profit: out.filter((o) => o.net > est).length / runs, // крафт выгоднее, чем продать как есть
+        full: out.filter((o) => o.full).length / runs, // все нужные моды получены, ни один не потерян
+      };
+    }
+
+    return { stepCost, addCost, removeCost, expandPlan, withDesecrate, simulate, EXALT_NAME };
   }
 
   const api = { create };

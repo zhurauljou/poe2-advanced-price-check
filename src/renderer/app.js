@@ -744,6 +744,7 @@ function chanceTag(p, unknown) {
 // ---- Крафт для новичка: места на вещи, «продать или крафтить», план с затратами ----
 let craftPrices = {}; // div за штуку валюты из плана (poe.ninja)
 let goalValue; // цена цели: undefined — считаем, null — не нашлось
+let goalBasis = 'exact'; // по чему цена цели: exact — точно такие, similar — похожие, partial — нижняя граница
 
 // Места на вещи кружками: занят (цвет по тиру), свободен; fractured — с рамкой.
 function slotsHtml(r) {
@@ -847,7 +848,7 @@ function verdictHtml(plan) {
   const now = state.est;
   const rows = [
     `<div><span>${esc(t('Sell as is'))}</span><b>${now != null ? money(now) : '—'}</b></div>`,
-    `<div><span>${esc(t('Goal item'))}</span><b>${goalValue === undefined ? '…' : goalValue == null ? t('none listed') : money(goalValue)}</b></div>`,
+    `<div><span>${esc(t('Goal item'))}${goalValue != null && goalBasis !== 'exact' ? ` <small class="muted" title="${esc(t(goalBasis === 'similar' ? 'No exact matches — priced by similar items: the added modifiers required, the rest at their tier floor' : 'No similar items either — priced by items with only the most valuable added modifier: the real goal is worth more'))}">${esc(t(goalBasis === 'similar' ? '(similar)' : '(at least)'))}</small>` : ''}</span><b>${goalValue === undefined ? '…' : goalValue == null ? t('none listed') : (goalBasis === 'partial' ? '≥ ' : '≈ ') + money(goalValue)}</b></div>`,
     `<div><span>${esc(t('Currency, on average'))}</span><b>${lottery ? `${esc(t('from'))} ` : ''}${money(known)}</b></div>`,
   ];
   let verdict = '';
@@ -860,11 +861,15 @@ function verdictHtml(plan) {
       ? `<div class="verdict bad">✖ ${esc(t('Selling as is is better: the currency alone costs ≈ {cost}, the item sells for ≈ {now}', { cost: money(known), now: money(now) }))}<small>${esc(t('No finished items like the goal are listed — its price is unknown'))}</small>${hitNote}</div>`
       : `<div class="verdict">${esc(t('No finished items like the goal are listed — its price is unknown'))}${hitNote}</div>`;
   } else if (goalValue != null && now != null) {
+    // Симуляция всего плана: распределение итога и шанс, что крафт выгоднее продажи сейчас (src/shared/plancost.js).
+    const sim = planner.simulate(plan, { keep: craftGoal ? craftGoal.keep.length : 0 });
     const gain = goalValue - now - known;
-    const good = gain > Math.max(now * 0.15, known * 0.5);
-    verdict = `<div class="verdict ${good && !lottery ? 'good' : 'bad'}">${good
-      ? `✅ ${esc(t('Craft: ≈ {gain} more than selling as is', { gain: money(gain) }))}`
-      : `✖ ${esc(t('Selling as is is better'))}`}${lottery ? `<small>${esc(t('A key modifier has unknown odds — this is a gamble'))}</small>` : ''}${hitNote || (risky ? `<small>${esc(t('Removing a modifier can hit a good one — the cost may grow'))}</small>` : '')}</div>`;
+    const good = sim ? sim.profit >= 0.5 : gain > Math.max(now * 0.15, known * 0.5);
+    const simNote = sim ? `<small class="sim">${esc(t('Simulated {n} crafts: the item ends up ≈ {p50} (10–90%: {p10}–{p90}), currency ≈ {spent} on average; better than selling now in {profit}%, the full goal in {full}%',
+      { n: sim.runs, p50: money(sim.value.p50), p10: money(sim.value.p10), p90: money(sim.value.p90), spent: money(sim.spent.mean), profit: Math.round(sim.profit * 100), full: Math.round(sim.full * 100) }))}</small>` : '';
+    verdict = `<div class="verdict ${good && (!lottery || sim) ? 'good' : 'bad'}">${good
+      ? `✅ ${esc(sim ? t('Craft: better than selling as is in {pct}% of simulated runs', { pct: Math.round(sim.profit * 100) }) : t('Craft: ≈ {gain} more than selling as is', { gain: money(gain) }))}`
+      : `✖ ${esc(t('Selling as is is better'))}`}${simNote}${lottery ? `<small>${esc(t('A key modifier has unknown odds — this is a gamble'))}</small>` : ''}${hitNote || (risky ? `<small>${esc(t('Removing a modifier can hit a good one — the cost may grow'))}</small>` : '')}</div>`;
   } else if (now == null) {
     verdict = `<div class="verdict">${esc(t('Price this item on the Price tab first'))}</div>`;
   }
@@ -879,11 +884,37 @@ async function computeGoal(g) {
   const gone = new Set(g.remove.flatMap((r) => r.templates));
   for (const m of f.mods) if (m.template && gone.has(tplKey(m.template))) m.enabled = false;
   withMods(f, g.add);
+  goalBasis = 'exact';
   try {
     const it = state.item.rarity === 'Magic' ? { ...state.item, rarity: 'Rare' } : state.item;
     const q = await window.pc.quickPrice(it, f);
     if (mine !== state) return;
     goalValue = estimate(q.lots);
+    // Точно таких нет — похожие: добавленные моды обязательны, у оставшихся — нижняя граница тира, второстепенные выключены.
+    if (goalValue == null) {
+      const added = new Set(g.add.flatMap((a) => (a.stats || []).map((s) => s.statId)));
+      const loose = JSON.parse(JSON.stringify(f));
+      for (const m of loose.mods) {
+        if (added.has(m.statId) || !m.enabled) continue;
+        if (!m.key && (m.importance || 0) < 2.4) m.enabled = false;
+        else if (m.range) m.min = Math.ceil(m.range.lo);
+      }
+      const q2 = await window.pc.quickPrice(it, loose);
+      if (mine !== state) return;
+      goalValue = estimate(q2.lots);
+      if (goalValue != null) goalBasis = 'similar';
+      // И так нет — нижняя граница: вещь только с самым ценным добавленным модом (остальное как у похожих).
+      if (goalValue == null && g.add.length > 1) {
+        const top = [...g.add].sort((a, b) => b.pct - a.pct)[0];
+        const keep = new Set((top.stats || []).map((s) => s.statId));
+        const part = JSON.parse(JSON.stringify(loose));
+        for (const m of part.mods) if (added.has(m.statId) && !keep.has(m.statId)) m.enabled = false;
+        const q3 = await window.pc.quickPrice(it, part);
+        if (mine !== state) return;
+        goalValue = estimate(q3.lots);
+        if (goalValue != null) goalBasis = 'partial';
+      }
+    }
   } catch (e) {
     if (mine !== state) return;
     goalValue = null;

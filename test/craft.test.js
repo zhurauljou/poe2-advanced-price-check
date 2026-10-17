@@ -154,3 +154,14 @@ test('Mageblood: Legacy — случайный вариант из 14 (Divine п
   assert.equal(legacies.length, 4);
   for (const m of legacies) assert.equal(m.categorical && m.categorical.n, 14);
 });
+
+test('симуляция плана: распределение итога и затрат, шанс выгоды — в разумных границах', { skip }, async () => {
+  await init();
+  const r = await craft.advise(item('boots-no-ms'), json('boots-no-ms.demand.json').mods, cached);
+  const planner = PlanCost.create(() => ({ prices, goalValue: 20, est: 5 }));
+  const sim = planner.simulate(r.goal.plan, { keep: r.goal.keep.length }, 500);
+  assert.ok(sim.value.p10 <= sim.value.p50 && sim.value.p50 <= sim.value.p90);
+  assert.ok(sim.spent.mean > 0);
+  assert.ok(sim.profit >= 0 && sim.profit <= 1 && sim.full >= 0 && sim.full <= 1);
+  assert.equal(PlanCost.create(() => ({ prices, goalValue: null, est: 5 })).simulate(r.goal.plan), null, 'без цены цели — нет симуляции');
+});
