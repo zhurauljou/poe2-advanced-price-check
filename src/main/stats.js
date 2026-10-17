@@ -136,14 +136,15 @@ function matchMods(item) {
 }
 
 // «Forged by the Breath of Aldur» — в гнезде руна Альдура: её не вынуть, а Fire/Lightning моды навсегда стали Cold.
-// Трейд ищет такую вещь по стату руны «When socketed, transforms all Fire and Lightning modifiers to equivalent Cold modifiers».
+// Трейд ищет такую вещь по стату руны: «…transforms all Fire and Lightning modifiers to equivalent Cold modifiers» (Breath),
+// «…into equivalent Fire / Lightning / Chaos modifiers» (Passion / Ire / Betrayal).
 const ALDUR = { Breath: 'Cold', Passion: 'Fire', Ire: 'Lightning', Betrayal: 'Chaos' };
 function forged(text) {
   const m = String(text).match(/^Forged by the (\w+) of Aldur$/);
   const el = m && ALDUR[m[1]];
   if (!el || !index) return null;
   for (const list of index.values()) {
-    for (const c of list) if (c.group === 'rune' && c.text.includes(`to equivalent ${el} modifiers`)) return c;
+    for (const c of list) if (c.group === 'rune' && c.text.includes(`equivalent ${el} modifiers`)) return c;
   }
   return null;
 }
