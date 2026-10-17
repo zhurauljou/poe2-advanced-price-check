@@ -1,10 +1,11 @@
 {
   "name": "poe2-price-checker",
   "productName": "PoE 2 Price Checker",
-  "version": "0.3.92",
+  "version": "0.3.93",
   "description": "Оверлей для оценки предметов Path of Exile 2 по горячей клавише",
   "main": "src/main/main.js",
   "private": true,
+  "engines": { "node": ">=22" },
   "scripts": {
     "start": "electron .",
     "test": "node --test test/*.test.js",
