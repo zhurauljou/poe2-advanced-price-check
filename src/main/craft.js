@@ -153,8 +153,9 @@ function canRoll(mod, tags) {
 
 // Кости для Desecration по слоту (poe2db): Gnawed — только до ilvl 64, Preserved — любые, Ancient — моды от 40 уровня.
 // Cranium (самоцветы) бывает только Preserved.
-// У палочек и посохов в тегах нет «weapon», но свой пул desecrated-модов есть — кость та же, Jawbone.
-const BONES = { armour: 'Rib', weapon: 'Jawbone', wand: 'Jawbone', staff: 'Jawbone', quiver: 'Jawbone', ring: 'Collarbone', amulet: 'Collarbone', belt: 'Collarbone', jewel: 'Cranium' };
+// У палочек, посохов и скипетров в тегах нет «weapon», но desecrate на них работает (на скипетре встречаются
+// desecrated-моды, при раскрытии — обычные моды) — кость та же, Jawbone.
+const BONES = { armour: 'Rib', weapon: 'Jawbone', wand: 'Jawbone', staff: 'Jawbone', sceptre: 'Jawbone', quiver: 'Jawbone', ring: 'Collarbone', amulet: 'Collarbone', belt: 'Collarbone', jewel: 'Cranium' };
 
 // Кости для плана: Gnawed — только ilvl ≤ 64, Preserved — любой, Ancient — моды 40+; Cranium (самоцветы) — только Preserved.
 function bonesFor(tags, ilvl) {
@@ -642,9 +643,14 @@ function planGoal(mine, candidates, max, want, magic, magicFree = [], itemClass 
       // Остальные держим, пока кандидат не ценнее в полтора раза — замена случайна и стоит валюты.
       const weak = a.mod && a.mod.lines.every((l) => isWeak(l));
       const locked = a.tag === 'fractured' || !a.mod || (a.tier && a.tier <= 2 && !weak) || pct >= KEY_PCT;
-      return { kind: 'cur', a, pct, v: locked ? Infinity : value(pct, a.tier) * KEEP_BONUS * (a.mod && keyOf(a.mod.lines) ? KEY_BONUS : 1) };
+      // Неключевой desecrated-мод держит единственный desecrate-слот; снять его можно наверняка (Omen of Light) и
+      // раскрыть вместо него выбор 1 из 3–6 для нужного мода — поэтому держим его вдвое слабее.
+      const desSlot = a.tag === 'desecrated' ? 0.5 : 1;
+      return { kind: 'cur', a, pct, v: locked ? Infinity : value(pct, a.tier) * KEEP_BONUS * desSlot * (a.mod && keyOf(a.mod.lines) ? KEY_BONUS : 1) };
     });
-    const cand = candidates.filter((c) => c.side === side).map((c) => ({ kind: 'add', c, pct: c.pct, v: value(c.pct, 2) * (keyOf(c.text.split(' / ')) ? KEY_BONUS : 1) }));
+    // Гибрид с мусорной половиной («Light Radius / Mana Regeneration») ценнее пустого места, но хуже чистого мода.
+    const worth = (c) => value(c.pct, 2) * (keyOf(c.text.split(' / ')) ? KEY_BONUS : 1) * (c.text.split(' / ').some((l) => isWeak(l)) ? 0.6 : 1);
+    const cand = candidates.filter((c) => c.side === side).map((c) => ({ kind: 'add', c, pct: c.pct, v: worth(c) }));
     const chosen = [...cur, ...cand].sort((x, y) => y.v - x.v).slice(0, max[side]);
     for (const x of cur) {
       const info = { side, tag: x.a.tag, text: x.a.mod ? x.a.mod.lines.join(' / ') : x.a.name, templates: x.a.mod ? x.a.mod.lines : [], tier: x.a.tier, pct: x.pct,
@@ -718,7 +724,7 @@ function planGoal(mine, candidates, max, want, magic, magicFree = [], itemClass 
     const sideOmen = otherOpen ? `Omen of ${S} Exaltation` : null;
     // Какой Exalted взять (обычный / Greater / Perfect) и с какими оменами — выбирает окно по ценам валюты.
     // onSide / onItem — сколько модов уже стоит (все нужные: лишнее убрано раньше) — от этого зависит, чем снимать промах.
-    const step = (c, i) => ({ act: 'add', side, mod: c.text, pct: c.pct, onSide: filled[side] - fixed[side] + i, onItem: filled.prefix + filled.suffix - fixed.prefix - fixed.suffix + i,
+    const step = (c, i) => ({ act: 'add', side, mod: c.text, pct: c.pct, worth: c.pct * (keyOf(c.text.split(' / ')) ? KEY_BONUS : 1), onSide: filled[side] - fixed[side] + i, onItem: filled.prefix + filled.suffix - fixed.prefix - fixed.suffix + i,
       annulOmen: `Omen of ${S} Annulment`, exalt: c.exaltAny || c.exalt || { base: { chance: c.chanceUnknown ? null : c.chance || null } }, orMods: c.orMods || null,
       sideOmen, otherOpen, retry: ['Orb of Annulment', `Omen of ${S} Annulment`],
       // Вместо Exalted — Desecrate (кость + Necromancy-омен на сторону): выбор 1 из 3 при раскрытии. Окно решит, где выгоднее.

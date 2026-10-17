@@ -938,7 +938,7 @@ function withDesecrate(plan) {
 
 // Отдать «одноразовый» способ (desecration, crafted-слот) шагу, где он выгоднее всего относительно Exalted.
 function withSlot(plan, field, flag, kind) {
-  let best = null, ratio = Infinity;
+  let best = null, ratio = Infinity, top = null;
   plan.forEach((s, i) => {
     for (const [j, x] of (s.act === 'add2' ? s.steps : s.act === 'add' ? [s] : []).entries()) {
       if (!x[field] || x.useDes || x.useCrafted) continue;
@@ -947,9 +947,16 @@ function withSlot(plan, field, flag, kind) {
       const alt = yes.k === kind ? yes.score : (yes.alts || []).concat(yes.desAlt || []).find((o) => o.k === kind)?.cost;
       if (alt == null || !no) continue;
       const r = !Number.isFinite(no) ? (Number.isFinite(alt) ? 0 : Infinity) : alt / no;
+      // Desecrate (6 вариантов на выбор) — самому ценному моду, где он помогает; эссенция — где выгоднее по цене.
+      if (kind === 'desecrate' && (r < 1 || yes.k === kind)) {
+        const v = x.worth || 0;
+        if (!top || v > top.v || (v === top.v && r < top.r)) top = { i, j, wins: yes.k === kind, v, r };
+      }
       if (r < ratio) { ratio = r; best = { i, j, wins: yes.k === kind }; }
     }
   });
+  // Desecrate помогает нескольким шагам — отдаём самому ценному; не помогает ни одному — покажется как альтернатива.
+  if (top) best = top;
   if (!best) return plan;
   return plan.flatMap((s, i) => {
     if (i !== best.i) return [s];
