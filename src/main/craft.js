@@ -103,6 +103,17 @@ function guaranteedFor(itemClass) {
   return out;
 }
 
+// Руны влияния (Runes of Aldur): навсегда открывают вещи пул модов (spawn-тег в RePoE).
+const INFLUENCE_RUNES = [
+  { rune: "Thrud's Might", name: 'Destruction', tag: 'destruction', on: ['weapon', 'wand', 'staff', 'sceptre'] },
+  { rune: "Kolr's Hunt", name: 'Marksman', tag: 'marksman', on: ['gloves'] },
+  { rune: "Katla's Gloom", name: 'Decay', tag: 'decay', on: ['gloves'] },
+  { rune: "Vorana's Carnage", name: 'Berserking', tag: 'berserking', on: ['helmet'] },
+  { rune: "Uhtred's Sidereus", name: 'Chronomancy', tag: 'chronomancy', on: ['boots'] },
+  { rune: "Medved's Tending", name: 'Soul', tag: 'soul', on: ['body_armour'] },
+];
+const INF_TAG = Object.fromEntries(INFLUENCE_RUNES.map((r) => [r.name, r.tag]));
+
 // Порченые эссенции с их модами для класса — [{ name, text }] (для плана: гарантированный мод через crafted-слот).
 function corruptedFor(itemClass) {
   guaranteedFor(itemClass); // загрузит данные
@@ -208,8 +219,10 @@ async function advise(item, demandMods, cached) {
   const jewel = tags.includes('jewel');
   const ilvl = item.ilvl || 100;
 
+  // Руна влияния в гнезде («Can roll Destruction modifiers») открывает вещи свой пул модов — добавляем его тег.
+  const hasInf = (item.modLines || []).map((l) => l.text.match(/^Can roll (\w+) modifiers$/)).filter(Boolean).map((m) => INF_TAG[m[1]]).filter(Boolean);
   // Моды, которые могут встать на эту базу, и наши аффиксы среди них (по имени и стороне).
-  const onBase = d.pool.filter((m) => canRoll(m, tags));
+  const onBase = d.pool.filter((m) => canRoll(m, [...tags, ...hasInf]));
   const mine = item.affixes.map((a) => ({
     ...a, mod: onBase.find((m) => m.name === a.name && m.generation_type === a.side) || null,
   }));
@@ -233,9 +246,9 @@ async function advise(item, demandMods, cached) {
   // Строки, которые на вещи уже есть, не делают кандидата востребованным: у гибрида «броня / урон миньонов»
   // спрос считаем по броне — урон миньонов у вещи уже есть (а при спросе «среди билдов с ним» он был бы 100%).
   const own = new Set((item.modLines || []).flatMap((l) => templates(l.text)));
-  const candidates = (domain) => {
+  const candidates = (domain, src = onBase) => {
     const byType = new Map();
-    for (const m of onBase) {
+    for (const m of src) {
       if (m.domain !== domain || m.is_essence_only) continue;
       const pct = Math.max(0, ...m.lines.filter((l) => !own.has(l)).map((l) => want.get(l) || 0));
       if (!pct || (m.groups || []).some((g) => present.has(g))) continue;
@@ -267,6 +280,19 @@ async function advise(item, demandMods, cached) {
   }).filter(Boolean);
 
   const normal = candidates('item');
+  // Руна влияния ещё не вставлена: моды её пула, нужные по спросу, — тоже кандидаты, но с условием «сначала руна»
+  // (вставляется навсегда в свободное augment-гнездо). Thrud's Might на оружии → «Explicit Speed Modifier magnitudes» и т.п.
+  const runes = (item.modLines || []).filter((l) => l.tag === 'rune').length;
+  const freeSocket = (item.sockets || 0) > runes;
+  for (const r of INFLUENCE_RUNES) {
+    if (hasInf.includes(r.tag) || !r.on.some((tg) => tags.includes(tg)) || hasInf.length) continue;
+    const extra = d.pool.filter((m) => canRoll(m, [...tags, r.tag]) && !canRoll(m, tags));
+    for (const c of candidates('item', extra)) {
+      if (normal.some((x) => x.type === c.type)) continue;
+      normal.push({ ...c, needs: { rune: r.rune, line: `Can roll ${r.name} modifiers`, free: freeSocket } });
+    }
+  }
+  normal.sort((a, b) => b.pct - a.pct);
   // Примерный шанс, что следующий мод на этой стороне (Exalted + омен стороны) — именно этот: частота семейства среди всех,
   // что могут встать сюда (без уже занятых групп), по собранной статистике. Семейства без данных считаем как самые редкие.
   // Что может добавить Exalted на каждую сторону: семейство → уровни его тиров на этой вещи (без занятых групп).
@@ -633,7 +659,11 @@ function planGoal(mine, candidates, max, want, magic, magicFree = [], itemClass 
   // Ключевой для слота мод (уровни умений, Spirit, скорость на ботинках…) поднимает цену сильнее, чем говорит его
   // популярность: «+2 к миньонам» на скипетре дороже Mana Regeneration, даже если тот встречается чаще.
   const KEY_BONUS = 2;
-  const keyOf = (lines) => lines.some((l) => isKey(itemClass, l));
+  // «#% increased Explicit Speed Modifier magnitudes» (руна Thrud's Might) усиливает моды своего типа — ключевой,
+  // если такой мод на вещи уже есть (Attack Speed → speed, %Phys → physical, крит → critical…).
+  const myTags = new Set(mine.flatMap((a) => (a.mod ? a.mod.implicit_tags || [] : [])));
+  const boosts = (l) => { const m = l.match(/explicit (\w+)(?: damage)? modifier magnitudes/i); return !!m && myTags.has(m[1].toLowerCase()); };
+  const keyOf = (lines) => lines.some((l) => isKey(itemClass, l) || boosts(l));
   const value = (pct, tier) => pct * (TIER_VALUE[tier] || 0.5);
   const keep = [], remove = [], add = [];
   for (const side of ['prefix', 'suffix']) {
@@ -665,9 +695,13 @@ function planGoal(mine, candidates, max, want, magic, magicFree = [], itemClass 
   // План для окна: шаги с валютой и шансом — по ним считаются затраты (цены валюты подставляет main.js по poe.ninja).
   // retry — чем убирать неудачный результат, чтобы попробовать снова.
   const plan = [];
+  const needRune = add.find((c) => c.needs);
+  if (needRune) plan.push({ act: 'rune', mod: needRune.needs.line, free: needRune.needs.free, currencies: [needRune.needs.rune], chance: 1 });
+  let essenceMod = null; // мод, который поставит эссенция magic → rare — его не добавляем второй раз
   if (magicFree.length) plan.push({ act: 'augment', side: magicFree[0], currencies: ['Orb of Augmentation'], chance: 1 });
   if (magic) {
     const ess = add.find((c) => c.essence);
+    essenceMod = ess || null;
     plan.push(ess ? { act: 'essence', mod: ess.text, currencies: [ess.essence.name], chance: 1 } : { act: 'regal', currencies: ['Regal Orb'], chance: 1 });
   }
   // Сначала сторона, где самый востребованный мод (ключевой) — он сильнее всего поднимает цену.
@@ -713,9 +747,10 @@ function planGoal(mine, candidates, max, want, magic, magicFree = [], itemClass 
       currencies: ['Orb of Annulment', 'Omen of Sinistral Annulment', 'Omen of Dextral Annulment', ...(whittle ? ['Chaos Orb', 'Omen of Whittling'] : [])] });
     for (const x of junk) filled[x.side]--;
   }
+  if (essenceMod) filled[essenceMod.side]++; // эссенция уже заняла место на своей стороне
   // 2. Добавить нужное: сначала сторона, где самый востребованный мод.
   for (const side of ['prefix', 'suffix'].sort((x, y) => top(y) - top(x))) {
-    const into = add.filter((c) => c.side === side);
+    const into = add.filter((c) => c.side === side && c !== essenceMod);
     if (!into.length) continue;
     const S = side === 'prefix' ? 'Sinistral' : 'Dextral';
     // Есть ли место на другой стороне: если нет, Exalted и без омена ляжет сюда — омен стороны не нужен.
@@ -757,7 +792,7 @@ function planGoal(mine, candidates, max, want, magic, magicFree = [], itemClass 
     plan.splice(-2, 2, { act: 'add2', cross: true, side: null, steps: last.map(bare), sideOmen: null, otherOpen: false, alt: last,
       retry: [...new Set(last.flatMap((s) => s.retry))], currencies: [...new Set([...last.flatMap((s) => s.currencies), 'Omen of Greater Exaltation'])] });
   }
-  return { keep, remove, add: add.map(({ side, text, pct, tier, tiers, range, stats, essence, chance, chanceUnknown }) => ({ side, text, pct, tier, tiers, range, stats, essence, chance, chanceUnknown })), plan };
+  return { keep, remove, add: add.map(({ side, text, pct, tier, tiers, range, stats, essence, chance, chanceUnknown, needs }) => ({ side, text, pct, tier, tiers, range, stats, essence, chance, chanceUnknown, needs })), plan };
 }
 
 // Может ли мод (шаблон poe.ninja: «# to Level of all Spell Skills») встать на эту базу. null — пул модов ещё не загружен.

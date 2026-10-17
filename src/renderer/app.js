@@ -978,6 +978,7 @@ const curChips = (list) => list.map((n) => `<span class="cur ${curKind(n)}">${es
 
 const STEP_LABEL = {
   augment: (s) => t('Add a {side} while it is magic', { side: t(s.side) }),
+  rune: (s) => t('Socket the rune: «{mod}» (permanent)', { mod: s.mod }) + (s.free ? '' : ` — ${t("needs a free augment socket (Artificer's Orb)")}`),
   regal: () => t('Make it rare'),
   essence: (s) => t('Make it rare with {mod}', { mod: s.mod }),
   remove: (s) => t('Remove {mod}', { mod: s.mod || s.mods.join(', ') }),

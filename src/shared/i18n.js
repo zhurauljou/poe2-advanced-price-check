@@ -430,6 +430,8 @@
     "or {mods}": "или {mods}",
     "max": "до",
     "Upper limit (optional): e.g. exactly +4, so +5 items do not count": "Верхняя граница (необязательно): например, ровно +4, чтобы вещи с +5 не считались",
+    "Socket the rune: «{mod}» (permanent)": "Вставить руну: «{mod}» (навсегда)",
+    "needs a free augment socket (Artificer's Orb)": "нужно свободное augment-гнездо (Artificer's Orb)",
     common: 'частый', uncommon: 'средний', rare: 'редкий', 'chance ?': 'шанс ?',
     'Valuable modifiers cannot be estimated from trade listings — items with them are priced and listed differently': 'Шанс ценных модов по трейду не оценить — вещи с ними выставляют и оценивают иначе',
     'Rough estimate: Exalted Orb + omen of its side gives this modifier about 1 in {n} times': 'Грубая оценка: Exalted Orb с оменом этой стороны даёт этот мод примерно 1 раз из {n}',
