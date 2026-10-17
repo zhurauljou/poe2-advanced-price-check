@@ -197,7 +197,7 @@ async function advise(item, demandMods, cached) {
     const tiers = onBase.filter((m) => m.type === a.mod.type && m.domain === a.mod.domain).sort((x, y) => y.required_level - x.required_level);
     const bestIdx = tiers.findIndex((m) => m.required_level <= ilvl);
     if (bestIdx < 0 || bestIdx + 1 >= a.tier) return null;
-    const how = [t('Divine Orb — rerolls the value, but only within T{tier}', { tier: a.tier })];
+    const how = [t('Divine Orb — rerolls the values of all modifiers at once, each only within its tier (now T{tier})', { tier: a.tier })];
     how.push(a.tag === 'desecrated'
       ? t('Orb of Annulment + Omen of Light removes it; desecrating again gives a random desecrated modifier — not necessarily this one')
       : t('A higher tier means removing it and rolling it again — the same modifier is not guaranteed'));
@@ -247,10 +247,11 @@ async function advise(item, demandMods, cached) {
     sections.push({ kind: 'upgrade', how: [
       ...[...new Map(sure.map((c) => [c.essence.name, c])).values()].slice(0, 4)
         .map((c) => t('{essence} — rare with guaranteed {mod}: {tiers}', { essence: c.essence.name, mod: c.text, tiers: c.essence.tiers.join(' · ') })),
+      ...(sure.length ? [t("An essence uses the item's only crafted-modifier slot: no Perfect Essence or Alloy later")] : []),
       t('Regal Orb — makes it rare with one random modifier from the whole pool; the popular ones below are only some of the outcomes'),
       ...(jewel ? [] : [t('Greater / Perfect Regal Orb — the same, but only modifiers of level 35+ / 50+')]),
       t('Omen of Sinistral / Dextral Coronation — the next Regal Orb adds only a prefix / only a suffix'),
-      t('Orb of Alchemy (+ Omen of Sinistral / Dextral Alchemy) — rerolls into a rare with 4 random modifiers instead'),
+      t('Orb of Alchemy — rerolls into a rare with 4 new random modifiers (current ones are lost); Omen of Sinistral / Dextral Alchemy — as many prefixes / suffixes as possible'),
       // Магическая с одним модом — второй можно добавить до Regal: Greater / Perfect Augmentation даёт только моды высокого уровня.
     ] });
   }
@@ -282,12 +283,15 @@ async function advise(item, demandMods, cached) {
     else {
       const sameSide = mine.filter((a) => a.side === weak.side && a.tag !== 'fractured').length;
       // Whittling смотрит на ВСЕ моды вещи (кроме fractured), а не только на кандидатов в замену.
-      const lowest = mine.filter((a) => a.mod && !['fractured', 'desecrated', 'crafted'].includes(a.tag)).sort((a, b) => a.mod.required_level - b.mod.required_level)[0];
+      const cands = mine.filter((a) => a.tag !== 'fractured');
+      const known = cands.every((a) => a.mod);
+      const byLevel = cands.filter((a) => a.mod).sort((a, b) => a.mod.required_level - b.mod.required_level);
+      const lowest = known && byLevel.length && (byLevel.length < 2 || byLevel[0].mod.required_level < byLevel[1].mod.required_level) ? byLevel[0] : null;
       const erasure = weak.side === 'prefix' ? 'Omen of Sinistral Erasure' : 'Omen of Dextral Erasure';
       const omen = weak.side === 'prefix' ? 'Omen of Sinistral Annulment' : 'Omen of Dextral Annulment';
       const how = weak.tag === 'desecrated'
         // Desecrated снимается прицельно: Omen of Light — Annulment убирает только desecrated-моды.
-        ? [t('Orb of Annulment + Omen of Light — removes only the desecrated modifier, then Exalted Orb (or desecrate again)')]
+        ? [t('Orb of Annulment + Omen of Light — removes the desecrated modifier (any tier), then desecrate again or Exalted Orb')]
         : [t(`Orb of Annulment + {omen} — removes a random ${weak.side} (1 in {n} to hit this one), then Exalted Orb`, { omen, n: sameSide }),
           t(`Chaos Orb + {omen} — removes a random ${weak.side} and adds a random modifier (Greater / Perfect Chaos: level 35+ / 50+)`, { omen: erasure })];
       // У самоцветов все моды одного уровня — Whittling снимает фактически случайный.
@@ -308,11 +312,15 @@ async function advise(item, demandMods, cached) {
     const des = candidates('desecrated').filter((c) => open[c.side] || (!open.prefix && !open.suffix)).slice(0, 4);
     if (des.length) {
       // Desecrated — отдельный слот (не crafted), но на полной вещи снимает случайный мод: осквернять ДО Exalt-ов.
-      const lich = tags.includes('weapon') || tags.includes('ring') || tags.includes('amulet') || tags.includes('belt');
+      // Лич-омены — «Weapon or Jewellery» (кольца и амулеты; пояса не подтверждены).
+      const lich = tags.includes('weapon') || tags.includes('ring') || tags.includes('amulet');
+      const bodyGear = ['body_armour', 'helmet', 'gloves', 'boots'].some((x) => tags.includes(x));
       sections.push({ kind: 'desecrate', how: [
         t('Desecrate with {bone} — adds an unrevealed desecrated modifier', { bone: boneFor(tags, ilvl) }) + (!open.prefix && !open.suffix ? ` (${t('replaces a random one when full')})` : ''),
         t('Desecrate before the Exalted Orbs — on a full item it removes a random modifier'),
         t('Omen of Sinistral / Dextral Necromancy — only a prefix / only a suffix'),
+        t('On reveal you choose 1 of 3 options; they can include normal modifiers unless a lich omen is used; Omen of Abyssal Echoes rerolls the options once'),
+        ...(bodyGear ? [t('Body armour, helmets, gloves and boots have no desecrated prefixes — Sinistral Necromancy gives only normal prefixes')] : []),
         ...(lich ? [t('Omen of the Sovereign / the Liege / the Blackblooded — guaranteed Ulaman / Amanamu / Kurgal modifier')] : []),
       ], candidates: des });
     }
@@ -324,13 +332,18 @@ async function advise(item, demandMods, cached) {
   // Всё, что заменяет случайный мод гарантированным crafted-модом: Perfect-эссенции, порченые эссенции, Alloy (data/crafting-currency.json).
   const perfect = item.rarity === 'Rare' ? [...perfectFor(item.itemClass), ...guaranteedFor(item.itemClass)] : [];
   if (jewel && item.rarity === 'Rare') {
+    const timeLost = tags.includes('radius_jewel');
+    // Обычные Potent-эмоции — только на базовые самоцветы, Ancient — только на Time-Lost (у них свои моды).
+    const emotions = timeLost
+      ? [t('Ancient Potent Liquid Contempt — +1 Prefix / Suffix Modifier allowed'),
+        t('Ancient Potent Liquid Melancholy — Upgrades Radius to Very Large (prefix)'),
+        t('Ancient Potent Liquid Ferocity — Notable Passives in Radius also grant +(5–7)% Fire / Cold / Lightning Resistance (Diamond: Chaos)'),
+        t('Regular Potent emotions fit only basic jewels')]
+      : [t('Potent Ferocity — (40–60)% increased Effect of Suffixes (as a prefix) or of Prefixes'),
+        t('Potent Contempt — +1 Suffix / Prefix Modifier allowed: a third modifier on one side for a slot on the other ("5-line" jewels)')];
     sections.push({ kind: 'emotions', how: hasCrafted
       ? [t('This item already has a crafted modifier — Liquid Emotions cannot be used (one crafted modifier per item)')]
-      : [t('Potent Ferocity — (40–60)% increased Effect of Suffixes (as a prefix) or of Prefixes'),
-        t('Potent Contempt — +1 Suffix / Prefix Modifier allowed: a third modifier on one side for a slot on the other ("5-line" jewels)'),
-        t('Ancient Liquid Emotions — only on Time-Lost jewels'),
-        t('Removes a random modifier; uses the only crafted-modifier slot'),
-        t("Hinekora's Lock first — see the result before you commit")] });
+      : [...emotions, t('Removes a random modifier; uses the only crafted-modifier slot'), t("Hinekora's Lock first — see the result before you commit")] });
   }
   if (perfect.length && hasCrafted) {
     sections.push({ kind: 'perfect', how: [t('This item already has a crafted modifier — Perfect Essences and Alloys cannot be used (one crafted modifier per item)')] });
@@ -345,10 +358,12 @@ async function advise(item, demandMods, cached) {
   const cheap = [];
   const armourOrWeapon = tags.includes('armour') || tags.includes('weapon') || tags.includes('onehand') || tags.includes('twohand');
   // Artificer's Orb — оружие, жезлы, посохи и броня (скипетров в списке нет).
-  if (armourOrWeapon && !tags.includes('sceptre') && !item.sockets) cheap.push(t("Artificer's Orb — add an augment socket, then a rune or soul core"));
+  // Artificer's: 2 гнезда на двуручном оружии и нательнике, 1 на остальном (по гайдам).
+  const maxSockets = tags.includes('twohand') || tags.includes('body_armour') ? 2 : 1;
+  if (armourOrWeapon && !tags.includes('sceptre') && (item.sockets || 0) < maxSockets) cheap.push(t("Artificer's Orb — add an augment socket (2 max on two-handed weapons and body armour, 1 elsewhere), then a rune or soul core"));
   if (armourOrWeapon && (item.quality || 0) < 20) cheap.push(t('Quality to 20% (currently {n}%) — {currency}', { n: item.quality || 0, currency: qualityCurrency(tags) }));
-  if ((tags.includes('ring') || tags.includes('amulet')) && !item.quality) cheap.push(t('Catalyst — quality on rings and amulets boosts matching modifiers (life, minion, caster…); with Omen of Catalysing Exaltation the next Exalted Orb favours that type'));
-  if (jewel && !item.quality) cheap.push(t('Refined Catalyst — quality on jewels boosts matching modifiers; with Omen of Catalysing Exaltation the next Exalted Orb favours that type'));
+  if ((tags.includes('ring') || tags.includes('amulet')) && !item.quality) cheap.push(t('Catalyst — quality on rings and amulets boosts matching modifiers (life, minion, caster…); Omen of Catalysing Exaltation makes the next Exalted Orb consume all catalyst quality to favour that type — re-apply the catalyst afterwards'));
+  if (jewel && !item.quality) cheap.push(t('Refined Catalyst — quality on jewels boosts matching modifiers'));
   const total = mine.length;
   if (cheap.length) sections.push({ kind: 'cheap', how: cheap });
   // Fracturing — не «дёшево и без риска»: в 0.5 редкий (только атлас) и фиксирует СЛУЧАЙНЫЙ мод.
@@ -450,7 +465,7 @@ function planGoal(mine, candidates, max, want, magic, magicFree = []) {
   if (magicFree.length) steps.push(t('Orb of Augmentation — first fill the free {side} while it is magic (cheap)', { side: t(magicFree[0]) }));
   if (magic) {
     const ess = add.find((c) => c.essence);
-    steps.push(ess ? t('{essence} — makes it rare with {mod}', { essence: ess.essence.name, mod: ess.text }) : t('Regal Orb — makes it rare (random modifier)'));
+    steps.push(ess ? t('{essence} — makes it rare with {mod}', { essence: ess.essence.name, mod: ess.text }) + ' · ' + t("An essence uses the item's only crafted-modifier slot: no Perfect Essence or Alloy later") : t('Regal Orb — makes it rare (random modifier)'));
   }
   // Сначала сторона, где самый востребованный мод (ключевой) — он сильнее всего поднимает цену.
   const top = (side) => Math.max(0, ...add.filter((c) => c.side === side).map((c) => c.pct));
