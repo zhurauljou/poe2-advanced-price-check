@@ -22,12 +22,15 @@ async function init() {
   }
 }
 
+// База для трейда. Название может нести лишнее: аффиксы магической вещи («Mirage's … of the Proficient»), приставки
+// «Superior» / «Exceptional» у белых. Нет такой базы на трейде — берём самую длинную базу, которая есть в названии.
 function resolveBase(item) {
-  if (item.rarity !== 'Magic' || !types) return item.baseType;
+  if (!types || types.has(item.baseType)) return item.baseType;
+  const text = item.rarity === 'Magic' ? item.name : item.baseType;
   let best = item.baseType;
   let len = 0;
   for (const t of types) {
-    if (t.length > len && item.name.includes(t)) { best = t; len = t.length; }
+    if (t.length > len && text.includes(t)) { best = t; len = t.length; }
   }
   return best;
 }
