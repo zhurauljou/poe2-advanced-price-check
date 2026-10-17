@@ -788,22 +788,43 @@ function stepCost(s) {
 // Шанс — попасть в нужное семейство в T1–T2; промах убираем Annulment'ом. rolls = 2 — с Omen of Greater Exaltation
 // (тогда s2 — второй мод пары). Шанс неизвестен (ценный мод) — выбираем по guess (все семейства равновероятны), цену не пишем.
 const EXALT_NAME = { base: 'Exalted Orb', greater: 'Greater Exalted Orb', perfect: 'Perfect Exalted Orb' };
+// Средняя стоимость до удачи с учётом того, чем снимать промах: per — цена попытки, pc — шанс,
+// removal — [{ a: цена снятия, q: шанс задеть нужный мод }]. Задетый нужный мод придётся добавлять снова (≈ та же
+// стоимость E): E = (per + (1−pc)·a) / (pc − (1−pc)·q). Знаменатель ≤ 0 — путь безнадёжен (Infinity).
+function tries(per, pc, removal) {
+  let best = Infinity;
+  for (const { a, q } of removal) {
+    const den = pc - (1 - pc) * q;
+    if (den > 0) best = Math.min(best, (per + (1 - pc) * a) / den);
+  }
+  return best;
+}
+// Чем снять промах Exalted: Annulment с оменом стороны (1 из модов стороны) или без (1 из всех модов).
+// Остальные моды к этому моменту — нужные (лишнее убрано раньше): задеть их — потеря.
+function exaltRemoval(s) {
+  const p = (n) => craftPrices[n];
+  const ann = p('Orb of Annulment') ?? 0;
+  const out = [{ a: ann, q: (s.onItem || 0) / ((s.onItem || 0) + 1) }];
+  if (p(s.annulOmen) != null) out.push({ a: ann + p(s.annulOmen), q: (s.onSide || 0) / ((s.onSide || 0) + 1) });
+  return out;
+}
 function addCost(s, rolls, s2) {
   const p = (n) => craftPrices[n];
-  const retry = p('Orb of Annulment') || 0;
+  const removal = exaltRemoval(s);
   const lottery = [s, s2].some((x) => x && Object.values(x.exalt).every((o) => o.chance == null));
   const opts = [];
   for (const k of Object.keys(EXALT_NAME)) {
     const os = [s, s2].filter(Boolean).map((x) => x.exalt[k]);
     if (os.some((o) => !o) || p(EXALT_NAME[k]) == null) continue;
-    for (const omen of s.sideOmen ? [true, false] : [false]) {
+    // Есть место на другой стороне — омен стороны обязателен: иначе мод может занять слот, нужный следующему шагу плана.
+    for (const omen of s.sideOmen ? [true] : [false]) {
       if (rolls === 2 && s.otherOpen && !omen) continue; // два мода на одну сторону — только с оменом стороны
       const cur = [EXALT_NAME[k], ...(rolls === 2 ? ['Omen of Greater Exaltation'] : []), ...(omen ? [s.sideOmen] : [])];
       if (cur.some((n) => p(n) == null)) continue;
       const per = cur.reduce((a, n) => a + p(n), 0) / rolls;
       const odds = (o) => { const c = lottery ? o.guess : o.chance; return s.otherOpen && !omen ? c / 2 : c; };
-      const cost = os.reduce((a, o) => { const pc = odds(o); return a + (per + (1 - pc) * retry) / pc; }, 0);
-      opts.push({ k, currencies: cur, chances: os.map((o) => (lottery ? null : odds(o))), pool: os[0].pool, cost });
+      const cost = os.reduce((a, o) => a + tries(per, odds(o), removal), 0);
+      opts.push({ k, currencies: cur, chances: os.map((o) => (lottery ? null : odds(o))), pool: os[0].pool, cost, per: per * rolls, slam: per / odds(os[0]) });
     }
   }
   // Desecrate (только для шага, которому окно его отдало: одна desecration на вещь). Кость + Necromancy на сторону
@@ -818,18 +839,22 @@ function addCost(s, rolls, s2) {
         const one = lottery ? o.guess : o.chance;
         const pc = 1 - Math.pow(1 - one, echo ? 6 : 3);
         const per = cur.reduce((a, n) => a + p(n), 0);
-        opts.push({ k: 'desecrate', bone, echo, currencies: cur, chances: [lottery ? null : pc], pool: o.pool, cost: (per + (1 - pc) * desRetry) / pc });
+        opts.push({ k: 'desecrate', bone, echo, currencies: cur, chances: [lottery ? null : pc], pool: o.pool, cost: tries(per, pc, [{ a: desRetry, q: 0 }]), per, slam: per / pc });
       }
     }
   }
   if (!opts.length) return { cost: null, chance: null, currencies: ['Exalted Orb'], lottery: true };
-  opts.sort((a, b) => a.cost - b.cost);
+  // Ни один способ «до победы» не сходится — значит, одна попытка (слэм), промах остаётся на вещи: берём способ
+  // с лучшим «шансом за цену попытки».
+  opts.sort((a, b) => a.cost - b.cost || a.slam - b.slam);
   const best = opts[0];
   // Другие способы — для сравнения (по одному лучшему варианту каждого).
   const kind = (o) => (o.k === 'desecrate' ? o.bone : o.k);
   const alts = opts.filter((o, i) => kind(o) !== kind(best) && opts.findIndex((x) => kind(x) === kind(o)) === i);
   const desAlt = best.k !== 'desecrate' ? alts.filter((o) => o.k === 'desecrate') : [];
-  return { cost: lottery ? null : best.cost, score: best.cost, chance: best.chances[0], chances: best.chances, currencies: best.currencies,
+  // Ни один способ не сходится: промах чаще снимет нужный мод, чем лишний.
+  const hopeless = !Number.isFinite(best.cost);
+  return { hopeless, perTry: best.per, cost: lottery || hopeless ? null : best.cost, score: best.cost, chance: best.chances[0], chances: best.chances, currencies: best.currencies,
     lottery, pool: best.pool, k: best.k, echo: best.echo, bone: best.bone, alts: lottery ? [] : alts, desAlt };
 }
 
@@ -857,7 +882,7 @@ function withDesecrate(plan) {
       const yes = addCost({ ...x, useDes: true }, 1);
       const des = yes.k === 'desecrate' ? yes.score : (yes.alts || []).concat(yes.desAlt || []).find((o) => o.k === 'desecrate')?.cost;
       if (des == null || !no) continue;
-      const r = des / no;
+      const r = !Number.isFinite(no) ? (Number.isFinite(des) ? 0 : Infinity) : des / no;
       if (r < ratio) { ratio = r; best = { i, j, wins: yes.k === 'desecrate' }; }
     }
   });
@@ -894,11 +919,14 @@ function planHtml(plan) {
   return `<ol class="plan">${expandPlan(plan).map((s) => {
     const c = stepCost(s);
     let odds;
-    if (c.lottery) odds = t('chance unknown — valuable modifier');
+    if (c.lottery) odds = t('chance unknown — valuable modifier') + (c.hopeless && c.perTry != null ? ` · ${t('one attempt ≈ {cost}', { cost: money(c.perTry) })}` : '');
+    else if (c.hopeless) odds = `${t('{odds} at T1–T2', { odds: (c.chances || [c.chance]).map(oneIn).join(' / ') })} · ${t('one attempt ≈ {cost}', { cost: money(c.perTry) })}`;
     else if (c.chances) odds = t('{odds} at T1–T2', { odds: c.chances.map(oneIn).join(' / ') });
     else odds = c.chance >= 1 ? t('guaranteed') : oneIn(c.chance);
     const notes = [];
     if (c.two) notes.push(t('one Exalted Orb adds both modifiers'));
+    if (c.hopeless) notes.push(t('One attempt: a miss stays on the item — removing it at random would more likely hit a needed modifier'));
+    else if (s.act !== 'remove' && c.k !== 'desecrate' && (s.onSide || s.onItem)) notes.push(t('the average includes misses: an Annulment may hit a needed modifier, which then has to be added again'));
     if (c.k === 'desecrate') {
       notes.push(t('Desecrate: reveal it at the Well of Souls and pick 1 of 3 offered modifiers — only one desecrated modifier per item'));
       if (/^Ancient /.test(c.bone)) notes.push(t('Ancient bone — only modifiers of level 40+'));
@@ -906,7 +934,7 @@ function planHtml(plan) {
       notes.push(t('A miss → Orb of Annulment + Omen of Light removes it ({cost})', { cost: money((craftPrices['Orb of Annulment'] || 0) + (craftPrices['Omen of Light'] || 0)) }));
     }
     if (EXALT_WHY[c.k]) notes.push(t(EXALT_WHY[c.k], { n: c.pool }));
-    if (s.act !== 'remove' && s.sideOmen && !c.currencies.includes(s.sideOmen)) notes.push(t('without a side omen half the rolls land on the other side'));
+    if (s.act !== 'remove' && c.k !== 'desecrate' && s.sideOmen && !c.currencies.includes(s.sideOmen)) notes.push(t('without a side omen half the rolls land on the other side'));
     const altText = (o) => o.k === 'desecrate'
       ? `${t('Desecrate')}${o.mod ? ` (${o.mod})` : ''}: ${o.currencies.join(' + ')}${o.chances[0] != null ? ` · ${oneIn(o.chances[0])}` : ''}${c.lottery ? '' : ` · ${t('≈ {cost} on average', { cost: money(o.cost) })}`}`
       : `${o.currencies[0]} · ${t('≈ {cost} on average', { cost: money(o.cost) })}`;

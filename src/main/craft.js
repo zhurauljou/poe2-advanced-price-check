@@ -141,7 +141,8 @@ function canRoll(mod, tags) {
 
 // Кости для Desecration по слоту (poe2db): Gnawed — только до ilvl 64, Preserved — любые, Ancient — моды от 40 уровня.
 // Cranium (самоцветы) бывает только Preserved.
-const BONES = { armour: 'Rib', weapon: 'Jawbone', quiver: 'Jawbone', ring: 'Collarbone', amulet: 'Collarbone', belt: 'Collarbone', jewel: 'Cranium' };
+// У палочек и посохов в тегах нет «weapon», но свой пул desecrated-модов есть — кость та же, Jawbone.
+const BONES = { armour: 'Rib', weapon: 'Jawbone', wand: 'Jawbone', staff: 'Jawbone', quiver: 'Jawbone', ring: 'Collarbone', amulet: 'Collarbone', belt: 'Collarbone', jewel: 'Cranium' };
 
 // Кости для плана: Gnawed — только ilvl ≤ 64, Preserved — любой, Ancient — моды 40+; Cranium (самоцветы) — только Preserved.
 function bonesFor(tags, ilvl) {
@@ -617,8 +618,10 @@ function planGoal(mine, candidates, max, want, magic, magicFree = []) {
     const otherOpen = max[other] - filled[other] > 0;
     const sideOmen = otherOpen ? `Omen of ${S} Exaltation` : null;
     // Какой Exalted взять (обычный / Greater / Perfect) и с какими оменами — выбирает окно по ценам валюты.
-    const step = (c) => ({ act: 'add', side, mod: c.text, pct: c.pct, exalt: c.exalt || { base: { chance: c.chanceUnknown ? null : c.chance || null } },
-      sideOmen, otherOpen, retry: ['Orb of Annulment'],
+    // onSide / onItem — сколько модов уже стоит (все нужные: лишнее убрано раньше) — от этого зависит, чем снимать промах.
+    const step = (c, i) => ({ act: 'add', side, mod: c.text, pct: c.pct, onSide: filled[side] + i, onItem: filled.prefix + filled.suffix + i,
+      annulOmen: `Omen of ${S} Annulment`, exalt: c.exalt || { base: { chance: c.chanceUnknown ? null : c.chance || null } },
+      sideOmen, otherOpen, retry: ['Orb of Annulment', `Omen of ${S} Annulment`],
       // Вместо Exalted — Desecrate (кость + Necromancy-омен на сторону): выбор 1 из 3 при раскрытии. Окно решит, где выгоднее.
       desecrate: desFree && c.desecrate && Object.keys(c.desecrate).length ? c.desecrate : null,
       necro: otherOpen ? `Omen of ${S} Necromancy` : null,
@@ -627,10 +630,10 @@ function planGoal(mine, candidates, max, want, magic, magicFree = []) {
     // Два мода на одну сторону — можно одним Exalted с Omen of Greater Exaltation (если дешевле, окно так и предложит).
     for (let i = 0; i < into.length; i += 2) {
       if (i + 1 < into.length) {
-        const pair = [step(into[i]), step(into[i + 1])];
-        plan.push({ act: 'add2', side, steps: pair, sideOmen, otherOpen, retry: ['Orb of Annulment'],
+        const pair = [step(into[i], i), step(into[i + 1], i + 1)];
+        plan.push({ act: 'add2', side, steps: pair, sideOmen, otherOpen, retry: ['Orb of Annulment', `Omen of ${S} Annulment`],
           currencies: [...new Set([...pair[0].currencies, ...pair[1].currencies, 'Omen of Greater Exaltation'])] });
-      } else plan.push(step(into[i]));
+      } else plan.push(step(into[i], i));
     }
     filled[side] += into.length;
   }
