@@ -1905,7 +1905,10 @@ $('misc').addEventListener('click', (e) => {
 $('misc').addEventListener('input', (e) => {
   const t = e.target;
   markDirty();
-  if (t.dataset.o) state.filters[t.dataset.o] = t.checked;
+  if (t.dataset.o) {
+    state.filters[t.dataset.o] = t.checked;
+    window.pc.setSearchDefaults({ online: state.filters.online, flex: state.filters.flex }); // у следующей вещи — так же
+  }
   if ('optmin' in t.dataset) state.filters.optionMin = Number(t.value) || null;
   if (t.type === 'checkbox') t.closest('.opt').classList.toggle('off', !t.checked);
 });
@@ -1974,6 +1977,8 @@ function applyLang() {
   $('search').textContent = t($('search').classList.contains('dirty') ? 'Search · filters changed' : 'Search');
 }
 applyLang();
+
+window.pc.onRefit(() => fit()); // сменили масштаб — окно подгоняется под содержимое
 
 window.pc.onUiLang((lang) => {
   window.i18n.setLang(lang);

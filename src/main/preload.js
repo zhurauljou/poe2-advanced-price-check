@@ -27,6 +27,8 @@ contextBridge.exposeInMainWorld('pc', {
   openUrl: (url) => ipcRenderer.invoke('open-url', url),
   hide: () => ipcRenderer.invoke('hide'),
   recheck: () => ipcRenderer.invoke('recheck'),
+  setSearchDefaults: (p) => ipcRenderer.invoke('set-search-defaults', p),
+  onRefit: (cb) => ipcRenderer.on('refit', () => cb()),
   elementVariants: (item, filters) => ipcRenderer.invoke('element-variants', item, filters),
   pin: (on) => ipcRenderer.invoke('pin', on),
   fit: (height) => ipcRenderer.invoke('fit', height),

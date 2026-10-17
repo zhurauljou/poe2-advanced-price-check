@@ -5,6 +5,7 @@
 //   --hover=N            навести на N-й лот (карточка сравнения сохранится как <shot>-cmp.png)
 //   --eval=<js>          выполнить в окне перед снимком (открыть меню и т.п.)
 //   --upd='{"state":…}'  снимок окна «Updates» в заданном состоянии
+//   --settings           снимок окна настроек
 const { app } = require('electron');
 const fs = require('fs');
 
@@ -39,8 +40,17 @@ const fakeUpdateStatus = () => (enabled && arg('upd') ? JSON.parse(arg('upd')) :
 const wait = (ms) => new Promise((r) => setTimeout(r, ms));
 
 // Сценарий: показать предмет (или окно «Updates»), выполнить флаги, снять скриншот и выйти.
-function run({ ready, priceCheck, openUpdates, windows }) {
+function run({ ready, priceCheck, openUpdates, openSettings, windows }) {
   if (!enabled) return;
+  if (process.argv.includes('--settings')) {
+    ready.catch(() => {}).then(() => openSettings());
+    setTimeout(async () => {
+      if (arg('eval')) { await windows().set.webContents.executeJavaScript(arg('eval')); await wait(800); }
+      fs.writeFileSync(arg('shot'), (await windows().set.webContents.capturePage()).toPNG());
+      app.quit();
+    }, 4000);
+    return;
+  }
   if (arg('upd')) {
     setTimeout(openUpdates, 300);
     setTimeout(async () => {

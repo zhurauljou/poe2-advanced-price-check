@@ -557,3 +557,24 @@ kbd { display: inline-block; padding: 0 6px; border: 1px solid var(--gold); bord
 #elements .el-row { display: flex; justify-content: space-between; gap: 8px; padding: 3px 0; font-size: 13.5px; }
 #elements .el-row small { color: var(--muted); margin-left: 4px; }
 #elements .el-row.better b { color: var(--good); }
+
+/* ---- окно настроек ---- */
+body.set-page { height: auto; user-select: text; }
+.set { padding: 4px 18px 16px; display: flex; flex-direction: column; gap: 14px; }
+.set section { display: flex; flex-direction: column; gap: 6px; }
+.set-k { font: 700 14px var(--sc); letter-spacing: .4px; color: var(--label); }
+.set-row { display: flex; align-items: center; gap: 12px; }
+.set-key { min-width: 150px; height: 32px; font: 700 15px var(--body); }
+.set-key.wait { color: var(--warn); border-color: var(--warn); }
+.set-note { font-size: 13px; color: var(--good); min-height: 0; }
+.set-note:empty { display: none; }
+.set-note.error { color: var(--bad); }
+.set-note.muted { color: var(--muted); }
+.set-check { display: flex; align-items: center; gap: 8px; color: var(--text); cursor: pointer; }
+.set-two { flex-direction: row !important; gap: 14px !important; }
+.set-two > div { flex: 1; display: flex; flex-direction: column; gap: 6px; }
+.set select { height: 30px; background: var(--input); color: var(--cream); border: 1px solid var(--input-line); font: 14px var(--body); padding: 0 6px; }
+.set .seg button.on { color: #1a1408; background: linear-gradient(#f1d79a, #c9a45c); border-color: #f1d79a; }
+.set-actions { flex-direction: column; align-items: stretch; gap: 8px !important; }
+.set-actions button:not(.link) { height: 32px; }
+.set-actions button.link { align-self: center; }

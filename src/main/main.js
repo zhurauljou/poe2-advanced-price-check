@@ -21,6 +21,10 @@ const i18n = require('../shared/i18n');
 const { t } = i18n;
 
 const WIDTH = 480;
+// Масштаб интерфейса (окно настроек): на 4K-мониторе — крупнее. Ширина окон и высота содержимого — с его учётом.
+const SCALES = [0.8, 0.9, 1, 1.1, 1.25, 1.5];
+const uiScale = () => (SCALES.includes(settings.get().uiScale) ? settings.get().uiScale : 1);
+const W = () => Math.round(WIDTH * uiScale());
 const ICON = path.join(__dirname, '../../assets/icon.png');
 
 let win = null;
@@ -63,6 +67,10 @@ app.on('web-contents-created', (_e, wc) => {
 
 // Карточка конкурента — отдельное окно сбоку от оверлея, чтобы не закрывать его содержимое.
 const CMP_WIDTH = 440;
+const CW = () => Math.round(CMP_WIDTH * uiScale());
+function applyScale() {
+  for (const w of [win, cmpWin]) if (w && !w.isDestroyed()) w.webContents.setZoomFactor(uiScale());
+}
 let cmpWin = null;
 let cmpY = 0; // экранная Y строки лота, напротив которой показываем карточку
 
@@ -74,6 +82,7 @@ function createCompare() {
   });
   cmpWin.setAlwaysOnTop(true, 'screen-saver');
   cmpWin.loadFile(path.join(__dirname, '../renderer/compare.html'));
+  cmpWin.webContents.on('did-finish-load', applyScale);
 }
 
 // Справа от оверлея, не влезает — слева; по высоте — напротив строки лота, в пределах экрана.
@@ -81,10 +90,10 @@ function placeCompare(height) {
   const b = win.getBounds();
   const area = screen.getDisplayMatching(b).workArea;
   let x = b.x + b.width + 6;
-  if (x + CMP_WIDTH > area.x + area.width) x = b.x - CMP_WIDTH - 6;
+  if (x + CW() > area.x + area.width) x = b.x - CW() - 6;
   const h = Math.min(Math.ceil(height), area.height - 10);
   const y = Math.max(area.y, Math.min(cmpY - 40, area.y + area.height - h));
-  cmpWin.setBounds({ x: Math.round(x), y: Math.round(y), width: CMP_WIDTH, height: h });
+  cmpWin.setBounds({ x: Math.round(x), y: Math.round(y), width: CW(), height: h });
   if (!cmpWin.isVisible()) cmpWin.showInactive();
 }
 
@@ -105,6 +114,7 @@ function createOverlay() {
   win.setAlwaysOnTop(true, 'screen-saver');
   win.setVisibleOnAllWorkspaces(true);
   win.loadFile(path.join(__dirname, '../renderer/index.html'));
+  win.webContents.on('did-finish-load', applyScale);
   win.on('focus', () => { interacted = true; syncEsc(); });
   win.on('blur', () => { if (interacted && !pinned) hide(); else syncEsc(); });
   // Пользователь перетащил окно — запоминаем место, дальше открываемся там же.
@@ -147,12 +157,12 @@ function show() {
     const cur = screen.getCursorScreenPoint();
     const area = screen.getDisplayNearestPoint(cur).workArea;
     x = cur.x + 24;
-    if (x + WIDTH > area.x + area.width) x = cur.x - WIDTH - 24;
+    if (x + W() > area.x + area.width) x = cur.x - W() - 24;
     y = Math.max(area.y, cur.y - 120);
   }
   anchorY = Math.round(y);
   const area = screen.getDisplayNearestPoint({ x, y }).workArea;
-  place({ x: Math.round(x), y: Math.min(anchorY, area.y + area.height - h), width: WIDTH, height: h });
+  place({ x: Math.round(x), y: Math.min(anchorY, area.y + area.height - h), width: W(), height: h });
   interacted = false;
   win.showInactive(); // не забираем фокус у игры
   syncEsc();
@@ -368,6 +378,10 @@ async function priceCheck(text, refresh = false) {
   }
   lastItem = item;
   const prepared = pricing.prepare(item, demand, (tpl) => craft.rollsOn(item.baseType, tpl));
+  // Переключатели поиска — как пользователь выбрал в прошлый раз.
+  const sd = settings.get();
+  if (typeof sd.searchOnline === 'boolean') prepared.filters.online = sd.searchOnline;
+  if (typeof sd.searchFlex === 'boolean') prepared.filters.flex = sd.searchFlex;
   // Тема вещи для советов по крафту: два самых важных включённых мода (без сумм).
   lastThemeMods = prepared.filters.mods.filter((m) => m.enabled && m.statId && m.tag !== 'pseudo' && m.tag !== 'implicit' && m.tag !== 'rune' && !m.option)
     .sort((a, b) => (b.importance || 0) - (a.importance || 0)).slice(0, 2).map((m) => m.text.split('\n')[0]);
@@ -449,21 +463,33 @@ let hotkeyBound = null; // какая комбинация сейчас заня
 // Варианты в меню трея. Игра читает клавиатуру напрямую и видит вторую клавишу комбинации, поэтому
 // она не должна ничего делать в игре: D — шаг вправо (уводит от сундука), E по умолчанию свободнее.
 const HOTKEYS = [['CommandOrControl+E', 'Ctrl+E'], ['CommandOrControl+D', 'Ctrl+D'], ['CommandOrControl+Shift+E', 'Ctrl+Shift+E']];
-const hotkeyLabel = () => (HOTKEYS.find(([k]) => k === settings.get().hotkey) || [0, settings.get().hotkey])[1];
+// Своя комбинация (окно настроек): Ctrl и / или Alt (можно с Shift) + буква, цифра или F1–F12.
+const ACCEL = /^(?:(?:CommandOrControl|Alt|Shift)\+)+(?:[A-Z0-9]|F[1-9]|F1[0-2])$/;
+const validHotkey = (k) => typeof k === 'string' && ACCEL.test(k) && /CommandOrControl|Alt/.test(k);
+const curHotkey = () => (validHotkey(settings.get().hotkey) ? settings.get().hotkey : HOTKEYS[0][0]);
+const hotkeyLabel = () => curHotkey().replace(/CommandOrControl/g, 'Ctrl');
 
+// Смена комбинации. Занята другой программой — оставляем прежнюю и возвращаем false.
 function setHotkey(hk) {
+  if (!validHotkey(hk)) return false;
   if (hotkeyOn && hotkeyBound) globalShortcut.unregister(hotkeyBound);
   hotkeyOn = false;
-  settings.set({ hotkey: hk });
+  let free = false;
+  try { free = globalShortcut.register(hk, () => {}); } catch {}
+  if (free) globalShortcut.unregister(hk);
+  if (free) settings.set({ hotkey: hk });
   syncHotkey();
+  return free;
 }
+// Пока окно настроек ждёт новую комбинацию, горячая клавиша отпущена — иначе её же нажатие не дойдёт до окна.
+let capturing = false;
 
 // Комбинацию заняла другая программа — пишем в лог и говорим в трее один раз, а не каждые 250 мс.
 let hotkeyFailed = null;
 function syncHotkey() {
-  const hk = HOTKEYS.some(([k]) => k === settings.get().hotkey) ? settings.get().hotkey : HOTKEYS[0][0];
-  let want = true;
-  if (settings.get().hotkeyGameOnly) {
+  const hk = curHotkey();
+  let want = !capturing;
+  if (want && settings.get().hotkeyGameOnly) {
     const fg = winapi.foreground();
     if (fg) want = GAME_TITLE.test(winapi.title(fg)) || (win && fg === winapi.hwndOf(win));
   }
@@ -475,7 +501,7 @@ function syncHotkey() {
     if (!hotkeyOn && hotkeyFailed !== hk) {
       hotkeyFailed = hk;
       log('Failed to register hotkey', hk);
-      if (tray) tray.displayBalloon({ title: 'PoE 2 Price Checker', content: t('{key} is taken by another program — choose another hotkey in the tray menu', { key: hotkeyLabel() }) });
+      if (tray) tray.displayBalloon({ title: 'PoE 2 Price Checker', content: t('{key} is taken by another program — choose another hotkey in Settings', { key: hotkeyLabel() }) });
     }
     if (hotkeyOn) hotkeyFailed = null;
   } else if (!want && hotkeyOn) {
@@ -528,12 +554,14 @@ function setUiLang(lang) {
   settings.set({ uiLang: lang });
   i18n.setLang(lang);
   refreshTray();
-  for (const w of [win, cmpWin, updWin]) if (w && !w.isDestroyed()) w.webContents.send('ui-lang', lang);
+  for (const w of [win, cmpWin, updWin, setWin]) if (w && !w.isDestroyed()) w.webContents.send('ui-lang', lang);
   if (updWin && !updWin.isDestroyed()) updWin.setTitle(t('Updates'));
+  if (setWin && !setWin.isDestroyed()) setWin.setTitle(t('Settings'));
 }
 
 function buildTray() {
   tray = new Tray(nativeImage.createFromPath(ICON).resize({ width: 16, height: 16 }));
+  tray.on('double-click', () => openSettings());
   const refresh = () => {
     const cur = settings.get().league;
     tray.setToolTip(`PoE 2 Price Checker — ${t('{key} over an item', { key: hotkeyLabel() })}`);
@@ -543,58 +571,73 @@ function buildTray() {
       { type: 'separator' },
       {
         label: t('League: {name}', { name: cur || '…' }),
-        submenu: leagues.map((l) => ({
-          label: l, type: 'radio', checked: l === cur,
-          click: () => { settings.set({ league: l }); api.loadNinja(l).catch(() => {}); refresh(); },
-        })),
+        submenu: leagues.map((l) => ({ label: l, type: 'radio', checked: l === cur, click: () => applySettings({ league: l }) })),
       },
-      { type: 'separator' },
-      {
-        label: t('Hotkey'),
-        submenu: HOTKEYS.map(([k, label]) => ({
-          label, type: 'radio', checked: settings.get().hotkey === k,
-          click: () => { setHotkey(k); refresh(); },
-        })),
-      },
-      {
-        label: t('Hotkey only in Path of Exile'), type: 'checkbox', checked: settings.get().hotkeyGameOnly,
-        click: (mi) => { settings.set({ hotkeyGameOnly: mi.checked }); syncHotkey(); },
-      },
-      {
-        // Автозапуск имеет смысл только у установленной программы, не у запуска из исходников.
-        label: t('Start with Windows'), type: 'checkbox', checked: settings.get().startWithWindows, enabled: app.isPackaged,
-        click: (mi) => { settings.set({ startWithWindows: mi.checked }); app.setLoginItemSettings({ openAtLogin: mi.checked }); },
-      },
-      {
-        label: t('Reset window position'), enabled: !!settings.get().windowPos,
-        click: () => { settings.set({ windowPos: null }); refresh(); },
-      },
+      { label: t('Settings…'), click: () => openSettings() },
       // После патча игры: новые моды и базы — сразу, а не через сутки (справочники трейда) или неделю (RePoE).
       { label: t('Refresh game data (after a patch)'), click: () => refreshData() },
-      {
-        // Язык интерфейса: названия языков — на своём языке, чтобы найти нужный при любом выбранном.
-        label: t('Interface language'),
-        submenu: [['en', 'English'], ['ru', 'Русский']].map(([l, label]) => ({
-          label, type: 'radio', checked: i18n.getLang() === l,
-          click: () => setUiLang(l),
-        })),
-      },
-      {
-        // Язык клиента игры: как читать скопированный предмет. Auto — по самому тексту.
-        label: t('Game client language'),
-        submenu: [['auto', t('Auto')], ['en', 'English'], ['ru', 'Русский']].map(([l, label]) => ({
-          label, type: 'radio', checked: (settings.get().clientLang || 'auto') === l,
-          click: () => { settings.set({ clientLang: l }); refresh(); },
-        })),
-      },
       { type: 'separator' },
       updateItem(),
       { type: 'separator' },
       { label: t('Quit'), click: () => app.quit() },
     ]));
+    if (setWin && !setWin.isDestroyed()) setWin.webContents.send('settings', settingsSnapshot());
   };
   refresh();
   return refresh;
+}
+
+// ---- настройки: одно место, где меняются (окно настроек, трей, оверлей), с проверкой значений ----
+const LANGS = ['en', 'ru'];
+const CLIENT_LANGS = ['auto', 'en', 'ru'];
+function settingsSnapshot() {
+  const s = settings.get();
+  return { hotkey: curHotkey(), hotkeyLabel: hotkeyLabel(), hotkeyGameOnly: !!s.hotkeyGameOnly, startWithWindows: !!s.startWithWindows,
+    packaged: app.isPackaged, uiLang: i18n.getLang(), clientLang: s.clientLang || 'auto', league: s.league, leagues,
+    uiScale: uiScale(), scales: SCALES, windowPos: !!s.windowPos };
+}
+// → { ok, error? }: неизвестное или неверное значение не сохраняется.
+function applySettings(patch) {
+  const p = patch || {};
+  let error = null;
+  if (LANGS.includes(p.uiLang) && p.uiLang !== i18n.getLang()) setUiLang(p.uiLang);
+  if (CLIENT_LANGS.includes(p.clientLang)) settings.set({ clientLang: p.clientLang });
+  if (p.league !== undefined && leagues.includes(p.league) && p.league !== settings.get().league) {
+    settings.set({ league: p.league });
+    api.loadNinja(p.league).catch(() => {});
+  }
+  if (p.hotkey !== undefined && p.hotkey !== curHotkey()) {
+    if (!validHotkey(p.hotkey)) error = t('Use Ctrl or Alt with a letter, digit or F1–F12');
+    else if (!setHotkey(p.hotkey)) error = t('{key} is taken by another program', { key: p.hotkey.replace(/CommandOrControl/g, 'Ctrl') });
+  }
+  if (typeof p.hotkeyGameOnly === 'boolean') { settings.set({ hotkeyGameOnly: p.hotkeyGameOnly }); syncHotkey(); }
+  if (typeof p.startWithWindows === 'boolean' && app.isPackaged) {
+    settings.set({ startWithWindows: p.startWithWindows });
+    app.setLoginItemSettings({ openAtLogin: p.startWithWindows });
+  }
+  if (SCALES.includes(p.uiScale)) {
+    settings.set({ uiScale: p.uiScale });
+    applyScale();
+    if (win && win.isVisible()) win.webContents.send('refit');
+  }
+  if (typeof p.searchOnline === 'boolean') settings.set({ searchOnline: p.searchOnline });
+  if (typeof p.searchFlex === 'boolean') settings.set({ searchFlex: p.searchFlex });
+  refreshTray();
+  return error ? { ok: false, error } : { ok: true };
+}
+
+let setWin = null;
+function openSettings() {
+  if (setWin && !setWin.isDestroyed()) { setWin.show(); setWin.focus(); return; }
+  setWin = new BrowserWindow({
+    width: 420, height: 520, frame: false, resizable: false, alwaysOnTop: true, fullscreenable: false, show: false,
+    title: t('Settings'), backgroundColor: '#0b1017', icon: ICON,
+    webPreferences: { ...SECURE, preload: path.join(__dirname, 'preload-settings.js') },
+  });
+  setWin.setAlwaysOnTop(true, 'screen-saver');
+  setWin.loadFile(path.join(__dirname, '../renderer/settings.html'));
+  setWin.once('ready-to-show', () => setWin.show());
+  setWin.on('closed', () => { if (capturing) { capturing = false; syncHotkey(); } setWin = null; });
 }
 
 // IPC: каждый канал принимает вызовы только от своего окна (карточка конкурента показывает данные трейда — ей
@@ -604,7 +647,8 @@ const FROM = {
   overlay: (e) => isFrom(win)(e),
   compare: (e) => isFrom(cmpWin)(e),
   updates: (e) => isFrom(updWin)(e),
-  any: (e) => isFrom(win)(e) || isFrom(updWin)(e),
+  settings: (e) => isFrom(setWin)(e),
+  any: (e) => isFrom(win)(e) || isFrom(updWin)(e) || isFrom(setWin)(e),
 };
 function handle(channel, allowed, fn) {
   ipcMain.handle(channel, (e, ...args) => {
@@ -617,6 +661,8 @@ const DEMAND_LEVELS = [80, 90, 95];
 
 app.whenReady().then(singleInstance).then((ok) => {
   if (!ok) { app.quit(); return; }
+  // Запустили ещё раз (ярлык на рабочем столе) — программа уже в трее: показываем настройки, а не молчим.
+  app.on('second-instance', () => openSettings());
   i18n.setLang(settings.get().uiLang);
   ipcMain.on('ui-lang-get', (e) => { e.returnValue = i18n.getLang(); });
   createOverlay();
@@ -645,7 +691,7 @@ app.whenReady().then(singleInstance).then((ok) => {
   }
 
   // Демо-режим (проверка без игры) — см. demo.js.
-  demo.run({ ready: ensureReady(), priceCheck, openUpdates, windows: () => ({ main: win, cmp: cmpWin, upd: updWin }) });
+  demo.run({ ready: ensureReady(), priceCheck, openUpdates, openSettings, windows: () => ({ main: win, cmp: cmpWin, upd: updWin, set: setWin }) });
 
   handle('search', FROM.overlay, (_e, item, filters, relax) => (demo.mockTrade()
     ? demo.mockSearch(api.ninja.rates) : api.forCurrent(() => pricing.search(curLeague(), item, filters, relax))));
@@ -707,6 +753,20 @@ app.whenReady().then(singleInstance).then((ok) => {
     return pricing.elementVariants(item, filters).map((v) => ({ ...v, cost: (price(v.rune) ?? 0) + (socket || 0), needSocket: !!socket }));
   });
   handle('hide', FROM.overlay, () => hide());
+  // Окно настроек
+  handle('settings-get', FROM.settings, () => settingsSnapshot());
+  handle('settings-set', FROM.settings, (_e, patch) => ({ ...applySettings(patch), settings: settingsSnapshot() }));
+  handle('settings-capture', FROM.settings, (_e, on) => { capturing = !!on; syncHotkey(); });
+  handle('settings-action', FROM.settings, (_e, act) => {
+    if (act === 'reset-position') { settings.set({ windowPos: null }); refreshTray(); }
+    if (act === 'refresh-data') refreshData();
+    if (act === 'open-logs') shell.openPath(app.getPath('userData'));
+    if (act === 'close' && setWin) setWin.close();
+    return settingsSnapshot();
+  });
+  handle('settings-fit', FROM.settings, (_e, h) => { if (Number.isFinite(h) && setWin) setWin.setContentSize(420, Math.min(Math.ceil(h) + 2, 900)); });
+  // Оверлей запоминает переключатели поиска («Buyable now», «Allow 1 minor mod missing») — у следующей вещи такие же.
+  handle('set-search-defaults', FROM.overlay, (_e, p) => { applySettings({ searchOnline: p && p.online, searchFlex: p && p.flex }); });
   handle('recheck', FROM.overlay, () => (lastText ? priceCheck(lastText, true) : null));
   handle('pin', FROM.overlay, (_e, on) => { pinned = !!on; syncEsc(); });
   handle('compare-show', FROM.overlay, (_e, html, y) => {
@@ -714,16 +774,16 @@ app.whenReady().then(singleInstance).then((ok) => {
     cmpY = win.getBounds().y + y;
     cmpWin.webContents.send('compare', html);
   });
-  handle('compare-fit', FROM.compare, (_e, h) => { if (Number.isFinite(h) && win.isVisible()) placeCompare(h); });
+  handle('compare-fit', FROM.compare, (_e, h) => { if (Number.isFinite(h) && win.isVisible()) placeCompare(h * uiScale()); });
   handle('compare-hide', FROM.overlay, () => cmpWin.hide());
   handle('fit', FROM.overlay, (_e, h) => {
     if (!Number.isFinite(h)) return;
     const area = screen.getDisplayMatching(win.getBounds()).workArea;
-    const height = Math.min(Math.ceil(h), area.height - 20);
+    const height = Math.min(Math.ceil(h * uiScale()), area.height - 20);
     const b = win.getBounds();
     // Держим верх на месте; вверх сдвигаем, только пока окно не влезает, и возвращаем, когда снова влезает.
     const y = Math.max(area.y, Math.min(anchorY, area.y + area.height - height));
-    place({ x: b.x, y, width: WIDTH, height });
+    place({ x: b.x, y, width: W(), height });
   });
 });
 

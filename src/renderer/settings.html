@@ -1,0 +1,55 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta http-equiv="Content-Security-Policy"
+        content="default-src 'self'; img-src 'self' data:; font-src 'self' data:; style-src 'self'; script-src 'self'">
+  <title>Settings — PoE 2 Price Checker</title>
+  <link rel="stylesheet" href="fonts/fonts.css">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body class="set-page">
+  <div class="topbar">
+    <span class="upd-title" data-i18n="Settings">Settings</span>
+    <span id="close" class="close" title="Close" data-i18n-title="Close">✕</span>
+  </div>
+  <main class="set">
+    <section>
+      <div class="set-k" data-i18n="Hotkey">Hotkey</div>
+      <div class="set-row">
+        <button id="hotkey" class="set-key" data-i18n-title="Click, then press the new combination"></button>
+        <button id="hotkeyReset" class="link" data-i18n="Reset to Ctrl+E">Reset to Ctrl+E</button>
+      </div>
+      <div id="hotkeyMsg" class="set-note"></div>
+      <div class="set-note muted" data-i18n="The game also sees the second key of the combination — pick one that does nothing in the game.">The game also sees the second key of the combination — pick one that does nothing in the game.</div>
+      <label class="set-check"><input type="checkbox" id="hotkeyGameOnly"> <span data-i18n="Hotkey only in Path of Exile">Hotkey only in Path of Exile</span></label>
+      <label class="set-check"><input type="checkbox" id="startWithWindows"> <span data-i18n="Start with Windows">Start with Windows</span></label>
+    </section>
+    <section>
+      <div class="set-k" data-i18n="League">League</div>
+      <select id="league"></select>
+    </section>
+    <section class="set-two">
+      <div>
+        <div class="set-k" data-i18n="Interface language">Interface language</div>
+        <select id="uiLang"><option value="en">English</option><option value="ru">Русский</option></select>
+      </div>
+      <div>
+        <div class="set-k" data-i18n="Game client language">Game client language</div>
+        <select id="clientLang"><option value="auto" data-i18n="Auto">Auto</option><option value="en">English</option><option value="ru">Русский</option></select>
+      </div>
+    </section>
+    <section>
+      <div class="set-k" data-i18n="Interface size">Interface size</div>
+      <div id="scale" class="seg"></div>
+    </section>
+    <section class="set-actions">
+      <button id="resetPos" data-i18n="Reset window position">Reset window position</button>
+      <button id="refresh" data-i18n="Refresh game data (after a patch)">Refresh game data (after a patch)</button>
+      <button id="logs" class="link" data-i18n="Open the log folder">Open the log folder</button>
+    </section>
+  </main>
+  <script src="../shared/i18n.js"></script>
+  <script src="settings.js"></script>
+</body>
+</html>
