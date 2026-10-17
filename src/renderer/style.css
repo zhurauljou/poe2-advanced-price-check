@@ -528,3 +528,7 @@ footer::before { bottom: 0; top: -12px; -webkit-backdrop-filter: blur(16px); bac
 .more-ways { padding-top: 6px; border-top: 1px solid var(--line2); }
 .gamble { border-left: 2px solid var(--bad); padding-left: 8px; }
 .gamble > .k { color: var(--bad); }
+.profit-row { padding: 5px 0; border-top: 1px solid var(--line, rgba(255,255,255,.06)); }
+.profit-row:first-of-type { border-top: 0; }
+.profit-row small { color: var(--muted); }
+.profit-row .rec { margin-left: 6px; font-size: 11px; color: var(--good); border: 1px solid var(--good); border-radius: 3px; padding: 0 4px; }

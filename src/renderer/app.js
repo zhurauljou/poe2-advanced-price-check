@@ -907,6 +907,45 @@ async function computeGoal(g) {
   if (box) { box.innerHTML = verdictHtml(g.plan); fit(); }
 }
 
+// ---- белая база: Transmutation (обычная / Greater 44+ / Perfect 70+) → магическая с одним модом ----
+// Промах — нужна новая база (или Orb of Annulment, если база дороже). Рекомендуем вариант с меньшей ожидаемой
+// стоимостью до популярного мода в одном из двух лучших тиров.
+const BASE_PRICEY = 0.5; // div: база дороже — сама по себе товар, промах ощутим
+function renderNormalCraft(r, head) {
+  craftGoal = null;
+  craftPrices = r.prices || {};
+  const p = (n) => craftPrices[n];
+  const base = state.est;
+  const retry = base != null ? Math.min(base, p('Orb of Annulment') ?? base) : 0;
+  const opts = r.normal.map((o) => {
+    const orb = p(o.name);
+    const cost = orb == null || !o.top ? null : (orb + (1 - o.top) * retry) / o.top;
+    return { ...o, orb, cost };
+  });
+  const known = opts.filter((o) => o.cost != null);
+  const best = known.length ? known.reduce((a, b) => (b.cost < a.cost ? b : a)) : opts[opts.length - 1];
+  const pct = (x) => `${x >= 0.1 ? Math.round(x * 100) : Math.round(x * 1000) / 10}%`;
+  const rows = opts.map((o) => `<div class="profit-row${o === best ? ' best' : ''}"><div><span class="game">${esc(o.name)}</span>${o.orb != null ? ` <small>≈ ${money(o.orb)}</small>` : ''}${o === best ? ` <b class="rec">${esc(t('recommended'))}</b>` : ''}</div>
+    <div class="ps-how">${esc(t('{n} possible modifiers · popular: {any} · popular in T1–T2: {top}', { n: o.pool, any: pct(o.any), top: pct(o.top) }))}${o.cost != null ? ` · <b>${esc(t('≈ {cost} on average', { cost: money(o.cost) }))}</b>` : ''}</div>
+    ${o.minLevel ? `<div class="ps-note">${esc(t('only modifiers of level {n}+: fewer junk modifiers, higher tiers', { n: o.minLevel }))}</div>` : ''}</div>`).join('');
+  const warn = base != null && base >= BASE_PRICEY
+    ? `<div class="craft-warn">⚠ ${esc(t('The base itself sells for ≈ {price} — a miss costs a base like this. Selling it as is may be the better deal.', { price: money(base) }))}</div>` : '';
+  const steps = [
+    t('{orb} — makes it magic with one random modifier', { orb: best.name }),
+    t('A popular modifier → Orb of Augmentation (Greater / Perfect — same idea) for the other side, then an Essence or Regal Orb → rare; open Craft again for the next steps'),
+    base != null && base < (p('Orb of Annulment') ?? Infinity)
+      ? t('A miss → take another base: it is cheaper than fixing this one')
+      : t('A miss → Orb of Annulment removes the modifier, then Orb of Augmentation'),
+    t('Alternative: Orb of Alchemy — straight to rare with 4 random modifiers (Omen of Sinistral / Dextral Alchemy — as many prefixes / suffixes as possible)'),
+  ];
+  const popular = (r.popular || []).map((c, i) => ({ name: `${c.text}${c.tier ? ` · T${c.tier}` : ''}`, pct: c.pct, rank: i + 1 }));
+  $('craft').innerHTML = head + `<div class="craft-sec plan-box"><div class="k">${esc(t('White base → magic'))}</div>
+    ${warn}${rows}
+    <ol class="plan">${steps.map((s) => `<li><div class="ps-how">${esc(s)}</div></li>`).join('')}</ol></div>
+    ${popular.length ? demandList('npop', t('Popular modifiers that can roll here'), popular) : ''}
+    ${r.chanceMeta ? `<div class="craft-warn">⚠ ${esc(t('Chances are rough estimates from {n} cheap trade listings ({date}) — PoE 2 game files have no modifier weights. Treat them as "common / rare", not exact odds.', { n: r.chanceMeta.items, date: r.chanceMeta.collected }))}</div>` : ''}`;
+}
+
 // ---- уник: Divine перекатывает значения всех модов разом (сами моды не меняются) ----
 const TOP_Q = 0.75; // «хорошие роллы» — верхняя четверть диапазона
 let uniqueTop; // цена с хорошими роллами: undefined — считаем, null — не нашли
@@ -1036,6 +1075,7 @@ function renderCraft(r) {
   }
   if (r.note) { $('craft').innerHTML = head + voidState('◇', t('No craft tips'), esc(r.note)); return; }
   if (r.unique) { renderUniqueCraft(r, head); return; }
+  if (r.normal) { renderNormalCraft(r, head); return; }
   const how = (list) => list.map((h) => `<div class="craft-how">${esc(h)}</div>`).join('');
   // Сверху — коротко для новичка: места на вещи, «продать или крафтить», план по шагам с затратами.
   // Всё остальное (все способы, варианты модов) — свёрнуто ниже.

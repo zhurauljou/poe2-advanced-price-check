@@ -162,7 +162,7 @@ const range = (text) => {
 
 // item — разобранный предмет (item.affixes из расширенного формата), demandMods — [{ name, pct }] с poe.ninja.
 async function advise(item, demandMods, cached) {
-  if (item.rarity !== 'Rare' && item.rarity !== 'Magic' && item.rarity !== 'Unique') return { note: t('Craft tips are for rare, magic and unique items.') };
+  if (!['Rare', 'Magic', 'Unique', 'Normal'].includes(item.rarity)) return { note: t('Craft tips are for rare, magic, unique items and white bases.') };
   if (item.corrupted || item.mirrored || item.sanctified) {
     return { blocked: item.corrupted ? 'Corrupted' : item.mirrored ? 'Mirrored' : 'Sanctified' };
   }
@@ -172,7 +172,7 @@ async function advise(item, demandMods, cached) {
     const base = d.bases.get(item.baseType);
     return { unique: true, gamble: gambleFor(item, (base && base.tags) || []) };
   }
-  if (!item.affixes || !item.affixes.length) {
+  if (item.rarity !== 'Normal' && (!item.affixes || !item.affixes.length)) {
     return { note: t('Turn on "Advanced Mod Descriptions" in the game options (or copy with Ctrl+Alt+C) to get craft tips.') };
   }
   const d = await load(cached);
@@ -301,6 +301,7 @@ async function advise(item, demandMods, cached) {
     }
   }
   for (const c of normal) c.essence = essenceFor(c.text, item.itemClass);
+  if (item.rarity === 'Normal') return { normal: transmuteOptions(normal, sidePool, nOf, ilvl, jewel), popular: normal.slice(0, 8), chanceMeta };
   const sections = [];
 
   // 0. Магическая → редкая: эссенция даёт гарантированный мод, Regal — случайный из всего пула.
@@ -447,6 +448,34 @@ async function advise(item, demandMods, cached) {
   const goal = planGoal(mine, normal, max, want, magic, magicFree);
   const gamble = gambleFor(item, tags);
   return { open, max, sections, goal, gamble, chanceMeta, source: 'RePoE (game files) · demand: poe.ninja' };
+}
+
+// Белая база → магическая: Orb of Transmutation даёт один случайный мод (префикс или суффикс);
+// Greater — только моды уровня 44+, Perfect — 70+ (меньше мусора, выше тиры). Для каждого: сколько семейств может выпасть,
+// шанс популярного мода (любой тир) и популярного в одном из двух лучших тиров. Веса — по статистике (nOf) или поровну.
+const TRANSMUTE = [['Orb of Transmutation', 0], ['Greater Orb of Transmutation', 44], ['Perfect Orb of Transmutation', 70]];
+function transmuteOptions(popular, sidePool, nOf, ilvl, jewel) {
+  const out = [];
+  for (const [name, L] of TRANSMUTE) {
+    if (L && (jewel || ilvl < L)) continue;
+    let total = 0, any = 0, top = 0, pool = 0;
+    for (const side of ['prefix', 'suffix']) {
+      for (const [type, lv] of sidePool[side]) {
+        const ok = lv.filter((x) => x >= L);
+        if (!ok.length) continue;
+        const w = (nOf ? nOf(type) : 1) * ok.length / lv.length;
+        total += w;
+        pool++;
+        const c = popular.find((x) => x.type === type && x.side === side);
+        if (!c) continue;
+        const best = [...lv].sort((a, b) => b - a).slice(0, 2).pop();
+        any += w;
+        top += w * ok.filter((x) => x >= best).length / ok.length;
+      }
+    }
+    if (total) out.push({ name, minLevel: L, pool, any: any / total, top: top / total });
+  }
+  return out;
 }
 
 // Доля «типов баз» класса (по набору тегов: str_armour, dex_int_armour…), на которых семейство мода может выпасть.
