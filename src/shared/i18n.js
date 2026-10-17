@@ -266,7 +266,6 @@
     'Quality to 20% (currently {n}%) — {currency}': 'Качество до 20% (сейчас {n}%) — {currency}',
     'Catalyst — quality on rings and amulets boosts matching modifiers (life, minion, caster…); with Omen of Catalysing Exaltation the next Exalted Orb favours that type':
       'Catalyst — качество на кольцах и амулетах усиливает моды своего типа (life, minion, caster…); с Omen of Catalysing Exaltation следующий Exalted Orb чаще даёт этот тип',
-    'Refined Catalyst — quality on jewels boosts matching modifiers': 'Refined Catalyst — качество на самоцветах усиливает моды своего типа',
 
     // ---- главный процесс: статусы, ошибки трейда, трей, уведомления ----
     'Failed to load data: {msg}': 'Не удалось загрузить данные: {msg}',
@@ -310,6 +309,14 @@
     'Orb of Augmentation — first fill the free {side} while it is magic (cheap)': 'Orb of Augmentation — сначала заполнить свободный {side}, пока вещь магическая (дёшево)',
     'While it is magic': 'Пока вещь магическая',
     'Popular modifiers for the free slot:': 'Популярные моды на свободное место:',
+    'On jewels every modifier has one tier — Greater / Perfect currency gives nothing extra': 'На самоцветах у каждого мода один тир — Greater / Perfect валюта ничего не добавляет',
+    'Refined Catalyst — quality on jewels boosts matching modifiers; with Omen of Catalysing Exaltation the next Exalted Orb favours that type': 'Refined Catalyst — качество на самоцветах усиливает моды своего типа; с Omen of Catalysing Exaltation следующий Exalted Orb чаще даёт этот тип',
+    'This item already has a crafted modifier — Liquid Emotions cannot be used (one crafted modifier per item)': 'На вещи уже есть crafted-мод — Liquid Emotions не встанут (один crafted-мод на вещь)',
+    'Potent Ferocity — (40–60)% increased Effect of Suffixes (as a prefix) or of Prefixes': 'Potent Ferocity — (40–60)% increased Effect of Suffixes (префиксом) или of Prefixes',
+    'Potent Contempt — +1 Suffix / Prefix Modifier allowed: a third modifier on one side for a slot on the other ("5-line" jewels)': 'Potent Contempt — +1 Suffix / Prefix Modifier allowed: третий мод на одной стороне ценой места на другой («5-строчные» самоцветы)',
+    'Ancient Liquid Emotions — only on Time-Lost jewels': 'Ancient Liquid Emotions — только на Time-Lost самоцветах',
+    'Removes a random modifier; uses the only crafted-modifier slot': 'Убирает случайный мод; занимает единственный crafted-слот',
+    'Liquid Emotions (Delirium) — the main jewel craft': 'Liquid Emotions (Delirium) — главный крафт самоцветов',
     common: 'частый', uncommon: 'средний', rare: 'редкий', 'chance ?': 'шанс ?',
     'Valuable modifiers cannot be estimated from trade listings — items with them are priced and listed differently': 'Шанс ценных модов по трейду не оценить — вещи с ними выставляют и оценивают иначе',
     'Rough estimate: Exalted Orb + omen of its side gives this modifier about 1 in {n} times': 'Грубая оценка: Exalted Orb с оменом этой стороны даёт этот мод примерно 1 раз из {n}',

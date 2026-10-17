@@ -121,6 +121,8 @@ async function advise(item, demandMods, cached) {
   const base = d.bases.get(item.baseType);
   if (!base) return { note: t('Unknown base "{base}" in RePoE data.', { base: item.baseType }) };
   const tags = base.tags || [];
+  // Самоцветы: у каждого мода один тир уровня 1 — Greater/Perfect валюта и Whittling бесполезны (docs/jewels-crafting.md).
+  const jewel = tags.includes('jewel');
   const ilvl = item.ilvl || 100;
 
   // Моды, которые могут встать на эту базу, и наши аффиксы среди них (по имени и стороне).
@@ -216,7 +218,7 @@ async function advise(item, demandMods, cached) {
   if (magicFree.length) {
     sections.push({ kind: 'magicfill', how: [
       t('Orb of Augmentation — adds a random {side} while the item is magic: the cheapest step, do it before Regal', { side: t(magicFree[0]) }),
-      t('Greater / Perfect Orb of Augmentation — only modifiers of level 44+ / 70+'),
+      jewel ? t('On jewels every modifier has one tier — Greater / Perfect currency gives nothing extra') : t('Greater / Perfect Orb of Augmentation — only modifiers of level 44+ / 70+'),
     ], candidates: normal.filter((c) => c.side === magicFree[0]).slice(0, 6) });
   }
   if (magic) {
@@ -225,7 +227,7 @@ async function advise(item, demandMods, cached) {
       ...[...new Map(sure.map((c) => [c.essence.name, c])).values()].slice(0, 4)
         .map((c) => t('{essence} — rare with guaranteed {mod}: {tiers}', { essence: c.essence.name, mod: c.text, tiers: c.essence.tiers.join(' · ') })),
       t('Regal Orb — makes it rare with one random modifier from the whole pool; the popular ones below are only some of the outcomes'),
-      t('Greater / Perfect Regal Orb — the same, but only modifiers of level 35+ / 50+'),
+      ...(jewel ? [] : [t('Greater / Perfect Regal Orb — the same, but only modifiers of level 35+ / 50+')]),
       t('Omen of Sinistral / Dextral Coronation — the next Regal Orb adds only a prefix / only a suffix'),
       t('Orb of Alchemy (+ Omen of Sinistral / Dextral Alchemy) — rerolls into a rare with 4 random modifiers instead'),
       // Магическая с одним модом — второй можно добавить до Regal: Greater / Perfect Augmentation даёт только моды высокого уровня.
@@ -240,7 +242,7 @@ async function advise(item, demandMods, cached) {
     const exalt = `Exalted Orb${open.prefix && open.suffix ? ` + ${omen} (${t(`only ${side}es`)})` : ''}`;
     sections.push({
       kind: 'open', side, count: open[side],
-      how: [magic ? t("after it's rare: {how}", { how: exalt }) : exalt, t('Greater / Perfect Exalted Orb — only modifiers of level 35+ / 50+'),
+      how: [magic ? t("after it's rare: {how}", { how: exalt }) : exalt, ...(jewel ? [] : [t('Greater / Perfect Exalted Orb — only modifiers of level 35+ / 50+')]),
         ...(open[side] >= 2 ? [t('Omen of Greater Exaltation — the next Exalted Orb adds two modifiers')] : [])],
       candidates: list,
     });
@@ -267,7 +269,8 @@ async function advise(item, demandMods, cached) {
         ? [t('Orb of Annulment + Omen of Light — removes only the desecrated modifier, then Exalted Orb (or desecrate again)')]
         : [t(`Orb of Annulment + {omen} — removes a random ${weak.side} (1 in {n} to hit this one), then Exalted Orb`, { omen, n: sameSide }),
           t(`Chaos Orb + {omen} — removes a random ${weak.side} and adds a random modifier (Greater / Perfect Chaos: level 35+ / 50+)`, { omen: erasure })];
-      if (lowest && lowest.name === weak.name && weak.tag !== 'desecrated') {
+      // У самоцветов все моды одного уровня — Whittling снимает фактически случайный.
+      if (!jewel && lowest && lowest.name === weak.name && weak.tag !== 'desecrated') {
         how.unshift(t('Chaos Orb + Omen of Whittling — removes the lowest-level modifier (this one) and adds a random modifier'));
       }
       sections.push({
@@ -299,6 +302,15 @@ async function advise(item, demandMods, cached) {
   const hasCrafted = mine.some((a) => a.tag === 'crafted');
   // Всё, что заменяет случайный мод гарантированным crafted-модом: Perfect-эссенции, порченые эссенции, Alloy (data/crafting-currency.json).
   const perfect = item.rarity === 'Rare' ? [...perfectFor(item.itemClass), ...guaranteedFor(item.itemClass)] : [];
+  if (jewel && item.rarity === 'Rare') {
+    sections.push({ kind: 'emotions', how: hasCrafted
+      ? [t('This item already has a crafted modifier — Liquid Emotions cannot be used (one crafted modifier per item)')]
+      : [t('Potent Ferocity — (40–60)% increased Effect of Suffixes (as a prefix) or of Prefixes'),
+        t('Potent Contempt — +1 Suffix / Prefix Modifier allowed: a third modifier on one side for a slot on the other ("5-line" jewels)'),
+        t('Ancient Liquid Emotions — only on Time-Lost jewels'),
+        t('Removes a random modifier; uses the only crafted-modifier slot'),
+        t("Hinekora's Lock first — see the result before you commit")] });
+  }
   if (perfect.length && hasCrafted) {
     sections.push({ kind: 'perfect', how: [t('This item already has a crafted modifier — Perfect Essences and Alloys cannot be used (one crafted modifier per item)')] });
   } else if (perfect.length) {
@@ -315,7 +327,7 @@ async function advise(item, demandMods, cached) {
   if (armourOrWeapon && !tags.includes('sceptre') && !item.sockets) cheap.push(t("Artificer's Orb — add an augment socket, then a rune or soul core"));
   if (armourOrWeapon && (item.quality || 0) < 20) cheap.push(t('Quality to 20% (currently {n}%) — {currency}', { n: item.quality || 0, currency: qualityCurrency(tags) }));
   if ((tags.includes('ring') || tags.includes('amulet')) && !item.quality) cheap.push(t('Catalyst — quality on rings and amulets boosts matching modifiers (life, minion, caster…); with Omen of Catalysing Exaltation the next Exalted Orb favours that type'));
-  if (tags.includes('jewel') && !item.quality) cheap.push(t('Refined Catalyst — quality on jewels boosts matching modifiers'));
+  if (jewel && !item.quality) cheap.push(t('Refined Catalyst — quality on jewels boosts matching modifiers; with Omen of Catalysing Exaltation the next Exalted Orb favours that type'));
   const total = mine.length;
   if (cheap.length) sections.push({ kind: 'cheap', how: cheap });
   // Fracturing — не «дёшево и без риска»: в 0.5 редкий (только атлас) и фиксирует СЛУЧАЙНЫЙ мод.
