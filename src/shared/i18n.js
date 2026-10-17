@@ -264,6 +264,8 @@
 
     // ---- главный процесс: статусы, ошибки трейда, трей, уведомления ----
     'Failed to load data: {msg}': 'Не удалось загрузить данные: {msg}',
+    'League list is not loaded yet — check your internet connection': 'Список лиг ещё не загружен — проверьте подключение к интернету',
+    'No answer from {host} in {n} s': '{host} не ответил за {n} с',
     'Waiting for the trade site rate limit… {n} s': 'Ждём лимит запросов трейда… {n} с',
     '{n} min': '{n} мин',
     '{n} s': '{n} с',

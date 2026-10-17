@@ -1704,7 +1704,11 @@ window.pc.onItem((data) => {
   fit();
   // Вкладки — только для предметов с поиском на трейде; валюте хватает одной.
   $('tabs').hidden = !state.searchable;
-  setTab(craftSession && sessionMatches() ? 'craft' : 'price');
+  // Окно закреплено, только пока показана вещь пошагового крафта: проверили другую — оно снова прячется как обычно
+  // (сессия остаётся: вернулись к той вещи — снова закреплено).
+  const inSession = !!(craftSession && sessionMatches());
+  window.pc.pin(inSession);
+  setTab(inSession ? 'craft' : 'price');
   if (state.searchable) runSearch(true);
   loadBuilds();
   loadDemand();

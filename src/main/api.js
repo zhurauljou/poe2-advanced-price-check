@@ -23,6 +23,15 @@ const MAX_SILENT_WAIT = 15000;
 
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 
+// Зависшее соединение не должно вешать проверку навсегда (горячая клавиша ждёт конца прошлой проверки).
+const TIMEOUT = 20000;
+function netFetch(url, opts = {}) {
+  return net.fetch(url, { ...opts, signal: AbortSignal.timeout(TIMEOUT) }).catch((e) => {
+    if (e && (e.name === 'TimeoutError' || e.name === 'AbortError')) throw new Error(t('No answer from {host} in {n} s', { host: new URL(url).host, n: TIMEOUT / 1000 }));
+    throw e;
+  });
+}
+
 // Бан переживает перезапуск: иначе новая копия сразу стучится снова и продлевает его.
 // Бан — на IP, поэтому файл общий и для демо-профиля (userData-demo).
 const banFile = () => path.join(app.getPath('userData').replace(/-demo$/, ''), 'trade-ban.json');
@@ -80,7 +89,7 @@ function learnRules(kind, res) {
 
 async function tradeRequest(kind, url, body) {
   await waitSlot(kind);
-  const res = await net.fetch(url, {
+  const res = await netFetch(url, {
     method: body ? 'POST' : 'GET',
     headers: { 'User-Agent': UA, 'Content-Type': 'application/json', Accept: 'application/json' },
     body: body ? JSON.stringify(body) : undefined,
@@ -97,13 +106,13 @@ async function tradeRequest(kind, url, body) {
 }
 
 async function fetchBuffer(url) {
-  const res = await net.fetch(url, { headers: { 'User-Agent': UA } });
+  const res = await netFetch(url, { headers: { 'User-Agent': UA } });
   if (!res.ok) throw new Error(`${url} → ${res.status}`);
   return Buffer.from(await res.arrayBuffer());
 }
 
 async function getJson(url) {
-  const res = await net.fetch(url, { headers: { 'User-Agent': UA, Accept: 'application/json' } });
+  const res = await netFetch(url, { headers: { 'User-Agent': UA, Accept: 'application/json' } });
   if (!res.ok) throw new Error(`${url} → ${res.status}`);
   return res.json();
 }

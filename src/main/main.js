@@ -28,7 +28,7 @@ let tray = null;
 let pinned = false; // пошаговый крафт: окно не прячется при клике в игру
 let interacted = false; // окно получало фокус (кликнули в него) — тогда клик обратно в игру его прячет
 let leagues = [];
-let ready = null; // промис загрузки справочников
+let ready = null; // промис загрузки справочников (сбросится, если загрузка не удалась, — см. ensureReady)
 let refreshTray = () => {};
 
 const demo = require('./demo');
@@ -95,8 +95,8 @@ function createOverlay() {
   win.setAlwaysOnTop(true, 'screen-saver');
   win.setVisibleOnAllWorkspaces(true);
   win.loadFile(path.join(__dirname, '../renderer/index.html'));
-  win.on('focus', () => { interacted = true; });
-  win.on('blur', () => { if (interacted && !pinned) hide(); });
+  win.on('focus', () => { interacted = true; syncEsc(); });
+  win.on('blur', () => { if (interacted && !pinned) hide(); else syncEsc(); });
   // Пользователь перетащил окно — запоминаем место, дальше открываемся там же.
   win.on('moved', () => {
     if (positioning || !win.isVisible()) return;
@@ -145,7 +145,17 @@ function show() {
   place({ x: Math.round(x), y: Math.min(anchorY, area.y + area.height - h), width: WIDTH, height: h });
   interacted = false;
   win.showInactive(); // не забираем фокус у игры
-  globalShortcut.register('Escape', hide);
+  syncEsc();
+}
+
+// Esc из игры закрывает оверлей — глобальной клавишей, которую игра тогда не получает. Поэтому занимаем её, только
+// пока она нужна: окно показано, но фокус у игры. В фокусе окно — Esc ловит страница (сначала закрывает список лиг);
+// закреплено (пошаговый крафт, играем дальше) — Esc остаётся игре, закрывает «■ Стоп» или крестик.
+let escOn = false;
+function syncEsc() {
+  const want = !!(win && win.isVisible() && !win.isFocused() && !pinned);
+  if (want && !escOn) escOn = globalShortcut.register('Escape', hide);
+  else if (!want && escOn) { globalShortcut.unregister('Escape'); escOn = false; }
 }
 
 // Окно игры — активное окно в момент Ctrl+D. Ему возвращаем фокус, когда закрываем оверлей,
@@ -153,11 +163,12 @@ function show() {
 let gameHwnd = 0;
 
 function hide() {
-  globalShortcut.unregister('Escape');
   if (cmpWin) cmpWin.hide();
-  if (!win || !win.isVisible()) return;
-  if (win.isFocused() && gameHwnd) winapi.focus(gameHwnd);
-  win.hide();
+  if (win && win.isVisible()) {
+    if (win.isFocused() && gameHwnd) winapi.focus(gameHwnd);
+    win.hide();
+  }
+  syncEsc();
 }
 
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
@@ -293,19 +304,21 @@ async function priceCheck(text) {
   // Текст последнего предмета — для разбора ошибок парсера.
   try { require('fs').writeFileSync(path.join(app.getPath('userData'), 'last-item.txt'), text); } catch {}
   try {
-    await ready;
+    await ensureReady();
   } catch (e) {
     send('status', { error: t('Failed to load data: {msg}', { msg: e.message }) });
   }
   const league = settings.get().league;
   // Цены этой лиги уже есть — показываем сразу, свежие докачаются в фоне. Нет — ждём (иначе нечего показать).
   // Ошибку глотаем: нет цен poe.ninja для лиги — трейд всё равно работает.
-  const ninja = api.loadNinja(league).catch((e) => log('ninja', e.message));
-  if (api.ninja.league !== league) await ninja;
+  const ninja = league ? api.loadNinja(league).catch((e) => log('ninja', e.message)) : null;
+  if (ninja && api.ninja.league !== league) await ninja;
   // Спрос по классу вещей (poe.ninja) — влияет на то, какие моды включены и насколько строго. Кэшируется,
   // поэтому ждём только в первый раз и не дольше 1.5 с; не успели — работаем без него.
   let demand = null;
-  if (['Rare', 'Magic', 'Normal'].includes(item.rarity)) {
+  if (!league) {
+    // список лиг не загрузился — спрос не по чему считать
+  } else if (['Rare', 'Magic', 'Normal'].includes(item.rarity)) {
     const q = categoryDemand({ league, itemClass: item.itemClass, rarity: 'Rare', limit: 80, minLevel: demandLevel() },
       api.fetchBuffer).catch((e) => { log('demand', e.message); return null; });
     demand = await Promise.race([q, new Promise((r) => setTimeout(() => r(null), 1500))]);
@@ -327,6 +340,29 @@ async function priceCheck(text) {
 
 function send(ch, data) {
   if (win) win.webContents.send(ch, data);
+}
+
+// Справочники грузим при запуске; не вышло (нет сети при первом запуске и т.п.) — пробуем снова при следующей
+// проверке и сами раз в минуту, а не ждём перезапуска.
+let retryTimer = null;
+function ensureReady() {
+  if (!ready) {
+    clearTimeout(retryTimer);
+    ready = initData().then(refreshTray, (e) => {
+      log('init failed', e);
+      ready = null;
+      retryTimer = setTimeout(() => ensureReady().catch(() => {}), 60e3);
+      throw e;
+    });
+  }
+  return ready;
+}
+
+// Лига для запросов. Списка лиг ещё нет (не загрузился) — не шлём на трейд «null», а говорим, в чём дело.
+function curLeague() {
+  const l = settings.get().league;
+  if (!l) throw new Error(t('League list is not loaded yet — check your internet connection'));
+  return l;
 }
 
 async function initData() {
@@ -508,8 +544,7 @@ app.whenReady().then(singleInstance).then((ok) => {
   });
   tray.on('balloon-click', openUpdates);
   api.onWait = (ms) => send('status', { text: t('Waiting for the trade site rate limit… {n} s', { n: Math.ceil(ms / 1000) }) });
-  ready = initData().then(refreshTray);
-  ready.catch((e) => log('init failed', e));
+  ensureReady().catch(() => {});
 
   if (!demo.enabled) {
     syncHotkey();
@@ -517,23 +552,23 @@ app.whenReady().then(singleInstance).then((ok) => {
   }
 
   // Демо-режим (проверка без игры) — см. demo.js.
-  demo.run({ ready, priceCheck, openUpdates, windows: () => ({ main: win, cmp: cmpWin, upd: updWin }) });
+  demo.run({ ready: ensureReady(), priceCheck, openUpdates, windows: () => ({ main: win, cmp: cmpWin, upd: updWin }) });
 
   ipcMain.handle('search', (_e, item, filters, relax) => (demo.mockTrade()
-    ? demo.mockSearch(api.ninja.rates) : pricing.search(settings.get().league, item, filters, relax)));
-  ipcMain.handle('unique-price', (_e, name, base) => api.uniquePrice(settings.get().league, name, base));
+    ? demo.mockSearch(api.ninja.rates) : pricing.search(curLeague(), item, filters, relax)));
+  ipcMain.handle('unique-price', (_e, name, base) => api.uniquePrice(curLeague(), name, base));
   ipcMain.handle('quick-price', (_e, item, filters) => (demo.mockTrade()
-    ? demo.mockQuick() : pricing.quick(settings.get().league, item, filters)));
+    ? demo.mockQuick() : pricing.quick(curLeague(), item, filters)));
   ipcMain.handle('set-league', async (_e, l) => {
     settings.set({ league: l });
     refreshTray();
     await api.loadNinja(l).catch(() => {});
     return true;
   });
-  ipcMain.handle('builds', (_e, opts) => popularBuilds({ ...opts, league: settings.get().league, limit: 5, minLevel: demandLevel() }, api.fetchBuffer));
+  ipcMain.handle('builds', (_e, opts) => popularBuilds({ ...opts, league: curLeague(), limit: 5, minLevel: demandLevel() }, api.fetchBuffer));
   ipcMain.handle('craft', async () => {
     if (!lastItem) return { note: t('No item') };
-    const league = settings.get().league;
+    const league = curLeague();
     const rarity = 'Rare'; // белые и магические — заготовки под крафт: смотрим спрос на редкие такого класса
     const d = await categoryDemand({ league, itemClass: lastItem.itemClass, rarity, limit: 80, withMods: lastThemeMods, minLevel: demandLevel() },
       api.fetchBuffer).catch(() => null);
@@ -550,14 +585,14 @@ app.whenReady().then(singleInstance).then((ok) => {
     }
     return { ...r, prices, theme: d ? d.themed : [], themeBuilds: d ? d.total : null };
   });
-  ipcMain.handle('demand', async (_e, opts) => forBase(await categoryDemand({ ...opts, league: settings.get().league, limit: 80, minLevel: demandLevel() }, api.fetchBuffer), lastItem)); // 80 — чтобы найти и моды вещи вне топ-10
+  ipcMain.handle('demand', async (_e, opts) => forBase(await categoryDemand({ ...opts, league: curLeague(), limit: 80, minLevel: demandLevel() }, api.fetchBuffer), lastItem)); // 80 — чтобы найти и моды вещи вне топ-10
   ipcMain.handle('set-price-currency', (_e, c) => { settings.set({ priceCurrency: c }); });
   ipcMain.handle('copy', (_e, t) => clipboard.writeText(t));
   ipcMain.handle('demand-level', () => settings.get().demandLevel || 90);
   ipcMain.handle('set-demand-level', (_e, l) => settings.set({ demandLevel: l }));
   ipcMain.handle('whisper-game', (_e, t) => whisperInGame(t));
   ipcMain.handle('listing-url', (_e, item, filters, account) => (demo.mockTrade() ? 'https://www.pathofexile.com/trade2'
-    : pricing.listingUrl(settings.get().league, item, filters, account)));
+    : pricing.listingUrl(curLeague(), item, filters, account)));
   ipcMain.handle('open-url', (_e, u) => {
     if (/^https:\/\/((www\.)?pathofexile\.com|poe\.ninja|github\.com\/zhurauljou\/poe2-advanced-price-check)\//.test(u)) shell.openExternal(u);
   });
@@ -576,7 +611,7 @@ app.whenReady().then(singleInstance).then((ok) => {
     return pricing.elementVariants(item, filters).map((v) => ({ ...v, cost: (price(v.rune) ?? 0) + (socket || 0), needSocket: !!socket }));
   });
   ipcMain.handle('hide', () => hide());
-  ipcMain.handle('pin', (_e, on) => { pinned = !!on; });
+  ipcMain.handle('pin', (_e, on) => { pinned = !!on; syncEsc(); });
   ipcMain.handle('compare-show', (_e, html, y) => {
     cmpY = win.getBounds().y + y;
     cmpWin.webContents.send('compare', html);
