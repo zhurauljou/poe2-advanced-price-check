@@ -837,7 +837,8 @@ function addCost(s, rolls, s2) {
         const cur = [bone, ...(s.necro ? [s.necro] : []), ...(echo ? ['Omen of Abyssal Echoes'] : [])];
         if (cur.some((n) => p(n) == null)) continue;
         const one = lottery ? o.guess : o.chance;
-        const pc = 1 - Math.pow(1 - one, echo ? 6 : 3);
+        // Подходящих модов на стороне ≤ 3 — нужный гарантированно среди вариантов (остаётся только тир).
+        const pc = o.pool <= 3 ? o.good : 1 - Math.pow(1 - one, echo ? 6 : 3);
         const per = cur.reduce((a, n) => a + p(n), 0);
         opts.push({ k: 'desecrate', bone, echo, currencies: cur, chances: [lottery ? null : pc], pool: o.pool, cost: tries(per, pc, [{ a: desRetry, q: 0 }]), per, slam: per / pc });
       }
@@ -911,8 +912,8 @@ const STEP_LABEL = {
 
 const oneIn = (c) => t('1 in {n}', { n: Math.round(1 / c) });
 const EXALT_WHY = {
-  greater: 'only modifiers of level 35+: no low tiers, fewer other modifiers ({n} possible)',
-  perfect: 'only modifiers of level 50+: top tiers only, fewer other modifiers ({n} possible)',
+  greater: 'low tiers cut off (level 35+; a family without such tiers rolls its best one)',
+  perfect: 'low tiers cut off (level 50+; a family without such tiers rolls its best one)',
 };
 
 function planHtml(plan) {
@@ -929,11 +930,11 @@ function planHtml(plan) {
     else if (s.act !== 'remove' && c.k !== 'desecrate' && (s.onSide || s.onItem)) notes.push(t('the average includes misses: an Annulment may hit a needed modifier, which then has to be added again'));
     if (c.k === 'desecrate') {
       notes.push(t('Desecrate: reveal it at the Well of Souls and pick 1 of 3 offered modifiers — only one desecrated modifier per item'));
-      if (/^Ancient /.test(c.bone)) notes.push(t('Ancient bone — only modifiers of level 40+'));
+      if (/^Ancient /.test(c.bone)) notes.push(t('Ancient bone — low tiers cut off (level 40+)'));
       if (c.echo) notes.push(t('Omen of Abyssal Echoes — reroll the 3 options once'));
       notes.push(t('A miss → Orb of Annulment + Omen of Light removes it ({cost})', { cost: money((craftPrices['Orb of Annulment'] || 0) + (craftPrices['Omen of Light'] || 0)) }));
     }
-    if (EXALT_WHY[c.k]) notes.push(t(EXALT_WHY[c.k], { n: c.pool }));
+    if (EXALT_WHY[c.k]) notes.push(t(EXALT_WHY[c.k]));
     if (s.act !== 'remove' && c.k !== 'desecrate' && s.sideOmen && !c.currencies.includes(s.sideOmen)) notes.push(t('without a side omen half the rolls land on the other side'));
     const altText = (o) => o.k === 'desecrate'
       ? `${t('Desecrate')}${o.mod ? ` (${o.mod})` : ''}: ${o.currencies.join(' + ')}${o.chances[0] != null ? ` · ${oneIn(o.chances[0])}` : ''}${c.lottery ? '' : ` · ${t('≈ {cost} on average', { cost: money(o.cost) })}`}`
@@ -1016,7 +1017,7 @@ function renderNormalCraft(r, head) {
   const pct = (x) => `${x >= 0.1 ? Math.round(x * 100) : Math.round(x * 1000) / 10}%`;
   const rows = opts.map((o) => `<div class="profit-row${o === best ? ' best' : ''}"><div><span class="game">${esc(o.name)}</span>${o.orb != null ? ` <small>≈ ${money(o.orb)}</small>` : ''}${o === best ? ` <b class="rec">${esc(t('recommended'))}</b>` : ''}</div>
     <div class="ps-how">${esc(t('{n} possible modifiers · popular: {any} · popular in T1–T2: {top}', { n: o.pool, any: pct(o.any), top: pct(o.top) }))}${o.cost != null ? ` · <b>${esc(t('≈ {cost} on average', { cost: money(o.cost) }))}</b>` : ''}</div>
-    ${o.minLevel ? `<div class="ps-note">${esc(t('only modifiers of level {n}+: fewer junk modifiers, higher tiers', { n: o.minLevel }))}</div>` : ''}</div>`).join('');
+    ${o.minLevel ? `<div class="ps-note">${esc(t('low tiers cut off (level {n}+; a family without such tiers rolls its best one)', { n: o.minLevel }))}</div>` : ''}</div>`).join('');
   const warn = base != null && base >= BASE_PRICEY
     ? `<div class="craft-warn">⚠ ${esc(t('The base itself sells for ≈ {price} — a miss costs a base like this. Selling it as is may be the better deal.', { price: money(base) }))}</div>` : '';
   const steps = [

@@ -310,13 +310,16 @@ async function advise(item, demandMods, cached) {
     if (!mineLv) continue;
     const top = [...mineLv].sort((a, b) => b - a).slice(0, 2).pop();
     // Шанс, что мод (среди обычных с уровнем ≥ L и extra «чужих» семейств средним весом) — это семейство в T1–T2.
+    // Мин. уровень (Greater/Perfect, Ancient-кость) отсекает низкие тиры, но семейство без тиров выше порога
+    // всё равно выпадает своим лучшим тиром (docs/crafting-tricks.md §0) — семейства из пула не исчезают.
     const at = (L, extra = 0) => {
-      const share = (type) => lv.get(type).filter((x) => x >= L).length / lv.get(type).length;
-      if (!share(c.type)) return null;
-      const good = mineLv.filter((x) => x >= L && x >= top).length / mineLv.filter((x) => x >= L).length;
-      const types = [...lv.keys()].filter((type) => share(type) > 0);
+      const allowed = (type) => { const l = lv.get(type); const ok = l.filter((x) => x >= L); return ok.length ? ok : [Math.max(...l)]; };
+      const share = (type) => allowed(type).length / lv.get(type).length;
+      const okC = allowed(c.type);
+      const good = okC.filter((x) => x >= top).length / okC.length;
+      const types = [...lv.keys()];
       const odds = (w) => { const sum = types.reduce((s, type) => s + w(type), 0); return w(c.type) / (sum + extra * sum / types.length) * good; };
-      return { pool: types.length + extra, guess: odds(share), chance: nOf && !c.chanceUnknown ? odds((type) => nOf(type) * share(type)) : null };
+      return { pool: types.length + extra, good, guess: odds(share), chance: nOf && !c.chanceUnknown ? odds((type) => nOf(type) * share(type)) : null };
     };
     c.exalt = {};
     for (const [k, L] of Object.entries(EXALT_MIN)) {
@@ -490,8 +493,9 @@ function transmuteOptions(popular, sidePool, nOf, ilvl, jewel) {
     let total = 0, any = 0, top = 0, pool = 0;
     for (const side of ['prefix', 'suffix']) {
       for (const [type, lv] of sidePool[side]) {
-        const ok = lv.filter((x) => x >= L);
-        if (!ok.length) continue;
+        // Семейство без тиров выше порога выпадает лучшим тиром (как у Exalted).
+        const hi = lv.filter((x) => x >= L);
+        const ok = hi.length ? hi : [Math.max(...lv)];
         const w = (nOf ? nOf(type) : 1) * ok.length / lv.length;
         total += w;
         pool++;
@@ -598,6 +602,8 @@ function planGoal(mine, candidates, max, want, magic, magicFree = []) {
   const desFree = mine.filter((a) => a.tag === 'desecrated').every((a) => remove.some((r) => r.tag === 'desecrated' && r.text === (a.mod ? a.mod.lines.join(' / ') : a.name)));
   const filled = { prefix: 0, suffix: 0 };
   for (const a of mine) filled[a.side]++;
+  const fixed = { prefix: 0, suffix: 0 }; // fractured — Annulment их не снимет
+  for (const a of mine) if (a.tag === 'fractured') fixed[a.side]++;
   for (const side of ['prefix', 'suffix'].sort((x, y) => top(y) - top(x))) {
     const out = remove.filter((r) => r.side === side);
     const into = add.filter((c) => c.side === side);
@@ -619,7 +625,7 @@ function planGoal(mine, candidates, max, want, magic, magicFree = []) {
     const sideOmen = otherOpen ? `Omen of ${S} Exaltation` : null;
     // Какой Exalted взять (обычный / Greater / Perfect) и с какими оменами — выбирает окно по ценам валюты.
     // onSide / onItem — сколько модов уже стоит (все нужные: лишнее убрано раньше) — от этого зависит, чем снимать промах.
-    const step = (c, i) => ({ act: 'add', side, mod: c.text, pct: c.pct, onSide: filled[side] + i, onItem: filled.prefix + filled.suffix + i,
+    const step = (c, i) => ({ act: 'add', side, mod: c.text, pct: c.pct, onSide: filled[side] - fixed[side] + i, onItem: filled.prefix + filled.suffix - fixed.prefix - fixed.suffix + i,
       annulOmen: `Omen of ${S} Annulment`, exalt: c.exalt || { base: { chance: c.chanceUnknown ? null : c.chance || null } },
       sideOmen, otherOpen, retry: ['Orb of Annulment', `Omen of ${S} Annulment`],
       // Вместо Exalted — Desecrate (кость + Necromancy-омен на сторону): выбор 1 из 3 при раскрытии. Окно решит, где выгоднее.
