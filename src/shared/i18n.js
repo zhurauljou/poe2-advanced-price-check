@@ -284,6 +284,8 @@
     'Hotkey only in Path of Exile': 'Горячая клавиша только в Path of Exile',
     'Start with Windows': 'Запускать с Windows',
     'Reset window position': 'Сбросить положение окна',
+    'Refresh game data (after a patch)': 'Обновить данные игры (после патча)',
+    'Game data updated': 'Данные игры обновлены',
     'Interface language': 'Язык интерфейса',
     'Without: {mod}': 'Без: {mod}',
     '{essence} — makes it rare with {mod}': '{essence} — сделает редкой с {mod}',

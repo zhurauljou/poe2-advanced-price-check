@@ -157,6 +157,15 @@ async function cached(name, url, maxAgeH = 24) {
   }
 }
 
+// «Обновить данные игры» (после патча): стираем справочники — следующая загрузка скачает свежие.
+function clearCache() {
+  for (const f of fs.readdirSync(cacheDir())) {
+    try { fs.unlinkSync(path.join(cacheDir(), f)); } catch {}
+  }
+  ninja.at = 0;
+  uniques.at = 0;
+}
+
 const tradeStats = () => cached('stats.json', `${TRADE}/api/trade2/data/stats`);
 const tradeItems = () => cached('items.json', `${TRADE}/api/trade2/data/items`);
 const tradeStatic = () => cached('static.json', `${TRADE}/api/trade2/data/static`);
@@ -258,5 +267,5 @@ async function uniquePrice(league, name, baseType) {
 }
 
 module.exports = {
-  TRADE, tradeRequest, newGeneration, cacheDir, forCurrent, fetchBuffer, cached, tradeStats, tradeItems, tradeStatic, tradeLeagues, loadNinja, ninja, uniquePrice,
+  TRADE, tradeRequest, newGeneration, cacheDir, clearCache, forCurrent, fetchBuffer, cached, tradeStats, tradeItems, tradeStatic, tradeLeagues, loadNinja, ninja, uniquePrice,
 };

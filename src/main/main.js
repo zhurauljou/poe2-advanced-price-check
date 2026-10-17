@@ -330,6 +330,7 @@ async function priceCheck(text) {
   } catch (e) {
     send('status', { error: t('Failed to load data: {msg}', { msg: e.message }) });
   }
+  refreshLeagues().catch((e) => log('leagues', e.message)); // из кэша (6 ч) — мгновенно; устарел — обновится в фоне
   const league = settings.get().league;
   // Цены этой лиги уже есть — показываем сразу, свежие докачаются в фоне. Нет — ждём (иначе нечего показать).
   // Ошибку глотаем: нет цен poe.ninja для лиги — трейд всё равно работает.
@@ -387,13 +388,39 @@ function curLeague() {
   return l;
 }
 
-async function initData() {
-  const list = await api.tradeLeagues();
-  leagues = list.result.map((l) => l.id);
+// Список лиг: кэш на 6 ч, проверяем при каждой проверке вещи и по таймеру — новая лига появляется в трее без
+// перезапуска; выбранная закончилась — переходим на основную текущую.
+async function refreshLeagues() {
+  const ids = (await api.tradeLeagues()).result.map((l) => l.id);
+  const changed = ids.join('|') !== leagues.join('|');
+  leagues = ids;
   if (!settings.get().league || !leagues.includes(settings.get().league)) {
     const main = leagues.find((l) => !/^(HC |Hardcore|Standard)/.test(l)) || leagues[0];
+    if (settings.get().league) log('league ended:', settings.get().league, '→', main);
     settings.set({ league: main });
   }
+  if (changed) refreshTray();
+}
+
+// «Обновить данные игры» (день патча): свежие справочники трейда, RePoE и названия на языке клиента — без перезапуска.
+async function refreshData() {
+  api.clearCache();
+  craft.reset();
+  clientLang.reset();
+  stats.buildLocal(null);
+  clientLangActive = 'en';
+  ready = null;
+  try {
+    await ensureReady();
+    await craft.load(api.cached);
+    tray.displayBalloon({ title: 'PoE 2 Price Checker', content: t('Game data updated') });
+  } catch (e) {
+    tray.displayBalloon({ title: 'PoE 2 Price Checker', content: t('Failed to load data: {msg}', { msg: e.message }) });
+  }
+}
+
+async function initData() {
+  await refreshLeagues();
   await pricing.init();
   api.loadNinja(settings.get().league).catch(() => {});
   craft.load(api.cached).catch((e) => log('craft data', e.message)); // пул модов — и для «нет ключевого мода»
@@ -519,6 +546,8 @@ function buildTray() {
         label: t('Reset window position'), enabled: !!settings.get().windowPos,
         click: () => { settings.set({ windowPos: null }); refresh(); },
       },
+      // После патча игры: новые моды и базы — сразу, а не через сутки (справочники трейда) или неделю (RePoE).
+      { label: t('Refresh game data (after a patch)'), click: () => refreshData() },
       {
         // Язык интерфейса: названия языков — на своём языке, чтобы найти нужный при любом выбранном.
         label: t('Interface language'),
@@ -571,6 +600,7 @@ app.whenReady().then(singleInstance).then((ok) => {
   if (!demo.enabled) {
     syncHotkey();
     setInterval(syncHotkey, 250);
+    setInterval(() => refreshLeagues().catch((e) => log('leagues', e.message)), 6 * 3600e3);
   }
 
   // Демо-режим (проверка без игры) — см. demo.js.

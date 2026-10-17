@@ -183,4 +183,4 @@ function modBody(l, L) {
     wrap: (en) => `${en}${tag ? tag[0] : ''}${unscalable ? ' — Unscalable Value' : ''}` };
 }
 
-module.exports = { LANGS, load, toEnglish };
+module.exports = { LANGS, load, toEnglish, reset: () => { data = null; } };

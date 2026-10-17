@@ -1053,6 +1053,12 @@ function sessionHtml(r) {
     ${done ? `<div class="verdict good">🎉 ${esc(t('Goal reached — check the price on the Price tab'))}</div>` : next ? `<div class="ss-next">${esc(t('Next: {step}', { step: STEP_LABEL[next.act](next) }))}</div>` : ''}</div>`;
 }
 
+// Шансы — оценка по лотам трейда; собраны в другой лиге — пишем в какой (после патча веса могли измениться).
+function chanceWarn(m) {
+  const date = m.league && state && m.league !== state.league ? `${m.collected}, ${m.league}` : m.collected;
+  return `<div class="craft-warn">⚠ ${esc(t('Chances are rough estimates from {n} cheap trade listings ({date}) — PoE 2 game files have no modifier weights. Treat them as "common / rare", not exact odds.', { n: m.items, date }))}</div>`;
+}
+
 // ---- белая база: Transmutation (обычная / Greater 44+ / Perfect 70+) → магическая с одним модом ----
 // Промах — нужна новая база (или Orb of Annulment, если база дороже). Рекомендуем вариант с меньшей ожидаемой
 // стоимостью до популярного мода в одном из двух лучших тиров.
@@ -1089,7 +1095,7 @@ function renderNormalCraft(r, head) {
     ${warn}${rows}
     <ol class="plan">${steps.map((s) => `<li><div class="ps-how">${esc(s)}</div></li>`).join('')}</ol></div>
     ${popular.length ? demandList('npop', t('Popular modifiers that can roll here'), popular) : ''}
-    ${r.chanceMeta ? `<div class="craft-warn">⚠ ${esc(t('Chances are rough estimates from {n} cheap trade listings ({date}) — PoE 2 game files have no modifier weights. Treat them as "common / rare", not exact odds.', { n: r.chanceMeta.items, date: r.chanceMeta.collected }))}</div>` : ''}`;
+    ${r.chanceMeta ? chanceWarn(r.chanceMeta) : ''}`;
 }
 
 // ---- уник: Divine перекатывает значения всех модов разом (сами моды не меняются) ----
@@ -1289,7 +1295,7 @@ function renderCraft(r) {
   if (r.theme && r.theme.length) {
     top.splice(1, 0, `<div class="craft-theme" title="${t('Demand % below is among {n} builds that wear this item class with these modifiers', { n: r.themeBuilds })}">${t('Demand among builds using')} <b>${r.theme.map(esc).join('</b> + <b>')}</b></div>`);
   }
-  if (r.chanceMeta) parts.push(`<div class="craft-warn">⚠ ${esc(t('Chances are rough estimates from {n} cheap trade listings ({date}) — PoE 2 game files have no modifier weights. Treat them as "common / rare", not exact odds.', { n: r.chanceMeta.items, date: r.chanceMeta.collected }))}</div>`);
+  if (r.chanceMeta) parts.push(chanceWarn(r.chanceMeta));
   if (r.gamble && r.goal && r.goal.plan && r.goal.plan.length) parts.push(gambleHtml(r.gamble)); // в конце, после всех безопасных способов
   parts.push(`<div class="craft-foot">${t(r.chanceMeta ? 'Mod pool: game files (RePoE).' : "Mod pool: game files (RePoE). Roll chances aren't shown — PoE 2 files have no modifier weights.")}<br>${t('% = share of those builds using the modifier (poe.ninja). «price?» — what your item would cost with it.')}</div>`);
   $('craft').innerHTML = head + top.join('')

@@ -23,13 +23,21 @@ const { t } = require('../shared/i18n');
 const REPOE = 'https://repoe-fork.github.io/poe2';
 
 let data = null; // { bases: Map name→base, pool: [...] }
+let loadedAt = 0;
 
-// Пул модов грузим один раз: initData и первый запрос Craft не должны разбирать RePoE параллельно.
+// Пул модов грузим один раз: initData и первый запрос Craft не должны разбирать RePoE параллельно. Программа живёт в
+// трее неделями — раз в сутки перечитываем (сам файл RePoE обновляется раз в неделю, после патча — «Обновить данные»).
 let loading = null;
 function load(cached) {
-  if (data) return Promise.resolve(data);
-  if (!loading) loading = loadData(cached).finally(() => { loading = null; });
+  if (data && Date.now() - loadedAt < 24 * 3600e3) return Promise.resolve(data);
+  if (!loading) loading = loadData(cached).then((d) => { reset(); data = d; loadedAt = Date.now(); return d; }).finally(() => { loading = null; });
   return loading;
+}
+// Забыть загруженный пул и всё, что из него посчитано (новые данные после патча).
+function reset() {
+  data = null;
+  shareCache.clear();
+  linesCache.clear();
 }
 
 async function loadData(cached) {
@@ -61,8 +69,7 @@ async function loadData(cached) {
     name: bases[key] && bases[key].name, limit: a.limit || null, level: a.required_level || 0,
     cats: Object.values(a.categories || {}).filter((c) => (c.stat_text || []).length).map((c) => ({ target: c.target, lines: c.stat_text.flatMap((tx) => templates(tx)) })),
   })).filter((a) => a.name && a.cats.length);
-  data = { bases: byName, pool, typeLines, augs };
-  return data;
+  return { bases: byName, pool, typeLines, augs };
 }
 
 // Моды Time-Lost самоцветов (radius_jewel) в RePoE записаны без «Small/Notable Passive Skills in Radius also grant» —
@@ -425,7 +432,7 @@ async function advise(item, demandMods, cached) {
   const wc = W && W.classes[item.itemClass];
   let chanceMeta = null;
   if (wc && wc.items >= 50) {
-    chanceMeta = { items: wc.items, collected: W.meta.collected };
+    chanceMeta = { items: wc.items, collected: W.meta.collected, league: W.meta.league };
     const counts = familyCounts(wc, (type) => Math.max(0, ...(d.typeLines.get(type) || []).map((l) => want.get(l) || 0)));
     // Статистика — по всему классу (все ботинки), а моды защиты встают только на свои базы (уклонение — на «ловкие»).
     // Делим частоту на долю «типов баз» класса, где семейство вообще может выпасть: оценка веса, как если бы оно было везде.
@@ -1053,4 +1060,4 @@ function sameClass(a, b) {
   return x && y ? x.item_class === y.item_class : null;
 }
 
-module.exports = { advise, load, rollsOn, canAppear, sameClass };
+module.exports = { advise, load, reset, rollsOn, canAppear, sameClass };
