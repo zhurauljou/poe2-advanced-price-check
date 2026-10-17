@@ -1,3 +1,5 @@
+// Мост главного окна (оверлей). У окна карточки конкурента и окна «Updates» свои мосты (preload-compare.js,
+// preload-updates.js) — только то, что им нужно: карточку рисуют данные трейда, ей незачем искать или писать в чат.
 const { contextBridge, ipcRenderer } = require('electron');
 
 // Язык интерфейса: синхронно при загрузке окна (без мигания английским) и событие смены из трея.
@@ -30,20 +32,4 @@ contextBridge.exposeInMainWorld('pc', {
   // карточка конкурента в окне сбоку
   compareShow: (html, y) => ipcRenderer.invoke('compare-show', html, y),
   compareHide: () => ipcRenderer.invoke('compare-hide'),
-  onCompare: (cb) => ipcRenderer.on('compare', (_e, html) => cb(html)),
-  compareFit: (height) => ipcRenderer.invoke('compare-fit', height),
-});
-
-// Окно «Updates»
-contextBridge.exposeInMainWorld('upd', {
-  uiLang,
-  onUiLang,
-  onStatus: (cb) => ipcRenderer.on('upd-status', (_e, s) => cb(s)),
-  ready: () => ipcRenderer.invoke('upd-ready'),
-  check: () => ipcRenderer.invoke('upd-check'),
-  download: () => ipcRenderer.invoke('upd-download'),
-  install: () => ipcRenderer.invoke('upd-install'),
-  close: () => ipcRenderer.invoke('upd-close'),
-  fit: (h) => ipcRenderer.invoke('upd-fit', h),
-  openUrl: (url) => ipcRenderer.invoke('open-url', url),
 });

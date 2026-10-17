@@ -51,6 +51,16 @@ async function singleInstance() {
 process.on('uncaughtException', (e) => log('uncaught', e));
 process.on('unhandledRejection', (e) => log('unhandled', e));
 
+// Окна показывают только свои файлы: без Node, в песочнице, с изоляцией контекста (явно — не полагаясь на умолчания
+// версии Electron). Переходы по ссылкам и новые окна запрещены (app.on('web-contents-created') ниже): внешние ссылки
+// открываются только через open-url, по списку сайтов.
+const SECURE = { contextIsolation: true, sandbox: true, nodeIntegration: false, webSecurity: true };
+app.on('web-contents-created', (_e, wc) => {
+  wc.on('will-navigate', (ev) => ev.preventDefault());
+  wc.on('will-attach-webview', (ev) => ev.preventDefault());
+  wc.setWindowOpenHandler(() => ({ action: 'deny' }));
+});
+
 // Карточка конкурента — отдельное окно сбоку от оверлея, чтобы не закрывать его содержимое.
 const CMP_WIDTH = 440;
 let cmpWin = null;
@@ -60,7 +70,7 @@ function createCompare() {
   cmpWin = new BrowserWindow({
     width: CMP_WIDTH, height: 300, show: false, frame: false, resizable: false, skipTaskbar: true,
     alwaysOnTop: true, focusable: false, fullscreenable: false, backgroundColor: '#0a0d12',
-    webPreferences: { preload: path.join(__dirname, 'preload.js'), contextIsolation: true, backgroundThrottling: false },
+    webPreferences: { ...SECURE, preload: path.join(__dirname, 'preload-compare.js'), backgroundThrottling: false },
   });
   cmpWin.setAlwaysOnTop(true, 'screen-saver');
   cmpWin.loadFile(path.join(__dirname, '../renderer/compare.html'));
@@ -89,7 +99,7 @@ function createOverlay() {
     alwaysOnTop: true,
     fullscreenable: false,
     backgroundColor: '#14110e',
-    webPreferences: { preload: path.join(__dirname, 'preload.js'), contextIsolation: true },
+    webPreferences: { ...SECURE, preload: path.join(__dirname, 'preload.js') },
   });
   // Уровень screen-saver держит окно над полноэкранным-в-окне клиентом игры.
   win.setAlwaysOnTop(true, 'screen-saver');
@@ -472,7 +482,7 @@ function openUpdates() {
     updWin = new BrowserWindow({
       width: 380, height: 200, frame: false, resizable: false, alwaysOnTop: true, fullscreenable: false, show: false,
       title: t('Updates'), backgroundColor: '#0b1017', icon: ICON,
-      webPreferences: { preload: path.join(__dirname, 'preload.js'), contextIsolation: true },
+      webPreferences: { ...SECURE, preload: path.join(__dirname, 'preload-updates.js') },
     });
     updWin.setAlwaysOnTop(true, 'screen-saver');
     updWin.loadFile(path.join(__dirname, '../renderer/updates.html'));
@@ -574,6 +584,24 @@ function buildTray() {
   return refresh;
 }
 
+// IPC: каждый канал принимает вызовы только от своего окна (карточка конкурента показывает данные трейда — ей
+// незачем искать или писать в чат игры).
+const isFrom = (w) => (e) => !!(w && !w.isDestroyed() && e.sender === w.webContents);
+const FROM = {
+  overlay: (e) => isFrom(win)(e),
+  compare: (e) => isFrom(cmpWin)(e),
+  updates: (e) => isFrom(updWin)(e),
+  any: (e) => isFrom(win)(e) || isFrom(updWin)(e),
+};
+function handle(channel, allowed, fn) {
+  ipcMain.handle(channel, (e, ...args) => {
+    if (!allowed(e)) { log('ipc: rejected', channel); throw new Error('not allowed'); }
+    return fn(e, ...args);
+  });
+}
+const PRICE_CURRENCIES = ['any', 'divine', 'chaos', 'exalted'];
+const DEMAND_LEVELS = [80, 90, 95];
+
 app.whenReady().then(singleInstance).then((ok) => {
   if (!ok) { app.quit(); return; }
   i18n.setLang(settings.get().uiLang);
@@ -606,19 +634,20 @@ app.whenReady().then(singleInstance).then((ok) => {
   // Демо-режим (проверка без игры) — см. demo.js.
   demo.run({ ready: ensureReady(), priceCheck, openUpdates, windows: () => ({ main: win, cmp: cmpWin, upd: updWin }) });
 
-  ipcMain.handle('search', (_e, item, filters, relax) => (demo.mockTrade()
+  handle('search', FROM.overlay, (_e, item, filters, relax) => (demo.mockTrade()
     ? demo.mockSearch(api.ninja.rates) : api.forCurrent(() => pricing.search(curLeague(), item, filters, relax))));
-  ipcMain.handle('unique-price', (_e, name, base) => api.uniquePrice(curLeague(), name, base));
-  ipcMain.handle('quick-price', (_e, item, filters) => (demo.mockTrade()
+  handle('unique-price', FROM.overlay, (_e, name, base) => api.uniquePrice(curLeague(), name, base));
+  handle('quick-price', FROM.overlay, (_e, item, filters) => (demo.mockTrade()
     ? demo.mockQuick() : api.forCurrent(() => pricing.quick(curLeague(), item, filters))));
-  ipcMain.handle('set-league', async (_e, l) => {
+  handle('set-league', FROM.overlay, async (_e, l) => {
+    if (!leagues.includes(l)) throw new Error(`unknown league ${l}`);
     settings.set({ league: l });
     refreshTray();
     await api.loadNinja(l).catch(() => {});
     return true;
   });
-  ipcMain.handle('builds', (_e, opts) => popularBuilds({ ...opts, league: curLeague(), limit: 5, minLevel: demandLevel() }, api.fetchBuffer));
-  ipcMain.handle('craft', async () => {
+  handle('builds', FROM.overlay, (_e, opts) => popularBuilds({ ...opts, league: curLeague(), limit: 5, minLevel: demandLevel() }, api.fetchBuffer));
+  handle('craft', FROM.overlay, async () => {
     if (!lastItem) return { note: t('No item') };
     const league = curLeague();
     const rarity = 'Rare'; // белые и магические — заготовки под крафт: смотрим спрос на редкие такого класса
@@ -637,40 +666,44 @@ app.whenReady().then(singleInstance).then((ok) => {
     }
     return { ...r, prices, theme: d ? d.themed : [], themeBuilds: d ? d.total : null };
   });
-  ipcMain.handle('demand', async (_e, opts) => forBase(await categoryDemand({ ...opts, league: curLeague(), limit: 80, minLevel: demandLevel() }, api.fetchBuffer), lastItem)); // 80 — чтобы найти и моды вещи вне топ-10
-  ipcMain.handle('set-price-currency', (_e, c) => { settings.set({ priceCurrency: c }); });
-  ipcMain.handle('copy', (_e, t) => clipboard.writeText(t));
-  ipcMain.handle('demand-level', () => settings.get().demandLevel || 90);
-  ipcMain.handle('set-demand-level', (_e, l) => settings.set({ demandLevel: l }));
-  ipcMain.handle('whisper-game', (_e, t) => whisperInGame(t));
-  ipcMain.handle('listing-url', (_e, item, filters, account) => (demo.mockTrade() ? 'https://www.pathofexile.com/trade2'
+  handle('demand', FROM.overlay, async (_e, opts) => forBase(await categoryDemand({ ...opts, league: curLeague(), limit: 80, minLevel: demandLevel() }, api.fetchBuffer), lastItem)); // 80 — чтобы найти и моды вещи вне топ-10
+  handle('set-price-currency', FROM.overlay, (_e, c) => { if (PRICE_CURRENCIES.includes(c)) settings.set({ priceCurrency: c }); });
+  handle('copy', FROM.overlay, (_e, t) => clipboard.writeText(String(t).slice(0, 4000)));
+  handle('demand-level', FROM.overlay, () => settings.get().demandLevel || 90);
+  handle('set-demand-level', FROM.overlay, (_e, l) => { if (DEMAND_LEVELS.includes(l)) settings.set({ demandLevel: l }); });
+  // В чат игры — только шёпот («@Ник текст»): окно не должно уметь напечатать в игре что угодно.
+  handle('whisper-game', FROM.overlay, (_e, t) => (typeof t === 'string' && /^@\S+ /.test(t) && t.length <= 512 && !/[\r\n]/.test(t) ? whisperInGame(t) : false));
+  handle('listing-url', FROM.overlay, (_e, item, filters, account) => (demo.mockTrade() ? 'https://www.pathofexile.com/trade2'
     : api.forCurrent(() => pricing.listingUrl(curLeague(), item, filters, account))));
-  ipcMain.handle('open-url', (_e, u) => {
+  handle('open-url', FROM.any, (_e, u) => {
     if (/^https:\/\/((www\.)?pathofexile\.com|poe\.ninja|github\.com\/zhurauljou\/poe2-advanced-price-check)\//.test(u)) shell.openExternal(u);
   });
-  ipcMain.handle('upd-ready', (e) => e.sender.send('upd-status', updStatus()));
-  ipcMain.handle('upd-check', () => updater.check());
-  ipcMain.handle('upd-download', () => updater.download());
-  ipcMain.handle('upd-install', () => updater.install());
-  ipcMain.handle('upd-close', () => { if (updWin && !updWin.isDestroyed()) updWin.close(); });
-  ipcMain.handle('upd-fit', (_e, h) => {
+  handle('upd-ready', FROM.updates, (e) => e.sender.send('upd-status', updStatus()));
+  handle('upd-check', FROM.updates, () => updater.check());
+  handle('upd-download', FROM.updates, () => updater.download());
+  handle('upd-install', FROM.updates, () => updater.install());
+  handle('upd-close', FROM.updates, () => { if (updWin && !updWin.isDestroyed()) updWin.close(); });
+  handle('upd-fit', FROM.updates, (_e, h) => {
+    if (!Number.isFinite(h)) return;
     if (updWin && !updWin.isDestroyed()) updWin.setContentSize(380, Math.min(Math.ceil(h) + 2, 400));
   });
-  ipcMain.handle('element-variants', (_e, item, filters) => {
+  handle('element-variants', FROM.overlay, (_e, item, filters) => {
     const price = (n) => { const row = api.ninja.byName.get(n); return row ? row.divine : null; };
     const runes = (item.modLines || []).filter((l) => l.tag === 'rune').length;
     const socket = (item.sockets || 0) > runes ? 0 : price("Artificer's Orb");
     return pricing.elementVariants(item, filters).map((v) => ({ ...v, cost: (price(v.rune) ?? 0) + (socket || 0), needSocket: !!socket }));
   });
-  ipcMain.handle('hide', () => hide());
-  ipcMain.handle('pin', (_e, on) => { pinned = !!on; syncEsc(); });
-  ipcMain.handle('compare-show', (_e, html, y) => {
+  handle('hide', FROM.overlay, () => hide());
+  handle('pin', FROM.overlay, (_e, on) => { pinned = !!on; syncEsc(); });
+  handle('compare-show', FROM.overlay, (_e, html, y) => {
+    if (typeof html !== 'string' || !Number.isFinite(y)) return;
     cmpY = win.getBounds().y + y;
     cmpWin.webContents.send('compare', html);
   });
-  ipcMain.handle('compare-fit', (_e, h) => { if (win.isVisible()) placeCompare(h); });
-  ipcMain.handle('compare-hide', () => cmpWin.hide());
-  ipcMain.handle('fit', (_e, h) => {
+  handle('compare-fit', FROM.compare, (_e, h) => { if (Number.isFinite(h) && win.isVisible()) placeCompare(h); });
+  handle('compare-hide', FROM.overlay, () => cmpWin.hide());
+  handle('fit', FROM.overlay, (_e, h) => {
+    if (!Number.isFinite(h)) return;
     const area = screen.getDisplayMatching(win.getBounds()).workArea;
     const height = Math.min(Math.ceil(h), area.height - 20);
     const b = win.getBounds();

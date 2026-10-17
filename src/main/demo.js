@@ -9,7 +9,8 @@ const { app } = require('electron');
 const fs = require('fs');
 
 const arg = (k) => (process.argv.find((a) => a.startsWith(`--${k}=`)) || '').slice(k.length + 3);
-const enabled = !!arg('demo');
+// Только при запуске из исходников: --eval выполняет произвольный код в окне, установленной программе он ни к чему.
+const enabled = !app.isPackaged && !!arg('demo');
 
 // Подставные лоты для --mock-trade.
 function mockSearch(rates) {

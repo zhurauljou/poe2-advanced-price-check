@@ -54,23 +54,8 @@ const plural = (c) => CLASS_PLURAL[c] || (/s$/.test(c) ? c : `${c}s`);
 
 let data = null; // { lang, items: Map ru → [entry], uniques: Map ru → [entry], bases: [{ ru, en, category }] }
 
-// Названия предметов на языке клиента (кэш на неделю в папке dir; нет сети — старый кэш).
-async function load(lang, dir, fetchBuffer) {
-  if (!LANGS[lang]) { data = null; return; }
-  if (data && data.lang === lang) return;
-  const file = path.join(dir, `ee2-${lang}-items.ndjson`);
-  let text = null;
-  try {
-    if (Date.now() - fs.statSync(file).mtimeMs < 7 * 24 * 3600e3) text = fs.readFileSync(file, 'utf8');
-  } catch {}
-  if (!text) {
-    try {
-      text = Buffer.from(await fetchBuffer(`${EE2}/${lang}/items.ndjson`)).toString('utf8');
-      writeFileAtomic(file, text);
-    } catch (e) {
-      if (fs.existsSync(file)) text = fs.readFileSync(file, 'utf8'); else throw e;
-    }
-  }
+// items.ndjson: строка — предмет { name (на языке клиента), refName (английское), namespace, craftable? }.
+function parse(text) {
   const items = new Map();
   const uniques = new Map();
   const bases = [];
@@ -83,6 +68,31 @@ async function load(lang, dir, fetchBuffer) {
     map.get(x.name).push(x);
     if (x.namespace === 'ITEM' && x.craftable) bases.push({ ru: x.name, en: x.refName, category: x.craftable.category });
   }
+  return { items, uniques, bases };
+}
+
+// Названия предметов на языке клиента (кэш на неделю в папке dir; нет сети — старый кэш).
+async function load(lang, dir, fetchBuffer) {
+  if (!LANGS[lang]) { data = null; return; }
+  if (data && data.lang === lang) return;
+  const file = path.join(dir, `ee2-${lang}-items.ndjson`);
+  let parsed = null;
+  try {
+    if (Date.now() - fs.statSync(file).mtimeMs < 7 * 24 * 3600e3) parsed = parse(fs.readFileSync(file, 'utf8'));
+  } catch {}
+  if (!parsed) {
+    try {
+      // Данные берём из ветки master чужого проекта: сменился формат — новая выгрузка не разберётся (баз почти нет).
+      // Тогда не затираем рабочий кэш, а живём со старым.
+      const text = Buffer.from(await fetchBuffer(`${EE2}/${lang}/items.ndjson`)).toString('utf8');
+      parsed = parse(text);
+      if (parsed.bases.length < 100) throw new Error(`EE2 ${lang}/items.ndjson: unexpected format (${parsed.bases.length} bases)`);
+      writeFileAtomic(file, text);
+    } catch (e) {
+      if (fs.existsSync(file)) parsed = parse(fs.readFileSync(file, 'utf8')); else throw e;
+    }
+  }
+  const { items, uniques, bases } = parsed;
   bases.sort((a, b) => b.ru.length - a.ru.length); // для магических: самое длинное совпадение внутри строки
   data = { lang, items, uniques, bases, byEn: new Map(bases.map((b) => [b.en, b])) };
 }
