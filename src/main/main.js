@@ -540,7 +540,7 @@ app.whenReady().then(singleInstance).then((ok) => {
     const r = await craft.advise(lastItem, d && d.mods, api.cached);
     // Цены валюты для расчёта затрат на крафт (div за штуку; нет на poe.ninja — null).
     const prices = {};
-    for (const name of ['Vaal Orb', 'Omen of Sanctification', 'Divine Orb', 'Orb of Transmutation', 'Greater Orb of Transmutation', 'Perfect Orb of Transmutation', 'Orb of Annulment', 'Fracturing Orb', "Hinekora's Lock", 'Omen of Putrefaction']) { const row = api.ninja.byName.get(name); prices[name] = row ? row.divine : null; }
+    for (const name of ['Vaal Orb', 'Omen of Sanctification', 'Divine Orb', 'Orb of Transmutation', 'Greater Orb of Transmutation', 'Perfect Orb of Transmutation', 'Orb of Annulment', 'Fracturing Orb', "Hinekora's Lock", 'Omen of Putrefaction', 'Chaos Orb', 'Greater Chaos Orb', 'Perfect Chaos Orb', 'Omen of Whittling', 'Omen of Sinistral Erasure', 'Omen of Dextral Erasure', 'Regal Orb', 'Greater Regal Orb', 'Perfect Regal Orb']) { const row = api.ninja.byName.get(name); prices[name] = row ? row.divine : null; }
     for (const s of (r.goal && r.goal.plan) || []) {
       for (const name of [...s.currencies, ...(s.retry || [])]) {
         const row = api.ninja.byName.get(name);

@@ -17,6 +17,7 @@ function weights() {
 }
 const { essenceFor, perfectFor } = require('./essences');
 const { isKey, isWeak } = require('./weights');
+const methods = require('../shared/methods');
 const { t } = require('../shared/i18n');
 
 const REPOE = 'https://repoe-fork.github.io/poe2';
@@ -635,7 +636,7 @@ async function advise(item, demandMods, cached) {
 // Белая база → магическая: Orb of Transmutation даёт один случайный мод (префикс или суффикс);
 // Greater — только моды уровня 44+, Perfect — 70+ (меньше мусора, выше тиры). Для каждого: сколько семейств может выпасть,
 // шанс популярного мода (любой тир) и популярного в одном из двух лучших тиров. Веса — по статистике (nOf) или поровну.
-const TRANSMUTE = [['Orb of Transmutation', 0], ['Greater Orb of Transmutation', 44], ['Perfect Orb of Transmutation', 70]];
+const TRANSMUTE = methods.tiers('transmute');
 function transmuteOptions(popular, sidePool, nOf, ilvl, jewel) {
   const out = [];
   for (const [name, L] of TRANSMUTE) {
@@ -711,8 +712,10 @@ function familyCounts(wc, pctOf) {
 // ценность = спрос (% билдов) × качество тира; кандидату засчитываем средний тир (что выпадет — неизвестно).
 // Fractured снять нельзя — остаются всегда. Возвращает { keep, remove, add } или null, если улучшать нечего.
 const TIER_VALUE = [0, 1, 0.85, 0.7, 0.6];
-const EXALT_MIN = { base: 0, greater: 35, perfect: 50 }; // Greater / Perfect Exalted Orb — только моды этого уровня и выше
-const EXALT_NAME = { base: 'Exalted Orb', greater: 'Greater Exalted Orb', perfect: 'Perfect Exalted Orb' };
+// Greater / Perfect Exalted Orb — только моды этого уровня и выше (src/shared/methods.js — реестр методов крафта).
+const EXALT_KEYS = ['base', 'greater', 'perfect'];
+const EXALT_MIN = Object.fromEntries(methods.tiers('exalt').map(([, lv], i) => [EXALT_KEYS[i], lv]));
+const EXALT_NAME = Object.fromEntries(methods.tiers('exalt').map(([n], i) => [EXALT_KEYS[i], n]));
 const KEY_PCT = 30; // мод, который носит столько % билдов, на другой не меняем
 const KEEP_BONUS = 1.5;
 function planGoal(mine, candidates, max, want, magic, magicFree = [], itemClass = '') {

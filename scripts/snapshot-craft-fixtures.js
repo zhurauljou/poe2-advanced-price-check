@@ -1,7 +1,8 @@
 // Снимок спроса poe.ninja и цен валюты для контрольных сценариев крафта (test/fixtures/craft/*.json).
 // Сценарии — вещи, на которых советы ошибались; тесты (test/craft.test.js) проверяют свойства плана на этих снимках,
 // чтобы результат не зависел от сегодняшнего рынка. Обновлять снимки — только осознанно (после патча / смены лиги):
-//   node scripts/snapshot-craft-fixtures.js
+//   node scripts/snapshot-craft-fixtures.js            (всё)
+//   node scripts/snapshot-craft-fixtures.js --prices   (только цены и категории валюты)
 const fs = require('fs');
 const path = require('path');
 const Module = require('module');
@@ -27,27 +28,29 @@ const SCENARIOS = [
   { name: 'staff-cold', class: 'Staves', theme: [] },
 ];
 const UNIQUES = ['Heart of the Well'];
-const PRICE_TYPES = ['Currency', 'Ritual', 'Abyss', 'Essences', 'Runes', 'Verisium'];
+const PRICE_TYPES = ['Currency', 'Ritual', 'Abyss', 'Essences', 'Runes', 'Verisium', 'Delirium', 'Breach', 'SoulCores'];
 
 (async () => {
   const leagues = await (await fetch('https://www.pathofexile.com/api/trade2/data/leagues', { headers: { 'User-Agent': 'poe2-price-checker' } })).json();
   const league = leagues.result[0].id;
-  for (const s of SCENARIOS) {
+  // --prices — только цены (снимки спроса не трогаем)
+  for (const s of process.argv.includes('--prices') ? [] : SCENARIOS) {
     const d = await nb.categoryDemand({ itemClass: s.class, rarity: 'Rare', limit: 80, minLevel: 95, withMods: s.theme }, fb);
     fs.writeFileSync(path.join(DIR, `${s.name}.demand.json`), JSON.stringify({ league: d.league, class: s.class, themed: d.themed, mods: d.mods, bases: d.bases }, null, 1));
     console.log(s.name, d.mods.length, 'mods', d.themed);
   }
-  for (const u of UNIQUES) {
+  for (const u of process.argv.includes('--prices') ? [] : UNIQUES) {
     const b = await nb.popularBuilds({ uniqueName: u, limit: 1, minLevel: 95 }, fb);
     fs.writeFileSync(path.join(DIR, `unique-${u.toLowerCase().replace(/\W+/g, '-')}.demand.json`), JSON.stringify({ mods: b.mods }, null, 1));
   }
   const prices = {};
+  const categories = {}; // имя → категория poe.ninja (для аудита реестра методов крафта)
   for (const t of PRICE_TYPES) {
     const d = await (await fetch(`https://poe.ninja/poe2/api/economy/exchange/current/overview?league=${encodeURIComponent(league)}&type=${t}`)).json();
     const names = new Map((d.items || []).map((i) => [i.id, i.name]));
     if (d.core) for (const i of d.core.items || []) names.set(i.id, i.name);
-    for (const l of d.lines) if (names.get(l.id)) prices[names.get(l.id)] = l.primaryValue;
+    for (const l of d.lines) if (names.get(l.id)) { prices[names.get(l.id)] = l.primaryValue; categories[names.get(l.id)] = t; }
   }
-  fs.writeFileSync(path.join(DIR, 'prices.json'), JSON.stringify({ league, at: new Date().toISOString().slice(0, 10), prices }, null, 1));
+  fs.writeFileSync(path.join(DIR, 'prices.json'), JSON.stringify({ league, at: new Date().toISOString().slice(0, 10), prices, categories }, null, 1));
   console.log('prices', Object.keys(prices).length);
 })().catch((e) => { console.error(e); process.exit(1); });

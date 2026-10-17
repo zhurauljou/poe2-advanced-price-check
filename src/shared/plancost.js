@@ -18,6 +18,11 @@
       const des = s.steps.find((x) => x.useDes);
       return { ...g, two: true, desAlt: des ? addCost(des, 1).desAlt.map((o) => ({ ...o, mod: des.mod })) : [] };
     }
+    if (s.act === 'regal') {
+      const opts = M.tiers('regal').filter(([n]) => p(n) != null).map(([n, lv]) => ({ orb: n, level: lv, cost: p(n) }));
+      const base = opts[0] || { orb: 'Regal Orb', cost: p('Regal Orb') };
+      return { cost: base.cost, chance: 1, currencies: [base.orb], regal: opts.slice(1) };
+    }
     const cost = sum(s.currencies);
     return { cost, chance: 1, currencies: s.currencies };
   }
@@ -25,7 +30,8 @@
   // Добавить мод: перебираем Exalted / Greater / Perfect (с оменом стороны и без) и берём самый дешёвый в среднем.
   // Шанс — попасть в нужное семейство в T1–T2; промах убираем Annulment'ом. rolls = 2 — с Omen of Greater Exaltation
   // (тогда s2 — второй мод пары). Шанс неизвестен (ценный мод) — выбираем по guess (все семейства равновероятны), цену не пишем.
-  const EXALT_NAME = { base: 'Exalted Orb', greater: 'Greater Exalted Orb', perfect: 'Perfect Exalted Orb' };
+  const M = typeof module !== 'undefined' && module.exports ? require('./methods') : root.CraftMethods;
+  const EXALT_NAME = Object.fromEntries(M.tiers('exalt').map(([n], i) => [['base', 'greater', 'perfect'][i], n]));
   // Снять J лишних модов, когда рядом K нужных (Annulment берёт случайный из J + K): ожидаемо Σ (j+K)/j попыток,
   // из них Σ K/j заденут нужный мод — его придётся добавлять снова (restoreCost — цена одного такого добавления).
   // Попадание в другой лишний мод — не промах, а прогресс. Сравниваем: Annulment по всей вещи или с оменом стороны.
@@ -54,9 +60,18 @@
     }
     opts.sort((a, b) => a.cost - b.cost);
     const best = opts[0];
-    const wh = s.whittle && p('Chaos Orb') != null && p('Omen of Whittling') != null ? p('Chaos Orb') + p('Omen of Whittling') : null;
+    const chaos = M.tiers('chaos').filter(([n]) => p(n) != null);
+    const wh = s.whittle && p('Omen of Whittling') != null
+      ? chaos.map(([n, lv]) => ({ orb: n, level: lv, cost: p(n) + p('Omen of Whittling') })) : [];
+    const erasure = [];
+    for (const [side, x] of Object.entries(s.sides || {})) {
+      const omen = `Omen of ${side === 'prefix' ? 'Sinistral' : 'Dextral'} Erasure`;
+      if (!x.J || p(omen) == null || !chaos.length) continue;
+      const [n] = chaos[0];
+      erasure.push({ side, orb: n, omen, chance: x.J / (x.J + x.K), cost: p(n) + p(omen) });
+    }
     return { cost: best.cost, spent: best.spent, tries: best.tries, hits: best.hits, currencies: best.currencies,
-      chance: best.hits > 0.05 ? 0.5 : 1, risky: best.hits > 0.05, whittle: wh, other: opts[1] || null };
+      chance: best.hits > 0.05 ? 0.5 : 1, risky: best.hits > 0.05, whittle: wh.length ? wh : null, erasure, other: opts[1] || null };
   }
 
   // Средняя стоимость до удачи с учётом того, чем снимать промах: per — цена попытки, pc — шанс,
