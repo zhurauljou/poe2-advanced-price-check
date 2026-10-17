@@ -36,7 +36,15 @@ const demo = require('./demo');
 const demandLevel = () => { const l = settings.get().demandLevel || 90; return l > 80 ? l : null; };
 // Демо-прогон живёт в своей папке данных, чтобы работать рядом с запущенной копией из трея.
 if (demo.enabled) app.setPath('userData', app.getPath('userData') + '-demo');
-if (!app.requestSingleInstanceLock()) app.quit();
+// Одна копия. После обновления установщик запускает новую версию, пока старая ещё закрывается, — поэтому, не получив
+// блокировку сразу, ждём до 10 с, пока старая не выйдет; только потом считаем себя лишней копией и выходим.
+async function singleInstance() {
+  for (let i = 0; i < 20; i++) {
+    if (app.requestSingleInstanceLock()) return true;
+    await sleep(500);
+  }
+  return false;
+}
 
 // Ошибка в фоне не должна всплывать системным окном поверх игры — пишем в лог и работаем дальше.
 process.on('uncaughtException', (e) => log('uncaught', e));
@@ -457,7 +465,8 @@ function buildTray() {
   return refresh;
 }
 
-app.whenReady().then(() => {
+app.whenReady().then(singleInstance).then((ok) => {
+  if (!ok) { app.quit(); return; }
   i18n.setLang(settings.get().uiLang);
   ipcMain.on('ui-lang-get', (e) => { e.returnValue = i18n.getLang(); });
   createOverlay();
