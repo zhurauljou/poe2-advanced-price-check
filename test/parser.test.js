@@ -68,7 +68,8 @@ test('аффиксы для крафта: по заголовкам, гибри�
   const robe = fixture('rare-armour-advanced.txt');
   assert.equal(robe.affixes.filter((a) => a.side === 'prefix').length, 3); // Divine (гибрид в 2 строки) + Scintillating + Unassailable
   assert.equal(robe.affixes.filter((a) => a.side === 'suffix').length, 3);
-  assert.deepEqual(robe.affixes[0], { side: 'prefix', name: 'Divine', tag: 'explicit', tier: 1 });
+  assert.deepEqual(robe.affixes[0], { side: 'prefix', name: 'Divine', tag: 'explicit', tier: 1,
+    lines: ['+30 to maximum Energy Shield', '41% increased Energy Shield'] }); // строки — чтобы различать одноимённые аффиксы
   assert.equal(robe.affixes.find((a) => a.name === 'Unassailable').tag, 'desecrated');
 });
 

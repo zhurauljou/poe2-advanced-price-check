@@ -188,7 +188,7 @@ function parseItem(text) {
         if (h) {
           head = headerInfo(h[1]);
           // Один заголовок — один аффикс (гибридный мод в две строки занимает одно место).
-          if (head.side) item.affixes.push({ side: head.side, name: head.name, tag: head.tag, tier: head.tier });
+          if (head.side) { head.affix = { side: head.side, name: head.name, tag: head.tag, tier: head.tier, lines: [] }; item.affixes.push(head.affix); }
           continue;
         }
         const l = boostLine(raw.replace(RANGE, '$1').replace(/ — Unscalable Value$/, '').replace(/(\S)\([^()]*\)$/, '$1') /* «()» и текстовый диапазон «Massive Ring(Very Small-Massive Ring)» */, head ? head.boost : 0);
@@ -204,6 +204,7 @@ function parseItem(text) {
         const line = t ? { text: t[1], tag: t[2], tier, range } : { text: l, tag, tier, range };
         if (tr) line.textRange = tr[1];
         item.modLines.push(line);
+        if (head && head.affix) head.affix.lines.push(line.text); // строки аффикса — чтобы различать моды с одинаковым названием
       }
     }
   }

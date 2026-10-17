@@ -262,7 +262,17 @@ async function advise(item, demandMods, cached) {
   // Моды, которые могут встать на эту базу, и наши аффиксы среди них (по имени и стороне).
   const onBase = d.pool.filter((m) => canRoll(m, [...tags, ...hasInf]));
   const mine = item.affixes.map((a) => ({
-    ...a, mod: onBase.find((m) => m.name === a.name && m.generation_type === a.side) || null,
+    // Название аффикса не уникально (у модов личей — «of Kurgal», «Amanamu's» на десятки модов): при нескольких
+    // совпадениях выбираем мод по тексту строк.
+    ...a, mod: (() => {
+      // Моды эссенций (Essences) не выпадают сами — их нет в пуле базы; ищем и среди всех модов.
+      let same = onBase.filter((m) => m.name === a.name && m.generation_type === a.side);
+      if (!same.length) same = d.pool.filter((m) => m.name === a.name && m.generation_type === a.side && m.domain !== 'desecrated' === (a.tag !== 'desecrated'));
+      if (same.length > 1 && !(a.lines || []).length) return null;
+      if (same.length <= 1 || !(a.lines || []).length) return same[0] || null;
+      const mine = new Set((a.lines || []).flatMap((l) => templates(l)));
+      return same.find((m) => m.lines.length && m.lines.every((l) => mine.has(l))) || same.find((m) => m.lines.some((l) => mine.has(l))) || null;
+    })(),
   }));
   const present = new Set(mine.flatMap((a) => (a.mod ? a.mod.groups || [] : [])));
 
@@ -425,6 +435,26 @@ async function advise(item, demandMods, cached) {
     for (const c of candidates('desecrated')) {
       if (normal.some((x) => x.type === c.type || x.text === c.text)) continue;
       if (c.pct >= 15 && (!best || c.pct > best.pct)) best = c;
+    }
+    // Altered Collarbone (бижутерия): Desecrate «с шансом на потусторонние моды» — свой пул Breach-модов
+    // (тег breach_desecration, уровень 1 — Whittling снимет их первыми). Доля потусторонних среди вариантов неизвестна.
+    const jewellery = ['ring', 'amulet', 'belt'].some((tg) => tags.includes(tg));
+    if (jewellery) {
+      const altered = d.pool.filter((m) => m.domain === 'desecrated' && canRoll(m, [...tags, 'breach_desecration']) && !canRoll(m, tags));
+      for (const c of candidates('desecrated', altered)) {
+        if (normal.some((x) => x.type === c.type || x.text === c.text)) continue;
+        if (c.pct >= 15 && (!best || c.pct > best.pct)) {
+          const n = new Set(altered.filter((m) => m.generation_type === c.side && !(m.groups || []).some((g) => present.has(g))).map((m) => m.type)).size || 1;
+          best = { ...c, altered: n };
+        }
+      }
+    }
+    if (best && best.altered) {
+      best.desecrateOnly = true;
+      best.desecrate = { 'Altered Collarbone': { pool: best.altered, good: 1, guess: 1 / best.altered, chance: null, altered: true } };
+      normal.push(best);
+      normal.sort((a, b) => b.pct - a.pct);
+      best = null;
     }
     if (best) {
       const mod = onBase.find((x) => x.domain === 'desecrated' && x.type === best.type);

@@ -470,6 +470,7 @@
     "Runes and soul cores for the sockets": "Руны и Soul Cores в гнёзда",
     "Ancient Augment: one per item": "Ancient Augment: один на вещь",
     "Greater / Perfect Regal Orb: the random modifier is level 35+ / 50+ — instead: {list}": "Greater / Perfect Regal Orb: случайный мод уровня 35+ / 50+ — вместо этого: {list}",
+    "Altered Collarbone: desecrates jewellery with a chance for otherworldly (Breach) modifiers — how often they show up among the options is unknown": "Altered Collarbone: Desecrate бижутерии с шансом на потусторонние моды (Breach) — как часто они попадают в варианты, неизвестно",
     common: 'частый', uncommon: 'средний', rare: 'редкий', 'chance ?': 'шанс ?',
     'Valuable modifiers cannot be estimated from trade listings — items with them are priced and listed differently': 'Шанс ценных модов по трейду не оценить — вещи с ними выставляют и оценивают иначе',
     'Rough estimate: Exalted Orb + omen of its side gives this modifier about 1 in {n} times': 'Грубая оценка: Exalted Orb с оменом этой стороны даёт этот мод примерно 1 раз из {n}',

@@ -39,9 +39,9 @@ function item(name) {
   if (it.rarity === 'Magic') it.baseType = bases.filter((n) => it.name.includes(n)).sort((a, b) => b.length - a.length)[0];
   return it;
 }
-async function plan(name) {
+async function plan(name, extra = []) {
   await init();
-  const r = await craft.advise(item(name), json(`${name}.demand.json`).mods, cached);
+  const r = await craft.advise(item(name), json(`${name}.demand.json`).mods.concat(extra), cached);
   assert.ok(r.goal, `${name}: план не построен (${r.note || ''})`);
   const planner = PlanCost.create(() => ({ prices, goalValue: null, est: null }));
   const steps = planner.expandPlan(r.goal.plan);
@@ -108,7 +108,8 @@ test('магическое копьё: первым шагом руна Thrud\'s
 });
 
 test('нательник с desecrated: два свободных места на разных сторонах — один Exalted с Omen of Greater Exaltation', { skip }, async () => {
-  const p = await plan('mantle-desecrated');
+  // Броня и ES на нательнике нужны (спрос поднят): цель — по одному моду на префикс и суффикс, без снятий.
+  const p = await plan('mantle-desecrated', [{ name: '# to Armour', pct: 90 }, { name: '# to maximum Energy Shield', pct: 90 }]);
   assert.ok(p.steps.some((s) => s.act === 'add2' && s.cross), 'пара через стороны');
 });
 
@@ -192,4 +193,22 @@ test('амулет: мод лича (только Desecrate) — через ко
   assert.equal(c.k, 'desecrate');
   assert.ok(c.currencies.some((n) => /^Omen of the (Sovereign|Liege|Blackblooded)$/.test(n)), 'лич-омен в валюте');
   assert.ok(!p.steps.some((s) => s.act === 'add2' && s.steps.some((x) => x.desecrateOnly)), 'не в паре');
+});
+
+test('амулет: одинаковые названия аффиксов («of Kurgal») различаются по тексту, мод эссенции (Essences) узнаётся', { skip }, async () => {
+  const p = await plan('amulet-minion');
+  assert.ok(p.goal.remove.some((r) => /minions have #% increased cooldown recovery rate/.test(r.text)), 'снимается сам Minions CDR');
+  assert.ok(!p.goal.remove.some((r) => /cold and chaos/.test(r.text)), 'не выдуманный мод с тем же названием');
+  assert.ok(p.goal.keep.some((k) => /global armour, evasion and energy shield/.test(k.text)), 'мод эссенции распознан');
+});
+
+test('бижутерия: потусторонний мод (Altered Collarbone) — только через Desecrate этой костью', { skip }, async () => {
+  await init();
+  const demand = json('amulet-lich.demand.json').mods.concat([{ name: 'Gain #% of Physical Damage as Extra Cold Damage', pct: 60 }]);
+  const r = await craft.advise(item('amulet-lich'), demand, cached);
+  const planner = PlanCost.create(() => ({ prices, goalValue: null, est: null }));
+  const steps = planner.expandPlan(r.goal.plan);
+  const s = steps.find((x) => x.act === 'add' && /physical damage as extra cold/.test(x.mod));
+  assert.ok(s && s.desecrateOnly);
+  assert.ok(planner.stepCost(s).currencies.includes('Altered Collarbone'));
 });

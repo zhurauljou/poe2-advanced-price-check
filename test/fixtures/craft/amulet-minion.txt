@@ -1,0 +1,23 @@
+Item Class: Amulets
+Rarity: Rare
+Miracle Rosary
+Portent Amulet
+--------
+Quality (Minion Modifiers): +40% (augmented)
+--------
+Requires: Level 60
+--------
+Item Level: 82
+--------
+Allocates Dominion (enchant)
+--------
+{ Prefix Modifier "Countess'" (Tier: 1) — }
++50(47-50) to Spirit
+{ Prefix Modifier "Shimmering" (Tier: 4) — Defences, Energy Shield }
++61(56-66) to maximum Energy Shield
+{ Prefix Modifier "Essences" (Tier: 1) — Defences }
+25(20-30)% increased Global Armour, Evasion and Energy Shield
+{ Suffix Modifier "of the Overseer" (Tier: 1) — Minion, Gem }
++4 to Level of all Minion Skills
+{ Desecrated Suffix Modifier "of Kurgal" (Tier: 1) — Minion }
+Minions have 26(12-20)% increased Cooldown Recovery Rate
