@@ -173,12 +173,21 @@ async function advise(item, demandMods, cached) {
   if (wc && wc.items >= 50) {
     chanceMeta = { items: wc.items, collected: W.meta.collected };
     const counts = familyCounts(wc, (type) => Math.max(0, ...(d.typeLines.get(type) || []).map((l) => want.get(l) || 0)));
+    // Статистика — по всему классу (все ботинки), а моды защиты встают только на свои базы (уклонение — на «ловкие»).
+    // Делим частоту на долю «типов баз» класса, где семейство вообще может выпасть: оценка веса, как если бы оно было везде.
+    const share = eligibleShare(d, base);
+    for (const type of Object.keys(counts)) counts[type] /= Math.max(share(type), 0.1);
     for (const side of ['prefix', 'suffix']) {
       const types = new Set(onBase.filter((m) => m.domain === 'item' && m.generation_type === side && !m.is_essence_only
         && m.required_level <= ilvl && !(m.groups || []).some((g) => present.has(g))).map((m) => m.type));
       const n = (type) => (counts[type] || 0) + SMOOTH;
       const total = [...types].reduce((s, type) => s + n(type), 0);
-      for (const c of normal.filter((x) => x.side === side)) if (total && types.has(c.type)) c.chance = n(c.type) / total;
+      // Ценные моды (≥ SALE_REASON% билдов) по трейду честно не оценить: без потолка цены они завышены (такие вещи охотнее
+      // выставляют), с потолком — занижены (такие вещи дороже). Шанс для них не показываем.
+      for (const c of normal.filter((x) => x.side === side)) {
+        if (c.pct >= SALE_REASON) c.chance = null, c.chanceUnknown = true;
+        else if (total && types.has(c.type)) c.chance = n(c.type) / total;
+      }
     }
   }
   for (const c of normal) c.essence = essenceFor(c.text, item.itemClass);
@@ -276,6 +285,28 @@ async function advise(item, demandMods, cached) {
   return { open, max, sections, goal, chanceMeta, source: 'RePoE (game files) · demand: poe.ninja' };
 }
 
+// Доля «типов баз» класса (по набору тегов: str_armour, dex_int_armour…), на которых семейство мода может выпасть.
+const shareCache = new Map();
+function eligibleShare(d, base) {
+  const key = base.item_class;
+  if (!shareCache.has(key)) {
+    const profiles = new Map();
+    for (const b of d.bases.values()) {
+      if (b.item_class !== key || b.release_state !== 'released' || b.domain !== 'item') continue;
+      const tags = (b.tags || []).filter((t) => !/_basetype$/.test(t)).sort();
+      profiles.set(tags.join(','), tags);
+    }
+    const byType = new Map();
+    for (const m of d.pool) {
+      if (m.domain !== 'item') continue;
+      if (!byType.has(m.type)) byType.set(m.type, new Set());
+      for (const [k, tags] of profiles) if (canRoll(m, tags)) byType.get(m.type).add(k);
+    }
+    shareCache.set(key, (type) => (profiles.size && byType.has(type) ? byType.get(type).size / profiles.size : 1));
+  }
+  return shareCache.get(key);
+}
+
 // Частоты семейств модов для оценки шансов.
 // Новый формат (raw — моды каждой вещи): на каждой вещи не считаем «причину продажи» — самый востребованный мод, если его
 // носят ≥ SALE_REASON% билдов: вещь выставили ради него, а остальные её моды выпали случайно. Старый — готовые счётчики.
@@ -283,12 +314,20 @@ const SALE_REASON = 30;
 const SMOOTH = 1; // +1 к каждому семейству: единичные находки не раздуваются, ненайденные не уходят в ноль
 function familyCounts(wc, pctOf) {
   if (!wc.raw) return Object.fromEntries(Object.entries(wc.families || {}).map(([type, x]) => [type, x.n]));
-  const counts = {};
+  const kept = {}, raw = {};
   for (const row of wc.raw) {
     let drop = -1, best = SALE_REASON - 1;
     row.forEach(([ti], k) => { const p = pctOf(wc.types[ti]); if (p > best) { best = p; drop = k; } });
-    row.forEach(([ti], k) => { if (k !== drop) counts[wc.types[ti]] = (counts[wc.types[ti]] || 0) + 1; });
+    row.forEach(([ti], k) => {
+      const type = wc.types[ti];
+      raw[type] = (raw[type] || 0) + 1;
+      if (k !== drop) kept[type] = (kept[type] || 0) + 1;
+    });
   }
+  // Мод, который почти всегда и есть «причина продажи» (+уровни на посохах), без него почти не встречается —
+  // честно его по трейду не оценить. Берём не меньше половины сырой частоты: скидка на отбор, но не ноль.
+  const counts = {};
+  for (const type of Object.keys(raw)) counts[type] = Math.max(kept[type] || 0, raw[type] * 0.5);
   return counts;
 }
 
@@ -336,7 +375,7 @@ function planGoal(mine, candidates, max, want, magic) {
     if (out.length) steps.push(t('Remove {mods}: Orb of Annulment + Omen of {S} Annulment (random {side}), or Chaos Orb + Omen of Whittling if it is the lowest-level modifier', { mods: out.map((r) => r.text).join(', '), S, side: t(side) }));
     steps.push(t('Add {mods}: Exalted Orb + Omen of {S} Exaltation', { mods: into.map((c) => c.text).join(', '), S }) + (into.length > 1 ? t(' (Omen of Greater Exaltation adds two)') : ''));
   }
-  return { keep, remove, add: add.map(({ side, text, pct, tier, tiers, range, stats, essence, chance }) => ({ side, text, pct, tier, tiers, range, stats, essence, chance })), steps };
+  return { keep, remove, add: add.map(({ side, text, pct, tier, tiers, range, stats, essence, chance, chanceUnknown }) => ({ side, text, pct, tier, tiers, range, stats, essence, chance, chanceUnknown })), steps };
 }
 
 // Может ли мод (шаблон poe.ninja: «# to Level of all Spell Skills») встать на эту базу. null — пул модов ещё не загружен.
