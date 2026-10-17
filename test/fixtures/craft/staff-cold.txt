@@ -9,15 +9,15 @@ Item Level: 83
 --------
 Grants Skill: Level 18 Consecrate
 --------
-{ Prefix Modifier "Frosted" (Tier: 1) — Damage, Elemental, Cold }
+{ Prefix Modifier "Frostbound" (Tier: 1) — Damage, Elemental, Cold }
 Gain 59(55-60)% of Damage as Extra Cold Damage
-{ Prefix Modifier "Prime" (Tier: 2) — Mana }
+{ Prefix Modifier "Mazarine" (Tier: 2) — Mana }
 +298(249-298) to maximum Mana
-{ Prefix Modifier "Runic" (Tier: 3) — Caster, Damage }
+{ Prefix Modifier "Incanter's" (Tier: 3) — Caster, Damage }
 150(149-188)% increased Spell Damage
-{ Suffix Modifier "of the Glacier" (Tier: 1) — Caster, Gem }
+{ Suffix Modifier "of Frostbite" (Tier: 1) — Caster, Gem }
 +7 to Level of all Cold Spell Skills
-{ Suffix Modifier "of Zeal" (Tier: 2) — Mana }
+{ Suffix Modifier "of Euphoria" (Tier: 2) — Mana }
 88(75-89)% increased Mana Regeneration Rate
-{ Suffix Modifier "of Siphoning" (Tier: 2) — Life }
+{ Suffix Modifier "of Glory" (Tier: 2) — Life }
 Gain 63(54-68) Life per enemy killed

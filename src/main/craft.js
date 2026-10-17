@@ -103,6 +103,11 @@ function guaranteedFor(itemClass) {
   return out;
 }
 
+const ELEMENTS = ['Fire', 'Cold', 'Lightning', 'Chaos'];
+const ALDUR_RUNE = { Fire: 'Passion of Aldur', Cold: 'Breath of Aldur', Lightning: 'Ire of Aldur', Chaos: 'Betrayal of Aldur' };
+const ALDUR_WEAPONS = new Set(['One Hand Maces', 'Two Hand Maces', 'Quarterstaves', 'Bows', 'Crossbows', 'Spears', 'Flails', 'Claws',
+  'Daggers', 'One Hand Swords', 'Two Hand Swords', 'One Hand Axes', 'Two Hand Axes', 'Talismans', 'Wands', 'Staves']);
+
 // Руны влияния (Runes of Aldur): навсегда открывают вещи пул модов (spawn-тег в RePoE).
 const INFLUENCE_RUNES = [
   { rune: "Thrud's Might", name: 'Destruction', tag: 'destruction', on: ['weapon', 'wand', 'staff', 'sceptre'] },
@@ -246,6 +251,20 @@ async function advise(item, demandMods, cached) {
 
   // Востребованные моды (≥ 15% билдов), которые могут встать: лучший доступный по ilvl тир.
   const want = new Map((demandMods || []).filter((r) => r.pct >= 15).map((r) => [r.name.toLowerCase(), r.pct]));
+  // Редкое оружие без руны Альдура: стихию модов можно сменить руной (Passion / Ire / Breath / Betrayal) — спрос на
+  // стихийный мод считаем по лучшей стихии (Extra Cold на посохе — как Extra Fire), лучшую стихию — советуем.
+  const aldur = item.rarity === 'Rare' && ALDUR_WEAPONS.has(item.itemClass) && !(item.modLines || []).some((l) => /^Forged by the \w+ of Aldur$/.test(l.text));
+  const bestElement = {};
+  if (aldur) {
+    const all = new Map((demandMods || []).map((r) => [r.name.toLowerCase(), r.pct]));
+    for (const r of demandMods || []) {
+      if (!/\b(fire|cold|lightning)\b/i.test(r.name)) continue;
+      const vs = ELEMENTS.map((e) => [e, all.get(r.name.replace(/\b(Fire|Cold|Lightning)\b/g, e).toLowerCase()) || 0]);
+      const top = vs.reduce((a, b) => (b[1] > a[1] ? b : a));
+      if (top[1] >= 15) for (const [e] of vs) want.set(r.name.replace(/\b(Fire|Cold|Lightning)\b/g, e).toLowerCase(), top[1]);
+      bestElement[r.name.toLowerCase()] = top;
+    }
+  }
   // Строки, которые на вещи уже есть, не делают кандидата востребованным: у гибрида «броня / урон миньонов»
   // спрос считаем по броне — урон миньонов у вещи уже есть (а при спросе «среди билдов с ним» он был бы 100%).
   const own = new Set((item.modLines || []).flatMap((l) => templates(l.text)));
@@ -560,6 +579,21 @@ async function advise(item, demandMods, cached) {
   if (armourOrWeapon && (item.quality || 0) < 20) cheap.push(t('Quality to 20% (currently {n}%) — {currency}', { n: item.quality || 0, currency: qualityCurrency(tags) }));
   if ((tags.includes('ring') || tags.includes('amulet')) && !item.quality) cheap.push(t('Catalyst — quality on rings and amulets boosts matching modifiers (life, minion, caster…); Omen of Catalysing Exaltation makes the next Exalted Orb consume all catalyst quality to favour that type — re-apply the catalyst afterwards'));
   if (jewel && !item.quality) cheap.push(t('Refined Catalyst — quality on jewels boosts matching modifiers'));
+  if (aldur) {
+    const tally = {};
+    for (const a of mine) {
+      for (const l of (a.mod && a.mod.lines) || []) {
+        const cur = (l.match(/\b(fire|cold|lightning)\b/) || [])[1];
+        const top = bestElement[l];
+        if (!cur || !top) continue;
+        const curPct = want.get(l) != null && top[0].toLowerCase() === cur ? top[1] : ((demandMods || []).find((r) => r.name.toLowerCase() === l) || {}).pct || 0;
+        tally[top[0]] = tally[top[0]] || { gain: 0, from: cur };
+        if (top[0].toLowerCase() !== cur) tally[top[0]].gain += top[1] - curPct;
+      }
+    }
+    const best = Object.entries(tally).sort((a, b) => b[1].gain - a[1].gain)[0];
+    if (best && best[1].gain >= 10) cheap.push(t('{rune} turns the {from} modifiers into {to} for good — {to} versions are more in demand; check «Other elements» on the Price tab before you socket it', { rune: ALDUR_RUNE[best[0]], from: best[1].from, to: best[0] }));
+  }
   // +3 к уровню умений на бижутерии при качестве 34%+ становится +4 (3 × 1.34); Essence of the Breach поднимает
   // потолок качества на 20% (docs/crafting-tricks.md T-11, по данным сообщества).
   const plus3 = (tags.includes('ring') || tags.includes('amulet')) && (item.modLines || []).find((l) => /^\+3 to Level of all .*Skills$/.test(l.text));

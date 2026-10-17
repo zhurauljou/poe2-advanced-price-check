@@ -176,3 +176,10 @@ test('посох со стихией холода: стихийные моды �
   assert.ok(vars[0].filters.mods.some((m) => m.enabled && /Extra Fire Damage/.test(m.text)));
   assert.ok(vars[0].filters.mods.some((m) => m.enabled && /Level of all Fire Spell Skills/.test(m.text)));
 });
+
+test('посох со стихией холода в крафте: Cold-моды держатся (спрос по лучшей стихии), совет про Passion of Aldur', { skip }, async () => {
+  const p = await plan('staff-cold');
+  assert.ok(p.goal.keep.some((k) => /extra cold damage/.test(k.text)) && p.goal.keep.some((k) => /cold spell skills/.test(k.text)));
+  const cheap = (p.r.sections.find((s) => s.kind === 'cheap') || { how: [] }).how;
+  assert.ok(cheap.some((h) => /Passion of Aldur/.test(h)));
+});

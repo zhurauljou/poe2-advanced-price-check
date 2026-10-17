@@ -460,6 +460,7 @@
     "Other elements (Runes of Aldur)": "Другие стихии (руны Альдура)",
     "A Rune of Aldur permanently turns the elemental modifiers of a rare weapon into another element — so buyers of other elements are buyers of this item too": "Руна Альдура навсегда переводит стихийные моды редкого оружия в другую стихию — поэтому покупатели других стихий тоже покупатели этой вещи",
     "The rune turns the elemental modifiers into another element for good": "Руна навсегда переводит стихийные моды в другую стихию",
+    "{rune} turns the {from} modifiers into {to} for good — {to} versions are more in demand; check «Other elements» on the Price tab before you socket it": "{rune} навсегда переводит моды «{from}» в {to} — {to}-версии востребованнее; перед вставкой сверьте цену в блоке «Другие стихии» на вкладке «Цена»",
     common: 'частый', uncommon: 'средний', rare: 'редкий', 'chance ?': 'шанс ?',
     'Valuable modifiers cannot be estimated from trade listings — items with them are priced and listed differently': 'Шанс ценных модов по трейду не оценить — вещи с ними выставляют и оценивают иначе',
     'Rough estimate: Exalted Orb + omen of its side gives this modifier about 1 in {n} times': 'Грубая оценка: Exalted Orb с оменом этой стороны даёт этот мод примерно 1 раз из {n}',
