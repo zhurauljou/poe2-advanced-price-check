@@ -368,6 +368,7 @@ async function advise(item, demandMods, cached) {
       const raw = x.text.replace(/–/g, '-').replace(/ \/ /g, '\n'); // гибрид в данных — через « / »
       const lines = templates(raw);
       if (normal.some((c) => c.side === x.side && lines.every((l) => c.text.split(' / ').includes(l)))) continue; // такое и Exalted даёт
+      if (lines.every((l) => own.has(l))) continue; // такой мод на вещи уже есть (гибрид с одной общей строкой — можно)
       const ps = lines.map((l) => want.get(l) || 0).sort((a, b) => b - a);
       const pct = (ps[0] || 0) + (ps[1] || 0) / 2; // гибрид: лучшая строка + половина второй
       if (pct >= 15 && (!best || pct > best.pct)) best = { side: x.side, pct, text: lines.join(' / '), tier: null, tiers: 1, range: null, level: 0,

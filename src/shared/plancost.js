@@ -38,7 +38,10 @@
   // из них Σ K/j заденут нужный мод — его придётся добавлять снова (restoreCost — цена одного такого добавления).
   // Попадание в другой лишний мод — не промах, а прогресс. Сравниваем: Annulment по всей вещи или с оменом стороны.
   // Цена потери нужного мода: его добавление, но не меньше четверти цены цели — без ключевого мода вещь почти ничего не стоит.
-  const restoreValue = () => Math.max(restoreCost ?? (C().prices['Orb of Annulment'] ?? 0) * 10, C().goalValue ? C().goalValue / 4 : 0, C().est ? C().est / 4 : 0);
+  // Потеря ключевого мода — четверть цены вещи (без него вещь стоит намного меньше); если цен нет — его повторное добавление.
+  // Больше доли мода в цене вещи потеря стоить не может: дорогое «добавить заново» — не повод платить больше вещи.
+  const valueShare = () => Math.max(C().goalValue ? C().goalValue / 4 : 0, C().est ? C().est / 4 : 0);
+  const restoreValue = () => valueShare() || (restoreCost ?? (C().prices['Orb of Annulment'] ?? 0) * 10);
   function removeCost(s) {
     const p = (n) => C().prices[n];
     const ann = p('Orb of Annulment');
@@ -50,7 +53,8 @@
     // Средняя цена «вернуть задетый» по нужным модам стороны: крафтовый — его эссенция / Alloy, остальные — restoreValue.
     const sideRestore = (x) => {
       const list = (x.restore || []).length ? x.restore : [null];
-      const minor = restoreCost ?? (p('Orb of Annulment') ?? 0) * 10; // второстепенный мод — его повторное добавление
+      // второстепенный мод — его повторное добавление, но не дороже половины доли ключевого
+      const minor = Math.min(restoreCost ?? (p('Orb of Annulment') ?? 0) * 10, valueShare() ? valueShare() / 2 : Infinity);
       return list.reduce((a, n) => a + (n === 'minor' ? minor : n && p(n) != null ? p(n) : restore), 0) / list.length;
     };
     const opts = [];
@@ -164,6 +168,8 @@
     // с лучшим «шансом за цену попытки».
     // Одна попытка (до победы не сходится) на вещи с известной выгодой: промах — испорченная вещь, а не цена сферы.
     // Тогда выбираем по выгоде попытки: шанс × (цена цели − цена сейчас) − цена попытки (Perfect Exalted на дорогой вещи).
+    // «До победы» дороже самой цели — так не крафтят: это одна попытка (промах остаётся на вещи).
+    if (C().goalValue) for (const o of opts) if (o.cost > C().goalValue) o.cost = Infinity;
     const gain = C().goalValue != null && C().est != null ? Math.max(0, C().goalValue - C().est) : 0;
     if (gain && opts.every((o) => !Number.isFinite(o.cost))) opts.sort((a, b) => (b.p * gain - b.per) - (a.p * gain - a.per));
     else opts.sort((a, b) => a.cost - b.cost || a.slam - b.slam);
