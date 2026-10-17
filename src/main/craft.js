@@ -115,11 +115,14 @@ const INFLUENCE_RUNES = [
 const INF_TAG = Object.fromEntries(INFLUENCE_RUNES.map((r) => [r.name, r.tag]));
 
 // Порченые эссенции с их модами для класса — [{ name, text }] (для плана: гарантированный мод через crafted-слот).
+// Порченые эссенции и Alloys (оба — «снимают случайный мод и ставят свой», crafted-слот) с модами для класса.
 function corruptedFor(itemClass) {
   guaranteedFor(itemClass); // загрузит данные
   const out = [];
-  for (const x of (currencyData && currencyData.corruptedEssences) || []) {
-    for (const m of x.mods || []) if (m.classes.includes(itemClass)) out.push({ name: x.name, text: m.text });
+  for (const list of [currencyData && currencyData.corruptedEssences, currencyData && currencyData.alloys]) {
+    for (const x of list || []) {
+      for (const m of x.mods || []) if (m.classes.includes(itemClass)) out.push({ name: x.name, text: m.text, side: (m.affix || '').toLowerCase() || null });
+    }
   }
   return out;
 }
@@ -280,6 +283,8 @@ async function advise(item, demandMods, cached) {
   }).filter(Boolean);
 
   const normal = candidates('item');
+  // Что может занять crafted-слот и дать конкретный мод: Perfect- и порченые эссенции, Alloys этого класса.
+  const craftedSources = [...perfectFor(item.itemClass).map((x) => ({ name: x.name, text: x.mod })), ...corruptedFor(item.itemClass)];
   // Руна влияния ещё не вставлена: моды её пула, нужные по спросу, — тоже кандидаты, но с условием «сначала руна»
   // (вставляется навсегда в свободное augment-гнездо). Thrud's Might на оружии → «Explicit Speed Modifier magnitudes» и т.п.
   const runes = (item.modLines || []).filter((l) => l.tag === 'rune').length;
@@ -291,6 +296,23 @@ async function advise(item, demandMods, cached) {
       if (normal.some((x) => x.type === c.type)) continue;
       normal.push({ ...c, needs: { rune: r.rune, line: `Can roll ${r.name} modifiers`, free: freeSocket } });
     }
+  }
+  // Крафтовый мод, которого нет обычным аффиксом (Celestial Alloy — «+Accuracy / Attack Speed» на копьях, булавах, луках…):
+  // кандидат «только через crafted-слот» (снимает случайный мод стороны и ставит свой). Ценность — по спросу его строк.
+  // Берём один лучший: crafted-слот на вещи один.
+  if (!item.affixes.some((a) => a.tag === 'crafted')) {
+    let best = null;
+    for (const x of craftedSources) {
+      if (!x.side || !['prefix', 'suffix'].includes(x.side)) continue;
+      const raw = x.text.replace(/–/g, '-').replace(/ \/ /g, '\n'); // гибрид в данных — через « / »
+      const lines = templates(raw);
+      if (normal.some((c) => c.side === x.side && lines.every((l) => c.text.split(' / ').includes(l)))) continue; // такое и Exalted даёт
+      const ps = lines.map((l) => want.get(l) || 0).sort((a, b) => b - a);
+      const pct = (ps[0] || 0) + (ps[1] || 0) / 2; // гибрид: лучшая строка + половина второй
+      if (pct >= 15 && (!best || pct > best.pct)) best = { side: x.side, pct, text: lines.join(' / '), tier: null, tiers: 1, range: null, level: 0,
+        stats: tradeStats({ text: raw }, 'item', item.itemClass), type: 'crafted:' + x.name, crafted: [x.name], craftedOnly: x.name };
+    }
+    if (best) normal.push(best);
   }
   normal.sort((a, b) => b.pct - a.pct);
   // Примерный шанс, что следующий мод на этой стороне (Exalted + омен стороны) — именно этот: частота семейства среди всех,
@@ -343,8 +365,6 @@ async function advise(item, demandMods, cached) {
   }
   const bones = bonesFor(tags, ilvl);
   const desecrateOK = !item.desecratedItem;
-  // Что может занять crafted-слот и дать конкретный мод: Perfect-эссенции и порченые эссенции этого класса.
-  const craftedSources = [...perfectFor(item.itemClass).map((x) => ({ name: x.name, text: x.mod })), ...corruptedFor(item.itemClass)];
   for (const c of normal) {
     const lv = sidePool[c.side];
     const mineLv = lv.get(c.type);
@@ -672,14 +692,15 @@ function planGoal(mine, candidates, max, want, magic, magicFree = [], itemClass 
       // Fractured и хорошие тиры (T1–T2) не трогаем: даже не самый ходовой T1 дороже лотереи Annulment + Exalted.
       // Остальные держим, пока кандидат не ценнее в полтора раза — замена случайна и стоит валюты.
       const weak = a.mod && a.mod.lines.every((l) => isWeak(l));
-      const locked = a.tag === 'fractured' || !a.mod || (a.tier && a.tier <= 2 && !weak) || pct >= KEY_PCT;
+      // Хороший тир держим, только если мод хоть кому-то нужен (+28 Dexterity T2 при 0% билдов — не повод).
+      const locked = a.tag === 'fractured' || !a.mod || (a.tier && a.tier <= 2 && !weak && pct >= 5) || pct >= KEY_PCT;
       // Неключевой desecrated-мод держит единственный desecrate-слот; снять его можно наверняка (Omen of Light) и
       // раскрыть вместо него выбор 1 из 3–6 для нужного мода — поэтому держим его вдвое слабее.
       const desSlot = a.tag === 'desecrated' ? 0.5 : 1;
       return { kind: 'cur', a, pct, v: locked ? Infinity : value(pct, a.tier) * KEEP_BONUS * desSlot * (a.mod && keyOf(a.mod.lines) ? KEY_BONUS : 1) };
     });
     // Гибрид с мусорной половиной («Light Radius / Mana Regeneration») ценнее пустого места, но хуже чистого мода.
-    const worth = (c) => value(c.pct, 2) * (keyOf(c.text.split(' / ')) ? KEY_BONUS : 1) * (c.text.split(' / ').some((l) => isWeak(l)) ? 0.6 : 1);
+    const worth = (c) => value(c.pct, 2) * (keyOf(c.text.split(' / ')) ? KEY_BONUS : 1) * (c.text.split(' / ').some((l) => isWeak(l) && !((want.get(l) || 0) >= 15)) ? 0.6 : 1);
     const cand = candidates.filter((c) => c.side === side).map((c) => ({ kind: 'add', c, pct: c.pct, v: worth(c) }));
     const chosen = [...cur, ...cand].sort((x, y) => y.v - x.v).slice(0, max[side]);
     for (const x of cur) {
@@ -766,19 +787,24 @@ function planGoal(mine, candidates, max, want, magic, magicFree = [], itemClass 
       desecrate: desFree && c.desecrate && Object.keys(c.desecrate).length ? c.desecrateAny || c.desecrate : null,
       necro: otherOpen ? `Omen of ${S} Necromancy` : null,
       // Perfect/порченая эссенция с этим модом: жертвенный Exalted на сторону → Crystallisation стороны + эссенция.
-      crafted: craftedFree && c.crafted && c.crafted.length ? c.crafted : null,
+      crafted: craftedFree && c.crafted && c.crafted.length ? c.crafted : null, craftedOnly: c.craftedOnly || null,
       crystal: `Omen of ${S} Crystallisation`,
       blocker: c.blocker || null,
       currencies: [...Object.keys(c.exalt || { base: 1 }).map((k) => EXALT_NAME[k]), ...(sideOmen ? [sideOmen] : []),
         ...(desFree && c.desecrate ? [...Object.keys(c.desecrate), `Omen of ${S} Necromancy`, 'Omen of Abyssal Echoes', 'Omen of Light'] : []),
         ...(craftedFree && c.crafted ? [...c.crafted, `Omen of ${S} Crystallisation`, 'Exalted Orb'] : [])] });
     // Два мода на одну сторону — можно одним Exalted с Omen of Greater Exaltation (если дешевле, окно так и предложит).
-    for (let i = 0; i < into.length; i += 2) {
-      if (i + 1 < into.length) {
+    // Мод «только через crafted-слот» — отдельным шагом (не в паре Greater Exaltation).
+    const solo = into.filter((c) => c.craftedOnly);
+    into.splice(0, into.length, ...into.filter((c) => !c.craftedOnly), ...solo);
+    const pairable = into.length - solo.length;
+    for (let i = 0; i < into.length;) {
+      if (i + 1 < pairable) {
         const pair = [step(into[i], i), step(into[i + 1], i + 1)];
         plan.push({ act: 'add2', side, steps: pair, sideOmen, otherOpen, retry: ['Orb of Annulment', `Omen of ${S} Annulment`],
           currencies: [...new Set([...pair[0].currencies, ...pair[1].currencies, 'Omen of Greater Exaltation'])] });
-      } else plan.push(step(into[i], i));
+        i += 2;
+      } else { plan.push(step(into[i], i)); i += 1; }
     }
     filled[side] += into.length;
   }
@@ -786,7 +812,7 @@ function planGoal(mine, candidates, max, want, magic, magicFree = [], itemClass 
   // Omen of Greater Exaltation кладёт оба мода одним Exalted (каждый — на свою сторону), омены стороны не нужны.
   const singles = plan.filter((s) => s.act === 'add');
   const last = plan.slice(-2);
-  if (last.length === 2 && last.every((s) => s.act === 'add') && last[0].side !== last[1].side && singles.length >= 2
+  if (last.length === 2 && last.every((s) => s.act === 'add' && !s.craftedOnly) && last[0].side !== last[1].side && singles.length >= 2
     && ['prefix', 'suffix'].every((side) => max[side] - filled[side] === 0)) {
     const bare = (s) => ({ ...s, sideOmen: null, otherOpen: false, necro: null });
     plan.splice(-2, 2, { act: 'add2', cross: true, side: null, steps: last.map(bare), sideOmen: null, otherOpen: false, alt: last,

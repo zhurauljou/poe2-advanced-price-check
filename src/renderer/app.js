@@ -511,7 +511,7 @@ function buildsQuery() {
   if (!f) return null;
   if (item.rarity === 'Unique' && f.useName) return { uniqueName: item.name };
   if (!['Rare', 'Magic', 'Normal'].includes(item.rarity) || !f.category) return null;
-  const mods = f.mods.filter((m) => m.enabled && m.statId && m.tag !== 'pseudo' && m.tag !== 'implicit')
+  const mods = f.mods.filter((m) => m.enabled && m.statId && m.tag !== 'pseudo' && m.tag !== 'implicit' && m.tag !== 'rune')
     .sort((a, b) => (b.importance || 0) - (a.importance || 0)).slice(0, 3).map((m) => m.text.split('\n')[0]);
   // Белые и магические вещи — заготовки: носят их уже редкими, поэтому спрос — по редким (магических почти никто не носит).
   return { itemClass: item.itemClass, rarity: 'Rare', baseType: f.useType ? item.baseType : undefined, mods };
@@ -840,7 +840,7 @@ function addCost(s, rolls, s2) {
   const removal = exaltRemoval(s);
   const lottery = [s, s2].some((x) => x && Object.values(x.exalt).every((o) => o.chance == null));
   const opts = [];
-  for (const k of Object.keys(EXALT_NAME)) {
+  for (const k of s.craftedOnly ? [] : Object.keys(EXALT_NAME)) {
     const os = [s, s2].filter(Boolean).map((x) => x.exalt[k]);
     if (os.some((o) => !o) || p(EXALT_NAME[k]) == null) continue;
     // Есть место на другой стороне — омен стороны обязателен: иначе мод может занять слот, нужный следующему шагу плана.
@@ -859,7 +859,7 @@ function addCost(s, rolls, s2) {
   // Промах — убрать desecrated-мод прицельно: Orb of Annulment + Omen of Light.
   // Perfect/порченая эссенция (crafted-слот): жертвенный мод Exalted'ом на эту сторону → Omen of Crystallisation
   // стороны + эссенция: снимает случайный мод стороны (жертву — если других снимаемых там нет) и ставит свой мод.
-  if (rolls === 1 && s.useCrafted && s.crafted) {
+  if (rolls === 1 && (s.useCrafted || s.craftedOnly) && s.crafted) {
     const P = 1 / ((s.onSide || 0) + 1);
     for (const name of s.crafted) {
       const cur = [name, s.crystal, 'Exalted Orb', ...(s.sideOmen ? [s.sideOmen] : [])];
@@ -938,6 +938,8 @@ function withDesecrate(plan) {
 
 // Отдать «одноразовый» способ (desecration, crafted-слот) шагу, где он выгоднее всего относительно Exalted.
 function withSlot(plan, field, flag, kind) {
+  // Мод, который даёт только crafted-слот (Alloy), — слот за ним.
+  if (kind === 'essence' && plan.some((s) => s.act === 'add' && s.craftedOnly)) return plan.map((s) => (s.act === 'add' && s.craftedOnly ? { ...s, [flag]: true } : s));
   let best = null, ratio = Infinity, top = null;
   plan.forEach((s, i) => {
     for (const [j, x] of (s.act === 'add2' ? s.steps : s.act === 'add' ? [s] : []).entries()) {

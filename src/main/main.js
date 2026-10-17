@@ -318,7 +318,7 @@ async function priceCheck(text) {
   lastItem = item;
   const prepared = pricing.prepare(item, demand, (tpl) => craft.rollsOn(item.baseType, tpl));
   // Тема вещи для советов по крафту: два самых важных включённых мода (без сумм).
-  lastThemeMods = prepared.filters.mods.filter((m) => m.enabled && m.statId && m.tag !== 'pseudo' && m.tag !== 'implicit' && !m.option)
+  lastThemeMods = prepared.filters.mods.filter((m) => m.enabled && m.statId && m.tag !== 'pseudo' && m.tag !== 'implicit' && m.tag !== 'rune' && !m.option)
     .sort((a, b) => (b.importance || 0) - (a.importance || 0)).slice(0, 2).map((m) => m.text.split('\n')[0]);
   send('item', { ...prepared, league, leagues, priceCurrency: settings.get().priceCurrency || 'any' });
   show();
