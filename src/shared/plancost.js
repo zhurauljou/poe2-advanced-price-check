@@ -20,8 +20,10 @@
     }
     if (s.act === 'regal') {
       const opts = M.tiers('regal').filter(([n]) => p(n) != null).map(([n, lv]) => ({ orb: n, level: lv, cost: p(n) }));
-      const base = opts[0] || { orb: 'Regal Orb', cost: p('Regal Orb') };
-      return { cost: base.cost, chance: 1, currencies: [base.orb], regal: opts.slice(1) };
+      // Greater / Perfect отсекают низкие тиры случайного мода; если стоят копейки (≤ 0.1 div или ≤ 3× обычного) — по умолчанию лучший.
+      const cheapest = opts[0] ? opts[0].cost : 0;
+      const pick = [...opts].reverse().find((o) => o.cost <= Math.max(0.1, cheapest * 3)) || opts[0] || { orb: 'Regal Orb', cost: p('Regal Orb') };
+      return { cost: pick.cost, chance: 1, currencies: [pick.orb], regal: opts.filter((o) => o !== pick) };
     }
     const cost = sum(s.currencies);
     return { cost, chance: 1, currencies: s.currencies };
@@ -101,9 +103,9 @@
   function addCost(s, rolls, s2) {
     const p = (n) => C().prices[n];
     const removal = exaltRemoval(s);
-    const lottery = [s, s2].some((x) => x && Object.values(x.exalt).every((o) => o.chance == null));
+    const lottery = [s, s2].some((x) => x && Object.values(x.desecrateOnly ? x.desecrate || {} : x.exalt).every((o) => o.chance == null));
     const opts = [];
-    for (const k of s.craftedOnly ? [] : Object.keys(EXALT_NAME)) {
+    for (const k of s.craftedOnly || s.desecrateOnly ? [] : Object.keys(EXALT_NAME)) {
       const os = [s, s2].filter(Boolean).map((x) => x.exalt[k]);
       if (os.some((o) => !o) || p(EXALT_NAME[k]) == null) continue;
       // Есть место на другой стороне — омен стороны обязателен: иначе мод может занять слот, нужный следующему шагу плана.
@@ -134,17 +136,18 @@
         opts.push({ k: 'essence', essence: name, currencies: cur, chances: [P], pool: 0, cost, per, slam: per / P, p: P, ps: [P] });
       }
     }
-    if (rolls === 1 && s.useDes && s.desecrate) {
+    if (rolls === 1 && (s.useDes || s.desecrateOnly) && s.desecrate) {
       const desRetry = (p('Orb of Annulment') ?? 0) + (p('Omen of Light') ?? 0);
       for (const [bone, o] of Object.entries(s.desecrate)) {
         for (const echo of [false, true]) {
-          const cur = [bone, ...(s.necro ? [s.necro] : []), ...(echo ? ['Omen of Abyssal Echoes'] : [])];
+          const boneName = bone.split('|')[0]; // ключ «кость|лич-омен»
+          const cur = [boneName, ...(o.extra || []), ...(s.necro ? [s.necro] : []), ...(echo ? ['Omen of Abyssal Echoes'] : [])];
           if (cur.some((n) => p(n) == null)) continue;
           const one = lottery ? o.guess : o.chance;
           // Подходящих модов на стороне ≤ 3 — нужный гарантированно среди вариантов (остаётся только тир).
           const pc = o.pool <= 3 ? o.good : 1 - Math.pow(1 - one, echo ? 6 : 3);
           const per = cur.reduce((a, n) => a + p(n), 0);
-          opts.push({ k: 'desecrate', bone, echo, currencies: cur, chances: [lottery ? null : pc], pool: o.pool, cost: tries(per, pc, [{ a: desRetry, q: 0 }]), per, slam: per / pc, p: pc, ps: [pc], rem: { a: desRetry, q: 0 } });
+          opts.push({ k: 'desecrate', bone: boneName, lich: o.lich || null, echo, currencies: cur, chances: [lottery ? null : pc], pool: o.pool, cost: tries(per, pc, [{ a: desRetry, q: 0 }]), per, slam: per / pc, p: pc, ps: [pc], rem: { a: desRetry, q: 0 } });
         }
       }
     }
@@ -166,7 +169,7 @@
     // Эссенция ставит мод наверняка — её цена известна, даже если шанс Exalted для этого мода неизвестен.
     const lot = lottery && best.k !== 'essence';
     return { hopeless, perTry: best.per, ps: best.ps, rem: best.rem, cost: lot || hopeless ? null : best.cost, score: best.cost, chance: best.chances[0], chances: best.chances, currencies: best.currencies,
-      lottery: lot, pool: best.pool, k: best.k, echo: best.echo, bone: best.bone, alts: lottery ? [] : alts, desAlt };
+      lottery: lot, pool: best.pool, k: best.k, echo: best.echo, bone: best.bone, lich: best.lich, alts: lottery ? [] : alts, desAlt };
   }
 
   // add2, если два отдельных Exalted выходят дешевле, — разворачиваем обратно в два шага.
@@ -204,6 +207,8 @@
   function withSlot(plan, field, flag, kind) {
     // Мод, который даёт только crafted-слот (Alloy), — слот за ним.
     if (kind === 'essence' && plan.some((s) => s.act === 'add' && s.craftedOnly)) return plan.map((s) => (s.act === 'add' && s.craftedOnly ? { ...s, [flag]: true } : s));
+    // Мод, который даёт только Desecrate (моды личей), — desecration за ним.
+    if (kind === 'desecrate' && plan.some((s) => s.act === 'add' && s.desecrateOnly)) return plan.map((s) => (s.act === 'add' && s.desecrateOnly ? { ...s, [flag]: true } : s));
     let best = null, ratio = Infinity, top = null;
     plan.forEach((s, i) => {
       for (const [j, x] of (s.act === 'add2' ? s.steps : s.act === 'add' ? [s] : []).entries()) {

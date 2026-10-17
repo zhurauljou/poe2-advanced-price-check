@@ -33,9 +33,8 @@
     { id: 'desecrate', op: 'desecrate', model: 'plan', rarity: ['Rare'], slot: 'desecrated',
       match: /^(Gnawed|Preserved|Ancient|Altered) (Rib|Jawbone|Collarbone|Cranium|Vertebrae)$/,
       omens: ['Omen of Sinistral Necromancy', 'Omen of Dextral Necromancy', 'Omen of Abyssal Echoes', 'Omen of Light', 'Omen of Putrefaction'] },
-    { id: 'lich-omens', op: 'desecrate-pool', model: 'gap', currencies: ['Omen of the Sovereign', 'Omen of the Liege', 'Omen of the Blackblooded'],
-      note: 'гарантированный мод лича при Desecrate (оружие и бижутерия) — нужен список модов личей по классам' },
-    { id: 'gaze', op: 'unknown', model: 'gap', match: /'s Gaze$/, note: 'Gaze-предметы Abyss — механика изучается' },
+    { id: 'lich-omens', op: 'desecrate-pool', model: 'plan', currencies: ['Omen of the Sovereign', 'Omen of the Liege', 'Omen of the Blackblooded'],
+      note: 'мод лича при Desecrate (оружие и бижутерия, ilvl 65+): все варианты раскрытия — из пула этого лича' },
     // ---- значения, фиксация, финал ----
     { id: 'divine', op: 'reroll-values', model: 'plan', currencies: ['Divine Orb'] },
     { id: 'fracture', op: 'fracture', model: 'advice', rarity: ['Rare'], currencies: ['Fracturing Orb'] },
@@ -51,21 +50,25 @@
     { id: 'rune-influence', op: 'socket-pool', model: 'plan', currencies: ["Thrud's Might", "Kolr's Hunt", "Katla's Gloom", "Vorana's Carnage", "Uhtred's Sidereus", "Medved's Tending"] },
     { id: 'rune-aldur', op: 'convert-element', model: 'plan', currencies: ['Passion of Aldur', 'Breath of Aldur', 'Ire of Aldur', 'Betrayal of Aldur'] },
     { id: 'rune-special', op: 'socket-special', model: 'advice', currencies: ["Aldur's Legacy", "Astrid's Creativity", "Serle's Triumph", "Cadigan's Epiphany"] },
-    { id: 'socketables', op: 'socket-stats', model: 'gap', match: /Rune\b|Rune of |Soul Core|^Emergent |^Talisman of/,
-      note: 'обычные руны и Soul Cores: «вставить лучшую руну» — нужны данные о статах рун по классам' },
+    { id: 'socketables', op: 'socket-stats', model: 'advice', match: /Rune\b|Rune of |Soul Core|^Emergent |^Talisman of|'s Gaze$|'s Thesis$|^Raven-Touched Shard$|^Idol of /,
+      note: 'руны, Soul Cores, Abyssal Eye (Gaze), Thesis: «что вставить» по спросу их статов (augments.json)' },
     // ---- качество ----
     { id: 'quality', op: 'quality', model: 'advice', currencies: ["Armourer's Scrap", "Blacksmith's Whetstone", "Arcanist's Etcher"], match: /Catalyst$/ },
     // ---- самоцветы ----
     { id: 'emotions', op: 'jewel-replace', model: 'advice', match: /Liquid (Ire|Guilt|Greed|Paranoia|Envy|Disgust|Despair|Fear|Suffering|Isolation|Contempt|Ferocity|Melancholy)$/ },
     // ---- Verisium (Runes of Aldur) ----
-    { id: 'verisium', op: 'unknown', model: 'gap', match: /Verisium|Starlit Ore|'s Crest of / , note: 'Verisium / Starlit Ore / Crest — механика изучается' },
-    { id: 'misc-unknown', op: 'unknown', model: 'gap', currencies: ['Ancient Infuser', 'Core Destabiliser', 'Vaal Siphoner', 'Orb of Extraction', 'Omen of Chance', 'Omen of the Ancients', 'Omen of the Blessed', 'Raven-Touched Shard'],
-      match: /'s Thesis$/, note: 'механика изучается' },
+    { id: 'verisium', op: 'encounter', model: 'ignore', match: /Verisium|Starlit Ore|'s Crest of /,
+      reason: 'энкаунтеры Runes of Aldur и улучшение уников (рунная ковка — в самом энкаунтере)' },
+    { id: 'vaal-siphoner', op: 'corrupt-siphon', model: 'gap', currencies: ['Vaal Siphoner'],
+      note: 'испорченная редкая бижутерия: после N убийств снимает случайный мод и усиливает остальные' },
+    { id: 'divine-implicit', op: 'reroll-implicit', model: 'advice', currencies: ['Omen of the Blessed'], note: 'Divine перекатывает только implicit' },
+    { id: 'chance', op: 'to-unique', model: 'ignore', currencies: ['Omen of Chance', 'Omen of the Ancients'], reason: 'Orb of Chance — гамбл в уник, не крафт' },
     // ---- не про крафт вещей ----
     { id: 'not-items', op: 'none', model: 'ignore', reason: 'карты, триалы, камни, ключи, обмен',
       currencies: ['Scroll of Wisdom', 'Chance Shard', 'Mirror of Kalandra', 'Cryptic Key', "Gemcutter's Prism", "Glassblower's Bauble",
         'Lesser Jeweller\'s Orb', "Greater Jeweller's Orb", "Perfect Jeweller's Orb", 'An Audience with the King', 'Head of the King', 'Sacred Bloom',
-        "Artificer's Shard", 'Transmutation Shard', 'Regal Shard', 'Orb of Chance', 'Fracturing Shard', 'Crystallised Corruption', 'Breach Splinter', 'Breachstone'],
+        "Artificer's Shard", 'Transmutation Shard', 'Regal Shard', 'Orb of Chance', 'Fracturing Shard', 'Crystallised Corruption', 'Breach Splinter', 'Breachstone',
+        'Ancient Infuser', 'Core Destabiliser', 'Orb of Extraction', 'Perfect Flux', 'Thaumaturgic Flux', 'Masterwork Rune'],
       match: /^Omen of (the Hunt|Gambling|Refreshment|Reinforcements|Secret Compartments|Bartering|Chaotic \w+|Resurgence|Answered Prayers|Amelioration)$/ },
   ];
 

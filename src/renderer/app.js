@@ -858,6 +858,7 @@ function planHtml(plan) {
       notes.push(t('Desecrate: reveal it at the Well of Souls and pick 1 of 3 offered modifiers — only one desecrated modifier per item'));
       if (/^Ancient /.test(c.bone)) notes.push(t('Ancient bone — low tiers cut off (level 40+)'));
       if (c.echo) notes.push(t('Omen of Abyssal Echoes — reroll the 3 options once'));
+      if (c.lich) notes.push(t(c.lich.n <= 3 ? 'Lich omen: all options come from {lich}\'s pool — {n} on this side, so the modifier is guaranteed' : 'Lich omen: all options come from {lich}\'s pool — {n} on this side', { lich: c.lich.name[0].toUpperCase() + c.lich.name.slice(1), n: c.lich.n }));
       notes.push(t('At the reveal pick: {mods}', { mods: [s.mod, ...(s.orMods || [])].join(' › ') }));
       notes.push(t('A miss → Orb of Annulment + Omen of Light removes it ({cost})', { cost: money((craftPrices['Orb of Annulment'] || 0) + (craftPrices['Omen of Light'] || 0)) }));
     }
@@ -872,13 +873,13 @@ function planHtml(plan) {
       : o.k === 'desecrate'
       ? `${t('Desecrate')}${o.mod ? ` (${o.mod})` : ''}: ${o.currencies.join(' + ')}${o.chances[0] != null ? ` · ${oneIn(o.chances[0])}` : ''}${c.lottery ? '' : ` · ${t('≈ {cost} on average', { cost: money(o.cost) })}`}`
       : `${o.currencies[0]} · ${t('≈ {cost} on average', { cost: money(o.cost) })}`;
-    const alts = [...(c.alts || []).filter((o) => o.k !== 'desecrate' && o.k !== 'essence'), ...(c.desAlt || []).slice(0, 2)].map(altText);
+    const alts = [...(c.alts || []).filter((o) => o.k !== 'desecrate' && o.k !== 'essence'), ...(c.desAlt || []).slice(0, 2)].filter((o) => Number.isFinite(o.cost)).map(altText);
     if (c.other) alts.push(t('{how}: ≈{n} attempts, ≈{hits} needed modifiers hit, {cost} in currency', { how: c.other.currencies.join(' + '), n: fmt(Math.round(c.other.tries * 10) / 10), hits: fmt(Math.round(c.other.hits * 10) / 10), cost: money(c.other.spent) }));
     if (s.whittleWrong) notes.push(t('Chaos Orb + Omen of Whittling would not help: it removes the lowest-level modifier, and that is «{mod}» (level {level})', { mod: s.whittleWrong.mod, level: s.whittleWrong.level }));
     if (c.whittle) alts.push(t('{mod}: Chaos Orb + Omen of Whittling removes it for sure (lowest-level modifier), a random modifier takes its place — {list}', { mod: s.whittle,
       list: c.whittle.map((o) => `${o.orb}${o.level ? ` (${t('new one {n}+', { n: o.level })})` : ''} ≈ ${money(o.cost)}`).join('; ') }));
     for (const e of c.erasure || []) alts.push(t('{orb} + {omen}: removes a random {side} (1 in {n} hits an unwanted one) and adds a random modifier, ≈ {cost} per try', { orb: e.orb, omen: e.omen, side: t(e.side), n: Math.round(1 / e.chance * 10) / 10, cost: money(e.cost) }));
-    if (c.regal && c.regal.length) notes.push(t('Greater / Perfect Regal Orb — the random modifier is level 35+ / 50+: {list}', { list: c.regal.map((o) => `${o.orb} ≈ ${money(o.cost)}`).join('; ') }));
+    if (c.regal && c.regal.length) notes.push(t('Greater / Perfect Regal Orb: the random modifier is level 35+ / 50+ — instead: {list}', { list: c.regal.map((o) => `${o.orb} ≈ ${money(o.cost)}`).join('; ') }));
     const desNote = (c.desAlt || []).some((o) => o.k === 'desecrate') ? t('Desecrate: pick 1 of 3 offered modifiers at the Well of Souls, but a miss costs Orb of Annulment + Omen of Light ({cost})', { cost: money((craftPrices['Orb of Annulment'] || 0) + (craftPrices['Omen of Light'] || 0)) }) : '';
     return `<li><div class="ps-what">${esc(STEP_LABEL[s.act](s))}</div>
       <div class="ps-how">${curChips(c.currencies)} · ${esc(odds)}${c.cost != null ? ` · <b>≈ ${money(c.cost)}</b>` : ''}</div>
@@ -1251,6 +1252,11 @@ function renderCraft(r) {
     } else if (s.kind === 'cheap') {
       parts.push(`<div class="craft-sec"><div class="k">${t('Cheap and safe')}</div>${how(s.how)}</div>`);
     }
+  }
+  if (r.augments && r.augments.length) {
+    const sock = r.freeSockets ? t('{n} free augment socket(s)', { n: r.freeSockets }) : t("no free augment socket — Artificer's Orb adds one");
+    parts.push(`<div class="craft-sec"><div class="k">${esc(t('Runes and soul cores for the sockets'))} <small class="muted">· ${esc(sock)}</small></div>
+      ${r.augments.map((a) => `<div class="craft-how"><span class="game">${esc(a.name)}</span>${craftPrices[a.name] != null ? ` ≈ ${money(craftPrices[a.name])}` : ''} — ${esc(a.lines.join(', '))} <span class="dem">${esc(t('{pct}% builds', { pct: fmt(a.pct) }))}</span>${a.ancient ? ` <small class="muted">(${esc(t('Ancient Augment: one per item'))})</small>` : ''}</div>`).join('')}</div>`);
   }
   if (r.theme && r.theme.length) {
     top.splice(1, 0, `<div class="craft-theme" title="${t('Demand % below is among {n} builds that wear this item class with these modifiers', { n: r.themeBuilds })}">${t('Demand among builds using')} <b>${r.theme.map(esc).join('</b> + <b>')}</b></div>`);

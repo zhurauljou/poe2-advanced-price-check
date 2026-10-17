@@ -183,3 +183,13 @@ test('посох со стихией холода в крафте: Cold-моды
   const cheap = (p.r.sections.find((s) => s.kind === 'cheap') || { how: [] }).how;
   assert.ok(cheap.some((h) => /Passion of Aldur/.test(h)));
 });
+
+test('амулет: мод лича (только Desecrate) — через кость с лич-оменом, не в паре Greater Exaltation', { skip }, async () => {
+  const p = await plan('amulet-lich');
+  const step = p.steps.find((s) => s.act === 'add' && s.desecrateOnly);
+  assert.ok(step, 'есть шаг с модом лича');
+  const c = p.cost[p.steps.indexOf(step)];
+  assert.equal(c.k, 'desecrate');
+  assert.ok(c.currencies.some((n) => /^Omen of the (Sovereign|Liege|Blackblooded)$/.test(n)), 'лич-омен в валюте');
+  assert.ok(!p.steps.some((s) => s.act === 'add2' && s.steps.some((x) => x.desecrateOnly)), 'не в паре');
+});

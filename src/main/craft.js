@@ -33,9 +33,10 @@ function load(cached) {
 }
 
 async function loadData(cached) {
-  const [mods, bases] = await Promise.all([
+  const [mods, bases, augments] = await Promise.all([
     cached('repoe-mods.json', `${REPOE}/mods.min.json`, 24 * 7),
     cached('repoe-base-items.json', `${REPOE}/base_items.min.json`, 24 * 7),
+    cached('repoe-augments.json', `${REPOE}/augments.min.json`, 24 * 7).catch(() => ({})),
   ]);
   const byName = new Map();
   for (const b of Object.values(bases)) if (b.name && !byName.has(b.name)) byName.set(b.name, b);
@@ -49,7 +50,13 @@ async function loadData(cached) {
   // Строки модов по семейству — чтобы знать спрос семейства (для «причины продажи» в оценке шансов).
   const typeLines = new Map();
   for (const m of pool) if (!typeLines.has(m.type)) typeLines.set(m.type, m.lines);
-  data = { bases: byName, pool, typeLines };
+  // Аугменты (руны, Soul Cores, Abyssal Eye, Thesis): имя, лимит, для каких классов какие статы (bonded — только с
+  // пассивкой Шамана, не учитываем).
+  const augs = Object.entries(augments || {}).map(([key, a]) => ({
+    name: bases[key] && bases[key].name, limit: a.limit || null, level: a.required_level || 0,
+    cats: Object.values(a.categories || {}).filter((c) => (c.stat_text || []).length).map((c) => ({ target: c.target, lines: c.stat_text.flatMap((tx) => templates(tx)) })),
+  })).filter((a) => a.name && a.cats.length);
+  data = { bases: byName, pool, typeLines, augs };
   return data;
 }
 
@@ -109,6 +116,10 @@ const ALDUR_RUNE = { Fire: 'Passion of Aldur', Cold: 'Breath of Aldur', Lightnin
 const ALDUR_WEAPONS = new Set(['One Hand Maces', 'Two Hand Maces', 'Quarterstaves', 'Bows', 'Crossbows', 'Spears', 'Flails', 'Claws',
   'Daggers', 'One Hand Swords', 'Two Hand Swords', 'One Hand Axes', 'Two Hand Axes', 'Talismans', 'Wands', 'Staves']);
 
+// Лич-омены: гарантированный мод лича при Desecrate (только оружие и бижутерия; моды личей — уровня 65).
+const LICH_OMEN = { ulaman: 'Omen of the Sovereign', amanamu: 'Omen of the Liege', kurgal: 'Omen of the Blackblooded' };
+const LICH_CLASSES = ['weapon', 'wand', 'staff', 'ring', 'amulet', 'belt'];
+
 // Руны влияния (Runes of Aldur): навсегда открывают вещи пул модов (spawn-тег в RePoE).
 const INFLUENCE_RUNES = [
   { rune: "Thrud's Might", name: 'Destruction', tag: 'destruction', on: ['weapon', 'wand', 'staff', 'sceptre'] },
@@ -121,6 +132,24 @@ const INFLUENCE_RUNES = [
 const INF_TAG = Object.fromEntries(INFLUENCE_RUNES.map((r) => [r.name, r.tag]));
 
 // Порченые эссенции с их модами для класса — [{ name, text }] (для плана: гарантированный мод через crafted-слот).
+// Классы вещей для целей аугментов («Martial Weapon», «Wand or Staff», «Armour», «All Equipment», ["Boots"]…).
+const AUG_GROUPS = {
+  'all equipment': null, // любой
+  armour: ['Body Armours', 'Helmets', 'Gloves', 'Boots', 'Shields', 'Bucklers', 'Foci'],
+  'martial weapon': ['One Hand Maces', 'Two Hand Maces', 'Quarterstaves', 'Bows', 'Crossbows', 'Spears', 'Flails', 'Claws', 'Daggers',
+    'One Hand Swords', 'Two Hand Swords', 'One Hand Axes', 'Two Hand Axes', 'Talismans'],
+  'caster weapon': ['Wands', 'Staves'],
+};
+AUG_GROUPS.weapon = [...AUG_GROUPS['martial weapon'], ...AUG_GROUPS['caster weapon'], 'Sceptres'];
+const AUG_SINGLE = { staff: 'Staves', quarterstaff: 'Quarterstaves', wand: 'Wands', sceptre: 'Sceptres', bow: 'Bows', crossbow: 'Crossbows', spear: 'Spears',
+  talisman: 'Talismans', 'one hand mace': 'One Hand Maces', 'two hand mace': 'Two Hand Maces', shields: 'Shields', shield: 'Shields', buckler: 'Bucklers',
+  bucklers: 'Bucklers', focus: 'Foci', helmet: 'Helmets', gloves: 'Gloves', boots: 'Boots', 'body armour': 'Body Armours' };
+function augFits(target, itemClass) {
+  if (Array.isArray(target)) return target.includes(itemClass);
+  const parts = String(target).replace(/\[(?:[^|\]]*\|)?([^\]]*)\]/g, '$1').toLowerCase().split(/, | or | and /);
+  return parts.some((p) => { const g = AUG_GROUPS[p.trim()]; if (g === null) return true; if (g) return g.includes(itemClass); return AUG_SINGLE[p.trim()] === itemClass; });
+}
+
 // Порченые эссенции и Alloys (оба — «снимают случайный мод и ставят свой», crafted-слот) с модами для класса.
 function corruptedFor(itemClass) {
   guaranteedFor(itemClass); // загрузит данные
@@ -387,6 +416,35 @@ async function advise(item, demandMods, cached) {
   }
   const bones = bonesFor(tags, ilvl);
   const desecrateOK = !item.desecratedItem;
+  // Desecrated-мод, которого нет обычным аффиксом (моды личей: «+1 Ballista Totem», «ES from Equipped Body Armour»…):
+  // кандидат «только через Desecrate» (docs/crafting-methods-research.md). Без омена — 1 из всех семейств стороны;
+  // с лич-оменом (Sovereign → Ulaman, Liege → Amanamu, Blackblooded → Kurgal; оружие и бижутерия, ilvl 65+) все
+  // варианты раскрытия — из пула этого лича: при ≤ 3 модах на стороне нужный гарантирован. Слот один — берём лучший.
+  if (desecrateOK && !mine.some((a) => a.tag === 'desecrated') && bones.length) {
+    let best = null;
+    for (const c of candidates('desecrated')) {
+      if (normal.some((x) => x.type === c.type || x.text === c.text)) continue;
+      if (c.pct >= 15 && (!best || c.pct > best.pct)) best = c;
+    }
+    if (best) {
+      const mod = onBase.find((x) => x.domain === 'desecrated' && x.type === best.type);
+      const lich = Object.keys(LICH_OMEN).find((l) => ((mod && mod.implicit_tags) || []).includes(`${l}_mod`));
+      const lichOK = lich && ilvl >= 65 && LICH_CLASSES.some((tg) => tags.includes(tg));
+      const sideDes = onBase.filter((x) => x.domain === 'desecrated' && x.generation_type === best.side && x.required_level <= ilvl
+        && !(x.groups || []).some((g) => present.has(g)));
+      const fam = new Set([...sideDes.map((x) => x.type), ...sidePool[best.side].keys()]).size || 1;
+      const lichN = lichOK ? new Set(sideDes.filter((x) => (x.implicit_tags || []).includes(`${lich}_mod`)).map((x) => x.type)).size || 1 : 0;
+      best.desecrateOnly = true;
+      best.desecrate = {};
+      for (const b of bones) {
+        if (mod && mod.required_level > 40 && b.minLevel === 0 && /^Gnawed/.test(b.name)) continue; // Gnawed — только ilvl ≤ 64
+        best.desecrate[b.name] = { pool: fam, good: 1, guess: 1 / fam, chance: 1 / fam };
+        if (lichOK) best.desecrate[`${b.name}|${LICH_OMEN[lich]}`] = { pool: lichN, good: 1, guess: 1 / lichN, chance: 1 / lichN, extra: [LICH_OMEN[lich]], lich: { name: lich, n: lichN } };
+      }
+      normal.push(best);
+      normal.sort((a, b) => b.pct - a.pct);
+    }
+  }
   for (const c of normal) {
     const lv = sidePool[c.side];
     const mineLv = lv.get(c.type);
@@ -410,7 +468,7 @@ async function advise(item, demandMods, cached) {
       const o = at(L);
       if (o) c.exalt[k] = o;
     }
-    if (desecrateOK && bones.length) {
+    if (desecrateOK && bones.length && !c.desecrateOnly) {
       c.desecrate = {};
       for (const b of bones) { const o = at(b.minLevel, desFamilies[c.side]); if (o) c.desecrate[b.name] = o; }
     }
@@ -629,8 +687,28 @@ async function advise(item, demandMods, cached) {
   }
 
   const goal = planGoal(mine, normal, max, want, magic, magicFree, item.itemClass);
+  // Руны / Soul Cores в гнёзда: аугменты для класса, чьи статы носят билды (спрос ≥ 15%) — лучший по семейству статов.
+  const augments = [];
+  if (!jewel) {
+    const fam = new Map();
+    for (const a of d.augs || []) {
+      const cat = a.cats.find((c) => augFits(c.target, item.itemClass));
+      if (!cat || a.level > (item.reqLevel || 100) + 20) continue;
+      // Руны влияния, Альдура и Legacy (только уники) учитываются отдельно.
+      const kind = methods.byName(a.name);
+      if ((kind && ['rune-influence', 'rune-aldur', 'rune-special'].includes(kind.id)) || /Legacy/.test(a.limit || '') || /^Legacy of /.test(a.name)) continue;
+      const pct = Math.max(0, ...cat.lines.map((l) => want.get(l) || 0));
+      if (pct < 15) continue;
+      const key = cat.lines.join('|');
+      const rank = (n) => (/^Perfect /.test(n) ? 3 : /^Greater /.test(n) ? 2 : /^Lesser /.test(n) ? 0 : 1);
+      const prev = fam.get(key);
+      if (!prev || rank(a.name) > rank(prev.name)) fam.set(key, { name: a.name, lines: cat.lines, pct, ancient: /Ancient/.test(a.limit || '') });
+    }
+    augments.push(...[...fam.values()].sort((x, y) => y.pct - x.pct).slice(0, 4));
+  }
+  const runesIn = (item.modLines || []).filter((l) => l.tag === 'rune').length;
   const gamble = gambleFor(item, tags);
-  return { open, max, sections, goal, gamble, chanceMeta, source: 'RePoE (game files) · demand: poe.ninja' };
+  return { open, max, sections, goal, gamble, augments, freeSockets: Math.max(0, (item.sockets || 0) - runesIn), chanceMeta, source: 'RePoE (game files) · demand: poe.ninja' };
 }
 
 // Белая база → магическая: Orb of Transmutation даёт один случайный мод (префикс или суффикс);
@@ -830,16 +908,16 @@ function planGoal(mine, candidates, max, want, magic, magicFree = [], itemClass 
       desecrate: desFree && c.desecrate && Object.keys(c.desecrate).length ? c.desecrateAny || c.desecrate : null,
       necro: otherOpen ? `Omen of ${S} Necromancy` : null,
       // Perfect/порченая эссенция с этим модом: жертвенный Exalted на сторону → Crystallisation стороны + эссенция.
-      crafted: craftedFree && c.crafted && c.crafted.length ? c.crafted : null, craftedOnly: c.craftedOnly || null,
+      crafted: craftedFree && c.crafted && c.crafted.length ? c.crafted : null, craftedOnly: c.craftedOnly || null, desecrateOnly: c.desecrateOnly || null,
       crystal: `Omen of ${S} Crystallisation`,
       blocker: c.blocker || null,
       currencies: [...Object.keys(c.exalt || { base: 1 }).map((k) => EXALT_NAME[k]), ...(sideOmen ? [sideOmen] : []),
-        ...(desFree && c.desecrate ? [...Object.keys(c.desecrate), `Omen of ${S} Necromancy`, 'Omen of Abyssal Echoes', 'Omen of Light'] : []),
+        ...(desFree && c.desecrate ? [...new Set(Object.keys(c.desecrate).flatMap((k) => k.split('|'))), `Omen of ${S} Necromancy`, 'Omen of Abyssal Echoes', 'Omen of Light'] : []),
         ...(craftedFree && c.crafted ? [...c.crafted, `Omen of ${S} Crystallisation`, 'Exalted Orb'] : [])] });
     // Два мода на одну сторону — можно одним Exalted с Omen of Greater Exaltation (если дешевле, окно так и предложит).
     // Мод «только через crafted-слот» — отдельным шагом (не в паре Greater Exaltation).
-    const solo = into.filter((c) => c.craftedOnly);
-    into.splice(0, into.length, ...into.filter((c) => !c.craftedOnly), ...solo);
+    const solo = into.filter((c) => c.craftedOnly || c.desecrateOnly);
+    into.splice(0, into.length, ...into.filter((c) => !c.craftedOnly && !c.desecrateOnly), ...solo);
     const pairable = into.length - solo.length;
     for (let i = 0; i < into.length;) {
       if (i + 1 < pairable) {
@@ -855,13 +933,13 @@ function planGoal(mine, candidates, max, want, magic, magicFree = [], itemClass 
   // Omen of Greater Exaltation кладёт оба мода одним Exalted (каждый — на свою сторону), омены стороны не нужны.
   const singles = plan.filter((s) => s.act === 'add');
   const last = plan.slice(-2);
-  if (last.length === 2 && last.every((s) => s.act === 'add' && !s.craftedOnly) && last[0].side !== last[1].side && singles.length >= 2
+  if (last.length === 2 && last.every((s) => s.act === 'add' && !s.craftedOnly && !s.desecrateOnly) && last[0].side !== last[1].side && singles.length >= 2
     && ['prefix', 'suffix'].every((side) => max[side] - filled[side] === 0)) {
     const bare = (s) => ({ ...s, sideOmen: null, otherOpen: false, necro: null });
     plan.splice(-2, 2, { act: 'add2', cross: true, side: null, steps: last.map(bare), sideOmen: null, otherOpen: false, alt: last,
       retry: [...new Set(last.flatMap((s) => s.retry))], currencies: [...new Set([...last.flatMap((s) => s.currencies), 'Omen of Greater Exaltation'])] });
   }
-  return { keep, remove, add: add.map(({ side, text, pct, tier, tiers, range, stats, essence, chance, chanceUnknown, needs }) => ({ side, text, pct, tier, tiers, range, stats, essence, chance, chanceUnknown, needs })), plan };
+  return { keep, remove, add: add.map(({ side, text, pct, tier, tiers, range, stats, essence, chance, chanceUnknown, needs, desecrateOnly }) => ({ side, text, pct, tier, tiers, range, stats, essence, chance, chanceUnknown, needs, desecrateOnly })), plan };
 }
 
 // Может ли мод (шаблон poe.ninja: «# to Level of all Spell Skills») встать на эту базу. null — пул модов ещё не загружен.

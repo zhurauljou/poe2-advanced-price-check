@@ -119,6 +119,8 @@
 ---
 
 ## 5. Ориентиры цен (тир затрат; брать poe.ninja live)
+
+> **Устарело (2026-10-18):** омены сторон Annulment / Erasure и Omen of Light подорожали в разы (Sinistral Annulment ≈ 19.6 div, Erasure ≈ 13–20 div, Light ≈ 8.8 div), Abyssal Echoes подешевел (≈ 0.08 div), Astrid's Creativity ≈ 3.6 div. Советник берёт цены с poe.ninja вживую. Подробности и поправки — `docs/crafting-methods-research.md`.
 Снимок сообщества 0.5 [T17][T14][T13], очень приблизительно:
 - **Дёшево (≤ 5 ex):** Preserved-кости (~1 ex), Omen of Greater Exaltation (~4 ex), Putrefaction (~4 ex), Greater Exalted, Greater-эссенции, Necromancy-омены.
 - **Средне (≈ 1–10 div):** Abyssal Echoes (~1 div), Perfect Exalted (~2.5 div), Sinistral/Dextral Annulment (~3.5 div за попытку), Omen of Light (5+ div), Ancient Collarbone (~7 div), Erasure-омены («несколько div»), Whittling.

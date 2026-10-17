@@ -1,0 +1,16 @@
+Item Class: Amulets
+Rarity: Rare
+Grim Locket
+Gold Amulet
+--------
+Requires: Level 70
+--------
+Item Level: 82
+--------
+{ Implicit Modifier — Drop }
+12(12-20)% increased Rarity of Items found (implicit)
+--------
+{ Prefix Modifier "Countess'" (Tier: 1) — }
++48(47-50) to Spirit
+{ Suffix Modifier "of Tzteosh" (Tier: 1) — Elemental, Fire, Resistance }
++43(41-45)% to Fire Resistance

@@ -1,0 +1,6897 @@
+{
+ "meta": {
+  "patch": "0.5.5e, league Forbidden Rites",
+  "compiled": "2026-10-18",
+  "summary": "docs/crafting-methods-research.md",
+  "prices": "poe.ninja exchange, league Forbidden Rites, 2026-10-18 (divine; 1 div = 710.6 ex = 10.6 chaos). Tiers: cheap < 0.05 div, mid < 2, high < 20, very high >= 20. Low-volume items (lich omens, Ulaman/Amanamu Gaze, Starlit Ores) are noisy.",
+  "lichSource": "Local RePoE cache %APPDATA%/PoE 2 Price Checker/Cache/repoe-mods.json (repoe-fork poe2 mods.min.json), domain 'desecrated', spawn tag ulaman_mod / amanamu_mod / kurgal_mod; class membership = first-match spawn_weights evaluated against the tags of every released base of the class (repoe-base-items.json). Counts: Ulaman 26P/51S, Amanamu 24P/39S, Kurgal 21P/37S = 198, all level 65; disabled (all weights 0): Amanamu '(8-15)% of Leech is Instant'; also Ulaman 'reduced Movement Speed Penalty from using Skills while moving' (no spawn tags at all). Lists hold distinct texts (one text can be several mods with different tiers per class). Before computing 'guaranteed if <= 3 options', drop mods whose group is already on the item (lichModIndex.group).",
+  "lichModsNote": "lichMods = classes where the omen is accepted (weapons + amulet/ring/belt; quiver M). Sceptre has no lich mods. lichModsNoOmen = helmet/gloves/boots/body/shield/buckler/focus lich mods (focus also has prefixes): they appear only in an un-omened reveal, mixed with base mods; \"[only: ...]\" marks mods limited to some attribute bases."
+ },
+ "items": [
+  {
+   "name": "Amanamu's Gaze",
+   "category": "Abyss / Abyssal Eye (augment)",
+   "effect": "Helmets: Remove a Damaging Ailment when you use a Command Skill; Body Armours: +2 to Armour per 1 Spirit; Boots: 1% increased Movement Speed per 15 Spirit, up to a maximum of 40% (other Modifiers to Movement Speed except for Sprinting do not apply)",
+   "applies": {
+    "rarity": [
+     "any (needs empty augment socket)"
+    ],
+    "classes": [
+     "Helmets",
+     "Body Armours",
+     "Boots"
+    ]
+   },
+   "slot": "socket",
+   "omens": [],
+   "advisorUse": "advice",
+   "confidence": "H",
+   "source": "https://poe2db.tw/us/Amanamus_Gaze",
+   "priceDiv": 0.5201,
+   "priceTier": "mid",
+   "notes": "Abyssal Eye augment. 'Limited to: 1 Ancient Augment' - shares the limit with the Soul Core Theses (Jiquani's/Guatelitzi's/Quipolatl's/Citaqualotl's Thesis) and the Emergent runes; req. level 60. Text says 'Weapon or Armour', but effects exist only for the slots listed. Does not touch modifiers; adds value when socketed (cannot be retrieved; can be replaced, or recovered with Orb of Extraction by destroying the item)."
+  },
+  {
+   "name": "Kurgal's Gaze",
+   "category": "Abyss / Abyssal Eye (augment)",
+   "effect": "Helmets: Increases and Reductions to Life Regeneration Rate also apply to Mana Regeneration Rate; Gloves: 40% increased effect of Arcane Surge on you; Boots: 15% increased Mana Cost Efficiency if you haven't Dodge Rolled Recently",
+   "applies": {
+    "rarity": [
+     "any (needs empty augment socket)"
+    ],
+    "classes": [
+     "Helmets",
+     "Gloves",
+     "Boots"
+    ]
+   },
+   "slot": "socket",
+   "omens": [],
+   "advisorUse": "advice",
+   "confidence": "H",
+   "source": "https://poe2db.tw/us/Kurgals_Gaze",
+   "priceDiv": 31.04,
+   "priceTier": "very high",
+   "notes": "Abyssal Eye augment. 'Limited to: 1 Ancient Augment' - shares the limit with the Soul Core Theses (Jiquani's/Guatelitzi's/Quipolatl's/Citaqualotl's Thesis) and the Emergent runes; req. level 60. Text says 'Weapon or Armour', but effects exist only for the slots listed. Does not touch modifiers; adds value when socketed (cannot be retrieved; can be replaced, or recovered with Orb of Extraction by destroying the item)."
+  },
+  {
+   "name": "Ulaman's Gaze",
+   "category": "Abyss / Abyssal Eye (augment)",
+   "effect": "Helmets: +1 to Accuracy Rating per 1 Item Evasion Rating on Equipped Helmet; Gloves: Critical Hit chance is Lucky against Parried enemies; Body Armours: Prevent +3% of Damage from Deflected Hits",
+   "applies": {
+    "rarity": [
+     "any (needs empty augment socket)"
+    ],
+    "classes": [
+     "Helmets",
+     "Gloves",
+     "Body Armours"
+    ]
+   },
+   "slot": "socket",
+   "omens": [],
+   "advisorUse": "advice",
+   "confidence": "H",
+   "source": "https://poe2db.tw/us/Ulamans_Gaze",
+   "priceDiv": 0.2141,
+   "priceTier": "mid",
+   "notes": "Abyssal Eye augment. 'Limited to: 1 Ancient Augment' - shares the limit with the Soul Core Theses (Jiquani's/Guatelitzi's/Quipolatl's/Citaqualotl's Thesis) and the Emergent runes; req. level 60. Text says 'Weapon or Armour', but effects exist only for the slots listed. Does not touch modifiers; adds value when socketed (cannot be retrieved; can be replaced, or recovered with Orb of Extraction by destroying the item)."
+  },
+  {
+   "name": "Tecrod's Gaze",
+   "category": "Abyss / Abyssal Eye (augment)",
+   "effect": "Body Armours: Regenerate 1.5% of maximum Life per second; Gloves: 25% increased Life Cost Efficiency; Boots: 10% increased Movement Speed when on Low Life",
+   "applies": {
+    "rarity": [
+     "any (needs empty augment socket)"
+    ],
+    "classes": [
+     "Body Armours",
+     "Gloves",
+     "Boots"
+    ]
+   },
+   "slot": "socket",
+   "omens": [],
+   "advisorUse": "advice",
+   "confidence": "H",
+   "source": "https://poe2db.tw/us/Tecrods_Gaze",
+   "priceDiv": 11.84,
+   "priceTier": "high",
+   "notes": "Abyssal Eye augment. 'Limited to: 1 Ancient Augment' - shares the limit with the Soul Core Theses (Jiquani's/Guatelitzi's/Quipolatl's/Citaqualotl's Thesis) and the Emergent runes; req. level 60. Text says 'Weapon or Armour', but effects exist only for the slots listed. Does not touch modifiers; adds value when socketed (cannot be retrieved; can be replaced, or recovered with Orb of Extraction by destroying the item)."
+  },
+  {
+   "name": "Omen of the Sovereign",
+   "category": "Ritual / Omen (desecration)",
+   "effect": "Next Weapon or Jewellery Desecration guarantees a random Ulaman modifier (reveal options limited to Ulaman's pool for the item class and side)",
+   "applies": {
+    "rarity": [
+     "Rare"
+    ],
+    "classes": [
+     "weapons (bow, crossbow, wand, staff, quarterstaff, spear, maces, talisman, claw, dagger, flail, swords, axes)",
+     "amulet",
+     "ring",
+     "belt",
+     "quiver (M)"
+    ]
+   },
+   "slot": "desecrated",
+   "omens": [
+    "Omen of Sinistral / Dextral Necromancy (side)",
+    "Omen of Abyssal Echoes (one reroll of the 3 options)",
+    "Omen of Light + Orb of Annulment (remove it and retry)"
+   ],
+   "advisorUse": "plan",
+   "confidence": "H",
+   "source": "https://poe2db.tw/us/Omen_of_the_Sovereign",
+   "priceDiv": 0.0001,
+   "priceTier": "cheap",
+   "notes": "Text: 'While this item is active in your inventory your next Weapon or Jewellery Desecration attempt will guarantee a random Ulaman modifier'. GGG (Timothy_GGG, forum thread 3834266): 'The Lich specific omens are only compatible with weapons and jewelry' - Rib on a Focus/armour is rejected ('Omen is incompatible with this Desecrating item'). Belts work (Collarbone). Lich mods are all level 65 -> needs ilvl >= 65 and a Preserved/Ancient bone; Gnawed (ilvl <= 64) is rejected. With the omen the 3 reveal options come from this lich's pool for the item class and side (community recipes: Sovereign + Sinistral on a crossbow 'always reveals' +1 Ballista; M). Pools: lichMods. Quivers take a Jawbone; whether they count as 'Weapon' for the omen is unconfirmed (M)."
+  },
+  {
+   "name": "Omen of the Liege",
+   "category": "Ritual / Omen (desecration)",
+   "effect": "Next Weapon or Jewellery Desecration guarantees a random Amanamu modifier (reveal options limited to Amanamu's pool for the item class and side)",
+   "applies": {
+    "rarity": [
+     "Rare"
+    ],
+    "classes": [
+     "weapons (bow, crossbow, wand, staff, quarterstaff, spear, maces, talisman, claw, dagger, flail, swords, axes)",
+     "amulet",
+     "ring",
+     "belt",
+     "quiver (M)"
+    ]
+   },
+   "slot": "desecrated",
+   "omens": [
+    "Omen of Sinistral / Dextral Necromancy (side)",
+    "Omen of Abyssal Echoes (one reroll of the 3 options)",
+    "Omen of Light + Orb of Annulment (remove it and retry)"
+   ],
+   "advisorUse": "plan",
+   "confidence": "H",
+   "source": "https://poe2db.tw/us/Omen_of_the_Liege",
+   "priceDiv": 0.0001,
+   "priceTier": "cheap",
+   "notes": "Text: 'While this item is active in your inventory your next Weapon or Jewellery Desecration attempt will guarantee a random Amanamu modifier'. GGG (Timothy_GGG, forum thread 3834266): 'The Lich specific omens are only compatible with weapons and jewelry' - Rib on a Focus/armour is rejected ('Omen is incompatible with this Desecrating item'). Belts work (Collarbone). Lich mods are all level 65 -> needs ilvl >= 65 and a Preserved/Ancient bone; Gnawed (ilvl <= 64) is rejected. With the omen the 3 reveal options come from this lich's pool for the item class and side (community recipes: Sovereign + Sinistral on a crossbow 'always reveals' +1 Ballista; M). Pools: lichMods. Quivers take a Jawbone; whether they count as 'Weapon' for the omen is unconfirmed (M)."
+  },
+  {
+   "name": "Omen of the Blackblooded",
+   "category": "Ritual / Omen (desecration)",
+   "effect": "Next Weapon or Jewellery Desecration guarantees a random Kurgal modifier (reveal options limited to Kurgal's pool for the item class and side)",
+   "applies": {
+    "rarity": [
+     "Rare"
+    ],
+    "classes": [
+     "weapons (bow, crossbow, wand, staff, quarterstaff, spear, maces, talisman, claw, dagger, flail, swords, axes)",
+     "amulet",
+     "ring",
+     "belt",
+     "quiver (M)"
+    ]
+   },
+   "slot": "desecrated",
+   "omens": [
+    "Omen of Sinistral / Dextral Necromancy (side)",
+    "Omen of Abyssal Echoes (one reroll of the 3 options)",
+    "Omen of Light + Orb of Annulment (remove it and retry)"
+   ],
+   "advisorUse": "plan",
+   "confidence": "H",
+   "source": "https://poe2db.tw/us/Omen_of_the_Blackblooded",
+   "priceDiv": 0.02,
+   "priceTier": "cheap",
+   "notes": "Text: 'While this item is active in your inventory your next Weapon or Jewellery Desecration attempt will guarantee a random Kurgal modifier'. GGG (Timothy_GGG, forum thread 3834266): 'The Lich specific omens are only compatible with weapons and jewelry' - Rib on a Focus/armour is rejected ('Omen is incompatible with this Desecrating item'). Belts work (Collarbone). Lich mods are all level 65 -> needs ilvl >= 65 and a Preserved/Ancient bone; Gnawed (ilvl <= 64) is rejected. With the omen the 3 reveal options come from this lich's pool for the item class and side (community recipes: Sovereign + Sinistral on a crossbow 'always reveals' +1 Ballista; M). Pools: lichMods. Quivers take a Jawbone; whether they count as 'Weapon' for the omen is unconfirmed (M)."
+  },
+  {
+   "name": "Liquid Verisium",
+   "category": "Verisium",
+   "effect": "Immediately start a Runic Remnant Encounter with a random Runic Inscription (used on a Runic Remnant in a map)",
+   "applies": {
+    "rarity": [],
+    "classes": [
+     "Runic Remnant (map object)"
+    ]
+   },
+   "slot": "none",
+   "omens": [],
+   "advisorUse": "ignore",
+   "confidence": "H",
+   "source": "https://poe2db.tw/us/Liquid_Verisium",
+   "priceDiv": 0.0512,
+   "priceTier": "mid"
+  },
+  {
+   "name": "Verisium",
+   "category": "Verisium",
+   "effect": "Spent at the Verisium Anvil to Runeforge equipment: armour base -> 'Runeforged <base>' with Runic Ward (e.g. Vaal Cuirass x130: Armour 298 kept + 70 Runic Ward). Cost by base: 20-230 for body armours, up to ~490 for level-80 shields/foci. Bases >= level 55 lose part of the base defence (RePoE: Tasalian Focus ES 91->36, Desert Buckler EV 192->87, Blacksteel Crest Shield AR 145->52; body armours of level <= 51 unchanged). Also paid in Unique Runeforging together with a Crest.",
+   "applies": {
+    "rarity": [
+     "Normal",
+     "Magic",
+     "Rare",
+     "Unique"
+    ],
+    "classes": [
+     "Body Armours",
+     "Helmets",
+     "Gloves",
+     "Boots",
+     "Shields",
+     "Bucklers",
+     "Foci"
+    ]
+   },
+   "slot": "none",
+   "omens": [],
+   "advisorUse": "advice",
+   "confidence": "M",
+   "source": "https://poe2db.tw/us/Runeforging",
+   "priceDiv": 0.0,
+   "priceTier": "cheap",
+   "notes": "Patch 0.5.0: 'Verisium Runeforging ... allows you to add Runic Ward to your armours by spending verisium'; 'Armours lower than level 55 gain Runic Ward with no downside. Armours above this level trade some of their regular base defences for Runic Ward.' The item becomes base 'Runeforged <base>' (tag runeforged); RePoE has no mods spawning on the runeforged tag -> modifier pool unchanged. Mods/rarity are kept (the base is transformed, not rerolled) - not stated verbatim, M."
+  },
+  {
+   "name": "Exceptional Verisium",
+   "category": "Verisium",
+   "effect": "Verisium Anvil currency for special bases: Sacrificial Regalia -> Runeforged Sacrificial Regalia (x20; 4 variants with a different defence pair + extra implicit: life / all res / chaos damage per corrupted item); Grasping Mail -> Runeforged (x5) -> Runemastered (x10) -> Runefather's Grasping Mail (x20), defence type changes (str/dex/int variants). Also part of some Unique Runeforging recipes (e.g. Brutus' Lead Sprinkler x3).",
+   "applies": {
+    "rarity": [
+     "Normal",
+     "Magic",
+     "Rare",
+     "Unique"
+    ],
+    "classes": [
+     "Body Armours (Sacrificial Regalia, Grasping Mail)",
+     "some uniques"
+    ]
+   },
+   "slot": "none",
+   "omens": [],
+   "advisorUse": "advice",
+   "confidence": "M",
+   "source": "https://poe2db.tw/us/Runeforging",
+   "priceDiv": 0.0014,
+   "priceTier": "cheap",
+   "notes": "Implicits/defences change -> item value changes; mods presumably kept (M)."
+  },
+  {
+   "name": "Revered Starlit Ore",
+   "category": "Verisium",
+   "effect": "Verisium Anvil: forge a new Unique item - The Unleashed",
+   "applies": {
+    "rarity": [],
+    "classes": [
+     "-"
+    ]
+   },
+   "slot": "none",
+   "omens": [],
+   "advisorUse": "ignore",
+   "confidence": "H",
+   "source": "https://poe2db.tw/us/Revered_Starlit_Ore",
+   "priceDiv": 0.755,
+   "priceTier": "mid"
+  },
+  {
+   "name": "Veridical Starlit Ore",
+   "category": "Verisium",
+   "effect": "Verisium Anvil: forge a new Unique item - Eventide Petals",
+   "applies": {
+    "rarity": [],
+    "classes": [
+     "-"
+    ]
+   },
+   "slot": "none",
+   "omens": [],
+   "advisorUse": "ignore",
+   "confidence": "H",
+   "source": "https://poe2db.tw/us/Veridical_Starlit_Ore",
+   "priceDiv": 0.1016,
+   "priceTier": "mid"
+  },
+  {
+   "name": "Venerable Starlit Ore",
+   "category": "Verisium",
+   "effect": "Verisium Anvil: forge a new Unique item - Eyes of the Runefather",
+   "applies": {
+    "rarity": [],
+    "classes": [
+     "-"
+    ]
+   },
+   "slot": "none",
+   "omens": [],
+   "advisorUse": "ignore",
+   "confidence": "H",
+   "source": "https://poe2db.tw/us/Venerable_Starlit_Ore",
+   "priceDiv": 0.0084,
+   "priceTier": "cheap"
+  },
+  {
+   "name": "Warding Starlit Ore",
+   "category": "Verisium",
+   "effect": "Verisium Anvil: forge a new Unique item - Duality (plain 'Starlit Ore' forges Serle's Grit)",
+   "applies": {
+    "rarity": [],
+    "classes": [
+     "-"
+    ]
+   },
+   "slot": "none",
+   "omens": [],
+   "advisorUse": "ignore",
+   "confidence": "H",
+   "source": "https://poe2db.tw/us/Warding_Starlit_Ore",
+   "priceDiv": 0.087,
+   "priceTier": "mid"
+  },
+  {
+   "name": "Medved's Crest of the Circle",
+   "category": "Verisium (Unique Runeforging)",
+   "effect": "'Can be used at the Verisium Anvil to transform Unique items' - upgrades a unique's base type (recipe-specific; 131 recipes on poe2db, e.g. Brynhand's Mark, Sculpted Suffering, Hoghunt, Hrimnor's Hymn, Trephina, Brain Rattler, The Empty Roar)",
+   "applies": {
+    "rarity": [
+     "Unique"
+    ],
+    "classes": [
+     "unique weapons/armours from the recipe list"
+    ]
+   },
+   "slot": "none",
+   "omens": [],
+   "advisorUse": "ignore",
+   "confidence": "H",
+   "source": "https://poe2db.tw/us/Medveds_Crest_of_the_Circle",
+   "priceDiv": 0.0042,
+   "priceTier": "cheap",
+   "notes": "Unique Runeforging (0.5.0: 'upgrade the base type of Unique Weapons and Armours that drop at levels lower than 55 ... higher damage / increased base defences as well as Runic Ward'; uniques above 55 can be runeforged for Runic Ward at the cost of other defences). Each recipe = the unique + Verisium (or Exceptional Verisium) + one specific Crest; 'Runemastered' = second upgrade step."
+  },
+  {
+   "name": "Vorana's Crest of the Scythe",
+   "category": "Verisium (Unique Runeforging)",
+   "effect": "'Can be used at the Verisium Anvil to transform Unique items' - upgrades a unique's base type (recipe-specific; 76 recipes on poe2db, e.g. Frostbreath, Trenchtimbre, Hoghunt (Runemastered), Brain Rattler (Runemastered), Shyaba)",
+   "applies": {
+    "rarity": [
+     "Unique"
+    ],
+    "classes": [
+     "unique weapons/armours from the recipe list"
+    ]
+   },
+   "slot": "none",
+   "omens": [],
+   "advisorUse": "ignore",
+   "confidence": "H",
+   "source": "https://poe2db.tw/us/Voranas_Crest_of_the_Scythe",
+   "priceDiv": 0.003,
+   "priceTier": "cheap",
+   "notes": "Unique Runeforging (0.5.0: 'upgrade the base type of Unique Weapons and Armours that drop at levels lower than 55 ... higher damage / increased base defences as well as Runic Ward'; uniques above 55 can be runeforged for Runic Ward at the cost of other defences). Each recipe = the unique + Verisium (or Exceptional Verisium) + one specific Crest; 'Runemastered' = second upgrade step."
+  },
+  {
+   "name": "Uhtred's Crest of the Chalice",
+   "category": "Verisium (Unique Runeforging)",
+   "effect": "'Can be used at the Verisium Anvil to transform Unique items' - upgrades a unique's base type (recipe-specific; 61 recipes on poe2db, e.g. Brutus' Lead Sprinkler, Serle's Grit, Hrimnor's Hymn (Runemastered))",
+   "applies": {
+    "rarity": [
+     "Unique"
+    ],
+    "classes": [
+     "unique weapons/armours from the recipe list"
+    ]
+   },
+   "slot": "none",
+   "omens": [],
+   "advisorUse": "ignore",
+   "confidence": "H",
+   "source": "https://poe2db.tw/us/Uhtreds_Crest_of_the_Chalice",
+   "priceDiv": 0.0126,
+   "priceTier": "cheap",
+   "notes": "Unique Runeforging (0.5.0: 'upgrade the base type of Unique Weapons and Armours that drop at levels lower than 55 ... higher damage / increased base defences as well as Runic Ward'; uniques above 55 can be runeforged for Runic Ward at the cost of other defences). Each recipe = the unique + Verisium (or Exceptional Verisium) + one specific Crest; 'Runemastered' = second upgrade step."
+  },
+  {
+   "name": "Olroth's Crest of the Sun",
+   "category": "Verisium (Unique Runeforging)",
+   "effect": "'Can be used at the Verisium Anvil to transform Unique items' - upgrades a unique's base type (recipe-specific; 41 recipes on poe2db, e.g. see the poe2db list)",
+   "applies": {
+    "rarity": [
+     "Unique"
+    ],
+    "classes": [
+     "unique weapons/armours from the recipe list"
+    ]
+   },
+   "slot": "none",
+   "omens": [],
+   "advisorUse": "ignore",
+   "confidence": "H",
+   "source": "https://poe2db.tw/us/Olroths_Crest_of_the_Sun",
+   "priceDiv": 0.0255,
+   "priceTier": "cheap",
+   "notes": "Unique Runeforging (0.5.0: 'upgrade the base type of Unique Weapons and Armours that drop at levels lower than 55 ... higher damage / increased base defences as well as Runic Ward'; uniques above 55 can be runeforged for Runic Ward at the cost of other defences). Each recipe = the unique + Verisium (or Exceptional Verisium) + one specific Crest; 'Runemastered' = second upgrade step."
+  },
+  {
+   "name": "Greater Chaos Orb",
+   "category": "Currency",
+   "effect": "Removes a random modifier and augments a Rare item with a new random modifier. Minimum Modifier Level: 35 (for the added modifier)",
+   "applies": {
+    "rarity": [
+     "Rare"
+    ],
+    "classes": [
+     "all equipment"
+    ]
+   },
+   "slot": "none",
+   "omens": [
+    "Omen of Whittling (removes the lowest-level mod)",
+    "Omen of Sinistral / Dextral Erasure (removes only a prefix / suffix)"
+   ],
+   "advisorUse": "plan",
+   "confidence": "H",
+   "source": "https://poe2db.tw/us/Greater_Chaos_Orb",
+   "priceDiv": 0.2947,
+   "priceTier": "mid"
+  },
+  {
+   "name": "Perfect Chaos Orb",
+   "category": "Currency",
+   "effect": "Removes a random modifier and augments a Rare item with a new random modifier. Minimum Modifier Level: 50 (for the added modifier)",
+   "applies": {
+    "rarity": [
+     "Rare"
+    ],
+    "classes": [
+     "all equipment"
+    ]
+   },
+   "slot": "none",
+   "omens": [
+    "Omen of Whittling",
+    "Omen of Sinistral / Dextral Erasure"
+   ],
+   "advisorUse": "plan",
+   "confidence": "H",
+   "source": "https://poe2db.tw/us/Perfect_Chaos_Orb",
+   "priceDiv": 7.72,
+   "priceTier": "high",
+   "notes": "Expensive in Forbidden Rites (~7.7 div): Whittling/Erasure + Perfect Chaos costs ~20-28 div per step."
+  },
+  {
+   "name": "Greater Regal Orb",
+   "category": "Currency",
+   "effect": "Upgrades a Magic item to a Rare item, adding 1 modifier; current modifiers are retained. Minimum Modifier Level: 35",
+   "applies": {
+    "rarity": [
+     "Magic"
+    ],
+    "classes": [
+     "all equipment"
+    ]
+   },
+   "slot": "none",
+   "omens": [
+    "Omen of Sinistral / Dextral Coronation (adds only a prefix / suffix)",
+    "Omen of Homogenising Coronation (Standard only)"
+   ],
+   "advisorUse": "plan",
+   "confidence": "H",
+   "source": "https://poe2db.tw/us/Greater_Regal_Orb",
+   "priceDiv": 0.0135,
+   "priceTier": "cheap"
+  },
+  {
+   "name": "Perfect Regal Orb",
+   "category": "Currency",
+   "effect": "Upgrades a Magic item to a Rare item, adding 1 modifier; current modifiers are retained. Minimum Modifier Level: 50",
+   "applies": {
+    "rarity": [
+     "Magic"
+    ],
+    "classes": [
+     "all equipment"
+    ]
+   },
+   "slot": "none",
+   "omens": [
+    "Omen of Sinistral / Dextral Coronation",
+    "Omen of Homogenising Coronation (Standard only)"
+   ],
+   "advisorUse": "plan",
+   "confidence": "H",
+   "source": "https://poe2db.tw/us/Perfect_Regal_Orb",
+   "priceDiv": 0.0533,
+   "priceTier": "mid",
+   "notes": "Cheap (~0.05 div): on ilvl 75+ bases it is almost always better than a plain Regal."
+  },
+  {
+   "name": "Omen of Whittling",
+   "category": "Ritual / Omen",
+   "effect": "Next Chaos Orb will remove the lowest level modifier",
+   "applies": {
+    "rarity": [
+     "Rare"
+    ],
+    "classes": [
+     "all equipment"
+    ]
+   },
+   "slot": "none",
+   "omens": [
+    "works with Greater/Perfect Chaos (same Chaos Orb family; M/H)",
+    "with Sinistral/Dextral Erasure -> lowest-level mod on that side (M)"
+   ],
+   "advisorUse": "plan",
+   "confidence": "H",
+   "source": "https://poe2db.tw/us/Omen_of_Whittling",
+   "priceDiv": 14.01,
+   "priceTier": "high"
+  },
+  {
+   "name": "Omen of Sinistral Erasure",
+   "category": "Ritual / Omen",
+   "effect": "Next Chaos Orb will remove only prefix modifiers",
+   "applies": {
+    "rarity": [
+     "Rare"
+    ],
+    "classes": [
+     "all equipment"
+    ]
+   },
+   "slot": "none",
+   "omens": [
+    "Greater/Perfect Chaos",
+    "Whittling"
+   ],
+   "advisorUse": "plan",
+   "confidence": "H",
+   "source": "https://poe2db.tw/us/Omen_of_Sinistral_Erasure",
+   "priceDiv": 20.05,
+   "priceTier": "very high",
+   "notes": "The text does not lock the side of the added modifier; when the other side is full it can only land on the freed side (M)."
+  },
+  {
+   "name": "Omen of Dextral Erasure",
+   "category": "Ritual / Omen",
+   "effect": "Next Chaos Orb will remove only suffix modifiers",
+   "applies": {
+    "rarity": [
+     "Rare"
+    ],
+    "classes": [
+     "all equipment"
+    ]
+   },
+   "slot": "none",
+   "omens": [
+    "Greater/Perfect Chaos",
+    "Whittling"
+   ],
+   "advisorUse": "plan",
+   "confidence": "H",
+   "source": "https://poe2db.tw/us/Omen_of_Dextral_Erasure",
+   "priceDiv": 13.2,
+   "priceTier": "high",
+   "notes": "Same as Sinistral, suffix side."
+  },
+  {
+   "name": "Omen of Sinistral Coronation",
+   "category": "Ritual / Omen",
+   "effect": "Next Regal Orb will add only prefix modifiers (Dextral: only suffix)",
+   "applies": {
+    "rarity": [
+     "Magic"
+    ],
+    "classes": [
+     "all equipment"
+    ]
+   },
+   "slot": "none",
+   "omens": [
+    "Greater/Perfect Regal (M)"
+   ],
+   "advisorUse": "plan",
+   "confidence": "H",
+   "source": "https://poe2db.tw/us/Omen_of_Sinistral_Coronation",
+   "priceDiv": null,
+   "priceTier": "unknown"
+  },
+  {
+   "name": "Altered Collarbone",
+   "category": "Abyss (bone)",
+   "effect": "Desecrates a Rare Amulet, Ring or Belt with a chance for 'otherworldly' modifiers (Breach-themed desecrated pool: 4 amulet, 16 ring, 16 belt mods - see alteredCollarbonePool)",
+   "applies": {
+    "rarity": [
+     "Rare"
+    ],
+    "classes": [
+     "Amulets",
+     "Rings",
+     "Belts"
+    ]
+   },
+   "slot": "desecrated",
+   "omens": [],
+   "advisorUse": "plan",
+   "confidence": "H",
+   "source": "https://poe2db.tw/us/Altered_Collarbone",
+   "priceDiv": 3.77,
+   "priceTier": "high",
+   "notes": "Otherworldly mods are level 1 in RePoE (tag breach_desecration) -> Whittling treats them as lowest-level. Chance vs the normal pool is not published (L)."
+  },
+  {
+   "name": "Omen of Amelioration",
+   "category": "Ritual / Omen",
+   "effect": "Prevents 75% of Experience loss when you die",
+   "applies": {
+    "rarity": [],
+    "classes": [
+     "-"
+    ]
+   },
+   "slot": "none",
+   "omens": [],
+   "advisorUse": "ignore",
+   "confidence": "H",
+   "source": "https://poe2db.tw/us/Omen_of_Amelioration",
+   "priceDiv": 0.0766,
+   "priceTier": "mid"
+  },
+  {
+   "name": "Omen of Answered Prayers",
+   "category": "Ritual / Omen",
+   "effect": "Next Shrine you click grants an additional Effect",
+   "applies": {
+    "rarity": [],
+    "classes": [
+     "-"
+    ]
+   },
+   "slot": "none",
+   "omens": [],
+   "advisorUse": "ignore",
+   "confidence": "H",
+   "source": "https://poe2db.tw/us/Omen_of_Answered_Prayers",
+   "priceDiv": 0.2541,
+   "priceTier": "mid"
+  },
+  {
+   "name": "Ancient Infuser",
+   "category": "Currency",
+   "effect": "Modifies a Tablet unpredictably and Corrupts it",
+   "applies": {
+    "rarity": [
+     "any"
+    ],
+    "classes": [
+     "Tablets"
+    ]
+   },
+   "slot": "none",
+   "omens": [],
+   "advisorUse": "ignore",
+   "confidence": "H",
+   "source": "https://poe2db.tw/us/Ancient_Infuser",
+   "priceDiv": 0.39,
+   "priceTier": "mid"
+  },
+  {
+   "name": "Core Destabiliser",
+   "category": "Currency",
+   "effect": "Modifies a Soul Core unpredictably, with a chance to destroy it",
+   "applies": {
+    "rarity": [],
+    "classes": [
+     "Soul Cores"
+    ]
+   },
+   "slot": "none",
+   "omens": [],
+   "advisorUse": "ignore",
+   "confidence": "H",
+   "source": "https://poe2db.tw/us/Core_Destabiliser",
+   "priceDiv": 1.1,
+   "priceTier": "mid",
+   "notes": "Changes the socketable, not the item."
+  },
+  {
+   "name": "Vaal Siphoner",
+   "category": "Currency (Incubator)",
+   "effect": "Adds a kill threshold to a Corrupted Rare Jewellery item; when it is met, siphons (removes) a random modifier and improves the numeric values of the other modifiers",
+   "applies": {
+    "rarity": [
+     "Rare (Corrupted)"
+    ],
+    "classes": [
+     "Amulets",
+     "Rings",
+     "Belts"
+    ]
+   },
+   "slot": "none",
+   "omens": [],
+   "advisorUse": "advice",
+   "confidence": "H",
+   "source": "https://poe2db.tw/us/Vaal_Siphoner",
+   "priceDiv": 0.0084,
+   "priceTier": "cheap",
+   "notes": "Post-corruption gamble on jewellery: -1 random mod, + values of the rest. Worth it only when one mod is junk or values are low."
+  },
+  {
+   "name": "Orb of Extraction",
+   "category": "Currency",
+   "effect": "Destroys an Equipment item, returning any non Socket-Bound Augments socketed in it",
+   "applies": {
+    "rarity": [
+     "any"
+    ],
+    "classes": [
+     "equipment with socketed augments"
+    ]
+   },
+   "slot": "socket",
+   "omens": [],
+   "advisorUse": "advice",
+   "confidence": "H",
+   "source": "https://poe2db.tw/us/Orb_of_Extraction",
+   "priceDiv": 2.35,
+   "priceTier": "high",
+   "notes": "Advise only when the socketed augments are worth more than the item + ~2.35 div (Thesis cores, Emergent runes, Gazes)."
+  },
+  {
+   "name": "Artificer's Shard",
+   "category": "Currency",
+   "effect": "A stack of 10 shards becomes an Artificer's Orb",
+   "applies": {
+    "rarity": [],
+    "classes": [
+     "-"
+    ]
+   },
+   "slot": "none",
+   "omens": [],
+   "advisorUse": "ignore",
+   "confidence": "H",
+   "source": "https://poe2db.tw/us/Artificers_Shard",
+   "priceDiv": 0.0003,
+   "priceTier": "cheap"
+  },
+  {
+   "name": "Crystallised Corruption",
+   "category": "Currency",
+   "effect": "Modifies a Corrupted Skill Gem unpredictably or destroys it",
+   "applies": {
+    "rarity": [],
+    "classes": [
+     "Skill Gems"
+    ]
+   },
+   "slot": "none",
+   "omens": [],
+   "advisorUse": "ignore",
+   "confidence": "H",
+   "source": "https://poe2db.tw/us/Crystallised_Corruption",
+   "priceDiv": 8.2,
+   "priceTier": "high"
+  },
+  {
+   "name": "Vaal Cultivation Orb",
+   "category": "Currency",
+   "effect": "Replaces up to 2 modifiers on a Corrupted Vaal Unique; replaces other Uniques with a Corrupted Unique of the same Item Class",
+   "applies": {
+    "rarity": [
+     "Unique"
+    ],
+    "classes": [
+     "uniques"
+    ]
+   },
+   "slot": "none",
+   "omens": [],
+   "advisorUse": "ignore",
+   "confidence": "H",
+   "source": "https://poe2db.tw/us/Vaal_Cultivation_Orb",
+   "priceDiv": 3.35,
+   "priceTier": "high",
+   "notes": "Covered in docs/corruption-sanctification.md."
+  },
+  {
+   "name": "Architect's Orb",
+   "category": "Currency",
+   "effect": "Modifies a Corrupted Equipment or Jewel item unpredictably or destroys it",
+   "applies": {
+    "rarity": [
+     "Corrupted"
+    ],
+    "classes": [
+     "equipment",
+     "jewels"
+    ]
+   },
+   "slot": "none",
+   "omens": [],
+   "advisorUse": "advice",
+   "confidence": "H",
+   "source": "https://poe2db.tw/us/Architects_Orb",
+   "priceDiv": 9.18,
+   "priceTier": "high",
+   "notes": "Covered in docs/corruption-sanctification.md."
+  },
+  {
+   "name": "Kamasa's / Kopec's / Yaomac's / Yugul's Orb of Sacrifice",
+   "category": "Currency",
+   "effect": "Upgrades a Corruption Enchantment on a Rare Amulet/Ring/Belt (Kamasa) / Armour (Kopec) / Weapon or Quiver (Yaomac) / Jewel (Yugul) and removes a random Modifier",
+   "applies": {
+    "rarity": [
+     "Rare (Corrupted)"
+    ],
+    "classes": [
+     "by orb"
+    ]
+   },
+   "slot": "none",
+   "omens": [],
+   "advisorUse": "advice",
+   "confidence": "H",
+   "source": "https://poe2db.tw/us/Kamasas_Orb_of_Sacrifice",
+   "priceDiv": 0.2831,
+   "priceTier": "mid",
+   "notes": "Covered in docs/corruption-sanctification.md."
+  },
+  {
+   "name": "Perfect Flux",
+   "category": "Expedition (currency)",
+   "effect": "Upgrades the Skills on an item to Level 20 (Thaumaturgic Flux (Level 13-20): same idea with a fixed level, L)",
+   "applies": {
+    "rarity": [
+     "any"
+    ],
+    "classes": [
+     "items with granted skills (wands, staves, sceptres, some uniques)"
+    ]
+   },
+   "slot": "none",
+   "omens": [],
+   "advisorUse": "advice",
+   "confidence": "M",
+   "source": "https://poe2db.tw/us/Perfect_Flux",
+   "priceDiv": 28.12,
+   "priceTier": "very high",
+   "notes": "~28 div; changes the item-skill level, not modifiers."
+  },
+  {
+   "name": "Masterwork Rune",
+   "category": "Runes",
+   "effect": "Place into an Augment Socket containing any tiered Rune to upgrade that Rune (Lesser -> ... -> Perfect)",
+   "applies": {
+    "rarity": [
+     "any"
+    ],
+    "classes": [
+     "all equipment"
+    ]
+   },
+   "slot": "socket",
+   "omens": [],
+   "advisorUse": "advice",
+   "confidence": "H",
+   "source": "https://poe2db.tw/us/Masterwork_Rune",
+   "priceDiv": 0.9185,
+   "priceTier": "mid",
+   "notes": "~0.9 div: cheaper than buying a Perfect rune only when Perfect > rune + Masterwork."
+  },
+  {
+   "name": "Omen of Chaotic Rarity / Quantity / Monsters / Effectiveness",
+   "category": "Ritual / Omen",
+   "effect": "Waystone-only (Chaos Orb on a Waystone)",
+   "applies": {
+    "rarity": [],
+    "classes": [
+     "Waystones"
+    ]
+   },
+   "slot": "none",
+   "omens": [],
+   "advisorUse": "ignore",
+   "confidence": "H",
+   "source": "https://poe2db.tw/us/Omen",
+   "priceDiv": 0.7344,
+   "priceTier": "mid",
+   "notes": "Covered in crafting-notes.md."
+  },
+  {
+   "name": "Omen of Bartering / Gambling / Secret Compartments / the Hunt / Resurgence / Refreshment / Reinforcements",
+   "category": "Ritual / Omen",
+   "effect": "Vendor price, gamble gold, reopenable strongbox, Azmeri spirits, recovery at low life, flask/charm refill, Rogue Exile ally",
+   "applies": {
+    "rarity": [],
+    "classes": [
+     "-"
+    ]
+   },
+   "slot": "none",
+   "omens": [],
+   "advisorUse": "ignore",
+   "confidence": "H",
+   "source": "https://poe2db.tw/us/Omen",
+   "priceDiv": null,
+   "priceTier": "unknown"
+  },
+  {
+   "name": "Uhtred's / Olroth's Saga",
+   "category": "Expedition / Omen",
+   "effect": "Next Logbook guarantees an <NPC> encounter in the revealed Biome",
+   "applies": {
+    "rarity": [],
+    "classes": [
+     "Logbooks"
+    ]
+   },
+   "slot": "none",
+   "omens": [],
+   "advisorUse": "ignore",
+   "confidence": "H",
+   "source": "https://poe2db.tw/us/Uhtreds_Saga",
+   "priceDiv": 2.25,
+   "priceTier": "high"
+  },
+  {
+   "name": "Head of the King / An Audience with the King / Sacred Bloom",
+   "category": "Ritual",
+   "effect": "Ritual boss access / quest items",
+   "applies": {
+    "rarity": [],
+    "classes": [
+     "-"
+    ]
+   },
+   "slot": "none",
+   "omens": [],
+   "advisorUse": "ignore",
+   "confidence": "H",
+   "source": "https://poe2db.tw/us/An_Audience_with_the_King",
+   "priceDiv": 0.1087,
+   "priceTier": "mid"
+  }
+ ],
+ "lichMods": {
+  "Omen of the Sovereign": {
+   "amulet": {
+    "prefix": [
+     "(10-20)% increased Deflection Rating",
+     "(15-25)% increased Attack Damage while on Low Life",
+     "(20-30)% chance for Skills to retain 40% of Glory on use",
+     "(35-50)% increased Evasion Rating from Equipped Body Armour"
+    ],
+    "suffix": [
+     "(10-20)% increased Reservation Efficiency of Herald Skills",
+     "(3-6)% increased Skill Speed",
+     "+(13-17)% to Lightning and Chaos Resistances",
+     "+(9-15) to Strength and Dexterity",
+     "+1 to Level of all Skills",
+     "Recover (2-3)% of maximum Life on Kill"
+    ]
+   },
+   "belt": {
+    "prefix": [
+     "(10-18)% chance for Flasks you use to not consume Charges",
+     "(20-30)% increased Life Regeneration rate during Effect of any Life Flask",
+     "Life Flasks gain (0.1-0.2) charges per Second"
+    ],
+    "suffix": [
+     "(25-17)% reduced Slowing Potency of Debuffs on You if you've used a Charm Recently",
+     "(30-20)% reduced Poison Duration on you",
+     "+(13-17)% to Lightning and Chaos Resistances",
+     "+(9-15) to Strength and Dexterity"
+    ]
+   },
+   "bow": {
+    "prefix": [
+     "Attacks with this Weapon Penetrate (15-25)% Lightning Resistance",
+     "Projectiles deal (60-79)% increased Damage with Hits against Enemies further than 6m"
+    ],
+    "suffix": [
+     "(15-20)% of Skill Mana Costs Converted to Life Costs",
+     "(8-13)% increased Attack Speed / (8-13)% increased Attack Speed while your Companion is in your Presence",
+     "Projectile Attacks have a (10-18)% chance to fire two additional Projectiles while moving"
+    ]
+   },
+   "claw": {
+    "prefix": [
+     "Attacks with this Weapon Penetrate (15-25)% Lightning Resistance"
+    ],
+    "suffix": [
+     "(15-20)% of Skill Mana Costs Converted to Life Costs"
+    ]
+   },
+   "crossbow": {
+    "prefix": [
+     "+1 to maximum number of Summoned Ballista Totems",
+     "Attacks with this Weapon Penetrate (15-25)% Lightning Resistance"
+    ],
+    "suffix": [
+     "(15-20)% of Skill Mana Costs Converted to Life Costs",
+     "Attacks Chain an additional time",
+     "Projectiles have (27-38)% increased Critical Damage Bonus against Enemies within 2m"
+    ]
+   },
+   "dagger": {
+    "prefix": [
+     "Attacks with this Weapon Penetrate (15-25)% Lightning Resistance"
+    ],
+    "suffix": [
+     "(15-20)% of Skill Mana Costs Converted to Life Costs"
+    ]
+   },
+   "flail": {
+    "prefix": [
+     "Attacks with this Weapon Penetrate (15-25)% Lightning Resistance"
+    ],
+    "suffix": [
+     "(15-20)% of Skill Mana Costs Converted to Life Costs"
+    ]
+   },
+   "one_hand_axe": {
+    "prefix": [
+     "Attacks with this Weapon Penetrate (15-25)% Lightning Resistance"
+    ],
+    "suffix": [
+     "(15-20)% of Skill Mana Costs Converted to Life Costs"
+    ]
+   },
+   "one_hand_mace": {
+    "prefix": [
+     "(41-59)% increased Damage against Enemies with Fully Broken Armour",
+     "(41-59)% increased Damage while you have a Totem",
+     "Attacks with this Weapon Penetrate (15-25)% Lightning Resistance",
+     "Empowered Attacks deal (41-59)% increased Damage",
+     "Melee Attack Skills have +1 to maximum number of Summoned Totems"
+    ],
+    "suffix": [
+     "(10-16)% chance for Mace Slam Skills you use yourself to cause an additional Aftershock",
+     "(15-20)% of Skill Mana Costs Converted to Life Costs",
+     "(17-25)% increased Totem Placement speed",
+     "(17-25)% increased Warcry Cooldown Recovery Rate",
+     "Break Armour equal to (2-4)% of Physical Damage dealt",
+     "Skills which create Fissures have a (15-25)% chance to create an additional Fissure"
+    ]
+   },
+   "one_hand_sword": {
+    "prefix": [
+     "Attacks with this Weapon Penetrate (15-25)% Lightning Resistance"
+    ],
+    "suffix": [
+     "(15-20)% of Skill Mana Costs Converted to Life Costs"
+    ]
+   },
+   "quarterstaff": {
+    "prefix": [
+     "(86-99)% increased Lightning Damage / (14-23)% increased Magnitude of Shock you inflict",
+     "Attacks with this Weapon Penetrate (15-25)% Lightning Resistance"
+    ],
+    "suffix": [
+     "(15-20)% of Skill Mana Costs Converted to Life Costs",
+     "Recover (6-12)% of Maximum Life when you expend at least 10 Combo"
+    ]
+   },
+   "quiver": {
+    "prefix": [
+     "Increases and Reductions to Projectile Speed also apply to Damage with Bows"
+    ],
+    "suffix": [
+     "(10-14)% of Skill Mana Costs Converted to Life Costs",
+     "Projectile Attacks have a (8-12)% chance to fire two additional Projectiles while moving"
+    ]
+   },
+   "ring": {
+    "prefix": [
+     "(15-25)% increased Attack Damage while on Low Life",
+     "(20-30)% increased Magnitude of Shock if you've consumed a Frenzy Charge Recently"
+    ],
+    "suffix": [
+     "(3-6)% increased Skill Speed",
+     "+(13-17)% to Lightning and Chaos Resistances",
+     "+(9-15) to Strength and Dexterity",
+     "Recover (2-3)% of maximum Life on Kill"
+    ]
+   },
+   "spear": {
+    "prefix": [
+     "Attacks with this Weapon Penetrate (15-25)% Lightning Resistance",
+     "Projectiles deal (60-79)% increased Damage with Hits against Enemies further than 6m"
+    ],
+    "suffix": [
+     "(15-20)% of Skill Mana Costs Converted to Life Costs",
+     "(8-13)% increased Attack Speed / (8-13)% increased Attack Speed while your Companion is in your Presence",
+     "Projectile Attacks have a (10-18)% chance to fire two additional Projectiles while moving"
+    ]
+   },
+   "staff": {
+    "prefix": [
+     "(4-5)% increased Spell Damage per 100 Maximum Life",
+     "(40-64)% increased Magnitude of Damaging Ailments you inflict"
+    ],
+    "suffix": [
+     "(25-35)% chance for Spell Skills to fire 2 additional Projectiles",
+     "(30-40)% increased Cast Speed when on Low Life"
+    ]
+   },
+   "talisman": {
+    "prefix": [
+     "(86-99)% increased Damage while you have a Totem",
+     "Attacks with this Weapon Penetrate (15-25)% Lightning Resistance",
+     "Empowered Attacks deal (86-99)% increased Damage",
+     "Melee Attack Skills have +1 to maximum number of Summoned Totems"
+    ],
+    "suffix": [
+     "(15-20)% of Skill Mana Costs Converted to Life Costs",
+     "(25-31)% increased Totem Placement speed",
+     "(25-31)% increased Warcry Cooldown Recovery Rate",
+     "Skills which create Fissures have a (25-31)% chance to create an additional Fissure"
+    ]
+   },
+   "two_hand_axe": {
+    "prefix": [
+     "Attacks with this Weapon Penetrate (15-25)% Lightning Resistance"
+    ],
+    "suffix": [
+     "(15-20)% of Skill Mana Costs Converted to Life Costs"
+    ]
+   },
+   "two_hand_mace": {
+    "prefix": [
+     "(86-99)% increased Damage against Enemies with Fully Broken Armour",
+     "(86-99)% increased Damage while you have a Totem",
+     "Attacks with this Weapon Penetrate (15-25)% Lightning Resistance",
+     "Empowered Attacks deal (86-99)% increased Damage",
+     "Melee Attack Skills have +1 to maximum number of Summoned Totems"
+    ],
+    "suffix": [
+     "(15-20)% of Skill Mana Costs Converted to Life Costs",
+     "(16-23)% chance for Mace Slam Skills you use yourself to cause an additional Aftershock",
+     "(25-31)% increased Totem Placement speed",
+     "(25-31)% increased Warcry Cooldown Recovery Rate",
+     "Break Armour equal to (4-7)% of Physical Damage dealt",
+     "Skills which create Fissures have a (25-31)% chance to create an additional Fissure"
+    ]
+   },
+   "two_hand_sword": {
+    "prefix": [
+     "Attacks with this Weapon Penetrate (15-25)% Lightning Resistance"
+    ],
+    "suffix": [
+     "(15-20)% of Skill Mana Costs Converted to Life Costs"
+    ]
+   },
+   "wand": {
+    "prefix": [
+     "(27-38)% increased Magnitude of Bleeding you inflict",
+     "Gain (21-25)% of Damage as Extra Physical Damage"
+    ],
+    "suffix": [
+     "(26-36)% increased Cast Speed while on Full Mana",
+     "Break (31-39)% increased Armour",
+     "Break Armour on Critical Hit with Spells equal to (11-18)% of Physical Damage dealt",
+     "Enemies Hindered by you take (4-7)% increased Physical Damage"
+    ]
+   },
+   "sceptre": {
+    "prefix": [],
+    "suffix": []
+   }
+  },
+  "Omen of the Liege": {
+   "amulet": {
+    "prefix": [
+     "(15-25)% increased Global Armour, Evasion and Energy Shield",
+     "(35-50)% increased Armour from Equipped Body Armour",
+     "Minions deal (15-25)% increased Damage if you've Hit Recently",
+     "Remnants you create have (8-15)% increased effect"
+    ],
+    "suffix": [
+     "(8-12)% increased Skill Effect Duration",
+     "+(13-17)% to Fire and Chaos Resistances",
+     "+(9-15) to Strength and Intelligence",
+     "Aura Skills have (8-16)% increased Magnitudes",
+     "Equipment and Skill Gems have (15-10)% reduced Attribute Requirements",
+     "Remnants can be collected from (20-30)% further away"
+    ]
+   },
+   "belt": {
+    "prefix": [
+     "(10-18)% chance for Charms you use to not consume Charges",
+     "2 to 4 Fire Thorns damage per 100 maximum Life",
+     "Charms gain (0.1-0.2) charges per Second"
+    ],
+    "suffix": [
+     "(20-30)% reduced Ignite Duration on you",
+     "+(13-17)% to Fire and Chaos Resistances",
+     "+(2-4)% to Thorns Critical Hit Chance",
+     "+(9-15) to Strength and Intelligence"
+    ]
+   },
+   "bow": {
+    "prefix": [
+     "(12-23)% increased Area of Effect for Attacks",
+     "Attacks with this Weapon Penetrate (15-25)% Fire Resistance",
+     "Companions deal (40-59)% increased Damage / (40-59)% increased Damage while your Companion is in your Presence"
+    ],
+    "suffix": [
+     "(12-18)% increased Attack Speed / Companions have (12-18)% increased Attack Speed",
+     "(40-60)% chance to Pierce an Enemy",
+     "(5-10)% increased Spirit Reservation Efficiency of Skills"
+    ]
+   },
+   "claw": {
+    "prefix": [
+     "Attacks with this Weapon Penetrate (15-25)% Fire Resistance"
+    ],
+    "suffix": [
+     "(5-10)% increased Spirit Reservation Efficiency of Skills"
+    ]
+   },
+   "crossbow": {
+    "prefix": [
+     "(101-121)% increased Grenade Damage / (20-30)% increased Grenade Duration",
+     "Attacks with this Weapon Penetrate (15-25)% Fire Resistance",
+     "Grenade Skills have +1 Cooldown Use"
+    ],
+    "suffix": [
+     "(5-10)% increased Spirit Reservation Efficiency of Skills",
+     "Grenades have (15-25)% chance to activate a second time"
+    ]
+   },
+   "dagger": {
+    "prefix": [
+     "Attacks with this Weapon Penetrate (15-25)% Fire Resistance"
+    ],
+    "suffix": [
+     "(5-10)% increased Spirit Reservation Efficiency of Skills"
+    ]
+   },
+   "flail": {
+    "prefix": [
+     "Attacks with this Weapon Penetrate (15-25)% Fire Resistance"
+    ],
+    "suffix": [
+     "(5-10)% increased Spirit Reservation Efficiency of Skills"
+    ]
+   },
+   "one_hand_axe": {
+    "prefix": [
+     "Attacks with this Weapon Penetrate (15-25)% Fire Resistance"
+    ],
+    "suffix": [
+     "(5-10)% increased Spirit Reservation Efficiency of Skills"
+    ]
+   },
+   "one_hand_mace": {
+    "prefix": [
+     "Attacks with this Weapon Penetrate (15-25)% Fire Resistance"
+    ],
+    "suffix": [
+     "(5-10)% increased Spirit Reservation Efficiency of Skills"
+    ]
+   },
+   "one_hand_sword": {
+    "prefix": [
+     "Attacks with this Weapon Penetrate (15-25)% Fire Resistance"
+    ],
+    "suffix": [
+     "(5-10)% increased Spirit Reservation Efficiency of Skills"
+    ]
+   },
+   "quarterstaff": {
+    "prefix": [
+     "(86-99)% increased Fire Damage / (14-23)% increased Ignite Magnitude",
+     "Attacks with this Weapon Penetrate (15-25)% Fire Resistance"
+    ],
+    "suffix": [
+     "(25-40)% chance to build an additional Combo on Hit",
+     "(5-10)% increased Spirit Reservation Efficiency of Skills"
+    ]
+   },
+   "quiver": {
+    "prefix": [
+     "Projectiles deal (20-30)% increased Damage with Hits against Enemies within 2m"
+    ],
+    "suffix": [
+     "Projectiles have (18-26)% increased Critical Damage Bonus against Enemies within 2m"
+    ]
+   },
+   "ring": {
+    "prefix": [
+     "(20-30)% increased Magnitude of Ignite if you've consumed an Endurance Charge Recently",
+     "Minions deal (15-25)% increased Damage if you've Hit Recently",
+     "Remnants you create have (8-15)% increased effect"
+    ],
+    "suffix": [
+     "(12-20)% increased amount of Life Leeched",
+     "(8-12)% increased Skill Effect Duration",
+     "+(13-17)% to Fire and Chaos Resistances",
+     "+(9-15) to Strength and Intelligence",
+     "Remnants can be collected from (20-30)% further away"
+    ]
+   },
+   "spear": {
+    "prefix": [
+     "(12-23)% increased Area of Effect for Attacks",
+     "Attacks with this Weapon Penetrate (15-25)% Fire Resistance",
+     "Companions deal (40-59)% increased Damage / (40-59)% increased Damage while your Companion is in your Presence"
+    ],
+    "suffix": [
+     "(12-18)% increased Attack Speed / Companions have (12-18)% increased Attack Speed",
+     "(40-60)% chance to Pierce an Enemy",
+     "(5-10)% increased Spirit Reservation Efficiency of Skills"
+    ]
+   },
+   "staff": {
+    "prefix": [
+     "(148-178)% increased Spell Damage with Spells that cost Life",
+     "+(35-50) to Spirit",
+     "Gain (40-50)% of Damage as Extra Chaos Damage"
+    ],
+    "suffix": [
+     "(25-35)% increased Archon Buff duration",
+     "(25-35)% of Spell Mana Cost Converted to Life Cost",
+     "+(20-25)% to Block chance"
+    ]
+   },
+   "talisman": {
+    "prefix": [
+     "Attacks with this Weapon Penetrate (15-25)% Fire Resistance",
+     "Companions deal (40-59)% increased Damage / (40-59)% increased Damage while your Companion is in your Presence",
+     "Minions deal (60-79)% increased Damage if you've Hit Recently"
+    ],
+    "suffix": [
+     "(12-18)% increased Attack Speed / Companions have (12-18)% increased Attack Speed",
+     "(5-10)% increased Spirit Reservation Efficiency of Skills",
+     "Gain (3-6) Rage on Melee Hit"
+    ]
+   },
+   "two_hand_axe": {
+    "prefix": [
+     "Attacks with this Weapon Penetrate (15-25)% Fire Resistance"
+    ],
+    "suffix": [
+     "(5-10)% increased Spirit Reservation Efficiency of Skills"
+    ]
+   },
+   "two_hand_mace": {
+    "prefix": [
+     "Attacks with this Weapon Penetrate (15-25)% Fire Resistance"
+    ],
+    "suffix": [
+     "(5-10)% increased Spirit Reservation Efficiency of Skills"
+    ]
+   },
+   "two_hand_sword": {
+    "prefix": [
+     "Attacks with this Weapon Penetrate (15-25)% Fire Resistance"
+    ],
+    "suffix": [
+     "(5-10)% increased Spirit Reservation Efficiency of Skills"
+    ]
+   },
+   "wand": {
+    "prefix": [
+     "(74-89)% increased Elemental Damage",
+     "(74-89)% increased Spell Damage with Spells that cost Life",
+     "Minions deal (55-64)% increased Damage / (55-64)% increased Spell Damage"
+    ],
+    "suffix": [
+     "(15-25)% of Spell Mana Cost Converted to Life Cost / (5-10)% increased Cost Efficiency",
+     "Enemies Hindered by you take (4-7)% increased Elemental Damage",
+     "Spell Skills have (8-16)% increased Area of Effect"
+    ]
+   },
+   "sceptre": {
+    "prefix": [],
+    "suffix": []
+   }
+  },
+  "Omen of the Blackblooded": {
+   "amulet": {
+    "prefix": [
+     "(15-25)% increased Spell Damage while on Full Energy Shield",
+     "(35-50)% increased Energy Shield from Equipped Body Armour",
+     "Invocated Spells have (10-20)% chance to consume half as much Energy"
+    ],
+    "suffix": [
+     "(10-15)% increased Exposure Effect",
+     "(8-12)% increased Cooldown Recovery Rate",
+     "(8-16)% of Damage is taken from Mana before Life",
+     "+(13-17)% to Cold and Chaos Resistances",
+     "+(3-5)% to Quality of all Skills",
+     "+(9-15) to Dexterity and Intelligence",
+     "Minions have (12-20)% increased Cooldown Recovery Rate",
+     "Recover (2-3)% of maximum Mana on Kill"
+    ]
+   },
+   "belt": {
+    "prefix": [
+     "(10-15)% chance for Flasks you use to not consume Charges",
+     "Gain (6-12)% of Maximum Mana as Armour",
+     "Mana Flasks gain (0.1-0.2) charges per Second"
+    ],
+    "suffix": [
+     "(30-20)% reduced Duration of Bleeding on You",
+     "(30-40)% increased Mana Regeneration Rate",
+     "+(13-17)% to Cold and Chaos Resistances",
+     "+(9-15) to Dexterity and Intelligence"
+    ]
+   },
+   "bow": {
+    "prefix": [
+     "(30-40)% increased bonuses gained from Equipped Quiver",
+     "Attacks with this Weapon Penetrate (15-25)% Cold Resistance",
+     "Projectiles have (25-35)% chance to Chain an additional time from terrain"
+    ],
+    "suffix": [
+     "(25-34)% increased Immobilisation buildup",
+     "(8-15)% increased Cost Efficiency of Attacks",
+     "Projectiles have (25-34)% increased Critical Hit Chance against Enemies further than 6m"
+    ]
+   },
+   "claw": {
+    "prefix": [
+     "Attacks with this Weapon Penetrate (15-25)% Cold Resistance"
+    ],
+    "suffix": [
+     "(8-15)% increased Cost Efficiency of Attacks"
+    ]
+   },
+   "crossbow": {
+    "prefix": [
+     "Attacks with this Weapon Penetrate (15-25)% Cold Resistance",
+     "Projectiles deal (85-109)% increased Damage with Hits against Enemies within 2m"
+    ],
+    "suffix": [
+     "(15-20)% chance when you Reload a Crossbow to be immediate",
+     "(17-25)% increased Reload Speed",
+     "(8-15)% increased Cost Efficiency of Attacks"
+    ]
+   },
+   "dagger": {
+    "prefix": [
+     "Attacks with this Weapon Penetrate (15-25)% Cold Resistance"
+    ],
+    "suffix": [
+     "(8-15)% increased Cost Efficiency of Attacks"
+    ]
+   },
+   "flail": {
+    "prefix": [
+     "Attacks with this Weapon Penetrate (15-25)% Cold Resistance"
+    ],
+    "suffix": [
+     "(8-15)% increased Cost Efficiency of Attacks"
+    ]
+   },
+   "one_hand_axe": {
+    "prefix": [
+     "Attacks with this Weapon Penetrate (15-25)% Cold Resistance"
+    ],
+    "suffix": [
+     "(8-15)% increased Cost Efficiency of Attacks"
+    ]
+   },
+   "one_hand_mace": {
+    "prefix": [
+     "(110-154)% increased Physical Damage / 15% reduced Attack Speed",
+     "Attacks with this Weapon Penetrate (15-25)% Cold Resistance"
+    ],
+    "suffix": [
+     "(8-15)% increased Cost Efficiency of Attacks"
+    ]
+   },
+   "one_hand_sword": {
+    "prefix": [
+     "Attacks with this Weapon Penetrate (15-25)% Cold Resistance"
+    ],
+    "suffix": [
+     "(8-15)% increased Cost Efficiency of Attacks"
+    ]
+   },
+   "quarterstaff": {
+    "prefix": [
+     "(86-99)% increased Cold Damage / (14-23)% increased Freeze Buildup",
+     "Attacks with this Weapon Penetrate (15-25)% Cold Resistance"
+    ],
+    "suffix": [
+     "(8-15)% increased Cost Efficiency of Attacks",
+     "Recover (4-6)% of Maximum Mana when you expend at least 10 Combo"
+    ]
+   },
+   "quiver": {
+    "prefix": [
+     "Projectiles deal (20-30)% increased Damage with Hits against Enemies further than 6m"
+    ],
+    "suffix": [
+     "(6-10)% increased Mana Cost Efficiency",
+     "Projectiles have (18-26)% increased Critical Hit Chance against Enemies further than 6m"
+    ]
+   },
+   "ring": {
+    "prefix": [
+     "(15-25)% increased Spell Damage while on Full Energy Shield",
+     "(20-30)% increased Freeze Buildup if you've consumed an Power Charge Recently"
+    ],
+    "suffix": [
+     "(10-15)% increased Exposure Effect",
+     "(12-20)% increased amount of Mana Leeched",
+     "(8-12)% increased Cooldown Recovery Rate",
+     "+(13-17)% to Cold and Chaos Resistances",
+     "+(9-15) to Dexterity and Intelligence",
+     "Recover (2-3)% of maximum Mana on Kill"
+    ]
+   },
+   "spear": {
+    "prefix": [
+     "(60-79)% increased Melee Damage if you've dealt a Projectile Attack Hit in the past eight seconds",
+     "Attacks with this Weapon Penetrate (15-25)% Cold Resistance",
+     "Projectiles have (25-35)% chance to Chain an additional time from terrain"
+    ],
+    "suffix": [
+     "(25-34)% increased Immobilisation buildup",
+     "(8-15)% increased Cost Efficiency of Attacks",
+     "Projectiles have (25-34)% increased Critical Hit Chance against Enemies further than 6m"
+    ]
+   },
+   "staff": {
+    "prefix": [
+     "(4-5)% increased Spell Damage per 100 maximum Mana",
+     "+(1-2) to maximum number of Elemental Infusions"
+    ],
+    "suffix": [
+     "+(3-4) maximum stacks of Puppet Master",
+     "Archon recovery period expires (25-35)% faster"
+    ]
+   },
+   "talisman": {
+    "prefix": [
+     "Attacks with this Weapon Penetrate (15-25)% Cold Resistance",
+     "Warcries Empower (1-2) additional Attacks"
+    ],
+    "suffix": [
+     "(39-51)% increased Critical Hit Chance against Marked Enemies",
+     "(8-15)% increased Cost Efficiency of Attacks"
+    ]
+   },
+   "two_hand_axe": {
+    "prefix": [
+     "Attacks with this Weapon Penetrate (15-25)% Cold Resistance"
+    ],
+    "suffix": [
+     "(8-15)% increased Cost Efficiency of Attacks"
+    ]
+   },
+   "two_hand_mace": {
+    "prefix": [
+     "(110-154)% increased Physical Damage / 15% reduced Attack Speed",
+     "Attacks with this Weapon Penetrate (15-25)% Cold Resistance"
+    ],
+    "suffix": [
+     "(8-15)% increased Cost Efficiency of Attacks"
+    ]
+   },
+   "two_hand_sword": {
+    "prefix": [
+     "Attacks with this Weapon Penetrate (15-25)% Cold Resistance"
+    ],
+    "suffix": [
+     "(8-15)% increased Cost Efficiency of Attacks"
+    ]
+   },
+   "wand": {
+    "prefix": [
+     "Invocated Spells deal (75-89)% increased Damage"
+    ],
+    "suffix": [
+     "(3-5)% increased Cast Speed for each different Non-Instant Spell you've Cast Recently",
+     "Enemies Hindered by you take (4-7)% increased Chaos Damage"
+    ]
+   },
+   "sceptre": {
+    "prefix": [],
+    "suffix": []
+   }
+  }
+ },
+ "lichModsNoOmen": {
+  "Omen of the Sovereign": {
+   "body_armour": {
+    "prefix": [],
+    "suffix": [
+     "(12-18)% increased Reservation Efficiency of Companion Skills [only: dex_armour,dex_int_armour,str_dex_armour,str_dex_int_armour]",
+     "+(13-17)% to Lightning and Chaos Resistances",
+     "+(9-15) to Strength and Dexterity",
+     "Hits have (25-17)% reduced Critical Hit Chance against you",
+     "Prevent +(3-5)% of Damage from Deflected Hits [only: dex_armour,dex_int_armour,str_dex_armour,str_dex_int_armour]"
+    ]
+   },
+   "helmet": {
+    "prefix": [],
+    "suffix": [
+     "(13-20)% increased Critical Damage Bonus [only: dex_armour,dex_int_armour,str_dex_armour,str_dex_int_armour]",
+     "(8-12)% increased Life Cost Efficiency",
+     "+(13-17)% to Lightning and Chaos Resistances",
+     "+(9-15) to Strength and Dexterity",
+     "Enemies you Mark take (4-8)% increased Damage [only: dex_armour,dex_int_armour,str_dex_armour,str_dex_int_armour]"
+    ]
+   },
+   "gloves": {
+    "prefix": [],
+    "suffix": [
+     "(10-20)% increased Magnitude of Ailments you inflict",
+     "(15-25)% chance for Attack Hits to apply Incision [only: dex_int_armour,int_armour,str_dex_int_armour,str_int_armour]",
+     "(20-30)% increased chance to Poison",
+     "(20-30)% increased chance to inflict Bleeding",
+     "(8-12)% increased Skill Speed if you've consumed a Frenzy Charge Recently [only: dex_int_armour,int_armour,str_dex_int_armour,str_int_armour]",
+     "+(13-17)% to Lightning and Chaos Resistances",
+     "+(9-15) to Strength and Dexterity"
+    ]
+   },
+   "boots": {
+    "prefix": [],
+    "suffix": [
+     "(30-20)% reduced Poison Duration on you",
+     "(40-50)% increased Life Regeneration Rate while moving",
+     "+(13-17)% to Lightning and Chaos Resistances",
+     "+(9-15) to Strength and Dexterity",
+     "Corrupted Blood cannot be inflicted on you"
+    ]
+   },
+   "shield": {
+    "prefix": [],
+    "suffix": [
+     "(20-30)% increased Parried Debuff Magnitude [only: str_dex_armour,str_dex_shield]",
+     "(25-35)% increased Parried Debuff Duration [only: str_dex_armour,str_dex_shield]",
+     "(30-40)% of Physical Damage taken as Lightning while your Shield is raised / You take (8-15)% of damage from Blocked Hits with a raised Shield",
+     "+(1-2)% to maximum Block chance",
+     "+(13-17)% to Lightning and Chaos Resistances",
+     "+(9-15) to Strength and Dexterity",
+     "Hits have (25-17)% reduced Critical Hit Chance against you"
+    ]
+   },
+   "buckler": {
+    "prefix": [],
+    "suffix": [
+     "(20-30)% increased Parried Debuff Magnitude",
+     "(25-35)% increased Parried Debuff Duration",
+     "(30-40)% of Physical Damage taken as Lightning while your Shield is raised / You take (8-15)% of damage from Blocked Hits with a raised Shield [only: str_dex_armour,str_dex_shield]",
+     "+(1-2)% to maximum Block chance",
+     "+(13-17)% to Lightning and Chaos Resistances",
+     "+(9-15) to Strength and Dexterity",
+     "Hits have (25-17)% reduced Critical Hit Chance against you"
+    ]
+   },
+   "focus": {
+    "prefix": [
+     "(61-79)% increased Spell Damage while wielding a Melee Weapon",
+     "Spell Skills have +1 to maximum number of Summoned Totems"
+    ],
+    "suffix": [
+     "(10-16)% chance for Spell Skills to fire 2 additional Projectiles",
+     "(10-20)% of Spell Mana Cost Converted to Life Cost",
+     "+(13-17)% to Lightning and Chaos Resistances",
+     "+(9-15) to Strength and Dexterity"
+    ]
+   }
+  },
+  "Omen of the Liege": {
+   "body_armour": {
+    "prefix": [],
+    "suffix": [
+     "(35-25)% reduced effect of Curses on you",
+     "(6-12)% increased Spirit Reservation Efficiency of Skills",
+     "+(13-17)% to Fire and Chaos Resistances",
+     "+(9-15) to Strength and Intelligence"
+    ]
+   },
+   "helmet": {
+    "prefix": [],
+    "suffix": [
+     "(10-20)% increased Glory generation [only: str_armour,str_dex_armour,str_dex_int_armour,str_int_armour]",
+     "(10-20)% of Damage taken Recouped as Life [only: str_armour,str_dex_armour,str_dex_int_armour,str_int_armour]",
+     "(25-35)% increased Presence Area of Effect",
+     "(4-8)% increased Spirit Reservation Efficiency of Skills",
+     "+(13-17)% to Fire and Chaos Resistances",
+     "+(9-15) to Strength and Intelligence"
+    ]
+   },
+   "gloves": {
+    "prefix": [],
+    "suffix": [
+     "(10-20)% chance to Daze on Hit",
+     "(10-20)% increased Immobilisation buildup [only: dex_armour,dex_int_armour,str_dex_armour,str_dex_int_armour]",
+     "(12-20)% increased Area of Effect of Curses [only: dex_armour,dex_int_armour,str_dex_armour,str_dex_int_armour]",
+     "+(13-17)% to Fire and Chaos Resistances",
+     "+(9-15) to Strength and Intelligence"
+    ]
+   },
+   "boots": {
+    "prefix": [],
+    "suffix": [
+     "(20-12)% reduced Slowing Potency of Debuffs on You",
+     "(20-30)% reduced Ignite Duration on you",
+     "+(0.1-0.2) metres to Dodge Roll distance",
+     "+(13-17)% to Fire and Chaos Resistances",
+     "+(9-15) to Strength and Intelligence"
+    ]
+   },
+   "shield": {
+    "prefix": [],
+    "suffix": [
+     "(10-20)% of Damage taken Recouped as Life",
+     "(35-25)% reduced effect of Curses on you",
+     "+(13-17)% to Fire and Chaos Resistances",
+     "+(9-15) to Strength and Intelligence",
+     "+1% to all maximum Resistances",
+     "Shield Skills fully Break Armour when they Heavy Stun targets",
+     "Your Heavy Stun buildup empties (30-40)% faster"
+    ]
+   },
+   "buckler": {
+    "prefix": [],
+    "suffix": [
+     "(10-20)% of Damage taken Recouped as Life [only: str_dex_armour,str_dex_shield]",
+     "(35-25)% reduced effect of Curses on you",
+     "+(13-17)% to Fire and Chaos Resistances",
+     "+(9-15) to Strength and Intelligence",
+     "+1% to all maximum Resistances",
+     "Shield Skills fully Break Armour when they Heavy Stun targets [only: str_dex_armour,str_dex_shield]",
+     "Your Heavy Stun buildup empties (30-40)% faster [only: str_dex_armour,str_dex_shield]"
+    ]
+   },
+   "focus": {
+    "prefix": [
+     "(8-16)% increased Curse Magnitudes",
+     "Offering Skills have (12-20)% increased Buff effect"
+    ],
+    "suffix": [
+     "(20-10)% faster Curse Activation",
+     "+(1-2) to Level of all Minion Skills",
+     "+(13-17)% to Fire and Chaos Resistances",
+     "+(9-15) to Strength and Intelligence"
+    ]
+   }
+  },
+  "Omen of the Blackblooded": {
+   "body_armour": {
+    "prefix": [],
+    "suffix": [
+     "(10-20)% of Damage is taken from Mana before Life [only: dex_int_armour,int_armour,str_dex_int_armour,str_int_armour]",
+     "(10-20)% of Damage taken Recouped as Mana",
+     "+(13-17)% to Cold and Chaos Resistances",
+     "+(9-15) to Dexterity and Intelligence"
+    ]
+   },
+   "helmet": {
+    "prefix": [],
+    "suffix": [
+     "(10-20)% of Elemental Damage taken Recouped as Energy Shield",
+     "(20-30)% increased effect of Arcane Surge on you [only: dex_int_armour,int_armour,str_dex_int_armour,str_int_armour]",
+     "(6-10)% increased Mana Cost Efficiency",
+     "+(13-17)% to Cold and Chaos Resistances",
+     "+(23-31)% of Armour also applies to Chaos Damage [only: str_armour,str_dex_armour,str_dex_int_armour,str_int_armour]",
+     "+(9-15) to Dexterity and Intelligence"
+    ]
+   },
+   "gloves": {
+    "prefix": [],
+    "suffix": [
+     "(10-15)% chance to Gain Arcane Surge when you deal a Critical Hit [only: dex_int_armour,int_armour,str_dex_int_armour,str_int_armour]",
+     "(6-10)% increased Mana Cost Efficiency",
+     "(8-15)% increased Cast Speed when on Full Life [only: dex_int_armour,int_armour,str_dex_int_armour,str_int_armour]",
+     "+(13-17)% to Cold and Chaos Resistances",
+     "+(9-15) to Dexterity and Intelligence"
+    ]
+   },
+   "boots": {
+    "prefix": [],
+    "suffix": [
+     "(30-20)% reduced Duration of Bleeding on You",
+     "(40-50)% increased Mana Regeneration Rate while stationary",
+     "(8-12)% increased Mana Cost Efficiency if you have Dodge Rolled Recently",
+     "+(13-17)% to Cold and Chaos Resistances",
+     "+(9-15) to Dexterity and Intelligence"
+    ]
+   },
+   "shield": {
+    "prefix": [],
+    "suffix": [
+     "(10-20)% of Damage taken Recouped as Mana",
+     "(10-20)% of Elemental Damage taken Recouped as Energy Shield [only: str_int_armour,str_int_shield]",
+     "(40-50)% increased Energy Shield Recharge Rate if you've Blocked Recently [only: str_int_armour,str_int_shield]",
+     "(6-12) Mana gained when you Block",
+     "+(13-17)% to Cold and Chaos Resistances",
+     "+(23-31)% of Armour also applies to Chaos Damage",
+     "+(9-15) to Dexterity and Intelligence"
+    ]
+   },
+   "buckler": {
+    "prefix": [],
+    "suffix": [
+     "(10-20)% of Damage taken Recouped as Mana",
+     "(6-12) Mana gained when you Block",
+     "+(13-17)% to Cold and Chaos Resistances",
+     "+(23-31)% of Armour also applies to Chaos Damage [only: str_dex_armour,str_dex_shield]",
+     "+(9-15) to Dexterity and Intelligence"
+    ]
+   },
+   "focus": {
+    "prefix": [
+     "Invocated Spells deal (61-79)% increased Damage",
+     "Spell Skills have (10-20)% increased Area of Effect"
+    ],
+    "suffix": [
+     "(15-25)% chance when collecting an Elemental Infusion to gain an / additional Elemental Infusion of the same type",
+     "(6-10)% increased Mana Cost Efficiency",
+     "+(13-17)% to Cold and Chaos Resistances",
+     "+(9-15) to Dexterity and Intelligence"
+    ]
+   }
+  }
+ },
+ "lichModIndex": [
+  {
+   "id": "AbyssModArmourJewelleryUlamanSuffixLightningChaosResistance",
+   "lich": "Ulaman",
+   "side": "suffix",
+   "group": "LightningAndChaosDamageResistance",
+   "text": "+(13-17)% to Lightning and Chaos Resistances",
+   "spawn": [
+    [
+     "armour",
+     1
+    ],
+    [
+     "belt",
+     1
+    ],
+    [
+     "ring",
+     1
+    ],
+    [
+     "amulet",
+     1
+    ],
+    [
+     "default",
+     0
+    ]
+   ],
+   "disabled": false
+  },
+  {
+   "id": "AbyssModArmourJewelleryUlamanSuffixStrengthAndDexterity",
+   "lich": "Ulaman",
+   "side": "suffix",
+   "group": "Strength",
+   "text": "+(9-15) to Strength and Dexterity",
+   "spawn": [
+    [
+     "armour",
+     1
+    ],
+    [
+     "belt",
+     1
+    ],
+    [
+     "ring",
+     1
+    ],
+    [
+     "amulet",
+     1
+    ],
+    [
+     "default",
+     0
+    ]
+   ],
+   "disabled": false
+  },
+  {
+   "id": "AbyssModArmourJewelleryAmanamuSuffixFireChaosResistance",
+   "lich": "Amanamu",
+   "side": "suffix",
+   "group": "FireAndChaosDamageResistance",
+   "text": "+(13-17)% to Fire and Chaos Resistances",
+   "spawn": [
+    [
+     "armour",
+     1
+    ],
+    [
+     "belt",
+     1
+    ],
+    [
+     "ring",
+     1
+    ],
+    [
+     "amulet",
+     1
+    ],
+    [
+     "default",
+     0
+    ]
+   ],
+   "disabled": false
+  },
+  {
+   "id": "AbyssModArmourJewelleryAmanamuSuffixStrengthAndIntelligence",
+   "lich": "Amanamu",
+   "side": "suffix",
+   "group": "Strength",
+   "text": "+(9-15) to Strength and Intelligence",
+   "spawn": [
+    [
+     "armour",
+     1
+    ],
+    [
+     "belt",
+     1
+    ],
+    [
+     "ring",
+     1
+    ],
+    [
+     "amulet",
+     1
+    ],
+    [
+     "default",
+     0
+    ]
+   ],
+   "disabled": false
+  },
+  {
+   "id": "AbyssModArmourJewelleryKurgalSuffixColdChaosResistance",
+   "lich": "Kurgal",
+   "side": "suffix",
+   "group": "ColdAndChaosDamageResistance",
+   "text": "+(13-17)% to Cold and Chaos Resistances",
+   "spawn": [
+    [
+     "armour",
+     1
+    ],
+    [
+     "belt",
+     1
+    ],
+    [
+     "ring",
+     1
+    ],
+    [
+     "amulet",
+     1
+    ],
+    [
+     "default",
+     0
+    ]
+   ],
+   "disabled": false
+  },
+  {
+   "id": "AbyssModArmourJewelleryKurgalSuffixDexterityAndIntelligence",
+   "lich": "Kurgal",
+   "side": "suffix",
+   "group": "Dexterity",
+   "text": "+(9-15) to Dexterity and Intelligence",
+   "spawn": [
+    [
+     "armour",
+     1
+    ],
+    [
+     "belt",
+     1
+    ],
+    [
+     "ring",
+     1
+    ],
+    [
+     "amulet",
+     1
+    ],
+    [
+     "default",
+     0
+    ]
+   ],
+   "disabled": false
+  },
+  {
+   "id": "AbyssModFourCatKurgalSuffixManaCostEfficiency",
+   "lich": "Kurgal",
+   "side": "suffix",
+   "group": "ManaCostEfficiency",
+   "text": "(6-10)% increased Mana Cost Efficiency",
+   "spawn": [
+    [
+     "helmet",
+     1
+    ],
+    [
+     "gloves",
+     1
+    ],
+    [
+     "focus",
+     1
+    ],
+    [
+     "quiver",
+     1
+    ],
+    [
+     "default",
+     0
+    ]
+   ],
+   "disabled": false
+  },
+  {
+   "id": "AbyssModHelmUlamanSuffixMarkedEnemyTakeIncreasedDamage",
+   "lich": "Ulaman",
+   "side": "suffix",
+   "group": "MarkDamage",
+   "text": "Enemies you Mark take (4-8)% increased Damage",
+   "spawn": [
+    [
+     "str_armour",
+     0
+    ],
+    [
+     "int_armour",
+     0
+    ],
+    [
+     "str_int_armour",
+     0
+    ],
+    [
+     "helmet",
+     1
+    ],
+    [
+     "default",
+     0
+    ]
+   ],
+   "disabled": false
+  },
+  {
+   "id": "AbyssModHelmUlamanSuffixCriticalHitDamage",
+   "lich": "Ulaman",
+   "side": "suffix",
+   "group": "CriticalStrikeMultiplier",
+   "text": "(13-20)% increased Critical Damage Bonus",
+   "spawn": [
+    [
+     "str_armour",
+     0
+    ],
+    [
+     "int_armour",
+     0
+    ],
+    [
+     "str_int_armour",
+     0
+    ],
+    [
+     "helmet",
+     1
+    ],
+    [
+     "default",
+     0
+    ]
+   ],
+   "disabled": false
+  },
+  {
+   "id": "AbyssModHelmUlamanSuffixLifeCostEfficiency",
+   "lich": "Ulaman",
+   "side": "suffix",
+   "group": "LifeCostEfficiency",
+   "text": "(8-12)% increased Life Cost Efficiency",
+   "spawn": [
+    [
+     "helmet",
+     1
+    ],
+    [
+     "default",
+     0
+    ]
+   ],
+   "disabled": false
+  },
+  {
+   "id": "AbyssModHelmAmanamuSuffixSpiritReservationEfficiency",
+   "lich": "Amanamu",
+   "side": "suffix",
+   "group": "SpiritReservationEfficiency",
+   "text": "(4-8)% increased Spirit Reservation Efficiency of Skills",
+   "spawn": [
+    [
+     "helmet",
+     1
+    ],
+    [
+     "default",
+     0
+    ]
+   ],
+   "disabled": false
+  },
+  {
+   "id": "AbyssModHelmAmanamuSuffixGloryGeneration",
+   "lich": "Amanamu",
+   "side": "suffix",
+   "group": "GloryGeneration",
+   "text": "(10-20)% increased Glory generation",
+   "spawn": [
+    [
+     "dex_armour",
+     0
+    ],
+    [
+     "int_armour",
+     0
+    ],
+    [
+     "dex_int_armour",
+     0
+    ],
+    [
+     "helmet",
+     1
+    ],
+    [
+     "default",
+     0
+    ]
+   ],
+   "disabled": false
+  },
+  {
+   "id": "AbyssModHelmAmanamuSuffixPresenceAreaOfEffect",
+   "lich": "Amanamu",
+   "side": "suffix",
+   "group": "PresenceRadius",
+   "text": "(25-35)% increased Presence Area of Effect",
+   "spawn": [
+    [
+     "helmet",
+     1
+    ],
+    [
+     "default",
+     0
+    ]
+   ],
+   "disabled": false
+  },
+  {
+   "id": "AbyssModHelmKurgalSuffixArcaneSurgeEffect",
+   "lich": "Kurgal",
+   "side": "suffix",
+   "group": "ArcaneSurgeEffect",
+   "text": "(20-30)% increased effect of Arcane Surge on you",
+   "spawn": [
+    [
+     "str_armour",
+     0
+    ],
+    [
+     "dex_armour",
+     0
+    ],
+    [
+     "str_dex_armour",
+     0
+    ],
+    [
+     "helmet",
+     1
+    ],
+    [
+     "default",
+     0
+    ]
+   ],
+   "disabled": false
+  },
+  {
+   "id": "AbyssModGlovesUlamanSuffixAilmentMagnitude",
+   "lich": "Ulaman",
+   "side": "suffix",
+   "group": "AilmentEffect",
+   "text": "(10-20)% increased Magnitude of Ailments you inflict",
+   "spawn": [
+    [
+     "gloves",
+     1
+    ],
+    [
+     "default",
+     0
+    ]
+   ],
+   "disabled": false
+  },
+  {
+   "id": "AbyssModGlovesUlamanSuffixPoisonChance",
+   "lich": "Ulaman",
+   "side": "suffix",
+   "group": "PoisonChanceIncrease",
+   "text": "(20-30)% increased chance to Poison",
+   "spawn": [
+    [
+     "gloves",
+     1
+    ],
+    [
+     "default",
+     0
+    ]
+   ],
+   "disabled": false
+  },
+  {
+   "id": "AbyssModGlovesUlamanSuffixBleedChance",
+   "lich": "Ulaman",
+   "side": "suffix",
+   "group": "BleedChanceIncrease",
+   "text": "(20-30)% increased chance to inflict Bleeding",
+   "spawn": [
+    [
+     "gloves",
+     1
+    ],
+    [
+     "default",
+     0
+    ]
+   ],
+   "disabled": false
+  },
+  {
+   "id": "AbyssModGlovesUlamanSuffixIncisionChance",
+   "lich": "Ulaman",
+   "side": "suffix",
+   "group": "IncisionChance",
+   "text": "(15-25)% chance for Attack Hits to apply Incision",
+   "spawn": [
+    [
+     "str_armour",
+     0
+    ],
+    [
+     "dex_armour",
+     0
+    ],
+    [
+     "str_dex_armour",
+     0
+    ],
+    [
+     "gloves",
+     1
+    ],
+    [
+     "default",
+     0
+    ]
+   ],
+   "disabled": false
+  },
+  {
+   "id": "AbyssModGlovesUlamanSuffixFrenzyChargeConsumedSkillSpeed",
+   "lich": "Ulaman",
+   "side": "suffix",
+   "group": "IncreasedSpeed",
+   "text": "(8-12)% increased Skill Speed if you've consumed a Frenzy Charge Recently",
+   "spawn": [
+    [
+     "str_armour",
+     0
+    ],
+    [
+     "dex_armour",
+     0
+    ],
+    [
+     "str_dex_armour",
+     0
+    ],
+    [
+     "gloves",
+     1
+    ],
+    [
+     "default",
+     0
+    ]
+   ],
+   "disabled": false
+  },
+  {
+   "id": "AbyssModGlovesAmanamuSuffixCurseAreaOfEffect",
+   "lich": "Amanamu",
+   "side": "suffix",
+   "group": "CurseAreaOfEffect",
+   "text": "(12-20)% increased Area of Effect of Curses",
+   "spawn": [
+    [
+     "str_armour",
+     0
+    ],
+    [
+     "int_armour",
+     0
+    ],
+    [
+     "str_int_armour",
+     0
+    ],
+    [
+     "gloves",
+     1
+    ],
+    [
+     "default",
+     0
+    ]
+   ],
+   "disabled": false
+  },
+  {
+   "id": "AbyssModGlovesAmanamuSuffixDazeChance",
+   "lich": "Amanamu",
+   "side": "suffix",
+   "group": "DazeBuildup",
+   "text": "(10-20)% chance to Daze on Hit",
+   "spawn": [
+    [
+     "gloves",
+     1
+    ],
+    [
+     "default",
+     0
+    ]
+   ],
+   "disabled": false
+  },
+  {
+   "id": "AbyssModGlovesAmanamuSuffixPercentOfLifeLeechInstant",
+   "lich": "Amanamu",
+   "side": "suffix",
+   "group": "InstantLeechPercent",
+   "text": "(8-15)% of Leech is Instant",
+   "spawn": [
+    [
+     "dex_armour",
+     0
+    ],
+    [
+     "int_armour",
+     0
+    ],
+    [
+     "dex_int_armour",
+     0
+    ],
+    [
+     "gloves",
+     0
+    ],
+    [
+     "default",
+     0
+    ]
+   ],
+   "disabled": true
+  },
+  {
+   "id": "AbyssModGlovesAmanamuSuffixImmobilisationBuildUp",
+   "lich": "Amanamu",
+   "side": "suffix",
+   "group": "Immobilise",
+   "text": "(10-20)% increased Immobilisation buildup",
+   "spawn": [
+    [
+     "str_armour",
+     0
+    ],
+    [
+     "int_armour",
+     0
+    ],
+    [
+     "str_int_armour",
+     0
+    ],
+    [
+     "gloves",
+     1
+    ],
+    [
+     "default",
+     0
+    ]
+   ],
+   "disabled": false
+  },
+  {
+   "id": "AbyssModGlovesKurgalSuffixArcaneSurgeOnCriticalHit",
+   "lich": "Kurgal",
+   "side": "suffix",
+   "group": "ArcaneSurgeOnCrit",
+   "text": "(10-15)% chance to Gain Arcane Surge when you deal a Critical Hit",
+   "spawn": [
+    [
+     "str_armour",
+     0
+    ],
+    [
+     "dex_armour",
+     0
+    ],
+    [
+     "str_dex_armour",
+     0
+    ],
+    [
+     "gloves",
+     1
+    ],
+    [
+     "default",
+     0
+    ]
+   ],
+   "disabled": false
+  },
+  {
+   "id": "AbyssModGlovesKurgalSuffixCastSpeedWhileOnFullMana",
+   "lich": "Kurgal",
+   "side": "suffix",
+   "group": "CastSpeedOnFullLife",
+   "text": "(8-15)% increased Cast Speed when on Full Life",
+   "spawn": [
+    [
+     "str_armour",
+     0
+    ],
+    [
+     "dex_armour",
+     0
+    ],
+    [
+     "str_dex_armour",
+     0
+    ],
+    [
+     "gloves",
+     1
+    ],
+    [
+     "default",
+     0
+    ]
+   ],
+   "disabled": false
+  },
+  {
+   "id": "AbyssModBootsAndBeltUlamanSuffixReducedPoisonDurationSelf",
+   "lich": "Ulaman",
+   "side": "suffix",
+   "group": "ReducedAilmentDuration",
+   "text": "(30-20)% reduced Poison Duration on you",
+   "spawn": [
+    [
+     "boots",
+     1
+    ],
+    [
+     "belt",
+     1
+    ],
+    [
+     "default",
+     0
+    ]
+   ],
+   "disabled": false
+  },
+  {
+   "id": "AbyssModBootsAndBeltAmanamuSuffixReducedIgniteDuration",
+   "lich": "Amanamu",
+   "side": "suffix",
+   "group": "ReducedSelfIgniteDuration",
+   "text": "(20-30)% reduced Ignite Duration on you",
+   "spawn": [
+    [
+     "boots",
+     1
+    ],
+    [
+     "belt",
+     1
+    ],
+    [
+     "default",
+     0
+    ]
+   ],
+   "disabled": false
+  },
+  {
+   "id": "AbyssModBootsAndBeltKurgalSuffixReducedBleedDurationSelf",
+   "lich": "Kurgal",
+   "side": "suffix",
+   "group": "ReducedAilmentDuration",
+   "text": "(30-20)% reduced Duration of Bleeding on You",
+   "spawn": [
+    [
+     "boots",
+     1
+    ],
+    [
+     "belt",
+     1
+    ],
+    [
+     "default",
+     0
+    ]
+   ],
+   "disabled": false
+  },
+  {
+   "id": "AbyssModBootsUlamanSuffixCorruptedBloodImmunity",
+   "lich": "Ulaman",
+   "side": "suffix",
+   "group": "CorruptedBlood",
+   "text": "Corrupted Blood cannot be inflicted on you",
+   "spawn": [
+    [
+     "boots",
+     1
+    ],
+    [
+     "default",
+     0
+    ]
+   ],
+   "disabled": false
+  },
+  {
+   "id": "AbyssModBootsAmanamuSuffixReducedPotencyOfSlows",
+   "lich": "Amanamu",
+   "side": "suffix",
+   "group": "SlowPotency",
+   "text": "(20-12)% reduced Slowing Potency of Debuffs on You",
+   "spawn": [
+    [
+     "boots",
+     1
+    ],
+    [
+     "default",
+     0
+    ]
+   ],
+   "disabled": false
+  },
+  {
+   "id": "AbyssModBootsAmanamuSuffixDodgeRollDistance",
+   "lich": "Amanamu",
+   "side": "suffix",
+   "group": "DodgeRoll",
+   "text": "+(0.1-0.2) metres to Dodge Roll distance",
+   "spawn": [
+    [
+     "boots",
+     1
+    ],
+    [
+     "default",
+     0
+    ]
+   ],
+   "disabled": false
+  },
+  {
+   "id": "AbyssModBootsKurgalSuffixManaCostEfficiencyDodgeRolledRecently",
+   "lich": "Kurgal",
+   "side": "suffix",
+   "group": "ManaCostEfficiency",
+   "text": "(8-12)% increased Mana Cost Efficiency if you have Dodge Rolled Recently",
+   "spawn": [
+    [
+     "boots",
+     1
+    ],
+    [
+     "default",
+     0
+    ]
+   ],
+   "disabled": false
+  },
+  {
+   "id": "AbyssModBootsKurgalSuffixManaRegenerationStationary",
+   "lich": "Kurgal",
+   "side": "suffix",
+   "group": "ManaRegeneration",
+   "text": "(40-50)% increased Mana Regeneration Rate while stationary",
+   "spawn": [
+    [
+     "boots",
+     1
+    ],
+    [
+     "default",
+     0
+    ]
+   ],
+   "disabled": false
+  },
+  {
+   "id": "AbyssModBeltUlamanPrefixLifeFlasksGainChargesPerSecond",
+   "lich": "Ulaman",
+   "side": "prefix",
+   "group": "FlaskChargeGeneration",
+   "text": "Life Flasks gain (0.1-0.2) charges per Second",
+   "spawn": [
+    [
+     "belt",
+     1
+    ],
+    [
+     "default",
+     0
+    ]
+   ],
+   "disabled": false
+  },
+  {
+   "id": "AbyssModBeltUlamanPrefixChanceToNotConsumeFlaskConsumeCharges",
+   "lich": "Ulaman",
+   "side": "prefix",
+   "group": "FlaskChargesUsed",
+   "text": "(10-18)% chance for Flasks you use to not consume Charges",
+   "spawn": [
+    [
+     "belt",
+     1
+    ],
+    [
+     "default",
+     0
+    ]
+   ],
+   "disabled": false
+  },
+  {
+   "id": "AbyssModBeltUlamanPrefixLifeRegenRateDuringLifeFlaskEffect",
+   "lich": "Ulaman",
+   "side": "prefix",
+   "group": "FlaskExtraLifeRegeneration",
+   "text": "(20-30)% increased Life Regeneration rate during Effect of any Life Flask",
+   "spawn": [
+    [
+     "belt",
+     1
+    ],
+    [
+     "default",
+     0
+    ]
+   ],
+   "disabled": false
+  },
+  {
+   "id": "AbyssModBeltUlamanSuffixReducedSlowPotencySelfIfCharmedRecently",
+   "lich": "Ulaman",
+   "side": "suffix",
+   "group": "SlowEffect",
+   "text": "(25-17)% reduced Slowing Potency of Debuffs on You if you've used a Charm Recently",
+   "spawn": [
+    [
+     "belt",
+     1
+    ],
+    [
+     "default",
+     0
+    ]
+   ],
+   "disabled": false
+  },
+  {
+   "id": "AbyssModBeltAmanamuPrefixCharmsGainChargesPerSecond",
+   "lich": "Amanamu",
+   "side": "prefix",
+   "group": "FlaskChargeGeneration",
+   "text": "Charms gain (0.1-0.2) charges per Second",
+   "spawn": [
+    [
+     "belt",
+     1
+    ],
+    [
+     "default",
+     0
+    ]
+   ],
+   "disabled": false
+  },
+  {
+   "id": "AbyssModBeltAmanamuPrefixGainFireThornsPer100MaximumLife",
+   "lich": "Amanamu",
+   "side": "prefix",
+   "group": "Thorns",
+   "text": "2 to 4 Fire Thorns damage per 100 maximum Life",
+   "spawn": [
+    [
+     "belt",
+     1
+    ],
+    [
+     "default",
+     0
+    ]
+   ],
+   "disabled": false
+  },
+  {
+   "id": "AbyssModBeltAmanamuPrefixChanceToNotConsumeCharmCharges",
+   "lich": "Amanamu",
+   "side": "prefix",
+   "group": "CharmChargesUsed",
+   "text": "(10-18)% chance for Charms you use to not consume Charges",
+   "spawn": [
+    [
+     "belt",
+     1
+    ],
+    [
+     "default",
+     0
+    ]
+   ],
+   "disabled": false
+  },
+  {
+   "id": "AbyssModBeltAmanamuSuffixThornsBaseCriticalStrikeChance",
+   "lich": "Amanamu",
+   "side": "suffix",
+   "group": "Thorns",
+   "text": "+(2-4)% to Thorns Critical Hit Chance",
+   "spawn": [
+    [
+     "belt",
+     1
+    ],
+    [
+     "default",
+     0
+    ]
+   ],
+   "disabled": false
+  },
+  {
+   "id": "AbyssModBeltKurgalPrefixManaFlasksGainChargesPerSecond",
+   "lich": "Kurgal",
+   "side": "prefix",
+   "group": "FlaskChargeGeneration",
+   "text": "Mana Flasks gain (0.1-0.2) charges per Second",
+   "spawn": [
+    [
+     "belt",
+     1
+    ],
+    [
+     "default",
+     0
+    ]
+   ],
+   "disabled": false
+  },
+  {
+   "id": "AbyssModBeltKurgalPrefixGainArmourPercentOfMana",
+   "lich": "Kurgal",
+   "side": "prefix",
+   "group": "IncreasedPhysicalDamageReductionRating",
+   "text": "Gain (6-12)% of Maximum Mana as Armour",
+   "spawn": [
+    [
+     "belt",
+     1
+    ],
+    [
+     "default",
+     0
+    ]
+   ],
+   "disabled": false
+  },
+  {
+   "id": "AbyssModBeltKurgalPrefixChanceToNotConsumeFlaskConsumeCharges",
+   "lich": "Kurgal",
+   "side": "prefix",
+   "group": "FlaskChargesUsed",
+   "text": "(10-15)% chance for Flasks you use to not consume Charges",
+   "spawn": [
+    [
+     "belt",
+     1
+    ],
+    [
+     "default",
+     0
+    ]
+   ],
+   "disabled": false
+  },
+  {
+   "id": "AbyssModBeltKurgalSuffixManaRegenerationRate",
+   "lich": "Kurgal",
+   "side": "suffix",
+   "group": "ManaRegeneration",
+   "text": "(30-40)% increased Mana Regeneration Rate",
+   "spawn": [
+    [
+     "belt",
+     1
+    ],
+    [
+     "default",
+     0
+    ]
+   ],
+   "disabled": false
+  },
+  {
+   "id": "AbyssModBodyShieldUlamanSuffixHitsAgainstYouReducedCriticalDamage",
+   "lich": "Ulaman",
+   "side": "suffix",
+   "group": "ChanceToTakeCriticalStrike",
+   "text": "Hits have (25-17)% reduced Critical Hit Chance against you",
+   "spawn": [
+    [
+     "body_armour",
+     1
+    ],
+    [
+     "shield",
+     1
+    ],
+    [
+     "default",
+     0
+    ]
+   ],
+   "disabled": false
+  },
+  {
+   "id": "AbyssModBodyShieldAmanamuSuffixLifeRecoup",
+   "lich": "Amanamu",
+   "side": "suffix",
+   "group": "DamageTakenGainedAsLife",
+   "text": "(10-20)% of Damage taken Recouped as Life",
+   "spawn": [
+    [
+     "dex_armour",
+     0
+    ],
+    [
+     "int_armour",
+     0
+    ],
+    [
+     "dex_int_armour",
+     0
+    ],
+    [
+     "helmet",
+     1
+    ],
+    [
+     "shield",
+     1
+    ],
+    [
+     "default",
+     0
+    ]
+   ],
+   "disabled": false
+  },
+  {
+   "id": "AbyssModBodyShieldAmanamuSuffixReducedCursedEffectSelf",
+   "lich": "Amanamu",
+   "side": "suffix",
+   "group": "ReducedCurseEffect",
+   "text": "(35-25)% reduced effect of Curses on you",
+   "spawn": [
+    [
+     "body_armour",
+     1
+    ],
+    [
+     "shield",
+     1
+    ],
+    [
+     "default",
+     0
+    ]
+   ],
+   "disabled": false
+  },
+  {
+   "id": "AbyssModBodyShieldKurgalSuffixManaRecoup",
+   "lich": "Kurgal",
+   "side": "suffix",
+   "group": "PercentDamageGoesToMana",
+   "text": "(10-20)% of Damage taken Recouped as Mana",
+   "spawn": [
+    [
+     "body_armour",
+     1
+    ],
+    [
+     "shield",
+     1
+    ],
+    [
+     "default",
+     0
+    ]
+   ],
+   "disabled": false
+  },
+  {
+   "id": "AbyssModBodyShieldKurgalSuffixElementalEnergyShieldRecoup",
+   "lich": "Kurgal",
+   "side": "suffix",
+   "group": "ElementalDamageTakenRecoupedAsEnergyShield",
+   "text": "(10-20)% of Elemental Damage taken Recouped as Energy Shield",
+   "spawn": [
+    [
+     "str_shield",
+     0
+    ],
+    [
+     "dex_shield",
+     0
+    ],
+    [
+     "str_dex_shield",
+     0
+    ],
+    [
+     "helmet",
+     1
+    ],
+    [
+     "shield",
+     1
+    ],
+    [
+     "default",
+     0
+    ]
+   ],
+   "disabled": false
+  },
+  {
+   "id": "AbyssModBodyShieldKurgalSuffixArmourAppliesToChaosDamage",
+   "lich": "Kurgal",
+   "side": "suffix",
+   "group": "ArmourAppliesToChaosDamage",
+   "text": "+(23-31)% of Armour also applies to Chaos Damage",
+   "spawn": [
+    [
+     "dex_armour",
+     0
+    ],
+    [
+     "int_armour",
+     0
+    ],
+    [
+     "dex_int_armour",
+     0
+    ],
+    [
+     "helmet",
+     1
+    ],
+    [
+     "shield",
+     1
+    ],
+    [
+     "default",
+     0
+    ]
+   ],
+   "disabled": false
+  },
+  {
+   "id": "AbyssModBodyArmourUlamanSuffixDeflectDamagePrevented",
+   "lich": "Ulaman",
+   "side": "suffix",
+   "group": "DeflectDamageTaken",
+   "text": "Prevent +(3-5)% of Damage from Deflected Hits",
+   "spawn": [
+    [
+     "str_armour",
+     0
+    ],
+    [
+     "int_armour",
+     0
+    ],
+    [
+     "str_int_armour",
+     0
+    ],
+    [
+     "body_armour",
+     1
+    ],
+    [
+     "default",
+     0
+    ]
+   ],
+   "disabled": false
+  },
+  {
+   "id": "AbyssModBodyArmourUlamanSuffixCompanionReservationEfficiency",
+   "lich": "Ulaman",
+   "side": "suffix",
+   "group": "CompanionReservationEfficiency",
+   "text": "(12-18)% increased Reservation Efficiency of Companion Skills",
+   "spawn": [
+    [
+     "str_armour",
+     0
+    ],
+    [
+     "int_armour",
+     0
+    ],
+    [
+     "str_int_armour",
+     0
+    ],
+    [
+     "body_armour",
+     1
+    ],
+    [
+     "default",
+     0
+    ]
+   ],
+   "disabled": false
+  },
+  {
+   "id": "AbyssModBodyArmourAmanamuSuffixSpiritReservationEfficiency",
+   "lich": "Amanamu",
+   "side": "suffix",
+   "group": "SpiritReservationEfficiency",
+   "text": "(6-12)% increased Spirit Reservation Efficiency of Skills",
+   "spawn": [
+    [
+     "body_armour",
+     1
+    ],
+    [
+     "default",
+     0
+    ]
+   ],
+   "disabled": false
+  },
+  {
+   "id": "AbyssModBodyArmourKurgalSuffixDamageTakenFromManaBeforeLife",
+   "lich": "Kurgal",
+   "side": "suffix",
+   "group": "DamageRemovedFromManaBeforeLife",
+   "text": "(10-20)% of Damage is taken from Mana before Life",
+   "spawn": [
+    [
+     "str_armour",
+     0
+    ],
+    [
+     "dex_armour",
+     0
+    ],
+    [
+     "str_dex_armour",
+     0
+    ],
+    [
+     "body_armour",
+     1
+    ],
+    [
+     "default",
+     0
+    ]
+   ],
+   "disabled": false
+  },
+  {
+   "id": "AbyssModShieldUlamanSuffixMaximumBlockChance",
+   "lich": "Ulaman",
+   "side": "suffix",
+   "group": "MaximumBlockChance",
+   "text": "+(1-2)% to maximum Block chance",
+   "spawn": [
+    [
+     "shield",
+     1
+    ],
+    [
+     "default",
+     0
+    ]
+   ],
+   "disabled": false
+  },
+  {
+   "id": "AbyssModShieldUlamanSuffixParryDebuffMagnitude",
+   "lich": "Ulaman",
+   "side": "suffix",
+   "group": "ParriedDebuff",
+   "text": "(20-30)% increased Parried Debuff Magnitude",
+   "spawn": [
+    [
+     "str_shield",
+     0
+    ],
+    [
+     "str_int_shield",
+     0
+    ],
+    [
+     "shield",
+     1
+    ],
+    [
+     "default",
+     0
+    ]
+   ],
+   "disabled": false
+  },
+  {
+   "id": "AbyssModShieldUlamanSuffixParryDebuffDuration",
+   "lich": "Ulaman",
+   "side": "suffix",
+   "group": "ParriedDebuff",
+   "text": "(25-35)% increased Parried Debuff Duration",
+   "spawn": [
+    [
+     "str_shield",
+     0
+    ],
+    [
+     "str_int_shield",
+     0
+    ],
+    [
+     "shield",
+     1
+    ],
+    [
+     "default",
+     0
+    ]
+   ],
+   "disabled": false
+  },
+  {
+   "id": "AbyssModShieldUlamanSuffixLightningTakenAsPhysAndGlancingWhileActiveBlocking",
+   "lich": "Ulaman",
+   "side": "suffix",
+   "group": "PhysicalDamageTakenAsLightningWhileActiveBlocking",
+   "text": "(30-40)% of Physical Damage taken as Lightning while your Shield is raised / You take (8-15)% of damage from Blocked Hits with a raised Shield",
+   "spawn": [
+    [
+     "dex_shield",
+     0
+    ],
+    [
+     "dex_int_shield",
+     0
+    ],
+    [
+     "shield",
+     1
+    ],
+    [
+     "default",
+     0
+    ]
+   ],
+   "disabled": false
+  },
+  {
+   "id": "AbyssModShieldAmanamuSuffixShieldSkillsFullyBreakArmourOnHeavyStun",
+   "lich": "Amanamu",
+   "side": "suffix",
+   "group": "ShieldSkillsStunningAlsoFullyBreaksArmour",
+   "text": "Shield Skills fully Break Armour when they Heavy Stun targets",
+   "spawn": [
+    [
+     "dex_shield",
+     0
+    ],
+    [
+     "dex_int_shield",
+     0
+    ],
+    [
+     "shield",
+     1
+    ],
+    [
+     "default",
+     0
+    ]
+   ],
+   "disabled": false
+  },
+  {
+   "id": "AbyssModShieldAmanamuSuffixHeavyStunDecaySelf",
+   "lich": "Amanamu",
+   "side": "suffix",
+   "group": "HeavyStunDecayRate",
+   "text": "Your Heavy Stun buildup empties (30-40)% faster",
+   "spawn": [
+    [
+     "dex_shield",
+     0
+    ],
+    [
+     "dex_int_shield",
+     0
+    ],
+    [
+     "shield",
+     1
+    ],
+    [
+     "default",
+     0
+    ]
+   ],
+   "disabled": false
+  },
+  {
+   "id": "AbyssModShieldAmanamuSuffixAllMaximumResistances",
+   "lich": "Amanamu",
+   "side": "suffix",
+   "group": "MaximumResistances",
+   "text": "+1% to all maximum Resistances",
+   "spawn": [
+    [
+     "shield",
+     1
+    ],
+    [
+     "default",
+     0
+    ]
+   ],
+   "disabled": false
+  },
+  {
+   "id": "AbyssModShieldKurgalSuffixFlatManaGainedOnBlock",
+   "lich": "Kurgal",
+   "side": "suffix",
+   "group": "GainManaOnBlock",
+   "text": "(6-12) Mana gained when you Block",
+   "spawn": [
+    [
+     "shield",
+     1
+    ],
+    [
+     "default",
+     0
+    ]
+   ],
+   "disabled": false
+  },
+  {
+   "id": "AbyssModShieldKurgalSuffixEnergyShieldRechargeRateBlockedRecently",
+   "lich": "Kurgal",
+   "side": "suffix",
+   "group": "EnergyShieldRechargeRateIfBlockedRecently",
+   "text": "(40-50)% increased Energy Shield Recharge Rate if you've Blocked Recently",
+   "spawn": [
+    [
+     "str_shield",
+     0
+    ],
+    [
+     "dex_shield",
+     0
+    ],
+    [
+     "str_dex_shield",
+     0
+    ],
+    [
+     "shield",
+     1
+    ],
+    [
+     "default",
+     0
+    ]
+   ],
+   "disabled": false
+  },
+  {
+   "id": "AbyssModFocusUlamanPrefixMaximumSpellTotems",
+   "lich": "Ulaman",
+   "side": "prefix",
+   "group": "AdditionalSpellTotem",
+   "text": "Spell Skills have +1 to maximum number of Summoned Totems",
+   "spawn": [
+    [
+     "focus",
+     1
+    ],
+    [
+     "default",
+     0
+    ]
+   ],
+   "disabled": false
+  },
+  {
+   "id": "AbyssModFocusUlamanPrefixSpellDamageWhileWieldingMeleeWeapon",
+   "lich": "Ulaman",
+   "side": "prefix",
+   "group": "SpellDamage",
+   "text": "(61-79)% increased Spell Damage while wielding a Melee Weapon",
+   "spawn": [
+    [
+     "focus",
+     1
+    ],
+    [
+     "default",
+     0
+    ]
+   ],
+   "disabled": false
+  },
+  {
+   "id": "AbyssModFocusUlamanSuffixSpellManaCostConvertedToLifeCost",
+   "lich": "Ulaman",
+   "side": "suffix",
+   "group": "SkillLifeCost",
+   "text": "(10-20)% of Spell Mana Cost Converted to Life Cost",
+   "spawn": [
+    [
+     "focus",
+     1
+    ],
+    [
+     "default",
+     0
+    ]
+   ],
+   "disabled": false
+  },
+  {
+   "id": "AbyssModFocusUlamanSuffixChanceForTwoAdditionalSpellProjectiles",
+   "lich": "Ulaman",
+   "side": "suffix",
+   "group": "SpellsFire2AdditionalProjectileChance",
+   "text": "(10-16)% chance for Spell Skills to fire 2 additional Projectiles",
+   "spawn": [
+    [
+     "focus",
+     1
+    ],
+    [
+     "default",
+     0
+    ]
+   ],
+   "disabled": false
+  },
+  {
+   "id": "AbyssModFocusAmanamuPrefixCurseMagnitude",
+   "lich": "Amanamu",
+   "side": "prefix",
+   "group": "CurseEffectiveness",
+   "text": "(8-16)% increased Curse Magnitudes",
+   "spawn": [
+    [
+     "focus",
+     1
+    ],
+    [
+     "default",
+     0
+    ]
+   ],
+   "disabled": false
+  },
+  {
+   "id": "AbyssModFocusAmanamuPrefixOfferingBuffEffect",
+   "lich": "Amanamu",
+   "side": "prefix",
+   "group": "OfferingEffect",
+   "text": "Offering Skills have (12-20)% increased Buff effect",
+   "spawn": [
+    [
+     "focus",
+     1
+    ],
+    [
+     "default",
+     0
+    ]
+   ],
+   "disabled": false
+  },
+  {
+   "id": "AbyssModFocusAmanamuSuffixGlobalMinionSkillLevels",
+   "lich": "Amanamu",
+   "side": "suffix",
+   "group": "IncreaseSocketedGemLevel",
+   "text": "+(1-2) to Level of all Minion Skills",
+   "spawn": [
+    [
+     "focus",
+     1
+    ],
+    [
+     "default",
+     0
+    ]
+   ],
+   "disabled": false
+  },
+  {
+   "id": "AbyssModFocusAmanamuSuffixFasterCurseActivation",
+   "lich": "Amanamu",
+   "side": "suffix",
+   "group": "CurseDelay",
+   "text": "(20-10)% faster Curse Activation",
+   "spawn": [
+    [
+     "focus",
+     1
+    ],
+    [
+     "default",
+     0
+    ]
+   ],
+   "disabled": false
+  },
+  {
+   "id": "AbyssModFocusKurgalPrefixInvocationSpellDamage",
+   "lich": "Kurgal",
+   "side": "prefix",
+   "group": "WeaponCasterDamagePrefix",
+   "text": "Invocated Spells deal (61-79)% increased Damage",
+   "spawn": [
+    [
+     "focus",
+     1
+    ],
+    [
+     "default",
+     0
+    ]
+   ],
+   "disabled": false
+  },
+  {
+   "id": "AbyssModFocusKurgalPrefixSpellAreaOfEffect",
+   "lich": "Kurgal",
+   "side": "prefix",
+   "group": "SpellAreaOfEffect",
+   "text": "Spell Skills have (10-20)% increased Area of Effect",
+   "spawn": [
+    [
+     "focus",
+     1
+    ],
+    [
+     "default",
+     0
+    ]
+   ],
+   "disabled": false
+  },
+  {
+   "id": "AbyssModFocusKurgalSuffixChanceForAdditionalInfusion",
+   "lich": "Kurgal",
+   "side": "suffix",
+   "group": "ChanceToGainAnAdditionalInfusion",
+   "text": "(15-25)% chance when collecting an Elemental Infusion to gain an / additional Elemental Infusion of the same type",
+   "spawn": [
+    [
+     "focus",
+     1
+    ],
+    [
+     "default",
+     0
+    ]
+   ],
+   "disabled": false
+  },
+  {
+   "id": "AbyssModQuiverUlamanPrefixIncreasesToProjectileSpeedApplyToDamage",
+   "lich": "Ulaman",
+   "side": "prefix",
+   "group": "ProjectileDamage",
+   "text": "Increases and Reductions to Projectile Speed also apply to Damage with Bows",
+   "spawn": [
+    [
+     "quiver",
+     1
+    ],
+    [
+     "default",
+     0
+    ]
+   ],
+   "disabled": false
+  },
+  {
+   "id": "AbyssModQuiverUlamanSuffixChanceForExtraProjectilesWhileMoving",
+   "lich": "Ulaman",
+   "side": "suffix",
+   "group": "AdditionalProjectiles",
+   "text": "Projectile Attacks have a (8-12)% chance to fire two additional Projectiles while moving",
+   "spawn": [
+    [
+     "quiver",
+     1
+    ],
+    [
+     "default",
+     0
+    ]
+   ],
+   "disabled": false
+  },
+  {
+   "id": "AbyssModQuiverUlamanSuffixAttackCostConvertedToLifeCost",
+   "lich": "Ulaman",
+   "side": "suffix",
+   "group": "LifeCost",
+   "text": "(10-14)% of Skill Mana Costs Converted to Life Costs",
+   "spawn": [
+    [
+     "quiver",
+     1
+    ],
+    [
+     "default",
+     0
+    ]
+   ],
+   "disabled": false
+  },
+  {
+   "id": "AbyssModQuiverAmanamuPrefixProjectileDamageCloseRange",
+   "lich": "Amanamu",
+   "side": "prefix",
+   "group": "ProjectileDamage",
+   "text": "Projectiles deal (20-30)% increased Damage with Hits against Enemies within 2m",
+   "spawn": [
+    [
+     "quiver",
+     1
+    ],
+    [
+     "default",
+     0
+    ]
+   ],
+   "disabled": false
+  },
+  {
+   "id": "AbyssModQuiverAmanamuSuffixProjectileCriticalHitDamageCloseRange",
+   "lich": "Amanamu",
+   "side": "suffix",
+   "group": "CriticalStrikeMultiplier",
+   "text": "Projectiles have (18-26)% increased Critical Damage Bonus against Enemies within 2m",
+   "spawn": [
+    [
+     "quiver",
+     1
+    ],
+    [
+     "default",
+     0
+    ]
+   ],
+   "disabled": false
+  },
+  {
+   "id": "AbyssModQuiverKurgalPrefixProjectileDamageFar",
+   "lich": "Kurgal",
+   "side": "prefix",
+   "group": "ProjectileDamage",
+   "text": "Projectiles deal (20-30)% increased Damage with Hits against Enemies further than 6m",
+   "spawn": [
+    [
+     "quiver",
+     1
+    ],
+    [
+     "default",
+     0
+    ]
+   ],
+   "disabled": false
+  },
+  {
+   "id": "AbyssModQuiverKurgalSuffixProjectileCriticalHitChanceFar",
+   "lich": "Kurgal",
+   "side": "suffix",
+   "group": "CriticalStrikeChanceIncrease",
+   "text": "Projectiles have (18-26)% increased Critical Hit Chance against Enemies further than 6m",
+   "spawn": [
+    [
+     "quiver",
+     1
+    ],
+    [
+     "default",
+     0
+    ]
+   ],
+   "disabled": false
+  },
+  {
+   "id": "AbyssModRingAmuletUlamanPrefixAttackDamageWhileLowLife",
+   "lich": "Ulaman",
+   "side": "prefix",
+   "group": "AttackDamage",
+   "text": "(15-25)% increased Attack Damage while on Low Life",
+   "spawn": [
+    [
+     "ring",
+     1
+    ],
+    [
+     "amulet",
+     1
+    ],
+    [
+     "default",
+     0
+    ]
+   ],
+   "disabled": false
+  },
+  {
+   "id": "AbyssModRingAmuletUlamanSuffixSkillSpeed",
+   "lich": "Ulaman",
+   "side": "suffix",
+   "group": "IncreasedSpeed",
+   "text": "(3-6)% increased Skill Speed",
+   "spawn": [
+    [
+     "ring",
+     1
+    ],
+    [
+     "amulet",
+     1
+    ],
+    [
+     "default",
+     0
+    ]
+   ],
+   "disabled": false
+  },
+  {
+   "id": "AbyssModRingAmuletUlamanSuffixRecoverPercentMaxLifeOnKill",
+   "lich": "Ulaman",
+   "side": "suffix",
+   "group": "RecoverPercentMaxLifeOnKill",
+   "text": "Recover (2-3)% of maximum Life on Kill",
+   "spawn": [
+    [
+     "ring",
+     1
+    ],
+    [
+     "amulet",
+     1
+    ],
+    [
+     "default",
+     0
+    ]
+   ],
+   "disabled": false
+  },
+  {
+   "id": "AbyssModRingAmuletAmanamuPrefixRemnantEffect",
+   "lich": "Amanamu",
+   "side": "prefix",
+   "group": "RemnantEffect",
+   "text": "Remnants you create have (8-15)% increased effect",
+   "spawn": [
+    [
+     "ring",
+     1
+    ],
+    [
+     "amulet",
+     1
+    ],
+    [
+     "default",
+     0
+    ]
+   ],
+   "disabled": false
+  },
+  {
+   "id": "AbyssModRingAmuletAmanamuPrefixMinionDamageIfYou'veHitRecently",
+   "lich": "Amanamu",
+   "side": "prefix",
+   "group": "IncreasedMinionDamageIfYouHitEnemy",
+   "text": "Minions deal (15-25)% increased Damage if you've Hit Recently",
+   "spawn": [
+    [
+     "ring",
+     1
+    ],
+    [
+     "amulet",
+     1
+    ],
+    [
+     "default",
+     0
+    ]
+   ],
+   "disabled": false
+  },
+  {
+   "id": "AbyssModRingAmuletAmanamuSuffixSkillEffectDuration",
+   "lich": "Amanamu",
+   "side": "suffix",
+   "group": "SkillEffectDuration",
+   "text": "(8-12)% increased Skill Effect Duration",
+   "spawn": [
+    [
+     "ring",
+     1
+    ],
+    [
+     "amulet",
+     1
+    ],
+    [
+     "default",
+     0
+    ]
+   ],
+   "disabled": false
+  },
+  {
+   "id": "AbyssModRingAmuletAmanamuSuffixRemnantCollectionRange",
+   "lich": "Amanamu",
+   "side": "suffix",
+   "group": "RemnantPickupRadius",
+   "text": "Remnants can be collected from (20-30)% further away",
+   "spawn": [
+    [
+     "ring",
+     1
+    ],
+    [
+     "amulet",
+     1
+    ],
+    [
+     "default",
+     0
+    ]
+   ],
+   "disabled": false
+  },
+  {
+   "id": "AbyssModRingAmuletKurgalPrefixSpellDamageWhileEnergyShieldFull",
+   "lich": "Kurgal",
+   "side": "prefix",
+   "group": "IncreasedSpellDamageOnFullEnergyShield",
+   "text": "(15-25)% increased Spell Damage while on Full Energy Shield",
+   "spawn": [
+    [
+     "ring",
+     1
+    ],
+    [
+     "amulet",
+     1
+    ],
+    [
+     "default",
+     0
+    ]
+   ],
+   "disabled": false
+  },
+  {
+   "id": "AbyssModRingAmuletKurgalSuffixExposureEffect",
+   "lich": "Kurgal",
+   "side": "suffix",
+   "group": "ExposureEffect",
+   "text": "(10-15)% increased Exposure Effect",
+   "spawn": [
+    [
+     "ring",
+     1
+    ],
+    [
+     "amulet",
+     1
+    ],
+    [
+     "default",
+     0
+    ]
+   ],
+   "disabled": false
+  },
+  {
+   "id": "AbyssModRingAmuletKurgalSuffixCooldownRecoveryRate",
+   "lich": "Kurgal",
+   "side": "suffix",
+   "group": "CooldownRecovery",
+   "text": "(8-12)% increased Cooldown Recovery Rate",
+   "spawn": [
+    [
+     "ring",
+     1
+    ],
+    [
+     "amulet",
+     1
+    ],
+    [
+     "default",
+     0
+    ]
+   ],
+   "disabled": false
+  },
+  {
+   "id": "AbyssModRingAmuletKurgalSuffixRecoverPercentMaxManaOnKill",
+   "lich": "Kurgal",
+   "side": "suffix",
+   "group": "ManaGainedOnKillPercentage",
+   "text": "Recover (2-3)% of maximum Mana on Kill",
+   "spawn": [
+    [
+     "ring",
+     1
+    ],
+    [
+     "amulet",
+     1
+    ],
+    [
+     "default",
+     0
+    ]
+   ],
+   "disabled": false
+  },
+  {
+   "id": "AbyssModRingUlamanPrefixShockMagnitudeIfConsumedFrenzyCharge",
+   "lich": "Ulaman",
+   "side": "prefix",
+   "group": "ElementalAilmentEffect",
+   "text": "(20-30)% increased Magnitude of Shock if you've consumed a Frenzy Charge Recently",
+   "spawn": [
+    [
+     "ring",
+     1
+    ],
+    [
+     "default",
+     0
+    ]
+   ],
+   "disabled": false
+  },
+  {
+   "id": "AbyssModRingAmanamuPrefixIgniteMagnitudeIfConsumedEnduranceCharge",
+   "lich": "Amanamu",
+   "side": "prefix",
+   "group": "ElementalAilmentEffect",
+   "text": "(20-30)% increased Magnitude of Ignite if you've consumed an Endurance Charge Recently",
+   "spawn": [
+    [
+     "ring",
+     1
+    ],
+    [
+     "default",
+     0
+    ]
+   ],
+   "disabled": false
+  },
+  {
+   "id": "AbyssModRingAmanamuSuffixLifeLeechAmount",
+   "lich": "Amanamu",
+   "side": "suffix",
+   "group": "LifeLeech",
+   "text": "(12-20)% increased amount of Life Leeched",
+   "spawn": [
+    [
+     "ring",
+     1
+    ],
+    [
+     "default",
+     0
+    ]
+   ],
+   "disabled": false
+  },
+  {
+   "id": "AbyssModRingKurgalPrefixFreezeBuildupIfConsumedPowerCharge",
+   "lich": "Kurgal",
+   "side": "prefix",
+   "group": "ElementalAilmentEffect",
+   "text": "(20-30)% increased Freeze Buildup if you've consumed an Power Charge Recently",
+   "spawn": [
+    [
+     "ring",
+     1
+    ],
+    [
+     "default",
+     0
+    ]
+   ],
+   "disabled": false
+  },
+  {
+   "id": "AbyssModRingKurgalSuffixManaLeechAmount",
+   "lich": "Kurgal",
+   "side": "suffix",
+   "group": "ManaLeechAmount",
+   "text": "(12-20)% increased amount of Mana Leeched",
+   "spawn": [
+    [
+     "ring",
+     1
+    ],
+    [
+     "default",
+     0
+    ]
+   ],
+   "disabled": false
+  },
+  {
+   "id": "AbyssModAmuletUlamanPrefixEvasionRatingFromEquippedBody",
+   "lich": "Ulaman",
+   "side": "prefix",
+   "group": "EvasionRatingFromBodyArmour",
+   "text": "(35-50)% increased Evasion Rating from Equipped Body Armour",
+   "spawn": [
+    [
+     "amulet",
+     1
+    ],
+    [
+     "default",
+     0
+    ]
+   ],
+   "disabled": false
+  },
+  {
+   "id": "AbyssModAmuletUlamanPrefixGlobalDeflectionRating",
+   "lich": "Ulaman",
+   "side": "prefix",
+   "group": "GlobalDeflectionRating",
+   "text": "(10-20)% increased Deflection Rating",
+   "spawn": [
+    [
+     "amulet",
+     1
+    ],
+    [
+     "default",
+     0
+    ]
+   ],
+   "disabled": false
+  },
+  {
+   "id": "AbyssModAmuletUlamanPrefixChanceToNotConsumeGlory",
+   "lich": "Ulaman",
+   "side": "prefix",
+   "group": "GloryChanceToNotConsume",
+   "text": "(20-30)% chance for Skills to retain 40% of Glory on use",
+   "spawn": [
+    [
+     "amulet",
+     1
+    ],
+    [
+     "default",
+     0
+    ]
+   ],
+   "disabled": false
+  },
+  {
+   "id": "AbyssModAmuletUlamanSuffixHeraldReservationEfficiency",
+   "lich": "Ulaman",
+   "side": "suffix",
+   "group": "HeraldReservationEfficiency",
+   "text": "(10-20)% increased Reservation Efficiency of Herald Skills",
+   "spawn": [
+    [
+     "amulet",
+     1
+    ],
+    [
+     "default",
+     0
+    ]
+   ],
+   "disabled": false
+  },
+  {
+   "id": "AbyssModAmuletUlamanSuffixGlobalLevelOfSkillGems",
+   "lich": "Ulaman",
+   "side": "suffix",
+   "group": "IncreaseSocketedGemLevel",
+   "text": "+1 to Level of all Skills",
+   "spawn": [
+    [
+     "amulet",
+     1
+    ],
+    [
+     "default",
+     0
+    ]
+   ],
+   "disabled": false
+  },
+  {
+   "id": "AbyssModAmuletAmanamuPrefixArmourFromEquippedBody",
+   "lich": "Amanamu",
+   "side": "prefix",
+   "group": "BodyArmourFromBodyArmour",
+   "text": "(35-50)% increased Armour from Equipped Body Armour",
+   "spawn": [
+    [
+     "amulet",
+     1
+    ],
+    [
+     "default",
+     0
+    ]
+   ],
+   "disabled": false
+  },
+  {
+   "id": "AbyssModAmuletAmanamuPrefixGlobalDefences",
+   "lich": "Amanamu",
+   "side": "prefix",
+   "group": "AllDefences",
+   "text": "(15-25)% increased Global Armour, Evasion and Energy Shield",
+   "spawn": [
+    [
+     "amulet",
+     1
+    ],
+    [
+     "default",
+     0
+    ]
+   ],
+   "disabled": false
+  },
+  {
+   "id": "AbyssModAmuletAmanamuSuffixReducedRequirementEquipmentAndSkill",
+   "lich": "Amanamu",
+   "side": "suffix",
+   "group": "GlobalItemAttributeRequirements",
+   "text": "Equipment and Skill Gems have (15-10)% reduced Attribute Requirements",
+   "spawn": [
+    [
+     "amulet",
+     1
+    ],
+    [
+     "default",
+     0
+    ]
+   ],
+   "disabled": false
+  },
+  {
+   "id": "AbyssModAmuletAmanamuSuffixAuraMagnitude",
+   "lich": "Amanamu",
+   "side": "suffix",
+   "group": "AuraEffect",
+   "text": "Aura Skills have (8-16)% increased Magnitudes",
+   "spawn": [
+    [
+     "amulet",
+     1
+    ],
+    [
+     "default",
+     0
+    ]
+   ],
+   "disabled": false
+  },
+  {
+   "id": "AbyssModAmuletKurgalPrefixEnergyShieldFromEquippedBody",
+   "lich": "Kurgal",
+   "side": "prefix",
+   "group": "MaximumEnergyShieldFromBodyArmour",
+   "text": "(35-50)% increased Energy Shield from Equipped Body Armour",
+   "spawn": [
+    [
+     "amulet",
+     1
+    ],
+    [
+     "default",
+     0
+    ]
+   ],
+   "disabled": false
+  },
+  {
+   "id": "AbyssModAmuletKurgalPrefixChanceInvocatedSpellsConsumeHalfEnergy",
+   "lich": "Kurgal",
+   "side": "prefix",
+   "group": "InvocatedSpellHalfEnergyChance",
+   "text": "Invocated Spells have (10-20)% chance to consume half as much Energy",
+   "spawn": [
+    [
+     "amulet",
+     1
+    ],
+    [
+     "default",
+     0
+    ]
+   ],
+   "disabled": false
+  },
+  {
+   "id": "AbyssModAmuletKurgalSuffixCooldownRecoveryRateCommandSkills",
+   "lich": "Kurgal",
+   "side": "suffix",
+   "group": "MinionCooldown",
+   "text": "Minions have (12-20)% increased Cooldown Recovery Rate",
+   "spawn": [
+    [
+     "amulet",
+     1
+    ],
+    [
+     "default",
+     0
+    ]
+   ],
+   "disabled": false
+  },
+  {
+   "id": "AbyssModAmuletKurgalSuffixDamageFromManaBeforeLife",
+   "lich": "Kurgal",
+   "side": "suffix",
+   "group": "DamageRemovedFromManaBeforeLife",
+   "text": "(8-16)% of Damage is taken from Mana before Life",
+   "spawn": [
+    [
+     "amulet",
+     1
+    ],
+    [
+     "default",
+     0
+    ]
+   ],
+   "disabled": false
+  },
+  {
+   "id": "AbyssModAmuletKurgalSuffixQualityofAllSkills",
+   "lich": "Kurgal",
+   "side": "suffix",
+   "group": "GlobalSkillGemQuality",
+   "text": "+(3-5)% to Quality of all Skills",
+   "spawn": [
+    [
+     "amulet",
+     1
+    ],
+    [
+     "default",
+     0
+    ]
+   ],
+   "disabled": false
+  },
+  {
+   "id": "AbyssModStaffUlamanPrefixSpellDamagePer100MaximumLife",
+   "lich": "Ulaman",
+   "side": "prefix",
+   "group": "WeaponCasterDamagePrefix",
+   "text": "(4-5)% increased Spell Damage per 100 Maximum Life",
+   "spawn": [
+    [
+     "staff",
+     1
+    ],
+    [
+     "default",
+     0
+    ]
+   ],
+   "disabled": false
+  },
+  {
+   "id": "AbyssModStaffUlamanPrefixMagnitudeOfDamagingAilments",
+   "lich": "Ulaman",
+   "side": "prefix",
+   "group": "AilmentEffect",
+   "text": "(40-64)% increased Magnitude of Damaging Ailments you inflict",
+   "spawn": [
+    [
+     "staff",
+     1
+    ],
+    [
+     "default",
+     0
+    ]
+   ],
+   "disabled": false
+  },
+  {
+   "id": "AbyssModStaffUlamanSuffixCastSpeedWhileLowLife",
+   "lich": "Ulaman",
+   "side": "suffix",
+   "group": "CastSpeedOnLowLife",
+   "text": "(30-40)% increased Cast Speed when on Low Life",
+   "spawn": [
+    [
+     "staff",
+     1
+    ],
+    [
+     "default",
+     0
+    ]
+   ],
+   "disabled": false
+  },
+  {
+   "id": "AbyssModStaffUlamanSuffixChanceForSpellsToFireTwoAdditionalProjectiles",
+   "lich": "Ulaman",
+   "side": "suffix",
+   "group": "SpellsFire2AdditionalProjectileChance",
+   "text": "(25-35)% chance for Spell Skills to fire 2 additional Projectiles",
+   "spawn": [
+    [
+     "staff",
+     1
+    ],
+    [
+     "default",
+     0
+    ]
+   ],
+   "disabled": false
+  },
+  {
+   "id": "AbyssModStaffAmanamuPrefixSpellDamageWithSpellsThatCostLife",
+   "lich": "Amanamu",
+   "side": "prefix",
+   "group": "WeaponCasterDamagePrefix",
+   "text": "(148-178)% increased Spell Damage with Spells that cost Life",
+   "spawn": [
+    [
+     "staff",
+     1
+    ],
+    [
+     "default",
+     0
+    ]
+   ],
+   "disabled": false
+  },
+  {
+   "id": "AbyssModStaffAmanamuPrefixFlatSpirit",
+   "lich": "Amanamu",
+   "side": "prefix",
+   "group": "BaseSpirit",
+   "text": "+(35-50) to Spirit",
+   "spawn": [
+    [
+     "staff",
+     1
+    ],
+    [
+     "default",
+     0
+    ]
+   ],
+   "disabled": false
+  },
+  {
+   "id": "AbyssModStaffAmanamuPrefixDamageAsChaos",
+   "lich": "Amanamu",
+   "side": "prefix",
+   "group": "ChaosDamage",
+   "text": "Gain (40-50)% of Damage as Extra Chaos Damage",
+   "spawn": [
+    [
+     "staff",
+     1
+    ],
+    [
+     "default",
+     0
+    ]
+   ],
+   "disabled": false
+  },
+  {
+   "id": "AbyssModStaffAmanamuSuffixSpellManaCostConvertedToLifeCost",
+   "lich": "Amanamu",
+   "side": "suffix",
+   "group": "SkillLifeCost",
+   "text": "(25-35)% of Spell Mana Cost Converted to Life Cost",
+   "spawn": [
+    [
+     "staff",
+     1
+    ],
+    [
+     "default",
+     0
+    ]
+   ],
+   "disabled": false
+  },
+  {
+   "id": "AbyssModStaffAmanamuSuffixArchonDuration",
+   "lich": "Amanamu",
+   "side": "suffix",
+   "group": "ArchonDuration",
+   "text": "(25-35)% increased Archon Buff duration",
+   "spawn": [
+    [
+     "staff",
+     1
+    ],
+    [
+     "default",
+     0
+    ]
+   ],
+   "disabled": false
+  },
+  {
+   "id": "AbyssModStaffAmanamuSuffixBlockChance",
+   "lich": "Amanamu",
+   "side": "suffix",
+   "group": "AdditionalBlock",
+   "text": "+(20-25)% to Block chance",
+   "spawn": [
+    [
+     "staff",
+     1
+    ],
+    [
+     "default",
+     0
+    ]
+   ],
+   "disabled": false
+  },
+  {
+   "id": "AbyssModStaffKurgalPrefixSpellDamagePer100MaximumMana",
+   "lich": "Kurgal",
+   "side": "prefix",
+   "group": "WeaponCasterDamagePrefix",
+   "text": "(4-5)% increased Spell Damage per 100 maximum Mana",
+   "spawn": [
+    [
+     "staff",
+     1
+    ],
+    [
+     "default",
+     0
+    ]
+   ],
+   "disabled": false
+  },
+  {
+   "id": "AbyssModStaffKurgalPrefixMaximumInfusions",
+   "lich": "Kurgal",
+   "side": "prefix",
+   "group": "ElementalInfusion",
+   "text": "+(1-2) to maximum number of Elemental Infusions",
+   "spawn": [
+    [
+     "staff",
+     1
+    ],
+    [
+     "default",
+     0
+    ]
+   ],
+   "disabled": false
+  },
+  {
+   "id": "AbyssModStaffKurgalSuffixArchonCooldownRecovery",
+   "lich": "Kurgal",
+   "side": "suffix",
+   "group": "ArchonDelayRecovery",
+   "text": "Archon recovery period expires (25-35)% faster",
+   "spawn": [
+    [
+     "staff",
+     1
+    ],
+    [
+     "default",
+     0
+    ]
+   ],
+   "disabled": false
+  },
+  {
+   "id": "AbyssModStaffKurgalSuffixCastSpeedWhileFullMana",
+   "lich": "Ulaman",
+   "side": "suffix",
+   "group": "IncreasedCastSpeed",
+   "text": "(26-36)% increased Cast Speed while on Full Mana",
+   "spawn": [
+    [
+     "wand",
+     1
+    ],
+    [
+     "default",
+     0
+    ]
+   ],
+   "disabled": false
+  },
+  {
+   "id": "AbyssModStaffKurgalSuffixPuppetMasterStacks",
+   "lich": "Kurgal",
+   "side": "suffix",
+   "group": "MaximumPuppeteerStacks",
+   "text": "+(3-4) maximum stacks of Puppet Master",
+   "spawn": [
+    [
+     "staff",
+     1
+    ],
+    [
+     "default",
+     0
+    ]
+   ],
+   "disabled": false
+  },
+  {
+   "id": "AbyssModWandUlamanPrefixDamageAsExtraPhysical",
+   "lich": "Ulaman",
+   "side": "prefix",
+   "group": "MartialWeaponGainedDamage",
+   "text": "Gain (21-25)% of Damage as Extra Physical Damage",
+   "spawn": [
+    [
+     "wand",
+     1
+    ],
+    [
+     "default",
+     0
+    ]
+   ],
+   "disabled": false
+  },
+  {
+   "id": "AbyssModWandUlamanPrefixBleedMagnitude",
+   "lich": "Ulaman",
+   "side": "prefix",
+   "group": "BleedingDamage",
+   "text": "(27-38)% increased Magnitude of Bleeding you inflict",
+   "spawn": [
+    [
+     "wand",
+     1
+    ],
+    [
+     "default",
+     0
+    ]
+   ],
+   "disabled": false
+  },
+  {
+   "id": "AbyssModWandUlamanSuffixArmourBreakAmount",
+   "lich": "Ulaman",
+   "side": "suffix",
+   "group": "ArmourBreak",
+   "text": "Break (31-39)% increased Armour",
+   "spawn": [
+    [
+     "wand",
+     1
+    ],
+    [
+     "default",
+     0
+    ]
+   ],
+   "disabled": false
+  },
+  {
+   "id": "AbyssModWandUlamanSuffixBreakArmourSpellCrits",
+   "lich": "Ulaman",
+   "side": "suffix",
+   "group": "ArmourBreak",
+   "text": "Break Armour on Critical Hit with Spells equal to (11-18)% of Physical Damage dealt",
+   "spawn": [
+    [
+     "wand",
+     1
+    ],
+    [
+     "default",
+     0
+    ]
+   ],
+   "disabled": false
+  },
+  {
+   "id": "AbyssModWandUlamanSuffixHinderedEnemiesTakeIncreasedPhysical",
+   "lich": "Ulaman",
+   "side": "suffix",
+   "group": "HinderedEnemyTakeIncreasedDamage",
+   "text": "Enemies Hindered by you take (4-7)% increased Physical Damage",
+   "spawn": [
+    [
+     "wand",
+     1
+    ],
+    [
+     "default",
+     0
+    ]
+   ],
+   "disabled": false
+  },
+  {
+   "id": "AbyssModWandAmanamuPrefixIncreasedElementalDamage",
+   "lich": "Amanamu",
+   "side": "prefix",
+   "group": "WeaponDamageTypePrefix",
+   "text": "(74-89)% increased Elemental Damage",
+   "spawn": [
+    [
+     "wand",
+     1
+    ],
+    [
+     "default",
+     0
+    ]
+   ],
+   "disabled": false
+  },
+  {
+   "id": "AbyssModWandAmanamuPrefixHybridSpellAndMinionDamage",
+   "lich": "Amanamu",
+   "side": "prefix",
+   "group": "MinionDamage",
+   "text": "Minions deal (55-64)% increased Damage / (55-64)% increased Spell Damage",
+   "spawn": [
+    [
+     "wand",
+     1
+    ],
+    [
+     "default",
+     0
+    ]
+   ],
+   "disabled": false
+  },
+  {
+   "id": "AbyssModWandAmanamuPrefixSpellDamageWithSpellsThatCostLife",
+   "lich": "Amanamu",
+   "side": "prefix",
+   "group": "WeaponCasterDamagePrefix",
+   "text": "(74-89)% increased Spell Damage with Spells that cost Life",
+   "spawn": [
+    [
+     "wand",
+     1
+    ],
+    [
+     "default",
+     0
+    ]
+   ],
+   "disabled": false
+  },
+  {
+   "id": "AbyssModWandAmanamuSuffixSpellAreaOfEffect",
+   "lich": "Amanamu",
+   "side": "suffix",
+   "group": "SpellAreaOfEffect",
+   "text": "Spell Skills have (8-16)% increased Area of Effect",
+   "spawn": [
+    [
+     "wand",
+     1
+    ],
+    [
+     "default",
+     0
+    ]
+   ],
+   "disabled": false
+  },
+  {
+   "id": "AbyssModWandAmanamuSuffixSpellManaCostConvertedToLifeSkillEfficiency",
+   "lich": "Amanamu",
+   "side": "suffix",
+   "group": "SkillLifeCost",
+   "text": "(15-25)% of Spell Mana Cost Converted to Life Cost / (5-10)% increased Cost Efficiency",
+   "spawn": [
+    [
+     "wand",
+     1
+    ],
+    [
+     "default",
+     0
+    ]
+   ],
+   "disabled": false
+  },
+  {
+   "id": "AbyssModWandAmanamuSuffixHinderedEnemiesTakeIncreasedElemental",
+   "lich": "Amanamu",
+   "side": "suffix",
+   "group": "HinderedEnemyTakeIncreasedDamage",
+   "text": "Enemies Hindered by you take (4-7)% increased Elemental Damage",
+   "spawn": [
+    [
+     "wand",
+     1
+    ],
+    [
+     "default",
+     0
+    ]
+   ],
+   "disabled": false
+  },
+  {
+   "id": "AbyssModWandKurgalPrefixInvocatedSpellDamage",
+   "lich": "Kurgal",
+   "side": "prefix",
+   "group": "WeaponCasterDamagePrefix",
+   "text": "Invocated Spells deal (75-89)% increased Damage",
+   "spawn": [
+    [
+     "wand",
+     1
+    ],
+    [
+     "default",
+     0
+    ]
+   ],
+   "disabled": false
+  },
+  {
+   "id": "AbyssModWandKurgalSuffixCastSpeedPerDifferentSpellCastRecently",
+   "lich": "Kurgal",
+   "side": "suffix",
+   "group": "IncreasedCastSpeed",
+   "text": "(3-5)% increased Cast Speed for each different Non-Instant Spell you've Cast Recently",
+   "spawn": [
+    [
+     "wand",
+     1
+    ],
+    [
+     "default",
+     0
+    ]
+   ],
+   "disabled": false
+  },
+  {
+   "id": "AbyssModWandKurgalSuffixHinderedEnemiesTakeIncreasedChaos",
+   "lich": "Kurgal",
+   "side": "suffix",
+   "group": "HinderedEnemyTakeIncreasedDamage",
+   "text": "Enemies Hindered by you take (4-7)% increased Chaos Damage",
+   "spawn": [
+    [
+     "wand",
+     1
+    ],
+    [
+     "default",
+     0
+    ]
+   ],
+   "disabled": false
+  },
+  {
+   "id": "AbyssModGenWeaponUlamanPrefixLightningPenetration",
+   "lich": "Ulaman",
+   "side": "prefix",
+   "group": "LightningResistancePenetration",
+   "text": "Attacks with this Weapon Penetrate (15-25)% Lightning Resistance",
+   "spawn": [
+    [
+     "weapon",
+     1
+    ],
+    [
+     "default",
+     0
+    ]
+   ],
+   "disabled": false
+  },
+  {
+   "id": "AbyssModGenWeaponUlamanSuffixSkillCostConvertedToLife",
+   "lich": "Ulaman",
+   "side": "suffix",
+   "group": "LifeCost",
+   "text": "(15-20)% of Skill Mana Costs Converted to Life Costs",
+   "spawn": [
+    [
+     "weapon",
+     1
+    ],
+    [
+     "default",
+     0
+    ]
+   ],
+   "disabled": false
+  },
+  {
+   "id": "AbyssModGenWeaponAmanamuPrefixFirePenetration",
+   "lich": "Amanamu",
+   "side": "prefix",
+   "group": "FireResistancePenetration",
+   "text": "Attacks with this Weapon Penetrate (15-25)% Fire Resistance",
+   "spawn": [
+    [
+     "weapon",
+     1
+    ],
+    [
+     "default",
+     0
+    ]
+   ],
+   "disabled": false
+  },
+  {
+   "id": "AbyssModGenWeaponAmanamuSuffixSpiritReservationEfficiency",
+   "lich": "Amanamu",
+   "side": "suffix",
+   "group": "SpiritReservationEfficiency",
+   "text": "(5-10)% increased Spirit Reservation Efficiency of Skills",
+   "spawn": [
+    [
+     "weapon",
+     1
+    ],
+    [
+     "default",
+     0
+    ]
+   ],
+   "disabled": false
+  },
+  {
+   "id": "AbyssModGenWeaponKurgalPrefixColdPenetration",
+   "lich": "Kurgal",
+   "side": "prefix",
+   "group": "ColdResistancePenetration",
+   "text": "Attacks with this Weapon Penetrate (15-25)% Cold Resistance",
+   "spawn": [
+    [
+     "weapon",
+     1
+    ],
+    [
+     "default",
+     0
+    ]
+   ],
+   "disabled": false
+  },
+  {
+   "id": "AbyssModGenWeaponKurgalSuffixAttackCostEfficiency",
+   "lich": "Kurgal",
+   "side": "suffix",
+   "group": "ManaCostEfficiency",
+   "text": "(8-15)% increased Cost Efficiency of Attacks",
+   "spawn": [
+    [
+     "weapon",
+     1
+    ],
+    [
+     "default",
+     0
+    ]
+   ],
+   "disabled": false
+  },
+  {
+   "id": "AbyssModAllMacesUlamanPrefixMaximumMeleeAttackTotems",
+   "lich": "Ulaman",
+   "side": "prefix",
+   "group": "AdditionalTotems",
+   "text": "Melee Attack Skills have +1 to maximum number of Summoned Totems",
+   "spawn": [
+    [
+     "mace",
+     1
+    ],
+    [
+     "talisman",
+     1
+    ],
+    [
+     "default",
+     0
+    ]
+   ],
+   "disabled": false
+  },
+  {
+   "id": "AbyssModAllMacesKurgalPrefixIncreasedPhysicalDamageReducedAttackSpeed",
+   "lich": "Kurgal",
+   "side": "prefix",
+   "group": "LocalPhysicalDamagePercent",
+   "text": "(110-154)% increased Physical Damage / 15% reduced Attack Speed",
+   "spawn": [
+    [
+     "mace",
+     1
+    ],
+    [
+     "default",
+     0
+    ]
+   ],
+   "disabled": false
+  },
+  {
+   "id": "AbyssModAllMacesKurgalSuffixCostEfficiencyOfAttackSkills",
+   "lich": "Kurgal",
+   "side": "suffix",
+   "group": "ManaCostEfficiency",
+   "text": "(8-15)% increased Cost Efficiency of Attacks",
+   "spawn": [
+    [
+     "mace",
+     1
+    ],
+    [
+     "default",
+     0
+    ]
+   ],
+   "disabled": false
+  },
+  {
+   "id": "AbyssMod1HMaceUlamanPrefixDamageWhileActiveTotem",
+   "lich": "Ulaman",
+   "side": "prefix",
+   "group": "TotemDamage",
+   "text": "(41-59)% increased Damage while you have a Totem",
+   "spawn": [
+    [
+     "two_hand_weapon",
+     0
+    ],
+    [
+     "mace",
+     1
+    ],
+    [
+     "default",
+     0
+    ]
+   ],
+   "disabled": false
+  },
+  {
+   "id": "AbyssMod1HMaceUlamanSuffixTotemPlacementSpeed",
+   "lich": "Ulaman",
+   "side": "suffix",
+   "group": "SummonTotemCastSpeed",
+   "text": "(17-25)% increased Totem Placement speed",
+   "spawn": [
+    [
+     "two_hand_weapon",
+     0
+    ],
+    [
+     "mace",
+     1
+    ],
+    [
+     "default",
+     0
+    ]
+   ],
+   "disabled": false
+  },
+  {
+   "id": "AbyssMod1HMaceAmanamuPrefixDamageAgainstFullyArmourBrokenEnemies",
+   "lich": "Ulaman",
+   "side": "prefix",
+   "group": "DamagevsArmourBrokenEnemies",
+   "text": "(41-59)% increased Damage against Enemies with Fully Broken Armour",
+   "spawn": [
+    [
+     "two_hand_weapon",
+     0
+    ],
+    [
+     "mace",
+     1
+    ],
+    [
+     "default",
+     0
+    ]
+   ],
+   "disabled": false
+  },
+  {
+   "id": "AbyssMod1HMaceAmanamuSuffixBreakPercentArmourPhysicalDamage",
+   "lich": "Ulaman",
+   "side": "suffix",
+   "group": "ArmourPenetration",
+   "text": "Break Armour equal to (2-4)% of Physical Damage dealt",
+   "spawn": [
+    [
+     "two_hand_weapon",
+     0
+    ],
+    [
+     "mace",
+     1
+    ],
+    [
+     "default",
+     0
+    ]
+   ],
+   "disabled": false
+  },
+  {
+   "id": "AbyssMod1HMaceAmanamuSuffixAdditionalFissureChance",
+   "lich": "Ulaman",
+   "side": "suffix",
+   "group": "FissureChance",
+   "text": "Skills which create Fissures have a (15-25)% chance to create an additional Fissure",
+   "spawn": [
+    [
+     "two_hand_weapon",
+     0
+    ],
+    [
+     "mace",
+     1
+    ],
+    [
+     "default",
+     0
+    ]
+   ],
+   "disabled": false
+  },
+  {
+   "id": "AbyssMod1HMaceAmanamuSuffixChanceSlamSkillsCauseAftershocks",
+   "lich": "Ulaman",
+   "side": "suffix",
+   "group": "AftershockChance",
+   "text": "(10-16)% chance for Mace Slam Skills you use yourself to cause an additional Aftershock",
+   "spawn": [
+    [
+     "two_hand_weapon",
+     0
+    ],
+    [
+     "mace",
+     1
+    ],
+    [
+     "default",
+     0
+    ]
+   ],
+   "disabled": false
+  },
+  {
+   "id": "AbyssMod1HMaceKurgalPrefixEmpoweredAttackDamage",
+   "lich": "Ulaman",
+   "side": "prefix",
+   "group": "ExertedAttackDamage",
+   "text": "Empowered Attacks deal (41-59)% increased Damage",
+   "spawn": [
+    [
+     "two_hand_weapon",
+     0
+    ],
+    [
+     "mace",
+     1
+    ],
+    [
+     "default",
+     0
+    ]
+   ],
+   "disabled": false
+  },
+  {
+   "id": "AbyssMod1HMaceKurgalSuffixWarcryCooldownRecoveryRate",
+   "lich": "Ulaman",
+   "side": "suffix",
+   "group": "WarcryCooldownSpeed",
+   "text": "(17-25)% increased Warcry Cooldown Recovery Rate",
+   "spawn": [
+    [
+     "two_hand_weapon",
+     0
+    ],
+    [
+     "mace",
+     1
+    ],
+    [
+     "default",
+     0
+    ]
+   ],
+   "disabled": false
+  },
+  {
+   "id": "AbyssMod2HMaceUlamanPrefixDamageWhileActiveTotem",
+   "lich": "Ulaman",
+   "side": "prefix",
+   "group": "TotemDamage",
+   "text": "(86-99)% increased Damage while you have a Totem",
+   "spawn": [
+    [
+     "one_hand_weapon",
+     0
+    ],
+    [
+     "mace",
+     1
+    ],
+    [
+     "talisman",
+     1
+    ],
+    [
+     "default",
+     0
+    ]
+   ],
+   "disabled": false
+  },
+  {
+   "id": "AbyssMod2HMaceUlamanSuffixTotemPlacementSpeed",
+   "lich": "Ulaman",
+   "side": "suffix",
+   "group": "SummonTotemCastSpeed",
+   "text": "(25-31)% increased Totem Placement speed",
+   "spawn": [
+    [
+     "one_hand_weapon",
+     0
+    ],
+    [
+     "mace",
+     1
+    ],
+    [
+     "talisman",
+     1
+    ],
+    [
+     "default",
+     0
+    ]
+   ],
+   "disabled": false
+  },
+  {
+   "id": "AbyssMod2HMaceAmanamuPrefixDamageAgainstFullyArmourBrokenEnemies",
+   "lich": "Ulaman",
+   "side": "prefix",
+   "group": "DamagevsArmourBrokenEnemies",
+   "text": "(86-99)% increased Damage against Enemies with Fully Broken Armour",
+   "spawn": [
+    [
+     "one_hand_weapon",
+     0
+    ],
+    [
+     "mace",
+     1
+    ],
+    [
+     "default",
+     0
+    ]
+   ],
+   "disabled": false
+  },
+  {
+   "id": "AbyssMod2HMaceAmanamuSuffixBreakPercentArmourPhysicalDamage",
+   "lich": "Ulaman",
+   "side": "suffix",
+   "group": "ArmourPenetration",
+   "text": "Break Armour equal to (4-7)% of Physical Damage dealt",
+   "spawn": [
+    [
+     "one_hand_weapon",
+     0
+    ],
+    [
+     "mace",
+     1
+    ],
+    [
+     "default",
+     0
+    ]
+   ],
+   "disabled": false
+  },
+  {
+   "id": "AbyssMod2HMaceAmanamuSuffixAdditionalFissureChance",
+   "lich": "Ulaman",
+   "side": "suffix",
+   "group": "FissureChance",
+   "text": "Skills which create Fissures have a (25-31)% chance to create an additional Fissure",
+   "spawn": [
+    [
+     "one_hand_weapon",
+     0
+    ],
+    [
+     "mace",
+     1
+    ],
+    [
+     "talisman",
+     1
+    ],
+    [
+     "default",
+     0
+    ]
+   ],
+   "disabled": false
+  },
+  {
+   "id": "AbyssMod2HMaceAmanamuSuffixChanceSlamSkillsCauseAftershocks",
+   "lich": "Ulaman",
+   "side": "suffix",
+   "group": "AftershockChance",
+   "text": "(16-23)% chance for Mace Slam Skills you use yourself to cause an additional Aftershock",
+   "spawn": [
+    [
+     "one_hand_weapon",
+     0
+    ],
+    [
+     "mace",
+     1
+    ],
+    [
+     "default",
+     0
+    ]
+   ],
+   "disabled": false
+  },
+  {
+   "id": "AbyssMod2HMaceKurgalPrefixEmpoweredAttackDamage",
+   "lich": "Ulaman",
+   "side": "prefix",
+   "group": "ExertedAttackDamage",
+   "text": "Empowered Attacks deal (86-99)% increased Damage",
+   "spawn": [
+    [
+     "one_hand_weapon",
+     0
+    ],
+    [
+     "mace",
+     1
+    ],
+    [
+     "talisman",
+     1
+    ],
+    [
+     "default",
+     0
+    ]
+   ],
+   "disabled": false
+  },
+  {
+   "id": "AbyssMod2HMaceKurgalSuffixWarcryCooldownRecoveryRate",
+   "lich": "Ulaman",
+   "side": "suffix",
+   "group": "WarcryCooldownSpeed",
+   "text": "(25-31)% increased Warcry Cooldown Recovery Rate",
+   "spawn": [
+    [
+     "one_hand_weapon",
+     0
+    ],
+    [
+     "mace",
+     1
+    ],
+    [
+     "talisman",
+     1
+    ],
+    [
+     "default",
+     0
+    ]
+   ],
+   "disabled": false
+  },
+  {
+   "id": "AbyssModQuarterstaffUlamanPrefixLightningDamageShockMagnitude",
+   "lich": "Ulaman",
+   "side": "prefix",
+   "group": "LightningDamagePercentagePrefix",
+   "text": "(86-99)% increased Lightning Damage / (14-23)% increased Magnitude of Shock you inflict",
+   "spawn": [
+    [
+     "warstaff",
+     1
+    ],
+    [
+     "default",
+     0
+    ]
+   ],
+   "disabled": false
+  },
+  {
+   "id": "AbyssModQuarterstaffUlamanSuffixRecoverLifeWhenExpendingTenCombo",
+   "lich": "Ulaman",
+   "side": "suffix",
+   "group": "RecoverResourceOnExpendingCombo",
+   "text": "Recover (6-12)% of Maximum Life when you expend at least 10 Combo",
+   "spawn": [
+    [
+     "warstaff",
+     1
+    ],
+    [
+     "default",
+     0
+    ]
+   ],
+   "disabled": false
+  },
+  {
+   "id": "AbyssModQuarterstaffAmanamuPrefixFireDamageIgniteMagnitude",
+   "lich": "Amanamu",
+   "side": "prefix",
+   "group": "FireDamagePercentagePrefix",
+   "text": "(86-99)% increased Fire Damage / (14-23)% increased Ignite Magnitude",
+   "spawn": [
+    [
+     "warstaff",
+     1
+    ],
+    [
+     "default",
+     0
+    ]
+   ],
+   "disabled": false
+  },
+  {
+   "id": "AbyssModQuarterstaffAmanamuSuffixChanceToGenerateAdditionalCombo",
+   "lich": "Amanamu",
+   "side": "suffix",
+   "group": "AdditionalComboChance",
+   "text": "(25-40)% chance to build an additional Combo on Hit",
+   "spawn": [
+    [
+     "warstaff",
+     1
+    ],
+    [
+     "default",
+     0
+    ]
+   ],
+   "disabled": false
+  },
+  {
+   "id": "AbyssModQuarterstaffKurgalPrefixColdDamageFreezeBuildup",
+   "lich": "Kurgal",
+   "side": "prefix",
+   "group": "ColdDamagePercentagePrefix",
+   "text": "(86-99)% increased Cold Damage / (14-23)% increased Freeze Buildup",
+   "spawn": [
+    [
+     "warstaff",
+     1
+    ],
+    [
+     "default",
+     0
+    ]
+   ],
+   "disabled": false
+  },
+  {
+   "id": "AbyssModQuarterstaffKurgalSuffixRecoverManaWhenExpendingTenCombo",
+   "lich": "Kurgal",
+   "side": "suffix",
+   "group": "RecoverResourceOnExpendingCombo",
+   "text": "Recover (4-6)% of Maximum Mana when you expend at least 10 Combo",
+   "spawn": [
+    [
+     "warstaff",
+     1
+    ],
+    [
+     "default",
+     0
+    ]
+   ],
+   "disabled": false
+  },
+  {
+   "id": "AbyssModCrossbowUlamanPrefixMaximumRangedAttackTotems",
+   "lich": "Ulaman",
+   "side": "prefix",
+   "group": "AdditionalBallistaTotem",
+   "text": "+1 to maximum number of Summoned Ballista Totems",
+   "spawn": [
+    [
+     "crossbow",
+     1
+    ],
+    [
+     "default",
+     0
+    ]
+   ],
+   "disabled": false
+  },
+  {
+   "id": "AbyssModCrossbowUlamanSuffixAttacksChainAdditionalTime",
+   "lich": "Ulaman",
+   "side": "suffix",
+   "group": "Chain",
+   "text": "Attacks Chain an additional time",
+   "spawn": [
+    [
+     "crossbow",
+     1
+    ],
+    [
+     "default",
+     0
+    ]
+   ],
+   "disabled": false
+  },
+  {
+   "id": "AbyssModCrossbowUlamanSuffixProjectileCriticalHitDamageCloseRange",
+   "lich": "Ulaman",
+   "side": "suffix",
+   "group": "CriticalStrikeMultiplier",
+   "text": "Projectiles have (27-38)% increased Critical Damage Bonus against Enemies within 2m",
+   "spawn": [
+    [
+     "crossbow",
+     1
+    ],
+    [
+     "default",
+     0
+    ]
+   ],
+   "disabled": false
+  },
+  {
+   "id": "AbyssModCrossbowAmanamuPrefixGrenadeAdditionalCooldown",
+   "lich": "Amanamu",
+   "side": "prefix",
+   "group": "GrenadeCooldownUse",
+   "text": "Grenade Skills have +1 Cooldown Use",
+   "spawn": [
+    [
+     "crossbow",
+     1
+    ],
+    [
+     "default",
+     0
+    ]
+   ],
+   "disabled": false
+  },
+  {
+   "id": "AbyssModCrossbowAmanamuPrefixGrenadeDamageAndDuration",
+   "lich": "Amanamu",
+   "side": "prefix",
+   "group": "GrenadeDamage",
+   "text": "(101-121)% increased Grenade Damage / (20-30)% increased Grenade Duration",
+   "spawn": [
+    [
+     "crossbow",
+     1
+    ],
+    [
+     "default",
+     0
+    ]
+   ],
+   "disabled": false
+  },
+  {
+   "id": "AbyssModCrossbowAmanamuSuffixAdditionalGrenadeTriggerChance",
+   "lich": "Amanamu",
+   "side": "suffix",
+   "group": "GrenadeAdditionalDetonationChance",
+   "text": "Grenades have (15-25)% chance to activate a second time",
+   "spawn": [
+    [
+     "crossbow",
+     1
+    ],
+    [
+     "default",
+     0
+    ]
+   ],
+   "disabled": false
+  },
+  {
+   "id": "AbyssModCrossbowKurgalPrefixProjectileDamageCloseRange",
+   "lich": "Kurgal",
+   "side": "prefix",
+   "group": "ProjectileDamage",
+   "text": "Projectiles deal (85-109)% increased Damage with Hits against Enemies within 2m",
+   "spawn": [
+    [
+     "crossbow",
+     1
+    ],
+    [
+     "default",
+     0
+    ]
+   ],
+   "disabled": false
+  },
+  {
+   "id": "AbyssModCrossbowKurgalSuffixReloadSpeed",
+   "lich": "Kurgal",
+   "side": "suffix",
+   "group": "CrossbowReloadSpeed",
+   "text": "(17-25)% increased Reload Speed",
+   "spawn": [
+    [
+     "crossbow",
+     1
+    ],
+    [
+     "default",
+     0
+    ]
+   ],
+   "disabled": false
+  },
+  {
+   "id": "AbyssModCrossbowKurgalSuffixChanceForInstantReload",
+   "lich": "Kurgal",
+   "side": "suffix",
+   "group": "CrossbowReloadSpeed",
+   "text": "(15-20)% chance when you Reload a Crossbow to be immediate",
+   "spawn": [
+    [
+     "crossbow",
+     1
+    ],
+    [
+     "default",
+     0
+    ]
+   ],
+   "disabled": false
+  },
+  {
+   "id": "AbyssModBowSpearUlamanPrefixProjectileDamageFar",
+   "lich": "Ulaman",
+   "side": "prefix",
+   "group": "ProjectileDamage",
+   "text": "Projectiles deal (60-79)% increased Damage with Hits against Enemies further than 6m",
+   "spawn": [
+    [
+     "bow",
+     1
+    ],
+    [
+     "spear",
+     1
+    ],
+    [
+     "default",
+     0
+    ]
+   ],
+   "disabled": false
+  },
+  {
+   "id": "AbyssModBowSpearUlamanSuffixChanceForExtraProjectilesWhileMoving",
+   "lich": "Ulaman",
+   "side": "suffix",
+   "group": "AdditionalProjectiles",
+   "text": "Projectile Attacks have a (10-18)% chance to fire two additional Projectiles while moving",
+   "spawn": [
+    [
+     "bow",
+     1
+    ],
+    [
+     "spear",
+     1
+    ],
+    [
+     "default",
+     0
+    ]
+   ],
+   "disabled": false
+  },
+  {
+   "id": "AbyssModBowSpearUlamanSuffixAttackSpeedLocalAndWithCompanion",
+   "lich": "Ulaman",
+   "side": "suffix",
+   "group": "CompanionDamage",
+   "text": "(8-13)% increased Attack Speed / (8-13)% increased Attack Speed while your Companion is in your Presence",
+   "spawn": [
+    [
+     "bow",
+     1
+    ],
+    [
+     "spear",
+     1
+    ],
+    [
+     "default",
+     0
+    ]
+   ],
+   "disabled": false
+  },
+  {
+   "id": "AbyssModBowSpearAmanamuPrefixCompanionDamageAndDamageWithCompanion",
+   "lich": "Amanamu",
+   "side": "prefix",
+   "group": "CompanionDamage",
+   "text": "Companions deal (40-59)% increased Damage / (40-59)% increased Damage while your Companion is in your Presence",
+   "spawn": [
+    [
+     "bow",
+     1
+    ],
+    [
+     "spear",
+     1
+    ],
+    [
+     "talisman",
+     1
+    ],
+    [
+     "default",
+     0
+    ]
+   ],
+   "disabled": false
+  },
+  {
+   "id": "AbyssModBowSpearAmanamuPrefixAttackSkillAreaOfEffect",
+   "lich": "Amanamu",
+   "side": "prefix",
+   "group": "IncreasedAttackAreaOfEffect",
+   "text": "(12-23)% increased Area of Effect for Attacks",
+   "spawn": [
+    [
+     "bow",
+     1
+    ],
+    [
+     "spear",
+     1
+    ],
+    [
+     "default",
+     0
+    ]
+   ],
+   "disabled": false
+  },
+  {
+   "id": "AbyssModBowSpearAmanamuSuffixCompanionAndLocalAttackSpeed",
+   "lich": "Amanamu",
+   "side": "suffix",
+   "group": "CompanionAttackSpeed",
+   "text": "(12-18)% increased Attack Speed / Companions have (12-18)% increased Attack Speed",
+   "spawn": [
+    [
+     "bow",
+     1
+    ],
+    [
+     "spear",
+     1
+    ],
+    [
+     "talisman",
+     1
+    ],
+    [
+     "default",
+     0
+    ]
+   ],
+   "disabled": false
+  },
+  {
+   "id": "AbyssModBowSpearAmanamuSuffixChancePierceAdditionalTime",
+   "lich": "Amanamu",
+   "side": "suffix",
+   "group": "ChanceToPierce",
+   "text": "(40-60)% chance to Pierce an Enemy",
+   "spawn": [
+    [
+     "bow",
+     1
+    ],
+    [
+     "spear",
+     1
+    ],
+    [
+     "default",
+     0
+    ]
+   ],
+   "disabled": false
+  },
+  {
+   "id": "AbyssModBowSpearKurgalPrefixChanceChainFromTerrain",
+   "lich": "Kurgal",
+   "side": "prefix",
+   "group": "ChainFromTerrain",
+   "text": "Projectiles have (25-35)% chance to Chain an additional time from terrain",
+   "spawn": [
+    [
+     "bow",
+     1
+    ],
+    [
+     "spear",
+     1
+    ],
+    [
+     "default",
+     0
+    ]
+   ],
+   "disabled": false
+  },
+  {
+   "id": "AbyssModBowSpearKurgalSuffixProjectileCriticalHitChanceFar",
+   "lich": "Kurgal",
+   "side": "suffix",
+   "group": "CriticalStrikeChanceIncrease",
+   "text": "Projectiles have (25-34)% increased Critical Hit Chance against Enemies further than 6m",
+   "spawn": [
+    [
+     "bow",
+     1
+    ],
+    [
+     "spear",
+     1
+    ],
+    [
+     "default",
+     0
+    ]
+   ],
+   "disabled": false
+  },
+  {
+   "id": "AbyssModBowSpearKurgalSuffixImmobilisationBuildup",
+   "lich": "Kurgal",
+   "side": "suffix",
+   "group": "Immobilise",
+   "text": "(25-34)% increased Immobilisation buildup",
+   "spawn": [
+    [
+     "bow",
+     1
+    ],
+    [
+     "spear",
+     1
+    ],
+    [
+     "default",
+     0
+    ]
+   ],
+   "disabled": false
+  },
+  {
+   "id": "AbyssModBowKurgalPrefixIncreasedQuiverStats",
+   "lich": "Kurgal",
+   "side": "prefix",
+   "group": "EquipmentModifierEffect",
+   "text": "(30-40)% increased bonuses gained from Equipped Quiver",
+   "spawn": [
+    [
+     "bow",
+     1
+    ],
+    [
+     "default",
+     0
+    ]
+   ],
+   "disabled": false
+  },
+  {
+   "id": "AbyssModSpearKurgalPrefixMeleeDamageIfProjectileAttackHitEightSeconds",
+   "lich": "Kurgal",
+   "side": "prefix",
+   "group": "MeleeDamage",
+   "text": "(60-79)% increased Melee Damage if you've dealt a Projectile Attack Hit in the past eight seconds",
+   "spawn": [
+    [
+     "spear",
+     1
+    ],
+    [
+     "default",
+     0
+    ]
+   ],
+   "disabled": false
+  },
+  {
+   "id": "AbyssModTalismanUlamanSuffixGainXRageOnMeleeHit",
+   "lich": "Amanamu",
+   "side": "suffix",
+   "group": "RageOnHit",
+   "text": "Gain (3-6) Rage on Melee Hit",
+   "spawn": [
+    [
+     "talisman",
+     1
+    ],
+    [
+     "default",
+     0
+    ]
+   ],
+   "disabled": false
+  },
+  {
+   "id": "AbyssModTalismanAmanamuPrefixMinionsDealIncreasedDamageIfYouHitRecently",
+   "lich": "Amanamu",
+   "side": "prefix",
+   "group": "IncreasedMinionDamageIfYouHitEnemy",
+   "text": "Minions deal (60-79)% increased Damage if you've Hit Recently",
+   "spawn": [
+    [
+     "talisman",
+     1
+    ],
+    [
+     "default",
+     0
+    ]
+   ],
+   "disabled": false
+  },
+  {
+   "id": "AbyssModTalismanKurgalPrefixWarcriesEmpowerXAdditionalAttacks",
+   "lich": "Kurgal",
+   "side": "prefix",
+   "group": "WarcriesExertAnAdditionalAttack",
+   "text": "Warcries Empower (1-2) additional Attacks",
+   "spawn": [
+    [
+     "talisman",
+     1
+    ],
+    [
+     "default",
+     0
+    ]
+   ],
+   "disabled": false
+  },
+  {
+   "id": "AbyssModTalismanKurgalSuffixCriticalHitChanceAgainstMarkedTargets",
+   "lich": "Kurgal",
+   "side": "suffix",
+   "group": "MarkCritical",
+   "text": "(39-51)% increased Critical Hit Chance against Marked Enemies",
+   "spawn": [
+    [
+     "talisman",
+     1
+    ],
+    [
+     "default",
+     0
+    ]
+   ],
+   "disabled": false
+  },
+  {
+   "id": "AbyssModBootsUlamanSuffixLifeRegenMoving",
+   "lich": "Ulaman",
+   "side": "suffix",
+   "group": "LifeRegenerationPlusPercentWhileMoving",
+   "text": "(40-50)% increased Life Regeneration Rate while moving",
+   "spawn": [
+    [
+     "boots",
+     1
+    ],
+    [
+     "default",
+     0
+    ]
+   ],
+   "disabled": false
+  }
+ ],
+ "alteredCollarbonePool": {
+  "source": "https://poe2db.tw/us/Altered_Collarbone",
+  "note": "Otherworldly (Breach) desecrated mods, RePoE tag breach_desecration, level 1",
+  "pool": {
+   "amulet": {
+    "prefix": [
+     "Gain (10-20)% of Physical Damage as Extra Cold Damage",
+     "Inflict Anaemia on Hit / Anaemia allows +(2-3) Corrupted Blood debuffs to be inflicted on enemies"
+    ],
+    "suffix": [
+     "+(4-5)% to Fire Spell Critical Hit Chance",
+     "Sealed Skills have +1 to maximum Seals"
+    ]
+   },
+   "ring": {
+    "prefix": [
+     "Offering Skills have (23-30)% increased Buff effect",
+     "Minions Break Armour equal to (2-4)% of Physical damage dealt",
+     "Minions have (35-45)% increased Magnitude of Damaging Ailments",
+     "Gain (8-12)% of Damage as Extra Lightning Damage with Spells",
+     "Gain (8-12)% of Damage as Extra Fire Damage with Spells",
+     "Gain (8-12)% of Damage as Extra Cold Damage with Spells",
+     "Spells Gain (8-12)% of Damage as extra Chaos Damage",
+     "(8-12)% of Damage is taken from Mana before Life"
+    ],
+    "suffix": [
+     "+1 to maximum number of Elemental Infusions",
+     "Temporary Minion Skills have +1 to Limit of Minions summoned",
+     "Minions have (20-30)% increased Skill Speed with Command Skills",
+     "Minions have (21-29)% increased Cooldown Recovery Rate",
+     "(40-50)% Surpassing Chance to gain a Puppet Master stack whenever you use a Command Skill",
+     "(25-35)% increased Exposure Effect",
+     "Invocated skills have (25-35)% increased Maximum Energy",
+     "(20-30)% increased Magnitude of Impales inflicted with Spells"
+    ]
+   },
+   "belt": {
+    "prefix": [
+     "(41-59)% increased Fire Damage if you've collected a Fire Infusion in the last 8 seconds",
+     "(41-59)% increased Lightning Damage if you've collected a Lightning Infusion in the last 8 seconds",
+     "(41-59)% increased Cold Damage if you've collected a Cold Infusion in the last 8 seconds",
+     "(20-39)% increased effect of Archon Buffs on you",
+     "(7-12)% increased Minion Damage per different Command Skill used in the past 15 seconds",
+     "Your Minions are Gigantic if they have Revived Recently",
+     "5% of Damage from Hits is taken from your Spectres' Life before you"
+    ],
+    "suffix": [
+     "Minions have +(50-100)% Surpassing chance to fire an additional Projectile",
+     "Sealed Skills have (21-35)% increased Seal gain frequency",
+     "Skills have (40-50)% chance to not remove Elemental Infusions but still count as consuming them if you've lost an Archon Buff in the past 6 seconds",
+     "(30-40)% increased Magnitude of Elemental Ailments you inflict with Spells",
+     "(40-50)% increased Archon Buff duration",
+     "(35-50)% to gain Archon of Undeath when you create an Offering",
+     "(7-10)% increased Reservation Efficiency of Minion Skills",
+     "Minions' Strikes have Melee Splash",
+     "(35-49)% increased Minion Duration"
+    ]
+   }
+  }
+ },
+ "runesData": {
+  "url": "https://repoe-fork.github.io/poe2/augments.json (also augments.min.json); names via base_items.min.json (same Metadata key)",
+  "format": "Object keyed by Metadata path (e.g. 'Metadata/Items/SoulCores/RuneDexterityPerfect'; name = base_items[key].name). Value: {type_id: Rune|SoulCore|Idol|AbyssalEye|CongealedMist, type_name, required_level (may be absent), limit ('1', '1 [Ancient|Ancient Augment]', \"1 [AldursLegacy|Aldur's Legacy]\" or absent), categories: {<slot label>: {target: [item classes] | 'Armour' | 'All Equipment' | '[MartialWeapon|Martial Weapon]' | 'Wand or Staff', stat_text: [..] (may be absent), stats: [{id, local}], bonded_stat_text: [..], bonded_stats: [..]}}}. Slot labels: All, Martial Weapon, Wand or Staff, Sceptre, Caster Weapon, Martial Or Caster Weapon, Armour, Body Armour, Helmet, Gloves, Boots, Shield, Buckler, Shield or Buckler, Focus, Wand, Staff, Bow, Crossbow, Spear, Quarterstaff, One/Two Hand Mace, Talisman and combos. Text uses the [Key|Shown] markup of mods.json.",
+  "notes": "313 entries (221 Rune, 52 SoulCore, 35 Idol, 4 AbyssalEye, 1 CongealedMist); file Last-Modified 2026-09-11 (0.5.5b). Same host the app already uses for mods.min.json / base_items.min.json (src/main/craft.js REPOE). 'bonded_*' = Bonded effects that apply only with the Shaman notable Wisdom of the Maji - ignore for normal pricing (some runes, e.g. Perfect Adept/Robust/Resolve on weapons, have ONLY bonded text there). One augment grants the line of the slot it is socketed in (Perfect Iron Rune: martial 20% inc Physical Damage, wand/staff 35% Spell Damage, armour 20% inc Armour/Evasion/ES). 'Armour' label covers all armour incl. shields/foci (M). Prices: poe.ninja Forbidden Rites 2026-10-18; Idols and Aldur's Legacy runes have no exchange price.",
+  "top": {
+   "martialWeapon": [
+    {
+     "name": "Perfect Iron Rune",
+     "type": "Rune",
+     "level": 50,
+     "limit": null,
+     "slot": "Martial Weapon",
+     "text": "20% increased Physical Damage",
+     "priceDiv": 2.59
+    },
+    {
+     "name": "Perfect Desert Rune",
+     "type": "Rune",
+     "level": 50,
+     "limit": null,
+     "slot": "Martial Weapon",
+     "text": "Adds 17 to 20 Fire Damage",
+     "priceDiv": 2.82
+    },
+    {
+     "name": "Perfect Glacial Rune",
+     "type": "Rune",
+     "level": 50,
+     "limit": null,
+     "slot": "Martial Weapon",
+     "text": "Adds 16 to 20 Cold Damage",
+     "priceDiv": 2.74
+    },
+    {
+     "name": "Perfect Storm Rune",
+     "type": "Rune",
+     "level": 50,
+     "limit": null,
+     "slot": "Martial Weapon",
+     "text": "Adds 1 to 40 Lightning Damage",
+     "priceDiv": 2.77
+    },
+    {
+     "name": "Soul Core of Quipolatl",
+     "type": "SoulCore",
+     "level": 0,
+     "limit": null,
+     "slot": "Martial Weapon",
+     "text": "5% increased Attack Speed",
+     "priceDiv": 0.593
+    },
+    {
+     "name": "Soul Core of Citaqualotl",
+     "type": "SoulCore",
+     "level": 0,
+     "limit": null,
+     "slot": "Martial Weapon",
+     "text": "40% increased Elemental Damage with Attacks",
+     "priceDiv": 0.181
+    },
+    {
+     "name": "Soul Core of Topotante",
+     "type": "SoulCore",
+     "level": 0,
+     "limit": "1",
+     "slot": "Martial Weapon",
+     "text": "Attacks with this Weapon Penetrate 25% Elemental Resistances",
+     "priceDiv": 0.007
+    },
+    {
+     "name": "Fenumus' Rune of Agony",
+     "type": "Rune",
+     "level": 50,
+     "limit": "1",
+     "slot": "Martial Weapon",
+     "text": "Gain 13% of Damage as Extra Chaos Damage",
+     "priceDiv": 0.21
+    },
+    {
+     "name": "Saqawal's Rune of the Sky",
+     "type": "Rune",
+     "level": 50,
+     "limit": "1",
+     "slot": "Martial Weapon",
+     "text": "Gain 5% of Damage as Extra Damage of all Elements",
+     "priceDiv": 0.161
+    },
+    {
+     "name": "Farrul's Rune of the Hunt",
+     "type": "Rune",
+     "level": 50,
+     "limit": "1",
+     "slot": "Martial Weapon",
+     "text": "50% increased Attack Damage against Rare or Unique Enemies",
+     "priceDiv": 0.078
+    },
+    {
+     "name": "Perfect Body Rune",
+     "type": "Rune",
+     "level": 50,
+     "limit": null,
+     "slot": "Martial Weapon",
+     "text": "Leeches 6% of Physical Damage as Life",
+     "priceDiv": 2.89
+    },
+    {
+     "name": "Perfect Vision Rune",
+     "type": "Rune",
+     "level": 50,
+     "limit": null,
+     "slot": "Martial Weapon",
+     "text": "+150 to Accuracy Rating",
+     "priceDiv": 2.69
+    },
+    {
+     "name": "Xopec's Soul Core of Power",
+     "type": "SoulCore",
+     "level": 50,
+     "limit": "1",
+     "slot": "Martial Weapon",
+     "text": "50% chance when you gain a Power Charge to gain an additional Power Charge",
+     "priceDiv": 1.96
+    },
+    {
+     "name": "Jiquani's Soul Core of Quaking",
+     "type": "SoulCore",
+     "level": 50,
+     "limit": "1",
+     "slot": "Martial Or Caster Weapon",
+     "text": "+1 to Level of all Slam Skill Gems",
+     "priceDiv": 0.448
+    },
+    {
+     "name": "Thrud's Might",
+     "type": "Rune",
+     "level": 0,
+     "limit": "1",
+     "slot": "Martial Or Caster Weapon",
+     "text": "Can roll Destruction modifiers",
+     "priceDiv": 0.316
+    }
+   ],
+   "casterWeapon": [
+    {
+     "name": "Perfect Iron Rune",
+     "type": "Rune",
+     "level": 50,
+     "limit": null,
+     "slot": "Wand or Staff",
+     "text": "35% increased Spell Damage",
+     "priceDiv": 2.59
+    },
+    {
+     "name": "Perfect Desert Rune",
+     "type": "Rune",
+     "level": 50,
+     "limit": null,
+     "slot": "Wand or Staff",
+     "text": "Gain 12% of Damage as Extra Fire Damage",
+     "priceDiv": 2.82
+    },
+    {
+     "name": "Perfect Glacial Rune",
+     "type": "Rune",
+     "level": 50,
+     "limit": null,
+     "slot": "Wand or Staff",
+     "text": "Gain 12% of Damage as Extra Cold Damage",
+     "priceDiv": 2.74
+    },
+    {
+     "name": "Perfect Storm Rune",
+     "type": "Rune",
+     "level": 50,
+     "limit": null,
+     "slot": "Wand or Staff",
+     "text": "Gain 12% of Damage as Extra Lightning Damage",
+     "priceDiv": 2.77
+    },
+    {
+     "name": "Hedgewitch Assandra's Rune of Wisdom",
+     "type": "Rune",
+     "level": 50,
+     "limit": "1",
+     "slot": "Wand or Staff",
+     "text": "+1 to Level of all Spell Skills",
+     "priceDiv": 0.124
+    },
+    {
+     "name": "Fenumus' Rune of Agony",
+     "type": "Rune",
+     "level": 50,
+     "limit": "1",
+     "slot": "Wand or Staff",
+     "text": "Gain 13% of Damage as Extra Chaos Damage",
+     "priceDiv": 0.21
+    },
+    {
+     "name": "Saqawal's Rune of the Sky",
+     "type": "Rune",
+     "level": 50,
+     "limit": "1",
+     "slot": "Wand or Staff",
+     "text": "Gain 5% of Damage as Extra Damage of all Elements",
+     "priceDiv": 0.161
+    },
+    {
+     "name": "Perfect Vision Rune",
+     "type": "Rune",
+     "level": 50,
+     "limit": null,
+     "slot": "Wand or Staff",
+     "text": "28% increased Critical Hit Chance for Spells",
+     "priceDiv": 2.69
+    },
+    {
+     "name": "Perfect Mind Rune",
+     "type": "Rune",
+     "level": 50,
+     "limit": null,
+     "slot": "Wand or Staff",
+     "text": "+90 to maximum Mana",
+     "priceDiv": 2.91
+    },
+    {
+     "name": "Xopec's Soul Core of Power",
+     "type": "SoulCore",
+     "level": 50,
+     "limit": "1",
+     "slot": "Wand or Staff",
+     "text": "50% chance when you gain a Power Charge to gain an additional Power Charge",
+     "priceDiv": 1.96
+    },
+    {
+     "name": "Legacy of Lifesprig",
+     "type": "Rune",
+     "level": 65,
+     "limit": "1 Aldur's Legacy",
+     "slot": "Wand",
+     "text": "+2 to Level of all Spell Skills",
+     "priceDiv": null
+    },
+    {
+     "name": "Legacy of Cursecarver",
+     "type": "Rune",
+     "level": 65,
+     "limit": "1 Aldur's Legacy",
+     "slot": "Wand",
+     "text": "+3 to Level of all Curse Skills",
+     "priceDiv": null
+    },
+    {
+     "name": "Legacy of Runeseeker's Call",
+     "type": "Rune",
+     "level": 65,
+     "limit": "1 Aldur's Legacy",
+     "slot": "Wand",
+     "text": "75% increased effect of Socketed Runes",
+     "priceDiv": null
+    },
+    {
+     "name": "Jiquani's Soul Core of Rippling",
+     "type": "SoulCore",
+     "level": 50,
+     "limit": "1",
+     "slot": "Martial Or Caster Weapon",
+     "text": "+1 to Level of all Nova Skill Gems",
+     "priceDiv": 1.65
+    },
+    {
+     "name": "Thrud's Might",
+     "type": "Rune",
+     "level": 0,
+     "limit": "1",
+     "slot": "Martial Or Caster Weapon",
+     "text": "Can roll Destruction modifiers",
+     "priceDiv": 0.316
+    }
+   ],
+   "sceptre": [
+    {
+     "name": "Xipocado's Soul Core of Dominion",
+     "type": "SoulCore",
+     "level": 50,
+     "limit": "1",
+     "slot": "Sceptre",
+     "text": "Minions deal 40% increased Damage with Command Skills",
+     "priceDiv": 0.076
+    },
+    {
+     "name": "Rune of the Hunt",
+     "type": "Rune",
+     "level": 15,
+     "limit": "1",
+     "slot": "Sceptre",
+     "text": "Companions deal 30% increased Damage",
+     "priceDiv": 0.07
+    },
+    {
+     "name": "Jiquani's Soul Core of Radiance",
+     "type": "SoulCore",
+     "level": 50,
+     "limit": "1",
+     "slot": "Martial Or Caster Weapon",
+     "text": "+1 to Level of all Herald Skill Gems",
+     "priceDiv": 0.5
+    }
+   ],
+   "bodyArmour": [
+    {
+     "name": "Emergent Vigour",
+     "type": "Rune",
+     "level": 60,
+     "limit": "1 Ancient Augment",
+     "slot": "Body Armour",
+     "text": "Gain Maximum Energy Shield equal to 50% of total / Strength Requirements of Equipped Armour Items",
+     "priceDiv": 42.06
+    },
+    {
+     "name": "Emergent Possibility",
+     "type": "Rune",
+     "level": 60,
+     "limit": "1 Ancient Augment",
+     "slot": "Body Armour",
+     "text": "15% of Chaos Damage from Hits taken as Damage of a random Element",
+     "priceDiv": 28.88
+    },
+    {
+     "name": "Guatelitzi's Thesis",
+     "type": "SoulCore",
+     "level": 60,
+     "limit": "1 Ancient Augment",
+     "slot": "Body Armour",
+     "text": "10% of Physical Damage prevented Recouped as Life",
+     "priceDiv": 16.31
+    },
+    {
+     "name": "Tecrod's Gaze",
+     "type": "AbyssalEye",
+     "level": 60,
+     "limit": "1 Ancient Augment",
+     "slot": "Body Armour",
+     "text": "Regenerate 1.5% of maximum Life per second",
+     "priceDiv": 11.84
+    },
+    {
+     "name": "Perfect Body Rune",
+     "type": "Rune",
+     "level": 50,
+     "limit": null,
+     "slot": "Armour",
+     "text": "+75 to maximum Life",
+     "priceDiv": 2.89
+    },
+    {
+     "name": "Perfect Iron Rune",
+     "type": "Rune",
+     "level": 50,
+     "limit": null,
+     "slot": "Armour",
+     "text": "20% increased Armour, Evasion and Energy Shield",
+     "priceDiv": 2.59
+    },
+    {
+     "name": "Perfect Desert Rune",
+     "type": "Rune",
+     "level": 50,
+     "limit": null,
+     "slot": "Armour",
+     "text": "+22% to Fire Resistance",
+     "priceDiv": 2.82
+    },
+    {
+     "name": "Perfect Glacial Rune",
+     "type": "Rune",
+     "level": 50,
+     "limit": null,
+     "slot": "Armour",
+     "text": "+22% to Cold Resistance",
+     "priceDiv": 2.74
+    },
+    {
+     "name": "Perfect Storm Rune",
+     "type": "Rune",
+     "level": 50,
+     "limit": null,
+     "slot": "Armour",
+     "text": "+22% to Lightning Resistance",
+     "priceDiv": 2.77
+    },
+    {
+     "name": "Soul Core of Citaqualotl",
+     "type": "SoulCore",
+     "level": 0,
+     "limit": null,
+     "slot": "Armour",
+     "text": "+6% to all Elemental Resistances",
+     "priceDiv": 0.181
+    },
+    {
+     "name": "Soul Core of Tacati",
+     "type": "SoulCore",
+     "level": 0,
+     "limit": null,
+     "slot": "Armour",
+     "text": "+13% to Chaos Resistance",
+     "priceDiv": 0.076
+    },
+    {
+     "name": "Rune of the Blossom",
+     "type": "Rune",
+     "level": 15,
+     "limit": "1",
+     "slot": "Body Armour",
+     "text": "+50 to Spirit ; -1 to Spirit per 2 Levels",
+     "priceDiv": 0.134
+    },
+    {
+     "name": "Medved's Tending",
+     "type": "Rune",
+     "level": 0,
+     "limit": "1",
+     "slot": "Body Armour",
+     "text": "Can roll Soul modifiers",
+     "priceDiv": 0.146
+    }
+   ],
+   "helmet": [
+    {
+     "name": "Jiquani's Thesis",
+     "type": "SoulCore",
+     "level": 60,
+     "limit": "1 Ancient Augment",
+     "slot": "Helmet",
+     "text": "+1 to maximum Mana per 3 Item Armour on Equipped Helmet",
+     "priceDiv": 226
+    },
+    {
+     "name": "Raven-Touched Shard",
+     "type": "CongealedMist",
+     "level": 60,
+     "limit": "1",
+     "slot": "Helmet",
+     "text": "Raven-Touched",
+     "priceDiv": 208.4
+    },
+    {
+     "name": "Emergent Vigour",
+     "type": "Rune",
+     "level": 60,
+     "limit": "1 Ancient Augment",
+     "slot": "Helmet",
+     "text": "+1 to maximum Life per 8 Armour on Equipped Helmet",
+     "priceDiv": 42.06
+    },
+    {
+     "name": "Kurgal's Gaze",
+     "type": "AbyssalEye",
+     "level": 60,
+     "limit": "1 Ancient Augment",
+     "slot": "Helmet",
+     "text": "Increases and Reductions to Life Regeneration Rate also apply to Mana Regeneration Rate",
+     "priceDiv": 31.04
+    },
+    {
+     "name": "Guatelitzi's Thesis",
+     "type": "SoulCore",
+     "level": 60,
+     "limit": "1 Ancient Augment",
+     "slot": "Helmet",
+     "text": "Gain Armour equal to 35% of Life Lost from Hits in the past 8 seconds",
+     "priceDiv": 16.31
+    },
+    {
+     "name": "Atziri's Soul Core of Devotion",
+     "type": "SoulCore",
+     "level": 50,
+     "limit": "1",
+     "slot": "Helmet",
+     "text": "Corrupting will always result in change ; 1% increased Spirit for each Corrupted Item Equipped",
+     "priceDiv": 8.63
+    },
+    {
+     "name": "Quipolatl's Soul Core of Flow",
+     "type": "SoulCore",
+     "level": 50,
+     "limit": "1",
+     "slot": "Helmet",
+     "text": "8% increased Skill Effect Duration ; 8% increased Cooldown Recovery Rate",
+     "priceDiv": 0.635
+    },
+    {
+     "name": "Perfect Body Rune",
+     "type": "Rune",
+     "level": 50,
+     "limit": null,
+     "slot": "Armour",
+     "text": "+75 to maximum Life",
+     "priceDiv": 2.89
+    },
+    {
+     "name": "Perfect Desert Rune",
+     "type": "Rune",
+     "level": 50,
+     "limit": null,
+     "slot": "Armour",
+     "text": "+22% to Fire Resistance",
+     "priceDiv": 2.82
+    },
+    {
+     "name": "Soul Core of Citaqualotl",
+     "type": "SoulCore",
+     "level": 0,
+     "limit": null,
+     "slot": "Armour",
+     "text": "+6% to all Elemental Resistances",
+     "priceDiv": 0.181
+    },
+    {
+     "name": "Vorana's Carnage",
+     "type": "Rune",
+     "level": 0,
+     "limit": "1",
+     "slot": "Helmet",
+     "text": "Can roll Berserking modifiers",
+     "priceDiv": 0.049
+    }
+   ],
+   "gloves": [
+    {
+     "name": "Jiquani's Thesis",
+     "type": "SoulCore",
+     "level": 60,
+     "limit": "1 Ancient Augment",
+     "slot": "Gloves",
+     "text": "Energy Shield Recharge starts after spending a total of /  2000 Mana, no more than once every 2 seconds",
+     "priceDiv": 226
+    },
+    {
+     "name": "Kurgal's Gaze",
+     "type": "AbyssalEye",
+     "level": 60,
+     "limit": "1 Ancient Augment",
+     "slot": "Gloves",
+     "text": "40% increased effect of Arcane Surge on you",
+     "priceDiv": 31.04
+    },
+    {
+     "name": "Emergent Possibility",
+     "type": "Rune",
+     "level": 60,
+     "limit": "1 Ancient Augment",
+     "slot": "Gloves",
+     "text": "Gain 1% of Damage as Extra Damage of a random Element per / Rune Socketed in Equipped Items",
+     "priceDiv": 28.88
+    },
+    {
+     "name": "Tecrod's Gaze",
+     "type": "AbyssalEye",
+     "level": 60,
+     "limit": "1 Ancient Augment",
+     "slot": "Gloves",
+     "text": "25% increased Life Cost Efficiency",
+     "priceDiv": 11.84
+    },
+    {
+     "name": "Emergent Protection",
+     "type": "Rune",
+     "level": 60,
+     "limit": "1 Ancient Augment",
+     "slot": "Gloves",
+     "text": "Banners also grant 2% of Life Regenerated per second to affected targets",
+     "priceDiv": 5.33
+    },
+    {
+     "name": "Perfect Body Rune",
+     "type": "Rune",
+     "level": 50,
+     "limit": null,
+     "slot": "Armour",
+     "text": "+75 to maximum Life",
+     "priceDiv": 2.89
+    },
+    {
+     "name": "Perfect Desert Rune",
+     "type": "Rune",
+     "level": 50,
+     "limit": null,
+     "slot": "Armour",
+     "text": "+22% to Fire Resistance",
+     "priceDiv": 2.82
+    },
+    {
+     "name": "Soul Core of Citaqualotl",
+     "type": "SoulCore",
+     "level": 0,
+     "limit": null,
+     "slot": "Armour",
+     "text": "+6% to all Elemental Resistances",
+     "priceDiv": 0.181
+    },
+    {
+     "name": "Kolr's Hunt",
+     "type": "Rune",
+     "level": 0,
+     "limit": "1",
+     "slot": "Gloves",
+     "text": "Can roll Marksman modifiers",
+     "priceDiv": 0.995
+    },
+    {
+     "name": "Katla's Gloom",
+     "type": "Rune",
+     "level": 0,
+     "limit": "1",
+     "slot": "Gloves",
+     "text": "Can roll Decay modifiers",
+     "priceDiv": 0.219
+    },
+    {
+     "name": "Cadigan's Epiphany",
+     "type": "Rune",
+     "level": 0,
+     "limit": "1",
+     "slot": "Gloves",
+     "text": "Destroys all Augment Sockets on the item to create a Jewel Socket",
+     "priceDiv": 0.924
+    },
+    {
+     "name": "The Greatwolf's Rune of Claws",
+     "type": "Rune",
+     "level": 50,
+     "limit": "1",
+     "slot": "Gloves",
+     "text": "Adds 5 to 12 Physical Damage to Attacks",
+     "priceDiv": 0.119
+    }
+   ],
+   "boots": [
+    {
+     "name": "Jiquani's Thesis",
+     "type": "SoulCore",
+     "level": 60,
+     "limit": "1 Ancient Augment",
+     "slot": "Boots",
+     "text": "Increases and Reductions to Movement Speed also /  apply to Energy Shield Recharge Rate",
+     "priceDiv": 226
+    },
+    {
+     "name": "Kurgal's Gaze",
+     "type": "AbyssalEye",
+     "level": 60,
+     "limit": "1 Ancient Augment",
+     "slot": "Boots",
+     "text": "15% increased Mana Cost Efficiency if you haven't Dodge Rolled Recently",
+     "priceDiv": 31.04
+    },
+    {
+     "name": "Tecrod's Gaze",
+     "type": "AbyssalEye",
+     "level": 60,
+     "limit": "1 Ancient Augment",
+     "slot": "Boots",
+     "text": "10% increased Movement Speed when on Low Life",
+     "priceDiv": 11.84
+    },
+    {
+     "name": "Guatelitzi's Thesis",
+     "type": "SoulCore",
+     "level": 60,
+     "limit": "1 Ancient Augment",
+     "slot": "Boots",
+     "text": "Lose 5% of maximum Life per second while Sprinting ; 25% increased Movement Speed while Sprinting",
+     "priceDiv": 16.31
+    },
+    {
+     "name": "Farrul's Rune of the Chase",
+     "type": "Rune",
+     "level": 50,
+     "limit": "1",
+     "slot": "Boots",
+     "text": "5% increased Movement Speed",
+     "priceDiv": 0.064
+    },
+    {
+     "name": "Zalatl's Soul Core of Insulation",
+     "type": "SoulCore",
+     "level": 50,
+     "limit": "1",
+     "slot": "Boots",
+     "text": "+40% of Armour also applies to Lightning Damage",
+     "priceDiv": 0.771
+    },
+    {
+     "name": "Soul Core of Quipolatl",
+     "type": "SoulCore",
+     "level": 0,
+     "limit": null,
+     "slot": "Boots",
+     "text": "15% reduced Slowing Potency of Debuffs on You",
+     "priceDiv": 0.593
+    },
+    {
+     "name": "Perfect Body Rune",
+     "type": "Rune",
+     "level": 50,
+     "limit": null,
+     "slot": "Armour",
+     "text": "+75 to maximum Life",
+     "priceDiv": 2.89
+    },
+    {
+     "name": "Perfect Desert Rune",
+     "type": "Rune",
+     "level": 50,
+     "limit": null,
+     "slot": "Armour",
+     "text": "+22% to Fire Resistance",
+     "priceDiv": 2.82
+    },
+    {
+     "name": "Soul Core of Citaqualotl",
+     "type": "SoulCore",
+     "level": 0,
+     "limit": null,
+     "slot": "Armour",
+     "text": "+6% to all Elemental Resistances",
+     "priceDiv": 0.181
+    },
+    {
+     "name": "Uhtred's Sidereus",
+     "type": "Rune",
+     "level": 0,
+     "limit": "1",
+     "slot": "Boots",
+     "text": "Can roll Chronomancy modifiers",
+     "priceDiv": 0.479
+    }
+   ],
+   "shieldFocus": [
+    {
+     "name": "Perfect Body Rune",
+     "type": "Rune",
+     "level": 50,
+     "limit": null,
+     "slot": "Armour",
+     "text": "+75 to maximum Life",
+     "priceDiv": 2.89
+    },
+    {
+     "name": "Perfect Iron Rune",
+     "type": "Rune",
+     "level": 50,
+     "limit": null,
+     "slot": "Armour",
+     "text": "20% increased Armour, Evasion and Energy Shield",
+     "priceDiv": 2.59
+    },
+    {
+     "name": "Perfect Desert Rune",
+     "type": "Rune",
+     "level": 50,
+     "limit": null,
+     "slot": "Armour",
+     "text": "+22% to Fire Resistance",
+     "priceDiv": 2.82
+    },
+    {
+     "name": "Soul Core of Citaqualotl",
+     "type": "SoulCore",
+     "level": 0,
+     "limit": null,
+     "slot": "Armour",
+     "text": "+6% to all Elemental Resistances",
+     "priceDiv": 0.181
+    },
+    {
+     "name": "Soul Core of Ticaba",
+     "type": "SoulCore",
+     "level": 0,
+     "limit": "1",
+     "slot": "Shield or Buckler",
+     "text": "Hits against you have 50% reduced Critical Damage Bonus",
+     "priceDiv": 0.012
+    },
+    {
+     "name": "Rune of Vitality",
+     "type": "Rune",
+     "level": 15,
+     "limit": "1",
+     "slot": "Shield or Buckler",
+     "text": "Recover 15 Life when you Block",
+     "priceDiv": 0.142
+    },
+    {
+     "name": "Atmohua's Soul Core of Retreat",
+     "type": "SoulCore",
+     "level": 50,
+     "limit": "1",
+     "slot": "Focus",
+     "text": "30% increased Energy Shield from Equipped Body Armour",
+     "priceDiv": 0.033
+    },
+    {
+     "name": "Ancient Rune of Witchcraft",
+     "type": "Rune",
+     "level": 30,
+     "limit": "1",
+     "slot": "Focus",
+     "text": "40% increased Area of Effect of Curses",
+     "priceDiv": 0.004
+    },
+    {
+     "name": "Ancient Rune of Retaliation",
+     "type": "Rune",
+     "level": 30,
+     "limit": "1",
+     "slot": "Shield",
+     "text": "8% increased Attack Speed if you have Blocked Recently",
+     "priceDiv": 0.01
+    },
+    {
+     "name": "Ancient Rune of Dueling",
+     "type": "Rune",
+     "level": 30,
+     "limit": "1",
+     "slot": "Buckler",
+     "text": "30% increased Parried Debuff Magnitude",
+     "priceDiv": 0.095
+    }
+   ],
+   "anySlotMeta": [
+    {
+     "name": "Astrid's Creativity",
+     "type": "Rune",
+     "level": 0,
+     "limit": "1",
+     "slot": "All",
+     "text": "Can have 1 additional Crafted Modifier",
+     "priceDiv": 3.55
+    },
+    {
+     "name": "Serle's Triumph",
+     "type": "Rune",
+     "level": 0,
+     "limit": "1",
+     "slot": "All",
+     "text": "+1 Suffix Modifier allowed",
+     "priceDiv": 2.98
+    },
+    {
+     "name": "Masterwork Rune",
+     "type": "Rune",
+     "level": 0,
+     "limit": null,
+     "slot": "All",
+     "text": "Upgrades a socketed Rune",
+     "priceDiv": 0.918
+    },
+    {
+     "name": "Aldur's Legacy",
+     "type": "Rune",
+     "level": 0,
+     "limit": null,
+     "slot": "All",
+     "text": "When socketed into a Unique Kalguuran or Ezomyte item, destroys the item to create a Rune imbued with that item's power",
+     "priceDiv": 484.2
+    }
+   ]
+  }
+ }
+}
