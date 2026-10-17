@@ -510,7 +510,8 @@ function buildsQuery() {
   if (!['Rare', 'Magic', 'Normal'].includes(item.rarity) || !f.category) return null;
   const mods = f.mods.filter((m) => m.enabled && m.statId && m.tag !== 'pseudo')
     .sort((a, b) => (b.importance || 0) - (a.importance || 0)).slice(0, 3).map((m) => m.text.split('\n')[0]);
-  return { itemClass: item.itemClass, rarity: item.rarity, baseType: f.useType ? item.baseType : undefined, mods };
+  // Белые и магические вещи — заготовки: носят их уже редкими, поэтому спрос — по редким (магических почти никто не носит).
+  return { itemClass: item.itemClass, rarity: 'Rare', baseType: f.useType ? item.baseType : undefined, mods };
 }
 
 let buildsSeq = 0;
@@ -549,7 +550,7 @@ async function loadDemand() {
   lastDemand = null;
   box.innerHTML = `<div class="sect"><span>${t('Demand')}</span></div><div class="muted center">${t('Loading from poe.ninja…')}</div>`;
   try {
-    const d = await window.pc.demand({ itemClass: item.itemClass, rarity: item.rarity === 'Normal' ? 'Rare' : item.rarity });
+    const d = await window.pc.demand({ itemClass: item.itemClass, rarity: 'Rare' });
     if (seq !== demandSeq) return;
     lastDemand = d;
     renderDemand(d);

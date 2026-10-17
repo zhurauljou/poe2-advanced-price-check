@@ -1,0 +1,14 @@
+Item Class: Foci
+Rarity: Magic
+Incandescent Tasalian Focus of the Infinite
+--------
+Energy Shield: 174 (augmented)
+--------
+Requires: Level 80, 115 Int
+--------
+Item Level: 80
+--------
+{ Prefix Modifier "Incandescent" (Tier: 1) — Defences }
++60(57-63) to maximum Energy Shield
+{ Suffix Modifier "of the Infinite" (Tier: 3) — Attribute }
++26(25-27) to Intelligence

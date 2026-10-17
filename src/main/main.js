@@ -282,7 +282,7 @@ async function priceCheck(text) {
   // поэтому ждём только в первый раз и не дольше 1.5 с; не успели — работаем без него.
   let demand = null;
   if (['Rare', 'Magic', 'Normal'].includes(item.rarity)) {
-    const q = categoryDemand({ league, itemClass: item.itemClass, rarity: item.rarity === 'Normal' ? 'Rare' : item.rarity, limit: 80, minLevel: demandLevel() },
+    const q = categoryDemand({ league, itemClass: item.itemClass, rarity: 'Rare', limit: 80, minLevel: demandLevel() },
       api.fetchBuffer).catch((e) => { log('demand', e.message); return null; });
     demand = await Promise.race([q, new Promise((r) => setTimeout(() => r(null), 1500))]);
   }
@@ -503,7 +503,7 @@ app.whenReady().then(() => {
   ipcMain.handle('craft', async () => {
     if (!lastItem) return { note: t('No item') };
     const league = settings.get().league;
-    const rarity = lastItem.rarity === 'Normal' ? 'Rare' : lastItem.rarity;
+    const rarity = 'Rare'; // белые и магические — заготовки под крафт: смотрим спрос на редкие такого класса
     const d = await categoryDemand({ league, itemClass: lastItem.itemClass, rarity, limit: 80, withMods: lastThemeMods, minLevel: demandLevel() },
       api.fetchBuffer).catch(() => null);
     const r = await craft.advise(lastItem, d && d.mods, api.cached);
