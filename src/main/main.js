@@ -165,6 +165,7 @@ let gameHwnd = 0;
 function hide() {
   if (cmpWin) cmpWin.hide();
   if (win && win.isVisible()) {
+    api.newGeneration(); // окно закрыли — оставшиеся поиски этой вещи лимит трейда не тратят
     if (win.isFocused() && gameHwnd) winapi.focus(gameHwnd);
     win.hide();
   }
@@ -301,6 +302,7 @@ async function priceCheck(text) {
     log('not an item:', text.slice(0, 80));
     return; // курсор не над предметом
   }
+  api.newGeneration(); // новая вещь — ещё не отправленные запросы прежней отменяются
   // Текст последнего предмета — для разбора ошибок парсера.
   try { require('fs').writeFileSync(path.join(app.getPath('userData'), 'last-item.txt'), text); } catch {}
   try {
@@ -555,10 +557,10 @@ app.whenReady().then(singleInstance).then((ok) => {
   demo.run({ ready: ensureReady(), priceCheck, openUpdates, windows: () => ({ main: win, cmp: cmpWin, upd: updWin }) });
 
   ipcMain.handle('search', (_e, item, filters, relax) => (demo.mockTrade()
-    ? demo.mockSearch(api.ninja.rates) : pricing.search(curLeague(), item, filters, relax)));
+    ? demo.mockSearch(api.ninja.rates) : api.forCurrent(() => pricing.search(curLeague(), item, filters, relax))));
   ipcMain.handle('unique-price', (_e, name, base) => api.uniquePrice(curLeague(), name, base));
   ipcMain.handle('quick-price', (_e, item, filters) => (demo.mockTrade()
-    ? demo.mockQuick() : pricing.quick(curLeague(), item, filters)));
+    ? demo.mockQuick() : api.forCurrent(() => pricing.quick(curLeague(), item, filters))));
   ipcMain.handle('set-league', async (_e, l) => {
     settings.set({ league: l });
     refreshTray();
@@ -592,7 +594,7 @@ app.whenReady().then(singleInstance).then((ok) => {
   ipcMain.handle('set-demand-level', (_e, l) => settings.set({ demandLevel: l }));
   ipcMain.handle('whisper-game', (_e, t) => whisperInGame(t));
   ipcMain.handle('listing-url', (_e, item, filters, account) => (demo.mockTrade() ? 'https://www.pathofexile.com/trade2'
-    : pricing.listingUrl(curLeague(), item, filters, account)));
+    : api.forCurrent(() => pricing.listingUrl(curLeague(), item, filters, account))));
   ipcMain.handle('open-url', (_e, u) => {
     if (/^https:\/\/((www\.)?pathofexile\.com|poe\.ninja|github\.com\/zhurauljou\/poe2-advanced-price-check)\//.test(u)) shell.openExternal(u);
   });

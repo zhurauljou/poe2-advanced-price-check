@@ -1,5 +1,6 @@
 // Сеть: официальный трейд PoE 2 (с соблюдением лимитов) и poe.ninja.
 const { net, app } = require('electron');
+const { AsyncLocalStorage } = require('async_hooks');
 const fs = require('fs');
 const path = require('path');
 const { t } = require('../shared/i18n');
@@ -20,6 +21,22 @@ const limits = {
 };
 // Дольше этого ждать молча не будем — сразу скажем пользователю.
 const MAX_SILENT_WAIT = 15000;
+
+// Ошибки лимита помечены ⏳ в начале текста: окно по нему понимает, что дальше искать бессмысленно (свойства
+// ошибки через IPC не доходят, текст — доходит). Отменённый запрос — ⊘: окно его не показывает.
+const limitError = (msg) => new Error(`⏳ ${msg}`);
+
+// Поколение запросов: каждая проверка вещи (и закрытие окна) начинает новое. Запрос трейда помнит своё поколение
+// (через AsyncLocalStorage — сквозь все await) и, если оно устарело, не тратит лимит: ещё не отправленные
+// запросы прежней вещи (поиск с ослаблением, «цена после крафта» по всем строкам…) отменяются.
+const owner = new AsyncLocalStorage();
+let generation = 0;
+const newGeneration = () => { generation++; };
+const forCurrent = (fn) => owner.run(generation, fn);
+function checkAlive() {
+  const g = owner.getStore();
+  if (g != null && g !== generation) throw new Error(`⊘ ${t('Cancelled — another item was checked')}`);
+}
 
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 
@@ -55,15 +72,16 @@ function waitText(ms) {
 async function waitSlot(kind) {
   const L = limits[kind];
   for (;;) {
+    checkAlive();
     const now = Date.now();
-    if (getBan() > now) throw new Error(t('Trade site rate limit hit — wait {time}', { time: waitText(getBan() - now) }));
+    if (getBan() > now) throw limitError(t('Trade site rate limit hit — wait {time}', { time: waitText(getBan() - now) }));
     let wait = Math.max(0, L.blockedUntil - now);
     for (const [hits, period] of L.rules) {
       const inWin = L.hits.filter((t) => now - t < period * 1000);
       if (inWin.length >= hits) wait = Math.max(wait, inWin[0] + period * 1000 - now + 50);
     }
     if (!wait) break;
-    if (wait > MAX_SILENT_WAIT) throw new Error(t('Trade request limit almost used up — wait {time}', { time: waitText(wait) }));
+    if (wait > MAX_SILENT_WAIT) throw limitError(t('Trade request limit almost used up — wait {time}', { time: waitText(wait) }));
     if (module.exports.onWait) module.exports.onWait(wait); // окно покажет «ждём лимит», а не молча висит
     await sleep(wait);
   }
@@ -98,7 +116,7 @@ async function tradeRequest(kind, url, body) {
   if (res.status === 429) {
     const ra = Number(res.headers.get('retry-after') || 60);
     setBan(ra);
-    throw new Error(t('Trade site rate limit hit — wait {time}', { time: waitText(ra * 1000) }));
+    throw limitError(t('Trade site rate limit hit — wait {time}', { time: waitText(ra * 1000) }));
   }
   const data = await res.json().catch(() => null);
   if (!res.ok) throw new Error((data && data.error && data.error.message) || t('Trade site responded {n}', { n: res.status }));
@@ -239,5 +257,5 @@ async function uniquePrice(league, name, baseType) {
 }
 
 module.exports = {
-  TRADE, tradeRequest, fetchBuffer, cached, tradeStats, tradeItems, tradeStatic, tradeLeagues, loadNinja, ninja, uniquePrice,
+  TRADE, tradeRequest, newGeneration, forCurrent, fetchBuffer, cached, tradeStats, tradeItems, tradeStatic, tradeLeagues, loadNinja, ninja, uniquePrice,
 };

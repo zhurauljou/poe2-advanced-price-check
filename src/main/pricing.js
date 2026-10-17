@@ -549,7 +549,7 @@ async function search(league, item, filters, relax = false) {
     try {
       s = await api.tradeRequest('search', `${api.TRADE}/api/trade2/search/poe2/${L}`, buildQuery(item, f));
     } catch (e) {
-      if (!s) throw e;
+      if (!s || e.message.startsWith('⊘')) throw e;
       log('relax stopped:', e.message);
       relaxStopped = e.message;
       // Лимит кончился посреди ослабления — показываем то, что уже нашли, со старыми фильтрами.
@@ -571,8 +571,18 @@ async function search(league, item, filters, relax = false) {
   const url = `${api.TRADE}/trade2/search/poe2/${L}/${s.id}`;
   const ids = (s.result || []).slice(0, 10);
   let listings = [];
+  let listingsError = null; // поиск прошёл, а лоты не скачались (лимит) — показываем, сколько нашли, и ссылку
+  let fr = null;
   if (ids.length) {
-    const fr = await api.tradeRequest('fetch', `${api.TRADE}/api/trade2/fetch/${ids.join(',')}?query=${s.id}`);
+    try {
+      fr = await api.tradeRequest('fetch', `${api.TRADE}/api/trade2/fetch/${ids.join(',')}?query=${s.id}`);
+    } catch (e) {
+      if (e.message.startsWith('⊘')) throw e;
+      log('listings fetch failed:', e.message);
+      listingsError = e.message;
+    }
+  }
+  if (fr) {
     listings = (fr.result || []).filter(Boolean).map((r) => {
       const p = r.listing.price || {};
       const cur = currencyInfo && currencyInfo.get(p.currency);
@@ -598,15 +608,16 @@ async function search(league, item, filters, relax = false) {
   let floor = null;
   const loose = JSON.parse(JSON.stringify(f));
   const tight = loose.mods.filter((m) => m.enabled && m.range && m.min != null && m.min > Math.ceil(m.range.lo));
-  if (!f.rollsLoosened && tight.length) {
+  if (!f.rollsLoosened && tight.length && !listingsError) {
     tight.forEach((m) => { m.min = Math.ceil(m.range.lo); });
     try {
       floor = await quickPrices(L, item, loose);
     } catch (e) {
+      if (e.message.startsWith('⊘')) throw e;
       log('floor price skipped:', e.message);
     }
   }
-  return { total: s.total, url, listings, rates: api.ninja.rates, filters: f, dropped,
+  return { total: s.total, url, listings, listingsError, rates: api.ninja.rates, filters: f, dropped,
     relaxStopped, floor };
 }
 

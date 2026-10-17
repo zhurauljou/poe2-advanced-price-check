@@ -12,8 +12,10 @@ function esc(s) {
 
 // Текст ошибки из главного процесса без обёртки Electron («Error invoking remote method 'search': Error: …»).
 function errText(e) {
-  return String((e && e.message) || e).replace(/^Error invoking remote method '\w+': (Error: )?/, '');
+  return String((e && e.message) || e).replace(/^Error invoking remote method '[\w-]+': (Error: )?/, '');
 }
+// Лимит трейда (⏳) — следующие запросы тоже упадут, серию поисков останавливаем.
+const isLimit = (e) => errText(e).startsWith('⏳');
 
 function fmt(n) {
   if (n == null || !isFinite(n)) return '—';
@@ -388,6 +390,11 @@ function ageSummary(priced, usedFresh) {
 
 function renderTradeHero(r) {
   const divs = r.listings.map((l) => l.divine).filter((v) => v != null).sort((a, b) => a - b);
+  if (!divs.length && r.listingsError) {
+    $('hero').innerHTML = voidState('⏳', t('Found {n} listings, but could not load them', { n: r.total }), esc(r.listingsError),
+      [['retry', t('Try again')], ['trade', t('Open trade site')]]);
+    return;
+  }
   if (!divs.length) {
     $('hero').innerHTML = voidState('∅', t('No similar items listed right now'),
       t('It may be a rare high-end item. Uncheck filters or lower the minimums to widen the search.'),
@@ -533,6 +540,14 @@ async function runImpact() {
     } catch (e) {
       if (seq !== impactSeq) return;
       state.impact[i] = { error: errText(e) };
+      if (isLimit(e)) {
+        // Остальные тоже упрутся в лимит — не ждём, помечаем сразу.
+        for (const j of idx) if (state.impact[j] && state.impact[j].wait) state.impact[j] = { error: errText(e) };
+        setStatus(errText(e), true);
+        renderFilters();
+        fit();
+        return;
+      }
     }
     renderFilters();
     fit();
@@ -671,14 +686,16 @@ function setTab(name) {
 let craftFor = null;
 async function loadCraft() {
   if (craftFor === state) return;
-  craftFor = state;
+  const mine = craftFor = state;
   const box = $('craft');
   box.innerHTML = `<div class="sect"><span>${t('Craft')}</span></div><div class="muted center">${t('Loading mod pool…')}</div>`;
   fit();
+  // Ответ для прежней вещи (пришла новая, пока считали) — не рисуем, ни советы, ни ошибку.
   try {
     const r = await window.pc.craft();
-    if (craftFor === state) renderCraft(r);
+    if (craftFor === mine && state === mine) renderCraft(r);
   } catch (e) {
+    if (craftFor !== mine || state !== mine) return;
     box.innerHTML = `<div class="sect"><span>${t('Craft')}</span></div>${voidState('⚠', t('Mod pool not loaded'), esc(errText(e)))}`;
   }
   fit();
@@ -708,7 +725,12 @@ async function priceAll(btn) {
   const mine = state;
   for (const b of [...list.querySelectorAll('[data-ck]')]) {
     if (state !== mine || !list.isConnected) return;
-    await priceCraft(b);
+    if (await priceCraft(b) === 'limit') {
+      // Лимит трейда: сортировать нечего — возвращаем кнопку, можно повторить позже.
+      btn.disabled = false;
+      btn.textContent = `⇅ ${t('Price all and sort')}`;
+      return;
+    }
   }
   const rows = [...list.querySelectorAll('.brow')];
   const val = (r) => (r.dataset.delta == null || r.dataset.delta === '' ? -1e9 : Number(r.dataset.delta));
@@ -724,6 +746,7 @@ async function priceAll(btn) {
 async function priceCraft(b) {
   const c = craftCands.get(b.dataset.ck);
   if (!c || !state) return;
+  const mine = state;
   b.disabled = true;
   b.textContent = '…';
   const f = withMods(JSON.parse(JSON.stringify(state.filters)), [c]);
@@ -731,6 +754,7 @@ async function priceCraft(b) {
     // Магическая вещь после Regal Orb — уже редкая: ищем среди редких.
     const it = state.item.rarity === 'Magic' ? { ...state.item, rarity: 'Rare' } : state.item;
     const q = await window.pc.quickPrice(it, f);
+    if (state !== mine) return; // пока искали, проверили другую вещь — её оценку не трогаем
     const v = estimate(q.lots);
     let html;
     const row = b.closest('.brow');
@@ -745,9 +769,11 @@ async function priceCraft(b) {
     }
     b.outerHTML = html;
   } catch (e) {
+    if (state !== mine) return;
     b.disabled = false;
     b.textContent = t('price?');
     setStatus(errText(e), true);
+    if (isLimit(e)) return 'limit';
   }
   fit();
 }
@@ -1863,9 +1889,13 @@ $('banner').addEventListener('click', (e) => {
   renderBanner();
 });
 
-$('search').addEventListener('click', () => { setNote(''); runSearch(); loadBuilds(); });
+function searchNow() { setNote(''); runSearch(); loadBuilds(); }
+$('search').addEventListener('click', searchNow);
 document.addEventListener('keydown', (e) => {
-  if (e.key === 'Enter' && state && state.searchable) { setNote(''); runSearch(); }
+  // Enter — поиск на вкладке цены: не автоповтором (удержание жгло лимит), не во время поиска и не на кнопке
+  // (она нажмётся сама — иначе и действие кнопки, и поиск).
+  if (e.key === 'Enter' && state && state.searchable && !e.repeat && !$('search').disabled && !$('tab-price').hidden
+    && !e.target.closest('button, summary, a, [data-act]')) searchNow();
   if (e.key === 'Escape') {
     // Сначала закрываем открытый список лиг, а не всё окно.
     if (!$('leagueMenu').hidden) toggleLeagueMenu(false);

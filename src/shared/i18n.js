@@ -9,6 +9,7 @@
     '{n} free prefixes': ['{n} free prefix', '{n} free prefixes'],
     '{n} free suffixes': ['{n} free suffix', '{n} free suffixes'],
     '{n} mods in this total': ['{n} mod in this total', '{n} mods in this total'],
+    'Found {n} listings, but could not load them': ['Found {n} listing, but could not load it', 'Found {n} listings, but could not load them'],
   };
 
   const RU = {
@@ -99,6 +100,8 @@
     'adds ~0': '≈ 0',
     '≈{n}% of price': '≈{n}% цены',
     'Search failed': 'Поиск не удался',
+    'Found {n} listings, but could not load them': ['Нашёлся {n} лот, но загрузить его не удалось', 'Нашлось {n} лота, но загрузить их не удалось', 'Нашлось {n} лотов, но загрузить их не удалось'],
+    'Cancelled — another item was checked': 'Отменено — проверяется другая вещь',
     'Try again': 'Ещё раз',
     'No price data for this item': 'Для этой вещи нет данных о цене',
     'Too few listings — relaxed: {list}': 'Мало лотов — ослабили: {list}',
