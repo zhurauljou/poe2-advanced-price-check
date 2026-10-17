@@ -1547,13 +1547,18 @@ function compareModel(t) {
   for (const m of mods) if (m.statId && m.tag !== 'pseudo' && !m.option) add(ours, key(m.statId), Math.abs(m.value || 0));
   for (const m of t.mods) if (m.statId) add(theirs, key(m.statId), Math.abs(modValue(m.text) || 0));
   const ourOptions = new Set(mods.filter((m) => m.option).map((m) => m.text.toLowerCase()));
+  // Минус в самом тексте («-11% to all Elemental Resistances») — обычно недостаток, но нишевым билдам (Doryani и т.п.)
+  // бо́льший минус как раз нужен: такое отличие не «лучше» и не «хуже» — «±, зависит от билда», в ▲▼ не считается.
+  const penalty = new Set(mods.filter((m) => m.statId && /^-\d/.test(String(m.text).trim())).map((m) => key(m.statId)));
   const theirTexts = new Set(t.mods.map((m) => m.text.toLowerCase()));
   // better / worse / same — мод есть у обоих; extra — у нас такого нет; '' — не сравнить (нет id стата).
   const classify = (m) => {
     if (ourOptions.has(m.text.toLowerCase())) return 'same';
     if (!m.statId) return '';
     const k = key(m.statId);
-    return ours.has(k) ? compareClass(theirs.get(k), ours.get(k)) || 'same' : 'extra';
+    if (!ours.has(k)) return 'extra';
+    const c = compareClass(theirs.get(k), ours.get(k));
+    return (penalty.has(k) && (c === 'better' || c === 'worse') ? 'diff' : c) || 'same';
   };
   const missing = mods.filter((m) => m.statId && m.tag !== 'pseudo'
     && (m.option ? !theirTexts.has(m.text.toLowerCase()) : !theirs.has(key(m.statId))));
@@ -1600,13 +1605,13 @@ function showCompare(l, row) {
   if (!tip) return;
   const { item } = state;
   const { classify, missing: miss, key, ours, order } = compareModel(tip);
-  const mark = { better: '▲', worse: '▼', extra: '+', same: '' };
+  const mark = { better: '▲', worse: '▼', extra: '+', same: '', diff: '±' };
   // Совпадающие моды — в порядке нашей вещи, остальные (которых у нас нет) — в конце; у ▲▼ — наше значение.
   const rank = (m) => (m.statId && order.has(key(m.statId)) ? order.get(key(m.statId)) : 1e3);
   const modLines = tip.mods.map((m, i) => ({ m, i })).sort((a, b) => rank(a.m) - rank(b.m) || a.i - b.i).map(({ m }) => {
     const cls = classify(m);
-    const mine = (cls === 'better' || cls === 'worse') && ours.get(key(m.statId));
-    return `<div class="cm ${cls} d-${esc(m.domain)}">${mark[cls] ? `<i>${mark[cls]}</i>` : ''}${esc(m.text)}${mine ? `<span class="yours">${t('yours {x}', { x: fmt(mine) })}</span>` : ''}</div>`;
+    const mine = (cls === 'better' || cls === 'worse' || cls === 'diff') && ours.get(key(m.statId));
+    return `<div class="cm ${cls} d-${esc(m.domain)}"${cls === 'diff' ? ` title="${esc(t('A downside: a bigger minus is usually worse, but some builds want it'))}"` : ''}>${mark[cls] ? `<i>${mark[cls]}</i>` : ''}${esc(m.text)}${mine ? `<span class="yours">${t('yours {x}', { x: (cls === 'diff' ? '-' : '') + fmt(mine) })}</span>` : ''}</div>`;
   }).join('');
   const missing = miss.map((m) => `<div class="cm missing"><i>✗</i>${esc(m.text.split('\n').join(' + '))}</div>`).join('');
 
@@ -1630,7 +1635,7 @@ function showCompare(l, row) {
       ${modLines}
       ${tip.corrupted ? '<div class="cm corrupt">Corrupted</div>' : ''}
       ${missing ? `<div class="cmp-miss">${t("Yours has, theirs doesn't:")}</div>${missing}` : ''}
-      <div class="cmp-legend"><span class="better">▲ ${t('better')}</span> · <span class="worse">▼ ${t('worse')}</span> · <span class="extra">+ ${t("you don't have")}</span> — ${t('than your item')}</div>
+      <div class="cmp-legend"><span class="better">▲ ${t('better')}</span> · <span class="worse">▼ ${t('worse')}</span> · <span class="extra">+ ${t("you don't have")}</span> — ${t('than your item')}${tip.mods.some((m) => classify(m) === 'diff') ? ` · <span class="diff">± ${t('depends on the build')}</span>` : ''}</div>
     </div>`;
   // Карточка — в отдельном окне сбоку (не закрывает оверлей), напротив строки лота.
   window.pc.compareShow(html, row.getBoundingClientRect().top);

@@ -424,6 +424,8 @@
     "No finished items like the goal are listed — its price is unknown": "Готовых вещей как цель на трейде нет — её цена неизвестна",
     "Chaos Orb + Omen of Whittling would not help: it removes the lowest-level modifier, and that is «{mod}» (level {level})": "Chaos Orb + Omen of Whittling не поможет: он снимает мод самого низкого уровня, а это «{mod}» (уровень {level})",
     "Divine also rerolls {mods} — each becomes a random one of its variants (1 in {n} to keep it)": "Divine перекатит и {mods} — каждый станет случайным из своих вариантов (сохранить: 1 из {n})",
+    "A downside: a bigger minus is usually worse, but some builds want it": "Недостаток: больший минус обычно хуже, но некоторым билдам он нужен",
+    "depends on the build": "зависит от билда",
     common: 'частый', uncommon: 'средний', rare: 'редкий', 'chance ?': 'шанс ?',
     'Valuable modifiers cannot be estimated from trade listings — items with them are priced and listed differently': 'Шанс ценных модов по трейду не оценить — вещи с ними выставляют и оценивают иначе',
     'Rough estimate: Exalted Orb + omen of its side gives this modifier about 1 in {n} times': 'Грубая оценка: Exalted Orb с оменом этой стороны даёт этот мод примерно 1 раз из {n}',

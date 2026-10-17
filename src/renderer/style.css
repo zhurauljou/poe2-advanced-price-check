@@ -532,3 +532,4 @@ footer::before { bottom: 0; top: -12px; -webkit-backdrop-filter: blur(16px); bac
 .profit-row:first-of-type { border-top: 0; }
 .profit-row small { color: var(--muted); }
 .profit-row .rec { margin-left: 6px; font-size: 11px; color: var(--good); border: 1px solid var(--good); border-radius: 3px; padding: 0 4px; }
+.cm.diff i, .cmp-legend .diff { color: var(--warn); }
