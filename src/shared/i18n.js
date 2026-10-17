@@ -294,6 +294,8 @@
     'Add {mods}: Exalted Orb + Omen of {S} Exaltation': 'Добавить {mods}: Exalted Orb + Omen of {S} Exaltation',
     ' (Omen of Greater Exaltation adds two)': ' (Omen of Greater Exaltation добавит два)',
     'Goal': 'Цель',
+    'Price all and sort': 'Оценить все и отсортировать', 'pricing…': 'оцениваю…',
+    'One trade search per row, then the list is sorted by how much each modifier adds to the price': 'По одному поиску на строку, затем список сортируется по приросту цены',
     common: 'частый', uncommon: 'средний', rare: 'редкий', 'chance ?': 'шанс ?',
     'Valuable modifiers cannot be estimated from trade listings — items with them are priced and listed differently': 'Шанс ценных модов по трейду не оценить — вещи с ними выставляют и оценивают иначе',
     'Rough estimate: Exalted Orb + omen of its side gives this modifier about 1 in {n} times': 'Грубая оценка: Exalted Orb с оменом этой стороны даёт этот мод примерно 1 раз из {n}',

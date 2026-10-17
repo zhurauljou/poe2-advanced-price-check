@@ -623,14 +623,32 @@ const SIDE = { prefix: 'prefix', suffix: 'suffix' };
 // Кандидаты крафта по ключу кнопки «price?»: сколько будет стоить вещь, если этот мод встанет (нижний ролл тира).
 const craftCands = new Map();
 function craftRows(list) {
-  return list.map((c) => {
+  const rows = list.map((c) => {
     const key = String(craftCands.size);
     craftCands.set(key, c);
     const btn = c.stats ? `<button class="link cprice" data-ck="${key}" title="${t('Search for your item with this modifier added (lowest roll of the tier)')}">${t('price?')}</button>` : '';
     return `
-    <div class="brow ${heat(c.pct)}"><span class="bname">${esc(c.text)}<span class="craft-tier">T${c.tier}/${c.tiers}${c.range ? ` · ${esc(c.range)}` : ''}</span>${chanceTag(c.chance, c.chanceUnknown)}${c.essence ? `<span class="ess" title="${esc(t('{essence} makes a magic item rare with this modifier: {tiers}', { essence: c.essence.name, tiers: c.essence.tiers.join(' · ') }))}">◈ ${esc(c.essence.short)}</span>` : ''}${btn}</span>
+    <div class="brow ${heat(c.pct)}" data-row="${key}"><span class="bname">${esc(c.text)}<span class="craft-tier">T${c.tier}/${c.tiers}${c.range ? ` · ${esc(c.range)}` : ''}</span>${chanceTag(c.chance, c.chanceUnknown)}${c.essence ? `<span class="ess" title="${esc(t('{essence} makes a magic item rare with this modifier: {tiers}', { essence: c.essence.name, tiers: c.essence.tiers.join(' · ') }))}">◈ ${esc(c.essence.short)}</span>` : ''}${btn}</span>
       <span class="bpct">${hot(c.pct)}${fmt(c.pct)}%</span><span class="bbar"><i data-w="${Math.min(100, c.pct)}%"></i></span></div>`;
   }).join('');
+  // «Оценить все»: по короткому поиску на строку, потом список — по приросту цены, лучший помечен.
+  const priceable = list.filter((c) => c.stats).length;
+  return `<div class="clist">${priceable > 1 ? `<button class="link cprice-all" data-priceall title="${esc(t('One trade search per row, then the list is sorted by how much each modifier adds to the price'))}">⇅ ${esc(t('Price all and sort'))}</button>` : ''}${rows}</div>`;
+}
+
+async function priceAll(btn) {
+  const list = btn.closest('.clist');
+  btn.disabled = true;
+  btn.textContent = t('pricing…');
+  for (const b of [...list.querySelectorAll('[data-ck]')]) await priceCraft(b);
+  const rows = [...list.querySelectorAll('.brow')];
+  const val = (r) => (r.dataset.delta == null || r.dataset.delta === '' ? -1e9 : Number(r.dataset.delta));
+  rows.sort((a, b) => val(b) - val(a)).forEach((r) => list.appendChild(r));
+  const best = rows.find((r) => val(r) > 0);
+  if (best) best.classList.add('best');
+  for (const r of rows) if (val(r) <= 0) r.classList.add('flat');
+  btn.remove();
+  fit();
 }
 
 // Цена после крафта: текущие фильтры + мод-кандидат. Тот же стат уже есть (сумма) — минимум растёт на ролл кандидата.
@@ -652,12 +670,15 @@ async function priceCraft(b) {
     const q = await window.pc.quickPrice(it, f);
     const v = estimate(q.lots);
     let html;
+    const row = b.closest('.brow');
     if (v == null) html = `<span class="cpr" title="${t('Nothing like it is listed — could be rare and pricey')}">${t('none listed')}</span>`;
     else {
       const d = state.est != null ? v - state.est : null;
       const cls = d == null ? '' : d > state.est * 0.1 ? ' up' : d < -state.est * 0.1 ? ' down' : '';
-      const delta = d == null ? '' : Math.abs(d) < state.est * 0.1 ? ` (${t('same')})` : ` (${d > 0 ? '+' : '−'}${money(Math.abs(d))})`;
-      html = `<span class="cpr${cls}" title="${t('{n} listed with it · vs your current estimate', { n: q.total })}">≈ ${money(v)}${delta}</span>`;
+      // Прирост — главное: крупно «+2.1 div», рядом итоговая цена вещи с модом.
+      const delta = d == null ? '' : Math.abs(d) < state.est * 0.1 ? t('same') : `${d > 0 ? '+' : '−'}${money(Math.abs(d))}`;
+      html = `<span class="cpr${cls}" title="${t('{n} listed with it · vs your current estimate', { n: q.total })}">${delta ? `<b>${delta}</b> · ` : ''}≈ ${money(v)}</span>`;
+      if (row && d != null) row.dataset.delta = Math.abs(d) < state.est * 0.1 ? 0 : d;
     }
     b.outerHTML = html;
   } catch (e) {
@@ -1203,6 +1224,8 @@ $('tabs').addEventListener('click', (e) => {
 $('craft').addEventListener('click', (e) => {
   const g = e.target.closest('[data-goal]');
   if (g) { priceGoal(g); return; }
+  const all = e.target.closest('[data-priceall]');
+  if (all) { priceAll(all); return; }
   const b = e.target.closest('[data-ck]');
   if (b) priceCraft(b);
 });
