@@ -188,6 +188,14 @@ function prepare(item, demand, rollsOn) {
   item.mods = stats.matchMods(item);
   // У уников несопоставленные строки — это флейвор-текст, его не показываем.
   if (item.rarity === 'Unique') item.mods = item.mods.filter((m) => m.statId);
+  // Неизменяемые моды уника («Passives in Radius can be Allocated…») есть у каждого экземпляра — на цену не влияют.
+  // Отличить можно только в расширенном формате: там у изменяемых модов есть диапазон или варианты.
+  let hiddenFixed = 0;
+  if (item.rarity === 'Unique' && item.advanced) {
+    const fixed = (m) => m.tag === 'explicit' && !m.range && !m.textRange && !(m.statId || '').includes('|');
+    hiddenFixed = item.mods.filter(fixed).length;
+    item.mods = item.mods.filter((m) => !fixed(m));
+  }
   const ninjaRow = api.ninja.byName.get(item.name) || (item.rarity === 'Currency' && api.ninja.byName.get(item.baseType));
   const exchange = ninjaRow ? { ...ninjaRow } : null;
 
@@ -259,6 +267,7 @@ function prepare(item, demand, rollsOn) {
     useName: item.rarity === 'Unique' && !item.unidentified,
     category: CATEGORY[item.itemClass] || null,
     mods: [...pseudo, ...mods],
+    hiddenFixed, // сколько неизменяемых модов уника скрыто
     props,
     // ilvl важен для баз под крафт (обычные/магические) — там включён сразу; у остальных — по желанию.
     ilvl: item.ilvl ? { enabled: item.rarity === 'Normal' || item.rarity === 'Magic', min: item.ilvl } : null,

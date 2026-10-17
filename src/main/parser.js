@@ -174,6 +174,7 @@ function parseItem(text) {
   const modRarities = ['Normal', 'Magic', 'Rare', 'Unique'];
   // В расширенном формате у каждого мода есть заголовок { … } — строки без него (флейвор) не моды.
   const advanced = lines.some((l) => MOD_HEADER.test(l));
+  item.advanced = advanced;
   if (modRarities.includes(item.rarity) && !item.unidentified) {
     for (const sec of sections.slice(1)) {
       // Секция свойств/требований: почти все строки вида «Ключ: значение».

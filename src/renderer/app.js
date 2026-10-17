@@ -1442,6 +1442,7 @@ function renderFilters() {
   (f.exclude || []).forEach((x, j) => rows.push(`<div class="mod excl${x.enabled ? '' : ' off'}" data-x="${j}" title="${esc(t('Listings that have this modifier are excluded — your item lacks it'))}">
       <label><input type="checkbox" data-k="exclude"${x.enabled ? ' checked' : ''}><span class="imp"></span><span class="tcol">≠</span>
         <span class="txt">${esc(t('Without: {mod}', { mod: x.text }))} <span class="dem hot">🔥 ${esc(t('{pct}% builds', { pct: fmt(x.pct) }))}</span></span></label></div>`));
+  if (f.hiddenFixed) rows.push(`<div class="muted small center">${esc(t('{n} fixed modifiers hidden — every copy has them', { n: f.hiddenFixed }))}</div>`);
   $('mods').innerHTML = rows.join('');
   // Защита/DPS, уровни и гнёзда выбираются прямо в подсказке под шапкой — здесь валюта цены и «онлайн».
   $('misc').innerHTML = `
