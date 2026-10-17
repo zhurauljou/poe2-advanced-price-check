@@ -275,6 +275,8 @@ async function popularBuilds(opts, fetchBuffer) {
     // class — ассенданси (или базовый класс, если не выбрано); skills — главные скиллы, у билда их бывает несколько
     classes: top(res.dims.class || [], res.total, limit),
     skills: top(res.dims.skills || [], res.total, limit),
+    // У уника — какие его моды носят (важно для уников со случайными модами: Heart of the Well, Megalomaniac…)
+    mods: uniqueName && parentKey ? top(res.dims[subKey(res.dims, 'itemmods', parentKey)] || [], res.total, 40) : [],
     allTotal: base ? base.total : null,
   };
 }

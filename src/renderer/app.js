@@ -1019,8 +1019,25 @@ function renderBuilds(b) {
       <div><div class="k">${t('Ascendancy')}</div>${buildRows(b.classes.slice(0, 4))}</div>
       <div><div class="k">${t('Main skill')}</div>${buildRows(b.skills.slice(0, 4))}</div>
     </div>` : voidState('◇', t('No builds use this'), t('No characters on poe.ninja wear this combination.'))}
+    ${uniqueModsHtml(b)}
     ${b.ignored && b.ignored.length ? `<div class="muted small">${t('Not on poe.ninja:')} ${esc(b.ignored.map((x) => Object.values(x)[0]).join(' · '))}</div>` : ''}
     <button class="link bopen" data-url="${esc(b.page)}">poe.ninja ↗</button>`;
+}
+
+// Уник со случайными модами (Heart of the Well, Megalomaniac…): какие из его модов носят билды.
+// Постоянные моды есть на каждой копии (~100%) — их не показываем; свои — всегда, с местом в рейтинге.
+const modKey = (s) => String(s || '').replace(/ \(Local\)$/, '').replace(/[+-]?\d+(\.\d+)?/g, '#').replace(/\+#/g, '#').toLowerCase();
+function uniqueModsHtml(b) {
+  if (!b.mods || !b.mods.length || !state.filters) return '';
+  const mine = new Set();
+  for (const m of state.filters.mods) {
+    if (m.template) mine.add(modKey(m.template));
+    for (const l of String(m.text || '').split('\n')) mine.add(modKey(l));
+  }
+  const all = b.mods.filter((r) => r.pct < 95).map((r, i) => ({ ...r, rank: i + 1, mine: mine.has(modKey(r.name)) }));
+  const rows = all.filter((r) => r.rank <= 10 || r.mine);
+  if (!rows.length) return '';
+  return demandList('umods', t('Which of its modifiers builds use'), rows);
 }
 
 // ---- фильтры ----

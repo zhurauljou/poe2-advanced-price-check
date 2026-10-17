@@ -368,6 +368,7 @@
     "without a side omen half the rolls land on the other side": "без омена стороны половина бросков уйдёт на другую сторону",
     "≈ {cost} on average": "≈ {cost} в среднем",
     "Instead: {list}": "Вместо этого: {list}",
+    "Which of its modifiers builds use": "Какие из его модов носят билды",
     common: 'частый', uncommon: 'средний', rare: 'редкий', 'chance ?': 'шанс ?',
     'Valuable modifiers cannot be estimated from trade listings — items with them are priced and listed differently': 'Шанс ценных модов по трейду не оценить — вещи с ними выставляют и оценивают иначе',
     'Rough estimate: Exalted Orb + omen of its side gives this modifier about 1 in {n} times': 'Грубая оценка: Exalted Orb с оменом этой стороны даёт этот мод примерно 1 раз из {n}',
