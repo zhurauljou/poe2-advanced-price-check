@@ -547,6 +547,7 @@ async function loadBuilds() {
 
 // ---- спрос по категории (poe.ninja): какие базы и моды носят на таких вещах ----
 let demandSeq = 0;
+let demandAll = false; // true — спрос по всем билдам класса, без темы вещи
 async function loadDemand() {
   const { item, filters: f } = state;
   const box = $('demand');
@@ -556,7 +557,10 @@ async function loadDemand() {
   lastDemand = null;
   box.innerHTML = `<div class="sect"><span>${t('Demand')}</span></div><div class="muted center">${t('Loading from poe.ninja…')}</div>`;
   try {
-    const d = await window.pc.demand({ itemClass: item.itemClass, rarity: 'Rare' });
+    // По умолчанию — среди билдов, которые носят такую вещь с ключевыми модами вашей (та же тема, что в «Популярных билдах»).
+    const q = buildsQuery();
+    const withMods = demandAll || !q ? [] : (q.mods || []).slice(0, 2);
+    const d = await window.pc.demand({ itemClass: item.itemClass, rarity: 'Rare', withMods });
     if (seq !== demandSeq) return;
     lastDemand = d;
     renderDemand(d);
@@ -577,14 +581,23 @@ function renderDemand(d) {
     return;
   }
   const mine = new Set(f.mods.filter((m) => m.template).map((m) => ninjaTemplate(m.template)));
-  const modRows = d.mods.map((r) => ({ ...r, mine: mine.has(r.name.toLowerCase()) }));
-  const hits = modRows.filter((r) => r.mine).length;
-  const baseRows = d.bases.map((r) => ({ ...r, mine: r.name === item.baseType }));
+  // Топ-10 + все моды вашей вещи, даже вне топа (с местом в рейтинге): ключевой мод узкой темы (+уровни миньонов)
+  // в общий топ класса может не попасть, но для покупателей с этой темой он главный.
+  const TOP = 10;
+  // Моды темы у таких билдов по определению на 100% — в списке они ничего не говорят.
+  const themeSet = new Set((d.themed || []).map((x) => x.toLowerCase()));
+  const all = d.mods.filter((r) => !themeSet.has(r.name.toLowerCase())).map((r, i) => ({ ...r, rank: i + 1, mine: mine.has(r.name.toLowerCase()) }));
+  const modRows = all.filter((r) => r.rank <= TOP || r.mine);
+  const hits = all.filter((r) => r.mine && r.rank <= TOP).length;
+  const baseRows = d.bases.slice(0, TOP).map((r) => ({ ...r, mine: r.name === item.baseType }));
   const baseRank = d.bases.findIndex((b) => b.name === item.baseType);
   $('demand').innerHTML = `
     <div class="sect"><span>${t('Demand')} · ${esc(d.category)}</span></div>
+    ${d.themed && d.themed.length
+      ? `<div class="bwhat">${t('Among builds wearing it with')} <b class="theme">${d.themed.map(esc).join(' + ')}</b> · <button class="link" data-dall="1">${t('all builds')}</button></div>`
+      : `<div class="bwhat muted">${demandAll ? `${t('All builds')} · <button class="link" data-dall="0">${t('builds like your item')}</button>` : t("Too few builds with your item's modifiers — showing all builds")}</div>`}
     <div class="bshare">${t('Worn by <b>{pct}%</b> of level {lvl}+ builds', { pct: fmt(d.total / d.allTotal * 100), lvl: demandLevel })}</div>
-    <div class="bwhat muted">${t('Your item:')} ${baseRank >= 0 ? t('base #{n}', { n: baseRank + 1 }) : t('base not in top 10')} · ${t('{n} of top {m} modifiers', { n: hits, m: modRows.length })}</div>
+    <div class="bwhat muted">${t('Your item:')} ${baseRank >= 0 ? t('base #{n}', { n: baseRank + 1 }) : t('base not in top 10')} · ${t('{n} of top {m} modifiers', { n: hits, m: Math.min(TOP, all.length) })}</div>
     ${demandList('bases', t('Most worn bases'), baseRows)}
     ${demandList('mods', t('Most common modifiers'), modRows)}
     <button class="link bopen" data-url="${esc(d.page)}">poe.ninja ↗</button>`;
@@ -597,7 +610,7 @@ function demandList(key, title, rows) {
   const hidden = rows.filter((r, i) => i >= DEMAND_SHOWN && !r.mine).length;
   const open = openDemand.has(key);
   return `<div class="dcol${open ? ' all' : ''}"><div class="k">${title}</div>${rows.map((r, i) => `
-    <div class="brow ${heat(r.pct)}${r.mine ? ' mine' : ''}${i >= DEMAND_SHOWN && !r.mine ? ' more' : ''}"${r.mine ? ` title="${t('Your item has this')}"` : ''}><span class="bname">${r.mine ? '✓ ' : ''}${esc(r.name)}</span><span class="bpct">${hot(r.pct)}${fmt(r.pct)}%</span>
+    <div class="brow ${heat(r.pct)}${r.mine ? ' mine' : ''}${i >= DEMAND_SHOWN && !r.mine ? ' more' : ''}"${r.mine ? ` title="${t('Your item has this')}"` : ''}><span class="bname">${r.mine ? '✓ ' : ''}${esc(r.name)}${r.rank > 10 ? ` <span class="rank">#${r.rank}</span>` : ''}</span><span class="bpct">${hot(r.pct)}${fmt(r.pct)}%</span>
       <span class="bbar"><i data-w="${Math.min(100, r.pct)}%"></i></span></div>`).join('')}
     ${hidden ? `<button class="link bmore" data-dmore="${key}">${open ? t('Show fewer') : t('Show all {n}', { n: rows.length })}</button>` : ''}</div>`;
 }
@@ -1273,6 +1286,8 @@ $('tab-demand').addEventListener('click', async (e) => {
     loadDemand();
     return;
   }
+  const dall = e.target.closest('[data-dall]');
+  if (dall) { demandAll = dall.dataset.dall === '1'; loadDemand(); return; }
   const more = e.target.closest('[data-dmore]');
   if (more) {
     const col = more.closest('.dcol');

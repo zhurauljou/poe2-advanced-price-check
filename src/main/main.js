@@ -509,7 +509,7 @@ app.whenReady().then(() => {
     const r = await craft.advise(lastItem, d && d.mods, api.cached);
     return { ...r, theme: d ? d.themed : [], themeBuilds: d ? d.total : null };
   });
-  ipcMain.handle('demand', (_e, opts) => categoryDemand({ ...opts, league: settings.get().league, limit: 10, minLevel: demandLevel() }, api.fetchBuffer));
+  ipcMain.handle('demand', (_e, opts) => categoryDemand({ ...opts, league: settings.get().league, limit: 80, minLevel: demandLevel() }, api.fetchBuffer)); // 80 — чтобы найти и моды вещи вне топ-10
   ipcMain.handle('set-price-currency', (_e, c) => { settings.set({ priceCurrency: c }); });
   ipcMain.handle('copy', (_e, t) => clipboard.writeText(t));
   ipcMain.handle('demand-level', () => settings.get().demandLevel || 90);

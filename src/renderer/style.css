@@ -503,3 +503,6 @@ footer::after { display: none; }
 .brow.best .bname::before { content: var(--best-label, "★ "); color: var(--good); font-weight: 700; }
 .brow.flat { opacity: .55; }
 .hero .ages .warn-t { color: var(--warn); }
+.brow .rank { font: 600 11.5px var(--body); color: var(--muted); }
+.bwhat .theme { color: var(--g-mod); font-weight: normal; font-family: var(--game); }
+.bwhat:has(.theme) { white-space: normal; } /* тема спроса — переносится, а не обрезается */
