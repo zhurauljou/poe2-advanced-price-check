@@ -5,7 +5,7 @@
 const fs = require('fs');
 const path = require('path');
 
-const dir = path.join(process.env.APPDATA || '', 'PoE 2 Price Checker', 'Cache');
+const dir = path.join(process.env.APPDATA || '', 'PoE 2 Price Checker', 'data-cache');
 const mods = JSON.parse(fs.readFileSync(path.join(dir, 'repoe-mods.json'), 'utf8'));
 const stats = JSON.parse(fs.readFileSync(path.join(dir, 'stats.json'), 'utf8'));
 

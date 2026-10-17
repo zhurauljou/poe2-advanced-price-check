@@ -13,7 +13,7 @@ Module._load = function (r, ...a) { if (r === 'electron') return { net: { fetch 
 
 const zlib = require('zlib');
 const LIVE = process.env.CRAFT_LIVE === '1';
-const CACHE = LIVE ? path.join(process.env.APPDATA || '', 'PoE 2 Price Checker', 'cache') : path.join(__dirname, 'fixtures', 'data');
+const CACHE = LIVE ? path.join(process.env.APPDATA || '', 'PoE 2 Price Checker', 'data-cache') : path.join(__dirname, 'fixtures', 'data');
 const file = (n) => path.join(CACHE, LIVE ? n : `${n}.gz`);
 const has = ['repoe-mods.json', 'repoe-base-items.json', 'stats.json'].every((f) => fs.existsSync(file(f)));
 const skip = has ? false : `нет данных (${CACHE})`;

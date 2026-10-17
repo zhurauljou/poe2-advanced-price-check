@@ -6,6 +6,7 @@
 const fs = require('fs');
 const path = require('path');
 const stats = require('./stats');
+const { writeFileAtomic } = require('./files');
 
 const EE2 = 'https://raw.githubusercontent.com/Kvan7/Exiled-Exchange-2/master/renderer/public/data';
 
@@ -53,15 +54,11 @@ const plural = (c) => CLASS_PLURAL[c] || (/s$/.test(c) ? c : `${c}s`);
 
 let data = null; // { lang, items: Map ru → [entry], uniques: Map ru → [entry], bases: [{ ru, en, category }] }
 
-function cachePath(dir, name) {
-  return path.join(dir, 'cache', name);
-}
-
-// Названия предметов на языке клиента (кэш на неделю; нет сети — старый кэш).
+// Названия предметов на языке клиента (кэш на неделю в папке dir; нет сети — старый кэш).
 async function load(lang, dir, fetchBuffer) {
   if (!LANGS[lang]) { data = null; return; }
   if (data && data.lang === lang) return;
-  const file = cachePath(dir, `ee2-${lang}-items.ndjson`);
+  const file = path.join(dir, `ee2-${lang}-items.ndjson`);
   let text = null;
   try {
     if (Date.now() - fs.statSync(file).mtimeMs < 7 * 24 * 3600e3) text = fs.readFileSync(file, 'utf8');
@@ -69,8 +66,7 @@ async function load(lang, dir, fetchBuffer) {
   if (!text) {
     try {
       text = Buffer.from(await fetchBuffer(`${EE2}/${lang}/items.ndjson`)).toString('utf8');
-      fs.mkdirSync(path.dirname(file), { recursive: true });
-      fs.writeFileSync(file, text);
+      writeFileAtomic(file, text);
     } catch (e) {
       if (fs.existsSync(file)) text = fs.readFileSync(file, 'utf8'); else throw e;
     }

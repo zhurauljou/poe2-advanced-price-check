@@ -3,7 +3,7 @@ const Module = require('module'); const orig = Module._load;
 Module._load = function (r, ...a) { if (r === 'electron') return { net: { fetch }, app: { getPath: () => process.env.TEMP } }; return orig.call(this, r, ...a); };
 process.chdir(require('path').join(__dirname, '..'));
 const fs = require('fs');
-const dir = process.env.APPDATA + '/PoE 2 Price Checker/Cache/';
+const dir = process.env.APPDATA + '/PoE 2 Price Checker/data-cache/';
 const cached = async (n) => JSON.parse(fs.readFileSync(dir + n, 'utf8'));
 const craft = require('../src/main/craft.js');
 const nb = require('../src/main/ninjaBuilds.js');

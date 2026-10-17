@@ -98,8 +98,7 @@ test('русский клиент: текст переводится в англ
   const cl = require('../src/main/clientLang');
   const ee2 = path.join(__dirname, 'fixtures', 'ee2-ru-items-sample.ndjson');
   const dir = fs.mkdtempSync(path.join(require('os').tmpdir(), 'cl-'));
-  fs.mkdirSync(path.join(dir, 'cache'));
-  fs.copyFileSync(ee2, path.join(dir, 'cache', 'ee2-ru-items.ndjson'));
+  fs.copyFileSync(ee2, path.join(dir, 'ee2-ru-items.ndjson'));
   await cl.load('ru', dir, null);
   const it = parseItem(cl.toEnglish(fs.readFileSync(path.join(__dirname, 'fixtures', 'ru-rare-armour-advanced.txt'), 'utf8'), 'ru'));
   assert.equal(it.itemClass, 'Body Armours');
@@ -157,8 +156,7 @@ test('русский клиент: строки модов переводятс�
 
     const ee2 = path.join(__dirname, 'fixtures', 'ee2-ru-items-sample.ndjson');
     const dir = fs.mkdtempSync(path.join(require('os').tmpdir(), 'cl-'));
-    fs.mkdirSync(path.join(dir, 'cache'));
-    fs.copyFileSync(ee2, path.join(dir, 'cache', 'ee2-ru-items.ndjson'));
+    fs.copyFileSync(ee2, path.join(dir, 'ee2-ru-items.ndjson'));
     await cl.load('ru', dir, null);
     const ru = parseItem(cl.toEnglish(fs.readFileSync(path.join(__dirname, 'fixtures', 'ru-rare-armour-advanced.txt'), 'utf8'), 'ru'));
     const en = fixture('rare-armour-advanced.txt');

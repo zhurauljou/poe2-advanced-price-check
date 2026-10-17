@@ -6,7 +6,7 @@ const fs = require('fs');
 const path = require('path');
 const zlib = require('zlib');
 
-const CACHE = path.join(process.env.APPDATA || '', 'PoE 2 Price Checker', 'cache');
+const CACHE = path.join(process.env.APPDATA || '', 'PoE 2 Price Checker', 'data-cache');
 const OUT = path.join(__dirname, '..', 'test', 'fixtures', 'data');
 const read = (f) => JSON.parse(fs.readFileSync(path.join(CACHE, f), 'utf8'));
 const pick = (o, keys) => Object.fromEntries(keys.filter((k) => o[k] !== undefined).map((k) => [k, o[k]]));

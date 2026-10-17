@@ -4,6 +4,7 @@ const { AsyncLocalStorage } = require('async_hooks');
 const fs = require('fs');
 const path = require('path');
 const { t } = require('../shared/i18n');
+const { writeFileAtomic, cacheDir } = require('./files');
 
 const VERSION = require('../../package.json').version;
 const UA = `poe2-price-checker/${VERSION} (personal desktop tool)`;
@@ -61,7 +62,7 @@ function getBan() {
 }
 function setBan(seconds) {
   bannedUntil = Math.max(getBan(), Date.now() + seconds * 1000);
-  try { fs.writeFileSync(banFile(), JSON.stringify({ until: bannedUntil })); } catch {}
+  try { writeFileAtomic(banFile(), JSON.stringify({ until: bannedUntil })); } catch {}
 }
 
 function waitText(ms) {
@@ -137,7 +138,7 @@ async function getJson(url) {
 
 // ---------- справочники трейда с кэшем на сутки ----------
 function cacheFile(name) {
-  return path.join(app.getPath('userData'), 'cache', name);
+  return path.join(cacheDir(), name);
 }
 
 async function cached(name, url, maxAgeH = 24) {
@@ -147,11 +148,11 @@ async function cached(name, url, maxAgeH = 24) {
   } catch {}
   try {
     const data = await getJson(url);
-    fs.mkdirSync(path.dirname(f), { recursive: true });
-    fs.writeFileSync(f, JSON.stringify(data));
+    writeFileAtomic(f, JSON.stringify(data));
     return data;
   } catch (e) {
-    if (fs.existsSync(f)) return JSON.parse(fs.readFileSync(f, 'utf8')); // нет сети — берём старый кэш
+    // Нет сети — берём старый кэш (битый — как будто его нет: ошибка сети понятнее, чем «Unexpected end of JSON»).
+    try { return JSON.parse(fs.readFileSync(f, 'utf8')); } catch {}
     throw e;
   }
 }
@@ -257,5 +258,5 @@ async function uniquePrice(league, name, baseType) {
 }
 
 module.exports = {
-  TRADE, tradeRequest, newGeneration, forCurrent, fetchBuffer, cached, tradeStats, tradeItems, tradeStatic, tradeLeagues, loadNinja, ninja, uniquePrice,
+  TRADE, tradeRequest, newGeneration, cacheDir, forCurrent, fetchBuffer, cached, tradeStats, tradeItems, tradeStatic, tradeLeagues, loadNinja, ninja, uniquePrice,
 };

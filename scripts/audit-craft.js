@@ -2,14 +2,14 @@
 // (RePoE), прогоняет через craft.advise + план со спросом poe.ninja и проверяет правила, нарушение которых — ошибка
 // советника (не тот мод, снятие нужного, слот без метода, бессмысленная цена…).
 //   node scripts/audit-craft.js [вещей на класс=30] [seed=1]
-// Нужен кэш программы (%APPDATA%/PoE 2 Price Checker/Cache) и интернет для спроса poe.ninja (по запросу на класс).
+// Нужен кэш программы (%APPDATA%/PoE 2 Price Checker/data-cache) и интернет для спроса poe.ninja (по запросу на класс).
 const fs = require('fs');
 const path = require('path');
 const Module = require('module');
 const orig = Module._load;
 Module._load = function (r, ...a) { if (r === 'electron') return { net: { fetch }, app: { getPath: () => require('os').tmpdir() } }; return orig.call(this, r, ...a); };
 
-const CACHE = path.join(process.env.APPDATA || '', 'PoE 2 Price Checker', 'Cache');
+const CACHE = path.join(process.env.APPDATA || '', 'PoE 2 Price Checker', 'data-cache');
 const cached = async (n, url) => {
   const p = path.join(CACHE, n);
   if (fs.existsSync(p)) return JSON.parse(fs.readFileSync(p, 'utf8'));

@@ -303,7 +303,7 @@ async function useClientLang(lang) {
   if (lang === clientLangActive) return;
   if (lang === 'en') stats.buildLocal(null);
   else {
-    await clientLang.load(lang, app.getPath('userData'), api.fetchBuffer);
+    await clientLang.load(lang, api.cacheDir(), api.fetchBuffer);
     stats.buildLocal(await api.cached(`stats-${lang}.json`, `https://${lang}.pathofexile.com/api/trade2/data/stats`));
   }
   clientLangActive = lang;
