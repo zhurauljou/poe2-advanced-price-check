@@ -62,6 +62,23 @@ function tradeStats(mod, domain, itemClass) {
   return out.every(Boolean) ? out.map((s) => ({ statId: s.statId, min: s.value })) : null;
 }
 
+// Порченые эссенции и Alloy (собрано с poe2db, data/crafting-currency.json): что добавят на этот класс вещей.
+let currencyData;
+function guaranteedFor(itemClass) {
+  if (currencyData === undefined) {
+    try { currencyData = JSON.parse(fsW.readFileSync(pathW.join(__dirname, '..', '..', 'data', 'crafting-currency.json'), 'utf8')); } catch { currencyData = null; }
+  }
+  if (!currencyData) return [];
+  const out = [];
+  for (const [list, kind] of [[currencyData.corruptedEssences, 'corrupted essence'], [currencyData.alloys, 'alloy']]) {
+    for (const x of list || []) {
+      const mods = [...new Set((x.mods || []).filter((m) => m.classes.includes(itemClass)).map((m) => m.text))];
+      if (mods.length) out.push({ name: `${x.name} (${t(kind)})`, mod: mods.join(' / ') });
+    }
+  }
+  return out;
+}
+
 // Вес мода на базе: первый тег из spawn_weights, который есть у базы (в PoE 2 — только 0 или 1).
 function canRoll(mod, tags) {
   for (const sw of mod.spawn_weights || []) if (tags.includes(sw.tag)) return sw.weight > 0;
@@ -203,6 +220,8 @@ async function advise(item, demandMods, cached) {
       t('Greater / Perfect Regal Orb — the same, but only modifiers of level 35+ / 50+'),
       t('Omen of Sinistral / Dextral Coronation — the next Regal Orb adds only a prefix / only a suffix'),
       t('Orb of Alchemy (+ Omen of Sinistral / Dextral Alchemy) — rerolls into a rare with 4 random modifiers instead'),
+      // Магическая с одним модом — второй можно добавить до Regal: Greater / Perfect Augmentation даёт только моды высокого уровня.
+      ...(mine.length < 2 ? [t('Greater / Perfect Orb of Augmentation — first add the second magic modifier, only of level 44+ / 70+')] : []),
     ] });
   }
 
@@ -271,7 +290,8 @@ async function advise(item, demandMods, cached) {
   // Perfect-эссенции — только на редких: убирают случайный мод и добавляют свой (у слота свой набор, не тот, что у Greater).
   // С 0.5 на вещи только один crafted-мод (эссенции, в т.ч. Perfect и порченые, и Alloy). Есть — Perfect/Alloy не встанут.
   const hasCrafted = mine.some((a) => a.tag === 'crafted');
-  const perfect = item.rarity === 'Rare' ? perfectFor(item.itemClass) : [];
+  // Всё, что заменяет случайный мод гарантированным crafted-модом: Perfect-эссенции, порченые эссенции, Alloy (data/crafting-currency.json).
+  const perfect = item.rarity === 'Rare' ? [...perfectFor(item.itemClass), ...guaranteedFor(item.itemClass)] : [];
   if (perfect.length && hasCrafted) {
     sections.push({ kind: 'perfect', how: [t('This item already has a crafted modifier — Perfect Essences and Alloys cannot be used (one crafted modifier per item)')] });
   } else if (perfect.length) {

@@ -1,0 +1,945 @@
+{
+  "meta": {
+    "patch": "0.5.5 (content update 0.5.0 'Return of the Ancients'), league Forbidden Rites",
+    "compiled": "2026-10-17",
+    "sources": [
+      "https://poe2db.tw/us/Essence",
+      "https://poe2db.tw/us/Essence_of_Hysteria",
+      "https://poe2db.tw/us/Essence_of_Delirium",
+      "https://poe2db.tw/us/Essence_of_Horror",
+      "https://poe2db.tw/us/Essence_of_Insanity",
+      "https://poe2db.tw/us/Essence_of_the_Abyss",
+      "https://poe2db.tw/us/Essence_of_the_Breach",
+      "https://poe2db.tw/us/Mark_of_the_Abyssal_Lord",
+      "https://poe2db.tw/us/Runic_Alloy",
+      "https://poe2db.tw/us/Adaptive_Alloy",
+      "https://poe2db.tw/us/Protective_Alloy",
+      "https://poe2db.tw/us/Expansive_Alloy",
+      "https://poe2db.tw/us/Swift_Alloy",
+      "https://poe2db.tw/us/Cyclonic_Alloy",
+      "https://poe2db.tw/us/Prismatic_Alloy",
+      "https://poe2db.tw/us/Mystic_Alloy",
+      "https://poe2db.tw/us/Sovereign_Alloy",
+      "https://poe2db.tw/us/Celestial_Alloy",
+      "https://poe2db.tw/us/Transcendent_Alloy",
+      "https://poe2db.tw/us/The_Runebinders_Alloy",
+      "https://poe2db.tw/us/The_Runefathers_Alloy",
+      "https://poe2db.tw/us/Greater_Orb_of_Transmutation",
+      "https://poe2db.tw/us/Perfect_Orb_of_Transmutation",
+      "https://poe2db.tw/us/Greater_Orb_of_Augmentation",
+      "https://poe2db.tw/us/Perfect_Orb_of_Augmentation",
+      "https://poe2db.tw/us/Omen_of_Sinistral_Alchemy",
+      "https://poe2db.tw/us/Omen_of_Dextral_Alchemy",
+      "https://www.pathofexile.com/forum/view-thread/3932540",
+      "https://www.pathofexile.com/forum/view-thread/3960848",
+      "local RePoE cache: %APPDATA%/PoE 2 Price Checker/cache/repoe-mods.json, repoe-base-items.json"
+    ],
+    "classNote": "Classes come from poe2db's per-class 'Class / Modifier / Pre/Suf / Required Level' table on each item page, so tooltip groups are already expanded there: 'Shield' -> Shields + Bucklers; 'Jewellery' -> Rings + Amulets; 'Mace' -> One Hand Maces + Two Hand Maces; 'Gloves or Boots' -> Gloves + Boots; 'Equipment' -> every weapon/armour/jewellery/quiver/shield/buckler/focus class (no Jewels). Classes outside the app list (Daggers, One/Two Hand Swords, One/Two Hand Axes, Flails) were dropped and named in each entry's notes. 'affix' and 'requiredLevel' are extra fields from poe2db (requiredLevel = mod level; 0 = none shown). Ranges are written (min-max).",
+    "craftedNote": "0.5.0 patch notes: 'All crafted modifiers are now guaranteed, but items can only have 1 crafted modifier at a time.' and 'Desecrated modifiers no longer count as crafted modifiers, but items are limited to 1 Desecrated modifier.' Alloys are explicitly 'crafted modifiers'. Essence mods (incl. corrupted essences / Mark of the Abyssal Lord) count as crafted per player bug reports showing 'This item already has a crafted modifier' (forum 3960848)."
+  },
+  "corruptedEssences": [
+    {
+      "name": "Essence of Hysteria",
+      "effect": "Removes a random modifier and augments a Rare item with a new guaranteed modifier",
+      "crafted": true,
+      "targetRarity": "Rare",
+      "applyText": "Right click this item then left click a Rare item to apply it.",
+      "tooltipGroups": "Helmet / Body Armour / Gloves / Boots / Ring / Amulet / Belt / Shield / Quiver / Focus",
+      "notes": "Occupies the item's single crafted-modifier slot (0.5.0: 'All crafted modifiers are now guaranteed, but items can only have 1 crafted modifier at a time.'); cannot be applied if the item already has a crafted modifier. Corrupted essence (base type CurrencyCorruptedEssenceHysteria). Its mods reuse ordinary explicit-mod tiers (RePoE: MovementVelocity5, CriticalMultiplier4, StunThreshold10, AttackerTakesDamage6, ManaRegeneration5, DamageTakenGainedAsLife4_, LocalBlockChance2, EnergyShieldRechargeRate5). Item text does not say it corrupts the target item. 0.5.0 changed the Foci value to 20-23% (previously 41-45%). Tooltip 'Shield' = Shields + Bucklers.",
+      "mods": [
+        {
+          "classes": [
+            "Helmets"
+          ],
+          "text": "+1 to Level of all Minion Skills",
+          "affix": "Suffix",
+          "requiredLevel": 4
+        },
+        {
+          "classes": [
+            "Body Armours"
+          ],
+          "text": "(64-97) to (98-145) Physical Thorns damage",
+          "affix": "Prefix",
+          "requiredLevel": 50
+        },
+        {
+          "classes": [
+            "Gloves"
+          ],
+          "text": "(25-29)% increased Critical Damage Bonus",
+          "affix": "Suffix",
+          "requiredLevel": 36
+        },
+        {
+          "classes": [
+            "Boots"
+          ],
+          "text": "30% increased Movement Speed",
+          "affix": "Prefix",
+          "requiredLevel": 52
+        },
+        {
+          "classes": [
+            "Rings"
+          ],
+          "text": "(50-59)% increased Mana Regeneration Rate",
+          "affix": "Suffix",
+          "requiredLevel": 44
+        },
+        {
+          "classes": [
+            "Amulets"
+          ],
+          "text": "(19-21)% of Damage taken Recouped as Life",
+          "affix": "Suffix",
+          "requiredLevel": 54
+        },
+        {
+          "classes": [
+            "Belts"
+          ],
+          "text": "+(254-304) to Stun Threshold",
+          "affix": "Suffix",
+          "requiredLevel": 57
+        },
+        {
+          "classes": [
+            "Shields",
+            "Bucklers"
+          ],
+          "text": "(20-24)% increased Block chance",
+          "affix": "Prefix",
+          "requiredLevel": 26
+        },
+        {
+          "classes": [
+            "Quivers"
+          ],
+          "text": "(43-50)% increased Damage with Bow Skills",
+          "affix": "Prefix",
+          "requiredLevel": 48
+        },
+        {
+          "classes": [
+            "Foci"
+          ],
+          "text": "(20-23)% increased Energy Shield Recharge Rate",
+          "affix": "Suffix",
+          "requiredLevel": 52
+        }
+      ],
+      "verified": true,
+      "source": "https://poe2db.tw/us/Essence_of_Hysteria"
+    },
+    {
+      "name": "Essence of Delirium",
+      "effect": "Removes a random modifier and augments a Rare item with a new guaranteed modifier",
+      "crafted": true,
+      "targetRarity": "Rare",
+      "applyText": "Right click this item then left click a Rare item to apply it.",
+      "tooltipGroups": "Body Armour",
+      "notes": "Occupies the item's single crafted-modifier slot (0.5.0: 'All crafted modifiers are now guaranteed, but items can only have 1 crafted modifier at a time.'); cannot be applied if the item already has a crafted modifier. The granted mod allocates a random Notable passive skill (RePoE mod EssenceGrantedPassive, prefix).",
+      "mods": [
+        {
+          "classes": [
+            "Body Armours"
+          ],
+          "text": "Allocates a random Notable Passive Skill",
+          "affix": "Prefix",
+          "requiredLevel": 0
+        }
+      ],
+      "verified": true,
+      "source": "https://poe2db.tw/us/Essence_of_Delirium"
+    },
+    {
+      "name": "Essence of Horror",
+      "effect": "Removes a random modifier and augments a Rare item with a new guaranteed modifier",
+      "crafted": true,
+      "targetRarity": "Rare",
+      "applyText": "Right click this item then left click a Rare item to apply it.",
+      "tooltipGroups": "Gloves or Boots",
+      "notes": "Occupies the item's single crafted-modifier slot (0.5.0: 'All crafted modifiers are now guaranteed, but items can only have 1 crafted modifier at a time.'); cannot be applied if the item already has a crafted modifier. RePoE mod EssenceLocalRuneAndSoulCoreEffect1 (suffix).",
+      "mods": [
+        {
+          "classes": [
+            "Gloves",
+            "Boots"
+          ],
+          "text": "60% increased effect of Socketed Augment Items",
+          "affix": "Suffix",
+          "requiredLevel": 0
+        }
+      ],
+      "verified": true,
+      "source": "https://poe2db.tw/us/Essence_of_Horror"
+    },
+    {
+      "name": "Essence of Insanity",
+      "effect": "Removes a random modifier and augments a Rare item with a new guaranteed modifier",
+      "crafted": true,
+      "targetRarity": "Rare",
+      "applyText": "Right click this item then left click a Rare item to apply it.",
+      "tooltipGroups": "Belt",
+      "notes": "Occupies the item's single crafted-modifier slot (0.5.0: 'All crafted modifiers are now guaranteed, but items can only have 1 crafted modifier at a time.'); cannot be applied if the item already has a crafted modifier. RePoE mod EssenceCorruptForTwoEnchantments1 (suffix): when the belt is later corrupted it gains two enchantments. Applying the essence itself does not corrupt the item (per item text).",
+      "mods": [
+        {
+          "classes": [
+            "Belts"
+          ],
+          "text": "On Corruption, Item gains two Enchantments",
+          "affix": "Suffix",
+          "requiredLevel": 0
+        }
+      ],
+      "verified": true,
+      "source": "https://poe2db.tw/us/Essence_of_Insanity"
+    },
+    {
+      "name": "Essence of the Abyss",
+      "effect": "Removes a random modifier and augments a Rare item with a new guaranteed modifier",
+      "crafted": true,
+      "targetRarity": "Rare",
+      "applyText": "Right click this item then left click a Rare item to apply it.",
+      "tooltipGroups": "Equipment",
+      "notes": "Occupies the item's single crafted-modifier slot (0.5.0: 'All crafted modifiers are now guaranteed, but items can only have 1 crafted modifier at a time.'); cannot be applied if the item already has a crafted modifier. Adds 'Bears the Mark of the Abyssal Lord' as a prefix OR a suffix (RePoE EssenceAbyssPrefix / EssenceAbyssSuffix; both rows listed per class). poe2db: 'Desecrating an item with the Mark of the Abyssal Lord modifier always removes that modifier, replacing it with an Unrevealed Desecrated modifier of a higher tier.' Tooltip group 'Equipment' expanded (by poe2db's class table) to all armour, weapon, jewellery, quiver, shield, buckler and focus classes; Jewels are not included. poe2db data also lists classes outside the app's class list: One Hand Swords, One Hand Axes, Two Hand Swords, Two Hand Axes, Daggers, Flails - omitted.",
+      "mods": [
+        {
+          "classes": [
+            "One Hand Maces",
+            "Two Hand Maces",
+            "Spears",
+            "Bows",
+            "Quarterstaves",
+            "Helmets",
+            "Body Armours",
+            "Gloves",
+            "Boots",
+            "Shields",
+            "Staves",
+            "Wands",
+            "Sceptres",
+            "Rings",
+            "Amulets",
+            "Belts",
+            "Quivers",
+            "Crossbows",
+            "Talismans",
+            "Foci",
+            "Bucklers"
+          ],
+          "text": "Bears the Mark of the Abyssal Lord",
+          "affix": "Prefix",
+          "requiredLevel": 0
+        },
+        {
+          "classes": [
+            "One Hand Maces",
+            "Two Hand Maces",
+            "Spears",
+            "Bows",
+            "Quarterstaves",
+            "Helmets",
+            "Body Armours",
+            "Gloves",
+            "Boots",
+            "Shields",
+            "Staves",
+            "Wands",
+            "Sceptres",
+            "Rings",
+            "Amulets",
+            "Belts",
+            "Quivers",
+            "Crossbows",
+            "Talismans",
+            "Foci",
+            "Bucklers"
+          ],
+          "text": "Bears the Mark of the Abyssal Lord",
+          "affix": "Suffix",
+          "requiredLevel": 0
+        }
+      ],
+      "verified": true,
+      "source": "https://poe2db.tw/us/Essence_of_the_Abyss"
+    },
+    {
+      "name": "Essence of the Breach",
+      "effect": "Removes a random modifier and augments a Rare item with a new guaranteed modifier",
+      "crafted": true,
+      "targetRarity": "Rare",
+      "applyText": "Right click this item then left click a Rare item to apply it.",
+      "tooltipGroups": "Jewellery",
+      "notes": "Occupies the item's single crafted-modifier slot (0.5.0: 'All crafted modifiers are now guaranteed, but items can only have 1 crafted modifier at a time.'); cannot be applied if the item already has a crafted modifier. RePoE mod EssenceBreach (prefix). Tooltip group 'Jewellery' = Rings + Amulets (poe2db table lists only these two; not Belts).",
+      "mods": [
+        {
+          "classes": [
+            "Rings",
+            "Amulets"
+          ],
+          "text": "+20% to Maximum Quality",
+          "affix": "Prefix",
+          "requiredLevel": 0
+        }
+      ],
+      "verified": true,
+      "source": "https://poe2db.tw/us/Essence_of_the_Breach"
+    }
+  ],
+  "alloys": [
+    {
+      "name": "Runic Alloy",
+      "effect": "Removes a random modifier and augments a Rare item with a new guaranteed modifier",
+      "crafted": true,
+      "targetRarity": "Rare",
+      "applyText": "Right click this item then left click a Rare item to apply it.",
+      "tooltipGroups": "Ring / Amulet / Belt",
+      "notes": "Added in 0.5.0: 'These items add various new crafted modifiers to items by replacing an existing modifier, similar to Perfect Essences.' Unlocked through Remnant encounters. Occupies the item's single crafted-modifier slot (0.5.0: 'All crafted modifiers are now guaranteed, but items can only have 1 crafted modifier at a time.'); cannot be applied if the item already has a crafted modifier. RePoE has HandWraps* variants of some alloy mods (different texts) not listed on poe2db alloy pages - omitted.",
+      "mods": [
+        {
+          "classes": [
+            "Rings"
+          ],
+          "text": "+(37-49) to maximum Runic Ward",
+          "affix": "Prefix",
+          "requiredLevel": 10
+        },
+        {
+          "classes": [
+            "Amulets"
+          ],
+          "text": "(6-10)% increased maximum Runic Ward",
+          "affix": "Prefix",
+          "requiredLevel": 10
+        },
+        {
+          "classes": [
+            "Belts"
+          ],
+          "text": "(15-20)% increased Runic Ward Regeneration Rate",
+          "affix": "Prefix",
+          "requiredLevel": 10
+        }
+      ],
+      "verified": true,
+      "source": "https://poe2db.tw/us/Runic_Alloy"
+    },
+    {
+      "name": "Adaptive Alloy",
+      "effect": "Removes a random modifier and augments a Rare item with a new guaranteed modifier",
+      "crafted": true,
+      "targetRarity": "Rare",
+      "applyText": "Right click this item then left click a Rare item to apply it.",
+      "notes": "Added in 0.5.0: 'These items add various new crafted modifiers to items by replacing an existing modifier, similar to Perfect Essences.' Unlocked through Remnant encounters. Occupies the item's single crafted-modifier slot (0.5.0: 'All crafted modifiers are now guaranteed, but items can only have 1 crafted modifier at a time.'); cannot be applied if the item already has a crafted modifier. RePoE also has ConvertedAlloyDamageAsExtra{Cold,Lightning,Chaos}[TwoHand]WhileMissingRunicWard1 variants (same values with Cold/Lightning/Chaos instead of Fire); origin unconfirmed, not listed by poe2db. RePoE has HandWraps* variants of some alloy mods (different texts) not listed on poe2db alloy pages - omitted.",
+      "mods": [
+        {
+          "classes": [
+            "Staves"
+          ],
+          "text": "Gain (42-52)% of Damage as Extra Fire Damage while you are missing Runic Ward",
+          "affix": "Prefix",
+          "requiredLevel": 20
+        },
+        {
+          "classes": [
+            "Wands"
+          ],
+          "text": "Gain (21-26)% of Damage as Extra Fire Damage while you are missing Runic Ward",
+          "affix": "Prefix",
+          "requiredLevel": 20
+        },
+        {
+          "classes": [
+            "Sceptres"
+          ],
+          "text": "(30-50)% Surpassing Chance to gain a Puppet Master stack whenever you use a Command Skill",
+          "affix": "Prefix",
+          "requiredLevel": 20
+        },
+        {
+          "classes": [
+            "Gloves"
+          ],
+          "text": "(10-15)% increased Attack Speed while missing Runic Ward",
+          "affix": "Suffix",
+          "requiredLevel": 20
+        }
+      ],
+      "verified": true,
+      "source": "https://poe2db.tw/us/Adaptive_Alloy"
+    },
+    {
+      "name": "Protective Alloy",
+      "effect": "Removes a random modifier and augments a Rare item with a new guaranteed modifier",
+      "crafted": true,
+      "targetRarity": "Rare",
+      "applyText": "Right click this item then left click a Rare item to apply it.",
+      "notes": "Added in 0.5.0: 'These items add various new crafted modifiers to items by replacing an existing modifier, similar to Perfect Essences.' Unlocked through Remnant encounters. Occupies the item's single crafted-modifier slot (0.5.0: 'All crafted modifiers are now guaranteed, but items can only have 1 crafted modifier at a time.'); cannot be applied if the item already has a crafted modifier. RePoE has HandWraps* variants of some alloy mods (different texts) not listed on poe2db alloy pages - omitted. poe2db data also lists classes outside the app's class list: One Hand Swords, One Hand Axes, Two Hand Swords, Two Hand Axes, Daggers, Flails - omitted.",
+      "mods": [
+        {
+          "classes": [
+            "Belts"
+          ],
+          "text": "Recover (32-45) Runic Ward when a Charm is used",
+          "affix": "Prefix",
+          "requiredLevel": 20
+        },
+        {
+          "classes": [
+            "One Hand Maces",
+            "Two Hand Maces",
+            "Spears",
+            "Bows",
+            "Quarterstaves",
+            "Crossbows",
+            "Talismans",
+            "Sceptres",
+            "Staves",
+            "Wands"
+          ],
+          "text": "+(51-74) to maximum Runic Ward",
+          "affix": "Suffix",
+          "requiredLevel": 20
+        },
+        {
+          "classes": [
+            "Shields",
+            "Bucklers"
+          ],
+          "text": "Recover (10-15) Runic Ward when you Block",
+          "affix": "Suffix",
+          "requiredLevel": 10
+        }
+      ],
+      "verified": true,
+      "source": "https://poe2db.tw/us/Protective_Alloy"
+    },
+    {
+      "name": "Expansive Alloy",
+      "effect": "Removes a random modifier and augments a Rare item with a new guaranteed modifier",
+      "crafted": true,
+      "targetRarity": "Rare",
+      "applyText": "Right click this item then left click a Rare item to apply it.",
+      "notes": "Added in 0.5.0: 'These items add various new crafted modifiers to items by replacing an existing modifier, similar to Perfect Essences.' Unlocked through Remnant encounters. Occupies the item's single crafted-modifier slot (0.5.0: 'All crafted modifiers are now guaranteed, but items can only have 1 crafted modifier at a time.'); cannot be applied if the item already has a crafted modifier. RePoE has HandWraps* variants of some alloy mods (different texts) not listed on poe2db alloy pages - omitted.",
+      "mods": [
+        {
+          "classes": [
+            "Gloves"
+          ],
+          "text": "Remnants can be collected from (35-50)% further away",
+          "affix": "Suffix",
+          "requiredLevel": 20
+        },
+        {
+          "classes": [
+            "Body Armours"
+          ],
+          "text": "(35-50)% increased Presence Area of Effect",
+          "affix": "Suffix",
+          "requiredLevel": 20
+        },
+        {
+          "classes": [
+            "Helmets"
+          ],
+          "text": "(18-29)% increased Mana Cost Efficiency",
+          "affix": "Prefix",
+          "requiredLevel": 20
+        },
+        {
+          "classes": [
+            "Boots"
+          ],
+          "text": "Temporary Minion Skills have +(1-2) to Limit of Minions summoned",
+          "affix": "Suffix",
+          "requiredLevel": 20
+        }
+      ],
+      "verified": true,
+      "source": "https://poe2db.tw/us/Expansive_Alloy"
+    },
+    {
+      "name": "Swift Alloy",
+      "effect": "Removes a random modifier and augments a Rare item with a new guaranteed modifier",
+      "crafted": true,
+      "targetRarity": "Rare",
+      "applyText": "Right click this item then left click a Rare item to apply it.",
+      "notes": "Added in 0.5.0: 'These items add various new crafted modifiers to items by replacing an existing modifier, similar to Perfect Essences.' Unlocked through Remnant encounters. Occupies the item's single crafted-modifier slot (0.5.0: 'All crafted modifiers are now guaranteed, but items can only have 1 crafted modifier at a time.'); cannot be applied if the item already has a crafted modifier. RePoE has HandWraps* variants of some alloy mods (different texts) not listed on poe2db alloy pages - omitted.",
+      "mods": [
+        {
+          "classes": [
+            "Gloves"
+          ],
+          "text": "(9-12)% increased Cast Speed",
+          "affix": "Suffix",
+          "requiredLevel": 36
+        },
+        {
+          "classes": [
+            "Rings"
+          ],
+          "text": "(7-9)% increased Attack Speed",
+          "affix": "Suffix",
+          "requiredLevel": 36
+        },
+        {
+          "classes": [
+            "Belts"
+          ],
+          "text": "Flasks gain (0.75-1) charges per Second",
+          "affix": "Suffix",
+          "requiredLevel": 36
+        },
+        {
+          "classes": [
+            "Shields",
+            "Bucklers",
+            "Foci"
+          ],
+          "text": "(30-49)% increased Totem Placement speed",
+          "affix": "Suffix",
+          "requiredLevel": 36
+        }
+      ],
+      "verified": true,
+      "source": "https://poe2db.tw/us/Swift_Alloy"
+    },
+    {
+      "name": "Cyclonic Alloy",
+      "effect": "Removes a random modifier and augments a Rare item with a new guaranteed modifier",
+      "crafted": true,
+      "targetRarity": "Rare",
+      "applyText": "Right click this item then left click a Rare item to apply it.",
+      "notes": "Added in 0.5.0: 'These items add various new crafted modifiers to items by replacing an existing modifier, similar to Perfect Essences.' Unlocked through Remnant encounters. Occupies the item's single crafted-modifier slot (0.5.0: 'All crafted modifiers are now guaranteed, but items can only have 1 crafted modifier at a time.'); cannot be applied if the item already has a crafted modifier. RePoE stores the Body Armour range as (30-15)% reduced; poe2db shows (15-30)%. RePoE has HandWraps* variants of some alloy mods (different texts) not listed on poe2db alloy pages - omitted.",
+      "mods": [
+        {
+          "classes": [
+            "Body Armours"
+          ],
+          "text": "(15-30)% reduced Slowing Potency of Debuffs on You",
+          "affix": "Suffix",
+          "requiredLevel": 36
+        },
+        {
+          "classes": [
+            "Boots"
+          ],
+          "text": "(15-19)% increased Skill Effect Duration",
+          "affix": "Suffix",
+          "requiredLevel": 36
+        },
+        {
+          "classes": [
+            "Gloves"
+          ],
+          "text": "(20-25)% increased Duration of Damaging Ailments on Enemies",
+          "affix": "Suffix",
+          "requiredLevel": 36
+        },
+        {
+          "classes": [
+            "Helmets"
+          ],
+          "text": "(35-42)% increased Archon Buff duration",
+          "affix": "Suffix",
+          "requiredLevel": 36
+        }
+      ],
+      "verified": true,
+      "source": "https://poe2db.tw/us/Cyclonic_Alloy"
+    },
+    {
+      "name": "Prismatic Alloy",
+      "effect": "Removes a random modifier and augments a Rare item with a new guaranteed modifier",
+      "crafted": true,
+      "targetRarity": "Rare",
+      "applyText": "Right click this item then left click a Rare item to apply it.",
+      "notes": "Added in 0.5.0: 'These items add various new crafted modifiers to items by replacing an existing modifier, similar to Perfect Essences.' Unlocked through Remnant encounters. Occupies the item's single crafted-modifier slot (0.5.0: 'All crafted modifiers are now guaranteed, but items can only have 1 crafted modifier at a time.'); cannot be applied if the item already has a crafted modifier. RePoE has HandWraps* variants of some alloy mods (different texts) not listed on poe2db alloy pages - omitted. poe2db data also lists classes outside the app's class list: One Hand Swords, One Hand Axes, Two Hand Swords, Two Hand Axes, Daggers, Flails - omitted.",
+      "mods": [
+        {
+          "classes": [
+            "Gloves"
+          ],
+          "text": "Damage Penetrates (9-15)% Elemental Resistances",
+          "affix": "Prefix",
+          "requiredLevel": 36
+        },
+        {
+          "classes": [
+            "One Hand Maces",
+            "Two Hand Maces",
+            "Spears",
+            "Bows",
+            "Quarterstaves",
+            "Crossbows",
+            "Talismans"
+          ],
+          "text": "(20-30)% increased Magnitude of Ailments you inflict",
+          "affix": "Suffix",
+          "requiredLevel": 36
+        },
+        {
+          "classes": [
+            "Staves",
+            "Wands",
+            "Foci"
+          ],
+          "text": "(40-50)% increased Exposure Effect",
+          "affix": "Suffix",
+          "requiredLevel": 36
+        },
+        {
+          "classes": [
+            "Sceptres"
+          ],
+          "text": "Minions have (40-49)% increased Magnitude of Damaging Ailments",
+          "affix": "Suffix",
+          "requiredLevel": 36
+        }
+      ],
+      "verified": true,
+      "source": "https://poe2db.tw/us/Prismatic_Alloy"
+    },
+    {
+      "name": "Mystic Alloy",
+      "effect": "Removes a random modifier and augments a Rare item with a new guaranteed modifier",
+      "crafted": true,
+      "targetRarity": "Rare",
+      "applyText": "Right click this item then left click a Rare item to apply it.",
+      "notes": "Added in 0.5.0: 'These items add various new crafted modifiers to items by replacing an existing modifier, similar to Perfect Essences.' Unlocked through Remnant encounters. Occupies the item's single crafted-modifier slot (0.5.0: 'All crafted modifiers are now guaranteed, but items can only have 1 crafted modifier at a time.'); cannot be applied if the item already has a crafted modifier. RePoE has HandWraps* variants of some alloy mods (different texts) not listed on poe2db alloy pages - omitted.",
+      "mods": [
+        {
+          "classes": [
+            "Helmets"
+          ],
+          "text": "Spell Skills have (10-15)% increased Area of Effect",
+          "affix": "Suffix",
+          "requiredLevel": 36
+        },
+        {
+          "classes": [
+            "Gloves"
+          ],
+          "text": "(10-15)% increased Area of Effect for Attacks",
+          "affix": "Suffix",
+          "requiredLevel": 36
+        },
+        {
+          "classes": [
+            "Boots"
+          ],
+          "text": "+(10-15) to Spirit",
+          "affix": "Suffix",
+          "requiredLevel": 36
+        },
+        {
+          "classes": [
+            "Quivers"
+          ],
+          "text": "(25-35)% chance to Chain an additional time",
+          "affix": "Suffix",
+          "requiredLevel": 36
+        },
+        {
+          "classes": [
+            "Staves",
+            "Wands",
+            "Sceptres"
+          ],
+          "text": "+1 to maximum number of Elemental Infusions",
+          "affix": "Suffix",
+          "requiredLevel": 36
+        }
+      ],
+      "verified": true,
+      "source": "https://poe2db.tw/us/Mystic_Alloy"
+    },
+    {
+      "name": "Sovereign Alloy",
+      "effect": "Removes a random modifier and augments a Rare item with a new guaranteed modifier",
+      "crafted": true,
+      "targetRarity": "Rare",
+      "applyText": "Right click this item then left click a Rare item to apply it.",
+      "notes": "Added in 0.5.0: 'These items add various new crafted modifiers to items by replacing an existing modifier, similar to Perfect Essences.' Unlocked through Remnant encounters. Occupies the item's single crafted-modifier slot (0.5.0: 'All crafted modifiers are now guaranteed, but items can only have 1 crafted modifier at a time.'); cannot be applied if the item already has a crafted modifier. RePoE has HandWraps* variants of some alloy mods (different texts) not listed on poe2db alloy pages - omitted. poe2db data also lists classes outside the app's class list: One Hand Swords, One Hand Axes, Two Hand Swords, Two Hand Axes, Daggers, Flails - omitted.",
+      "mods": [
+        {
+          "classes": [
+            "One Hand Maces",
+            "Two Hand Maces",
+            "Spears",
+            "Bows",
+            "Quarterstaves",
+            "Crossbows",
+            "Talismans",
+            "Sceptres",
+            "Staves",
+            "Wands"
+          ],
+          "text": "(20-30)% increased effect of Socketed Augment Items",
+          "affix": "Suffix",
+          "requiredLevel": 52
+        },
+        {
+          "classes": [
+            "Helmets",
+            "Body Armours",
+            "Gloves",
+            "Boots",
+            "Shields",
+            "Bucklers",
+            "Foci"
+          ],
+          "text": "(24-30)% increased Runic Ward",
+          "affix": "Prefix",
+          "requiredLevel": 20
+        },
+        {
+          "classes": [
+            "Rings",
+            "Amulets",
+            "Belts"
+          ],
+          "text": "(20-30)% increased Explicit Resistance Modifier magnitudes",
+          "affix": "Prefix",
+          "requiredLevel": 52
+        }
+      ],
+      "verified": true,
+      "source": "https://poe2db.tw/us/Sovereign_Alloy"
+    },
+    {
+      "name": "Celestial Alloy",
+      "effect": "Removes a random modifier and augments a Rare item with a new guaranteed modifier",
+      "crafted": true,
+      "targetRarity": "Rare",
+      "applyText": "Right click this item then left click a Rare item to apply it.",
+      "notes": "Added in 0.5.0: 'These items add various new crafted modifiers to items by replacing an existing modifier, similar to Perfect Essences.' Unlocked through Remnant encounters. Occupies the item's single crafted-modifier slot (0.5.0: 'All crafted modifiers are now guaranteed, but items can only have 1 crafted modifier at a time.'); cannot be applied if the item already has a crafted modifier. RePoE has HandWraps* variants of some alloy mods (different texts) not listed on poe2db alloy pages - omitted. poe2db data also lists classes outside the app's class list: One Hand Swords, One Hand Axes, Two Hand Swords, Two Hand Axes, Daggers, Flails - omitted.",
+      "mods": [
+        {
+          "classes": [
+            "Staves",
+            "Wands"
+          ],
+          "text": "+(142-188) to maximum Mana / +1 to Level of all Spell Skills",
+          "affix": "Prefix",
+          "requiredLevel": 52
+        },
+        {
+          "classes": [
+            "One Hand Maces",
+            "Two Hand Maces",
+            "Spears",
+            "Bows",
+            "Quarterstaves",
+            "Crossbows",
+            "Talismans"
+          ],
+          "text": "+(327-427) to Accuracy Rating / (5-8)% increased Attack Speed",
+          "affix": "Prefix",
+          "requiredLevel": 52
+        }
+      ],
+      "verified": true,
+      "source": "https://poe2db.tw/us/Celestial_Alloy"
+    },
+    {
+      "name": "Transcendent Alloy",
+      "effect": "Removes a random modifier and augments a Rare item with a new guaranteed modifier",
+      "crafted": true,
+      "targetRarity": "Rare",
+      "applyText": "Right click this item then left click a Rare item to apply it.",
+      "notes": "Added in 0.5.0: 'These items add various new crafted modifiers to items by replacing an existing modifier, similar to Perfect Essences.' Unlocked through Remnant encounters. Occupies the item's single crafted-modifier slot (0.5.0: 'All crafted modifiers are now guaranteed, but items can only have 1 crafted modifier at a time.'); cannot be applied if the item already has a crafted modifier. RePoE has HandWraps* variants of some alloy mods (different texts) not listed on poe2db alloy pages - omitted. poe2db data also lists classes outside the app's class list: One Hand Swords, One Hand Axes, Two Hand Swords, Two Hand Axes, Daggers, Flails - omitted.",
+      "mods": [
+        {
+          "classes": [
+            "Staves"
+          ],
+          "text": "(39-47)% increased Cast Speed / Gain (11-16)% of Elemental Damage as Extra Cold Damage",
+          "affix": "Suffix",
+          "requiredLevel": 52
+        },
+        {
+          "classes": [
+            "Foci",
+            "Wands"
+          ],
+          "text": "(26-31)% increased Cast Speed / Gain (7-11)% of Elemental Damage as Extra Cold Damage",
+          "affix": "Suffix",
+          "requiredLevel": 52
+        },
+        {
+          "classes": [
+            "One Hand Maces",
+            "Two Hand Maces",
+            "Spears",
+            "Bows",
+            "Quarterstaves",
+            "Crossbows",
+            "Talismans"
+          ],
+          "text": "(15-20)% increased Physical Damage / +(7-10) to all Attributes",
+          "affix": "Suffix",
+          "requiredLevel": 52
+        }
+      ],
+      "verified": true,
+      "source": "https://poe2db.tw/us/Transcendent_Alloy"
+    },
+    {
+      "name": "The Runebinder's Alloy",
+      "effect": "Removes a random modifier and augments a Rare item with a new guaranteed modifier",
+      "crafted": true,
+      "targetRarity": "Rare",
+      "applyText": "Right click this item then left click a Rare item to apply it.",
+      "notes": "Added in 0.5.0: 'These items add various new crafted modifiers to items by replacing an existing modifier, similar to Perfect Essences.' Unlocked through Remnant encounters. Occupies the item's single crafted-modifier slot (0.5.0: 'All crafted modifiers are now guaranteed, but items can only have 1 crafted modifier at a time.'); cannot be applied if the item already has a crafted modifier. RePoE has HandWraps* variants of some alloy mods (different texts) not listed on poe2db alloy pages - omitted.",
+      "mods": [
+        {
+          "classes": [
+            "Staves"
+          ],
+          "text": "(25-50)% chance to gain Nature's Archon when your Plants Overgrow",
+          "affix": "Suffix",
+          "requiredLevel": 52
+        },
+        {
+          "classes": [
+            "Wands"
+          ],
+          "text": "+1 to Limit for Elemental Skills",
+          "affix": "Suffix",
+          "requiredLevel": 52
+        },
+        {
+          "classes": [
+            "Sceptres"
+          ],
+          "text": "+(4-5) maximum stacks of Puppet Master",
+          "affix": "Suffix",
+          "requiredLevel": 52
+        },
+        {
+          "classes": [
+            "Crossbows"
+          ],
+          "text": "+2 to maximum number of Summoned Ballista Totems",
+          "affix": "Suffix",
+          "requiredLevel": 52
+        },
+        {
+          "classes": [
+            "Bows"
+          ],
+          "text": "(40-50)% increased Effect of your Mark Skills",
+          "affix": "Suffix",
+          "requiredLevel": 52
+        }
+      ],
+      "verified": true,
+      "source": "https://poe2db.tw/us/The_Runebinders_Alloy"
+    },
+    {
+      "name": "The Runefather's Alloy",
+      "effect": "Removes a random modifier and augments a Rare item with a new guaranteed modifier",
+      "crafted": true,
+      "targetRarity": "Rare",
+      "applyText": "Right click this item then left click a Rare item to apply it.",
+      "tooltipGroups": "Mace / Quarterstaff / Spear / Talisman",
+      "notes": "Added in 0.5.0: 'These items add various new crafted modifiers to items by replacing an existing modifier, similar to Perfect Essences.' Unlocked through Remnant encounters. Occupies the item's single crafted-modifier slot (0.5.0: 'All crafted modifiers are now guaranteed, but items can only have 1 crafted modifier at a time.'); cannot be applied if the item already has a crafted modifier. RePoE has HandWraps* variants of some alloy mods (different texts) not listed on poe2db alloy pages - omitted.",
+      "mods": [
+        {
+          "classes": [
+            "One Hand Maces",
+            "Two Hand Maces"
+          ],
+          "text": "(60-75)% chance for Skills to retain 40% of Glory on use",
+          "affix": "Suffix",
+          "requiredLevel": 52
+        },
+        {
+          "classes": [
+            "Quarterstaves"
+          ],
+          "text": "Tempest Bells are destroyed after an additional (4-5) Hits",
+          "affix": "Suffix",
+          "requiredLevel": 52
+        },
+        {
+          "classes": [
+            "Spears"
+          ],
+          "text": "+(8-10) to Weapon Range",
+          "affix": "Suffix",
+          "requiredLevel": 52
+        },
+        {
+          "classes": [
+            "Talismans"
+          ],
+          "text": "Lightning Damage from Hits also Contributes to Flammability and Ignite Magnitudes",
+          "affix": "Suffix",
+          "requiredLevel": 52
+        }
+      ],
+      "verified": true,
+      "source": "https://poe2db.tw/us/The_Runefathers_Alloy"
+    }
+  ],
+  "magicBase": {
+    "greaterTransmutation": {
+      "name": "Greater Orb of Transmutation",
+      "text": "Upgrades a Normal item to a Magic item with 1 modifier",
+      "minModLevel": 44,
+      "verified": true,
+      "source": "https://poe2db.tw/us/Greater_Orb_of_Transmutation",
+      "notes": "Tooltip: 'Minimum Modifier Level: 44'. 0.5.0: 'Greater Orbs of Transmutation and Greater Orbs of Augmentation now have a minimum Modifier Level of 44 (previously 55)'."
+    },
+    "perfectTransmutation": {
+      "name": "Perfect Orb of Transmutation",
+      "text": "Upgrades a Normal item to a Magic item with 1 modifier",
+      "minModLevel": 70,
+      "verified": true,
+      "source": "https://poe2db.tw/us/Perfect_Orb_of_Transmutation",
+      "notes": "Tooltip: 'Minimum Modifier Level: 70'."
+    },
+    "greaterAugmentation": {
+      "name": "Greater Orb of Augmentation",
+      "text": "Augments a Magic item with a new random modifier",
+      "minModLevel": 44,
+      "verified": true,
+      "source": "https://poe2db.tw/us/Greater_Orb_of_Augmentation",
+      "notes": "Tooltip: 'Minimum Modifier Level: 44'. Directions: 'Magic items can have up to two random modifiers.'"
+    },
+    "perfectAugmentation": {
+      "name": "Perfect Orb of Augmentation",
+      "text": "Augments a Magic item with a new random modifier",
+      "minModLevel": 70,
+      "verified": true,
+      "source": "https://poe2db.tw/us/Perfect_Orb_of_Augmentation",
+      "notes": "Tooltip: 'Minimum Modifier Level: 70'."
+    },
+    "alchemyOmens": [
+      {
+        "name": "Omen of Sinistral Alchemy",
+        "text": "While this item is active in your inventory your next Orb of Alchemy will result in the maximum number of prefix modifiers",
+        "verified": true,
+        "source": "https://poe2db.tw/us/Omen_of_Sinistral_Alchemy"
+      },
+      {
+        "name": "Omen of Dextral Alchemy",
+        "text": "While this item is active in your inventory your next Orb of Alchemy will result in the maximum number of suffix modifiers",
+        "verified": true,
+        "source": "https://poe2db.tw/us/Omen_of_Dextral_Alchemy"
+      }
+    ]
+  },
+  "unverified": [
+    "Essence mods (incl. corrupted essences) counting as 'crafted': the official notes say so explicitly only for Alloys; for essences it rests on player bug reports (forum 3960848, 3956910) showing 'This item already has a crafted modifier'.",
+    "Whether applying a corrupted essence corrupts the target item: the item text does not mention corruption; assumed it does not, but no source says so outright.",
+    "Perfect Orb of Transmutation/Augmentation minimum modifier level 70 comes from the poe2db tooltip only; the 0.5.0 patch-note line found mentions only Greater (44, previously 55).",
+    "Adaptive Alloy: RePoE contains Cold/Lightning/Chaos 'ConvertedAlloy...' variants of the Fire 'while missing Runic Ward' mods; how they are obtained is unconfirmed.",
+    "RePoE HandWraps* alloy/essence mod variants (other texts, for a Hand Wraps glove sub-type) are not shown on poe2db pages; whether alloys/essences roll them on Hand Wraps is unconfirmed, omitted.",
+    "poe2db lists Daggers, One/Two Hand Swords, One/Two Hand Axes and Flails for several alloys and Essence of the Abyss; these are outside the app's class list and were omitted."
+  ]
+}
