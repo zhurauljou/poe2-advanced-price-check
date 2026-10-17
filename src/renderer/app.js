@@ -910,7 +910,7 @@ async function computeGoal(g) {
 // ---- уник: Divine перекатывает значения всех модов разом (сами моды не меняются) ----
 const TOP_Q = 0.75; // «хорошие роллы» — верхняя четверть диапазона
 let uniqueTop; // цена с хорошими роллами: undefined — считаем, null — не нашли
-const uniqueRolls = () => (state.filters.mods || []).filter((m) => m.tag === 'explicit' && m.range && m.range.hi > m.range.lo && m.roll != null);
+const uniqueRolls = () => (state.filters.mods || []).filter((m) => (m.tag === 'explicit' || m.tag === 'desecrated') && m.range && m.range.hi > m.range.lo && m.roll != null);
 
 // Моды, ради которых уник берут: по poe.ninja их носят ≥ 10% билдов с этим уником (нет данных — все).
 // Роллы остальных на цену почти не влияют — «хорошие роллы» требуем только у ключевых.
@@ -941,7 +941,7 @@ function renderUniqueCraft(r, head) {
   const rolls = uniqueRolls();
   const top = [];
   if (!rolls.length) {
-    const noRanges = state.item.mods && state.item.mods.some((m) => m.tag === 'explicit' && m.statId && !m.range && /\d/.test(m.text));
+    const noRanges = state.item.mods && state.item.mods.some((m) => (m.tag === 'explicit' || m.tag === 'desecrated') && m.statId && !m.range && /\d/.test(m.text));
     top.push(`<div class="craft-sec"><div class="craft-how">${esc(noRanges
       ? t('No roll ranges in the copied text — turn on "Advanced Mod Descriptions" (or copy with Ctrl+Alt+C) to see how good the rolls are')
       : t('This unique has no variable values — Divine Orb changes nothing'))}</div></div>`);

@@ -197,7 +197,9 @@ function prepare(item, demand, rollsOn) {
     // а когда ослабление снимет базу и ищет по категории — не потеряется.
     const hotImplicit = m.tag === 'implicit' && !!m.statId && dp >= 60 && searchMods;
     // Минусовые строки (весь диапазон ≤ 0: «-11(-20--5)% to all Elemental Resistances») — недостаток, за него не платят.
-    const rolls = item.rarity === 'Unique' && m.tag === 'explicit' && !!m.statId && !option && !!m.range && m.range.hi > m.range.lo && m.range.hi > 0;
+    // Desecrated у уника (Heart of the Well) — случайные моды из пула: какие выпали и как — и есть цена.
+    const uniqueRandom = item.rarity === 'Unique' && m.tag === 'desecrated' && !!m.statId;
+    const rolls = item.rarity === 'Unique' && (m.tag === 'explicit' || m.tag === 'desecrated') && !!m.statId && !option && !!m.range && m.range.hi > m.range.lo && m.range.hi > 0;
     return {
       statId: m.statId,
       text: m.text,
@@ -210,7 +212,7 @@ function prepare(item, demand, rollsOn) {
       importance: w.importance,
       demand: dp != null ? dp : null, // % билдов с этим модом на вещах этого класса
       key: w.key,
-      enabled: (option && m.tag === 'explicit') || rolls || hotImplicit || (!!m.statId && searchMods
+      enabled: (option && m.tag === 'explicit') || rolls || uniqueRandom || hotImplicit || (!!m.statId && searchMods
         && ['explicit', 'fractured', 'desecrated', 'crafted'].includes(m.tag)
         && w.importance >= ENABLE_FROM && !covered.some((re) => re.test(m.template))),
       option,
