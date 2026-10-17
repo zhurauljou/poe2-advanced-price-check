@@ -107,13 +107,15 @@ function propFilters(item) {
   if (!['Rare', 'Magic', 'Normal', 'Unique'].includes(item.rarity)) return [];
   // У уников защиту/урон задают сами моды (и они в поиске) — свойства можно включить вручную, по умолчанию выключены.
   const unique = item.rarity === 'Unique';
+  // Магическая вещь — заготовка: её покупают ради модов и их тиров, а не ради DPS/защиты — свойства по желанию.
+  const magic = item.rarity === 'Magic';
   return PROPS.filter((p) => item.props[p.key] > 0).map((p) => ({
     ...p,
     value: item.props[p.key],
     // Защита/DPS — главное в цене брони и оружия: ищем почти такие же (−3%); при нехватке лотов ослабление опустит до −15%.
     min: propMin(item.props[p.key], PROP_MIN),
     // У оружия ищем по общему DPS, физ/элем — по желанию.
-    enabled: !unique && !['pdps', 'edps', 'spirit', 'crit', 'aps'].includes(p.key),
+    enabled: !unique && !magic && !['pdps', 'edps', 'spirit', 'crit', 'aps'].includes(p.key),
   }));
 }
 
@@ -223,6 +225,7 @@ function prepare(item, demand, rollsOn) {
     // Desecrated у уника (Heart of the Well) — случайные моды из пула: какие выпали и как — и есть цена.
     // Почти никому не нужный (< 10% билдов с этим уником) — не включаем: лоты с другим таким же бесполезным модом — те же аналоги.
     const unwanted = item.rarity === 'Unique' && m.tag === 'desecrated' && demandPct.size > 0 && (dp == null || dp < 10);
+    const infRune = m.tag === 'rune' && /^Can roll \w+ modifiers$/.test(m.text || '');
     const uniqueRandom = item.rarity === 'Unique' && m.tag === 'desecrated' && !!m.statId && !unwanted;
     const rolls = item.rarity === 'Unique' && (m.tag === 'explicit' || m.tag === 'desecrated') && !unwanted && !!m.statId && !option && !!m.range && m.range.hi > m.range.lo && m.range.hi > 0;
     return {
@@ -238,20 +241,21 @@ function prepare(item, demand, rollsOn) {
       demand: dp != null ? dp : null, // % билдов с этим модом на вещах этого класса
       key: w.key,
       // Руна Альдура (не вынуть) — сравниваем с такими же вещами.
-      enabled: !!m.forged || (option && m.tag === 'explicit') || rolls || uniqueRandom || hotImplicit || (!!m.statId && searchMods
+      // Руна влияния в гнезде («Can roll Destruction modifiers») — навсегда; как и руна Альдура, сравниваем с такими же.
+      enabled: !!m.forged || infRune || (option && m.tag === 'explicit') || rolls || uniqueRandom || hotImplicit || (!!m.statId && searchMods
         && ['explicit', 'fractured', 'desecrated', 'crafted'].includes(m.tag)
         && w.importance >= ENABLE_FROM && !covered.some((re) => re.test(m.template))),
       option,
       // «до»: уровни умений — ровно своё значение (+5 и +4 — разные товары, особенно на магической базе).
       max: !option && m.value != null && Number.isInteger(m.value) && LEVELS.test(m.template || '') ? m.value : null,
-      forged: !!m.forged,
+      forged: !!m.forged || infRune,
       // Вариант с текстовым диапазоном (размер кольца) — порядковый «ролл»: окно учитывает его при Divine.
       ...((o) => (o ? { ordinal: o } : {}))(option ? stats.ordinal(m.statId, m.template, m.textRange) : null),
       ...(option && item.rarity === 'Unique' && !stats.ordinal(m.statId, m.template, m.textRange) ? { categorical: { n: stats.optionCount(m.statId) } } : {}),
       range: m.range || null,
       roll: rollQuality(m.value, m.range),
       // Вариант с числом («Glorifying … # souls» — сид timeless, «+# to Level of all X Skills») ищем и по числу.
-      min: m.forged ? null : option ? (m.value != null && /#/.test(m.template || '') ? m.value : null) : hotImplicit ? (m.range ? Math.ceil(m.range.lo) : minOf(m.value)) : minFor(m.value, m.range, rolls ? Math.max(w.importance, 1.2) : w.importance),
+      min: m.forged || infRune ? null : option ? (m.value != null && /#/.test(m.template || '') ? m.value : null) : hotImplicit ? (m.range ? Math.ceil(m.range.lo) : minOf(m.value)) : minFor(m.value, m.range, rolls ? Math.max(w.importance, 1.2) : w.importance),
     };
   });
   const pseudo = searchMods ? pseudoFilters(mods) : [];
