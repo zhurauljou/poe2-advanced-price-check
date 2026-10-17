@@ -1,5 +1,5 @@
 const {
-  app, BrowserWindow, globalShortcut, clipboard, screen, ipcMain, Tray, Menu, shell, nativeImage,
+  app, BrowserWindow, globalShortcut, clipboard, ClipboardItem, screen, ipcMain, Tray, Menu, shell, nativeImage,
 } = require('electron');
 const path = require('path');
 const { uIOhook, UiohookKey } = require('uiohook-napi');
@@ -209,10 +209,34 @@ function forBase(d, item) {
     bases: d.bases.filter((b) => !foreign.includes(b.name)) };
 }
 
+// Буфер обмена в Electron 44 асинхронный (как navigator.clipboard): readText / writeText / read / write — промисы.
+// Снимок буфера пользователя — все типы сразу (текст, HTML, картинка…): ClipboardItem из read() читает данные
+// лениво, после нашей записи там было бы уже другое. Скопированные в Проводнике файлы в read() не попадают.
+async function saveClipboard() {
+  try {
+    const items = await clipboard.read();
+    const snap = await Promise.all(items.map(async (it) => {
+      const data = {};
+      for (const type of it.types) data[type] = await it.getType(type);
+      return data;
+    }));
+    return snap.filter((d) => Object.keys(d).length);
+  } catch (e) {
+    log('clipboard save', e.message);
+    return null;
+  }
+}
+async function restoreClipboard(snap) {
+  if (!snap || !snap.length) return;
+  try { await clipboard.write(snap.map((d) => new ClipboardItem(d))); } catch (e) { log('clipboard restore', e.message); }
+}
+
 // Шёпот продавцу в игре: переключаемся в игру, открываем чат (Enter) и вставляем текст (Ctrl+V).
 // Отправляет сам игрок — своим Enter: одно действие на сервере = одно нажатие игрока.
+// Вставили — возвращаем прежний буфер; не вышло (игры нет) — шёпот остаётся в буфере, его можно вставить руками.
 async function whisperInGame(text) {
-  clipboard.writeText(text);
+  const prev = await saveClipboard();
+  await clipboard.writeText(text);
   if (!gameHwnd) return false;
   winapi.focus(gameHwnd);
   await sleep(150);
@@ -220,30 +244,26 @@ async function whisperInGame(text) {
   await tap(UiohookKey.Enter);
   await sleep(120);
   await tap(UiohookKey.V, UiohookKey.Ctrl);
+  setTimeout(() => restoreClipboard(prev), 300); // игра читает буфер не мгновенно
   return true;
 }
 
 // Нажимаем Ctrl+C за пользователя и ждём, пока игра положит текст предмета в буфер.
 // Не ответила за 400 мс — пробуем ещё раз.
 async function copyItem() {
-  const prev = clipboard.readText();
-  clipboard.writeText('');
+  const prev = await saveClipboard();
+  await clipboard.writeText('');
   let text = '';
   for (let attempt = 0; attempt < 2 && !text; attempt++) {
     await pressCopy();
     for (let i = 0; i < 20 && !text; i++) {
       await sleep(20);
-      text = clipboard.readText();
+      text = await clipboard.readText();
     }
     if (!text) log(`copy: clipboard empty after attempt ${attempt + 1}`);
   }
-  // Возвращаем пользователю прежний буфер. Строку с «битыми» символами (половинка эмодзи и т.п.)
-  // Electron записать не может — тогда просто оставляем буфер как есть.
-  if (prev) {
-    setTimeout(() => {
-      try { clipboard.writeText(prev.toWellFormed ? prev.toWellFormed() : prev); } catch {}
-    }, 50);
-  }
+  // Возвращаем пользователю прежний буфер — со всеми форматами, а не только текст (картинку раньше стирали).
+  setTimeout(() => restoreClipboard(prev), 50);
   return text;
 }
 
