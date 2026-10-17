@@ -1,6 +1,7 @@
 // Контрольные сценарии крафта и цены: вещи, на которых советы ошибались (test/fixtures/craft/*.txt), со снимком
 // спроса poe.ninja и цен валюты (scripts/snapshot-craft-fixtures.js). Проверяем свойства плана, а не точные числа.
-// Нужен кэш программы (RePoE и справочник трейда в %APPDATA%/PoE 2 Price Checker/Cache) — без него тесты пропускаются.
+// Данные — снимок RePoE и справочника трейда (test/fixtures/data, scripts/snapshot-test-data.js); CRAFT_LIVE=1 — живой кэш
+// программы (%APPDATA%/PoE 2 Price Checker/cache): проверить сценарии на свежих данных перед обновлением снимка.
 const test = require('node:test');
 const assert = require('node:assert');
 const fs = require('fs');
@@ -10,20 +11,24 @@ const Module = require('module');
 const orig = Module._load;
 Module._load = function (r, ...a) { if (r === 'electron') return { net: { fetch }, app: { getPath: () => require('os').tmpdir() } }; return orig.call(this, r, ...a); };
 
-const CACHE = path.join(process.env.APPDATA || '', 'PoE 2 Price Checker', 'Cache');
-const has = ['repoe-mods.json', 'repoe-base-items.json', 'stats.json'].every((f) => fs.existsSync(path.join(CACHE, f)));
-const skip = has ? false : 'нет кэша программы (RePoE / stats.json)';
+const zlib = require('zlib');
+const LIVE = process.env.CRAFT_LIVE === '1';
+const CACHE = LIVE ? path.join(process.env.APPDATA || '', 'PoE 2 Price Checker', 'cache') : path.join(__dirname, 'fixtures', 'data');
+const file = (n) => path.join(CACHE, LIVE ? n : `${n}.gz`);
+const has = ['repoe-mods.json', 'repoe-base-items.json', 'stats.json'].every((f) => fs.existsSync(file(f)));
+const skip = has ? false : `нет данных (${CACHE})`;
+const load = (n) => { const b = fs.readFileSync(file(n)); return JSON.parse(LIVE ? b.toString('utf8') : zlib.gunzipSync(b).toString('utf8')); };
 
 const FIX = path.join(__dirname, 'fixtures', 'craft');
 const read = (f) => fs.readFileSync(path.join(FIX, f), 'utf8');
 const json = (f) => JSON.parse(read(f));
-const cached = async (n) => JSON.parse(fs.readFileSync(path.join(CACHE, n), 'utf8'));
+const cached = async (n) => load(n);
 
 let stats, craft, pricing, parseItem, PlanCost, prices, bases;
 async function init() {
   if (stats) return;
   stats = require('../src/main/stats');
-  stats.build(JSON.parse(fs.readFileSync(path.join(CACHE, 'stats.json'), 'utf8')));
+  stats.build(load('stats.json'));
   craft = require('../src/main/craft');
   pricing = require('../src/main/pricing');
   ({ parseItem } = require('../src/main/parser'));

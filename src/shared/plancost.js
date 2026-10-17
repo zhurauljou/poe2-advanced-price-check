@@ -275,7 +275,8 @@
     // эссенция ставит свой мод наверняка, но может снять нужный. Итог — затраты и цена вещи: между ценой сейчас и
     // ценой цели по доле достигнутых модов (по их ценности), минус потерянные нужные моды.
     // info: { keep: сколько нужных модов на вещи }. → null, если нет цены цели или вещи.
-    function simulate(plan, info = {}, runs = 2000) {
+    // random — генератор [0, 1) (тесты передают свой, с зерном, чтобы результат повторялся).
+    function simulate(plan, info = {}, runs = 2000, random = Math.random) {
       const { goalValue: goal, est, prices } = C();
       if (goal == null || est == null) return null;
       const steps = expandPlan(plan);
@@ -284,7 +285,7 @@
       const totalWorth = targets.reduce((a, s) => a + (s.worth || s.pct || 1), 0) || 1;
       const lossPer = Math.max(goal, est) / Math.max(1, (info.keep || 0) + targets.length);
       const ann = prices['Orb of Annulment'] || 0;
-      const poisson = (x) => Math.floor(x) + (Math.random() < x % 1 ? 1 : 0);
+      const poisson = (x) => Math.floor(x) + (random() < x % 1 ? 1 : 0);
       const out = [];
       for (let r = 0; r < runs; r++) {
         let spent = 0, got = 0, lost = 0, restoreLoss = 0;
@@ -297,7 +298,7 @@
           const per = c.perTry || 0;
           if (c.k === 'essence') { // мод ставится наверняка; жертва снимается с шансом P, иначе — нужный мод
             spent += per; got += s.worth || s.pct || 1;
-            if (Math.random() > (ps[0] || 1)) { lost++; spent += ann; }
+            if (random() > (ps[0] || 1)) { lost++; spent += ann; }
             return;
           }
           const loop = c.cost != null && Number.isFinite(c.score) && !c.lottery;
@@ -306,14 +307,14 @@
             const w = x.worth || x.pct || 1;
             if (!loop) { // одна попытка: попал — мод есть, нет — промах остаётся
               spent += j === 0 ? per : 0;
-              if (Math.random() < p) got += w;
+              if (random() < p) got += w;
               return;
             }
             for (let k = 0; k < 200; k++) { // до победы: каждый промах снимается (rem.a), иногда вместе с нужным модом
               spent += per / parts.length;
-              if (Math.random() < p) { got += w; return; }
+              if (random() < p) { got += w; return; }
               spent += (c.rem && c.rem.a) || 0;
-              if (Math.random() < ((c.rem && c.rem.q) || 0)) lost++;
+              if (random() < ((c.rem && c.rem.q) || 0)) lost++;
             }
           });
         });

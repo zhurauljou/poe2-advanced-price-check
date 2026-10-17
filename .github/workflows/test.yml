@@ -1,0 +1,17 @@
+# Тесты на каждый пуш и PR: парсер, крафт (на снимке данных test/fixtures/data), модель стоимости плана.
+# Electron и нативные модули тестам не нужны — ставим без скриптов (без скачивания Electron и сборки uiohook / koffi).
+name: test
+on:
+  push:
+  pull_request:
+jobs:
+  test:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci --ignore-scripts
+      - run: npm test
