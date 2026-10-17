@@ -74,4 +74,9 @@ function weight(itemClass, template, tier, demandPct) {
   return { importance: Math.round(base * factor * 100) / 100, key };
 }
 
-module.exports = { weight, ENABLE_FROM, KEEP_FROM };
+// Для шаблонов из RePoE (крафт): без учёта регистра.
+const ci = (re) => new RegExp(re.source, 'i');
+const isKey = (itemClass, template) => [...ANY_KEY, ...slotKey(itemClass)].some((re) => ci(re).test(template));
+const isWeak = (template) => ci(WEAK).test(template);
+
+module.exports = { weight, ENABLE_FROM, KEEP_FROM, isKey, isWeak };

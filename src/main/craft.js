@@ -16,6 +16,7 @@ function weights() {
   return weightsData;
 }
 const { essenceFor, perfectFor } = require('./essences');
+const { isKey, isWeak } = require('./weights');
 const { t } = require('../shared/i18n');
 
 const REPOE = 'https://repoe-fork.github.io/poe2';
@@ -539,7 +540,7 @@ async function advise(item, demandMods, cached) {
     }
   }
 
-  const goal = planGoal(mine, normal, max, want, magic, magicFree);
+  const goal = planGoal(mine, normal, max, want, magic, magicFree, item.itemClass);
   const gamble = gambleFor(item, tags);
   return { open, max, sections, goal, gamble, chanceMeta, source: 'RePoE (game files) · demand: poe.ninja' };
 }
@@ -627,7 +628,11 @@ const EXALT_MIN = { base: 0, greater: 35, perfect: 50 }; // Greater / Perfect Ex
 const EXALT_NAME = { base: 'Exalted Orb', greater: 'Greater Exalted Orb', perfect: 'Perfect Exalted Orb' };
 const KEY_PCT = 30; // мод, который носит столько % билдов, на другой не меняем
 const KEEP_BONUS = 1.5;
-function planGoal(mine, candidates, max, want, magic, magicFree = []) {
+function planGoal(mine, candidates, max, want, magic, magicFree = [], itemClass = '') {
+  // Ключевой для слота мод (уровни умений, Spirit, скорость на ботинках…) поднимает цену сильнее, чем говорит его
+  // популярность: «+2 к миньонам» на скипетре дороже Mana Regeneration, даже если тот встречается чаще.
+  const KEY_BONUS = 2;
+  const keyOf = (lines) => lines.some((l) => isKey(itemClass, l));
   const value = (pct, tier) => pct * (TIER_VALUE[tier] || 0.5);
   const keep = [], remove = [], add = [];
   for (const side of ['prefix', 'suffix']) {
@@ -635,10 +640,11 @@ function planGoal(mine, candidates, max, want, magic, magicFree = []) {
       const pct = a.mod ? Math.max(0, ...a.mod.lines.map((l) => want.get(l) || 0)) : 0;
       // Fractured и хорошие тиры (T1–T2) не трогаем: даже не самый ходовой T1 дороже лотереи Annulment + Exalted.
       // Остальные держим, пока кандидат не ценнее в полтора раза — замена случайна и стоит валюты.
-      const locked = a.tag === 'fractured' || !a.mod || (a.tier && a.tier <= 2) || pct >= KEY_PCT;
-      return { kind: 'cur', a, pct, v: locked ? Infinity : value(pct, a.tier) * KEEP_BONUS };
+      const weak = a.mod && a.mod.lines.every((l) => isWeak(l));
+      const locked = a.tag === 'fractured' || !a.mod || (a.tier && a.tier <= 2 && !weak) || pct >= KEY_PCT;
+      return { kind: 'cur', a, pct, v: locked ? Infinity : value(pct, a.tier) * KEEP_BONUS * (a.mod && keyOf(a.mod.lines) ? KEY_BONUS : 1) };
     });
-    const cand = candidates.filter((c) => c.side === side).map((c) => ({ kind: 'add', c, pct: c.pct, v: value(c.pct, 2) }));
+    const cand = candidates.filter((c) => c.side === side).map((c) => ({ kind: 'add', c, pct: c.pct, v: value(c.pct, 2) * (keyOf(c.text.split(' / ')) ? KEY_BONUS : 1) }));
     const chosen = [...cur, ...cand].sort((x, y) => y.v - x.v).slice(0, max[side]);
     for (const x of cur) {
       const info = { side, tag: x.a.tag, text: x.a.mod ? x.a.mod.lines.join(' / ') : x.a.name, templates: x.a.mod ? x.a.mod.lines : [], tier: x.a.tier, pct: x.pct,
