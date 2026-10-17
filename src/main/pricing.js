@@ -231,6 +231,9 @@ function prepare(item, demand, rollsOn) {
         && w.importance >= ENABLE_FROM && !covered.some((re) => re.test(m.template))),
       option,
       forged: !!m.forged,
+      // Вариант с текстовым диапазоном (размер кольца) — порядковый «ролл»: окно учитывает его при Divine.
+      ...((o) => (o ? { ordinal: o } : {}))(option ? stats.ordinal(m.statId, m.template, m.textRange) : null),
+      ...(option && item.rarity === 'Unique' && !stats.ordinal(m.statId, m.template, m.textRange) ? { categorical: { n: stats.optionCount(m.statId) } } : {}),
       range: m.range || null,
       roll: rollQuality(m.value, m.range),
       // Вариант с числом («Glorifying … # souls» — сид timeless, «+# to Level of all X Skills») ищем и по числу.

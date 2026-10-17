@@ -117,3 +117,9 @@ test('руна Альдура в гнезде — отдельная строк�
   assert.deepEqual(it.modLines[0], { text: 'Forged by the Breath of Aldur', tag: 'rune', tier: null, range: null });
   assert.equal(it.modLines.length, 6);
 });
+
+test('текстовый диапазон сохраняется для оценки роллов: «Massive Ring» — лучший из «Very Small-Massive Ring»', () => {
+  const it = fixture('unique-controlled-metamorphosis.txt');
+  assert.equal(it.modLines[0].textRange, 'Very Small-Massive Ring');
+  assert.equal(it.modLines[2].textRange, undefined);
+});

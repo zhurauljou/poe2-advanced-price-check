@@ -129,7 +129,7 @@ function matchMods(item) {
     const m = lookup(l.text);
     const c = m && pick(m.cands, l.tag, localItem);
     // Несопоставленное показываем серым, без галочки: видно, что мод есть, но искать по нему нельзя.
-    out.push(c ? { text: l.text, tag: l.tag, tier: l.tier, statId: c.id, template: c.text, value: m.value, range: l.range }
+    out.push(c ? { text: l.text, tag: l.tag, tier: l.tier, statId: c.id, template: c.text, value: m.value, range: l.range, textRange: l.textRange }
       : { text: l.text, tag: l.tag, tier: l.tier, statId: null });
   }
   return mergeSame(out);
@@ -193,4 +193,42 @@ function statFor(text, tag, itemClass) {
   return c ? { statId: c.id, value: m.value } : null;
 }
 
-module.exports = { build, buildLocal, matchMods, find, statFor };
+// Порядковое место варианта по текстовому диапазону: «Massive Ring» из «Very Small-Massive Ring» среди вариантов
+// стата (|1 Very Small … |8 Massive — номера идут по размеру). → { idx, lo, hi, loText, hiText } или null.
+function ordinal(statId, text, textRange) {
+  if (!index || !statId || !statId.includes('|') || !textRange) return null;
+  const base = statId.split('|')[0];
+  const opts = [];
+  for (const list of index.values()) for (const c of list) if (c.id.startsWith(base + '|')) opts.push({ n: Number(c.id.split('|')[1]), text: c.text });
+  if (opts.length < 3) return null;
+  // Общие начало и конец текстов вариантов — остаётся меняющаяся часть («Very Small», «Medium-Small», «Massive»).
+  const texts = opts.map((o) => o.text);
+  let pre = texts[0], suf = texts[0];
+  for (const x of texts) {
+    while (!x.startsWith(pre)) pre = pre.slice(0, -1);
+    while (!x.endsWith(suf)) suf = suf.slice(1);
+  }
+  const part = (x) => x.slice(pre.length, x.length - suf.length);
+  // Шкала — только размеры (Very Small … Massive). «Amethyst-Topaz» у Legacy Mageblood — алфавитный список, не порядок.
+  const SIZE = /^(Very Small|Small|Medium-Small|Medium|Medium-Large|Large|Very Large|Massive)$/;
+  if (!opts.every((o) => SIZE.test(part(o.text)))) return null;
+  const byPart = new Map(opts.map((o) => [part(o.text), o.n]));
+  const cur = opts.find((o) => o.text === text);
+  // «Very Small-Massive Ring»: дефис есть и внутри вариантов (Medium-Small) — перебираем, где резать.
+  const tr = textRange.endsWith(suf) ? textRange.slice(0, textRange.length - suf.length) : textRange;
+  for (let i = tr.indexOf('-'); i > 0; i = tr.indexOf('-', i + 1)) {
+    const lo = byPart.get(tr.slice(0, i)), hi = byPart.get(tr.slice(i + 1));
+    if (lo != null && hi != null && cur && hi > lo) return { idx: cur.n, lo, hi, loText: tr.slice(0, i), hiText: tr.slice(i + 1) };
+  }
+  return null;
+}
+
+function optionCount(statId) {
+  if (!index || !statId || !statId.includes('|')) return 0;
+  const base = statId.split('|')[0] + '|';
+  const ids = new Set();
+  for (const list of index.values()) for (const c of list) if (c.id.startsWith(base)) ids.add(c.id);
+  return ids.size;
+}
+
+module.exports = { build, buildLocal, matchMods, find, statFor, ordinal, optionCount };

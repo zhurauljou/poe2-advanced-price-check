@@ -1120,14 +1120,24 @@ function renderNormalCraft(r, head) {
 // ---- уник: Divine перекатывает значения всех модов разом (сами моды не меняются) ----
 const TOP_Q = 0.75; // «хорошие роллы» — верхняя четверть диапазона
 let uniqueTop; // цена с хорошими роллами: undefined — считаем, null — не нашли
-const uniqueRolls = () => (state.filters.mods || []).filter((m) => (m.tag === 'explicit' || m.tag === 'desecrated') && m.range && m.range.hi > m.range.lo && m.roll != null);
+const rollOf = (m) => (m.ordinal ? (m.ordinal.idx - m.ordinal.lo) / (m.ordinal.hi - m.ordinal.lo) : m.roll);
+const uniqueRolls = () => (state.filters.mods || []).filter((m) => (m.tag === 'explicit' || m.tag === 'desecrated')
+  && (m.ordinal || (m.categorical && m.categorical.n > 1) || (m.range && m.range.hi > m.range.lo && m.roll != null)));
+// Шанс после Divine попасть в верхнюю четверть: у порядкового варианта — доля вариантов сверху, у числа — 1/4.
+const topShare = (m) => {
+  if (m.categorical) return 1 / m.categorical.n; // сохранить тот же вариант
+  if (!m.ordinal) return 1 - TOP_Q;
+  const { lo, hi } = m.ordinal;
+  const from = Math.ceil(lo + TOP_Q * (hi - lo));
+  return (hi - from + 1) / (hi - lo + 1);
+};
 
 // Моды, ради которых уник берут: по poe.ninja их носят ≥ 10% билдов с этим уником (нет данных — все).
 // Роллы остальных на цену почти не влияют — «хорошие роллы» требуем только у ключевых.
 function keyRolls(rolls) {
   const pct = new Map(((lastBuilds && lastBuilds.mods) || []).map((r) => [modKey(r.name), r.pct]));
   const of = (m) => Math.max(pct.get(modKey(m.template)) || 0, ...String(m.text).split('\n').map((l) => pct.get(modKey(l)) || 0));
-  const key = rolls.filter((m) => of(m) >= 10);
+  const key = rolls.filter((m) => m.categorical || of(m) >= 10);
   return pct.size && key.length ? key : rolls;
 }
 
@@ -1156,16 +1166,20 @@ function renderUniqueCraft(r, head) {
       ? t('No roll ranges in the copied text — turn on "Advanced Mod Descriptions" (or copy with Ctrl+Alt+C) to see how good the rolls are')
       : t('This unique has no variable values — Divine Orb changes nothing'))}</div></div>`);
   } else {
-    const qs = rolls.map((m) => m.roll);
+    const qs = rolls.filter((m) => !m.categorical).map(rollOf);
     const key = keyRolls(rolls);
-    const low = key.filter((m) => m.roll < TOP_Q).length;
-    const tries = Math.round(1 / Math.pow(1 - TOP_Q, low));
-    const rows = rolls.map((m) => `<div class="brow${key.includes(m) ? '' : ' cold'}"${key.includes(m) ? '' : ` title="${esc(t('Few builds use it — its roll barely affects the price'))}"`}><span class="bname">${esc(m.text.split('\n')[0])} <span class="craft-tier">${fmt(m.range.lo)}–${fmt(m.range.hi)}</span></span><span class="bpct">${Math.round(m.roll * 100)}%</span>
-      <span class="bbar"><i data-w="${Math.round(m.roll * 100)}%"></i></span></div>`).join('');
+    const cats = rolls.filter((m) => m.categorical);
+    const low = key.filter((m) => m.categorical || rollOf(m) < TOP_Q).length;
+    // Divine перекатывает ВСЕ значения: «удача» — все ключевые роллы разом в верхней четверти, а не только низкие.
+    const tries = Math.round(1 / key.reduce((a, m) => a * topShare(m), 1));
+    const rangeText = (m) => (m.ordinal ? `${m.ordinal.loText}–${m.ordinal.hiText}` : `${fmt(m.range.lo)}–${fmt(m.range.hi)}`);
+    const rows = rolls.filter((m) => !m.categorical).map((m) => `<div class="brow${key.includes(m) ? '' : ' cold'}"${key.includes(m) ? '' : ` title="${esc(t('Few builds use it — its roll barely affects the price'))}"`}><span class="bname">${esc(m.text.split('\n')[0])} <span class="craft-tier">${esc(rangeText(m))}</span></span><span class="bpct">${Math.round(rollOf(m) * 100)}%</span>
+      <span class="bbar"><i data-w="${Math.round(rollOf(m) * 100)}%"></i></span></div>`).join('');
     top.push(`<div class="craft-sec plan-box"><div class="k">Divine Orb</div>
       <div class="craft-how">${esc(t('Rerolls the values of all modifiers at once — the modifiers themselves stay'))}</div>
       <div class="dcol"><div class="k">${esc(t('How good the rolls are'))}</div>${rows}</div>
-      <div class="craft-how">${esc(t('Chance the rolls get better overall: {pct}%', { pct: Math.round(betterOdds(qs) * 100) }))}</div>
+      ${cats.length ? `<div class="craft-warn">⚠ ${esc(t('Divine also rerolls {mods} — each becomes a random one of its variants (1 in {n} to keep it)', { mods: cats.map((m) => m.text.split('\n')[0]).join(', '), n: cats.map((m) => m.categorical.n).join(' / ') }))}</div>` : ''}
+      ${qs.length ? `<div class="craft-how">${esc(t('Chance the rolls get better overall: {pct}%', { pct: Math.round(betterOdds(qs) * 100) }))}</div>` : ''}
       <div class="craft-how">${esc(low
         ? t(key.length < rolls.length ? 'Key modifiers in the top quarter: about 1 in {n}' : 'All modifiers in the top quarter: about 1 in {n}', { n: tries })
         : t('All rolls are already in the top quarter — a Divine is more likely to make it worse'))}</div>
@@ -1173,7 +1187,7 @@ function renderUniqueCraft(r, head) {
   }
   if (r.gamble) top.push(gambleHtml(r.gamble));
   $('craft').innerHTML = head + top.join('');
-  if (rolls.length && keyRolls(rolls).some((m) => m.roll < TOP_Q)) computeUniqueTop(keyRolls(rolls));
+  if (rolls.length && keyRolls(rolls).some((m) => !m.categorical && rollOf(m) < TOP_Q)) computeUniqueTop(keyRolls(rolls));
 }
 
 function uniqueVerdictHtml(tries) {
@@ -1204,7 +1218,7 @@ async function computeUniqueTop(rolls) {
   uniqueTop = undefined;
   const f = JSON.parse(JSON.stringify(state.filters));
   state.filters.mods.forEach((m, i) => {
-    if (!rolls.includes(m)) return;
+    if (!rolls.includes(m) || m.ordinal || m.categorical) return;
     const x = f.mods[i];
     const want = m.range.lo + TOP_Q * (m.range.hi - m.range.lo);
     const v = Number.isInteger(m.range.lo) && Number.isInteger(m.range.hi) ? Math.ceil(want) : Math.round(want * 100) / 100;
@@ -1221,8 +1235,7 @@ async function computeUniqueTop(rolls) {
     setStatus(errText(e), true);
   }
   const box = document.querySelector('#craft .verdict-box');
-  const low = rolls.filter((m) => m.roll < TOP_Q).length;
-  if (box) { box.innerHTML = uniqueVerdictHtml(Math.round(1 / Math.pow(1 - TOP_Q, low))); fit(); }
+  if (box) { box.innerHTML = uniqueVerdictHtml(Math.round(1 / rolls.reduce((a, m) => a * topShare(m), 1))); fit(); }
 }
 
 // «Рискованный финал»: порча и освящение — необратимо, шансы — оценки сообщества.

@@ -197,9 +197,12 @@ function parseItem(text) {
         if (advanced && !head && !t) continue;
         const tier = head ? head.tier : null;
         const range = tierRange(raw, head ? head.boost : 0);
+        const tr = raw.replace(/ — Unscalable Value$/, '').match(/\S\(([^()]*[A-Za-z][^()]*)\)$/);
         // У самоцветов «{ Enhancement }» — их собственные моды («Allocates …» у Megalomaniac), а не анойнт: самоцветы не анойнтят.
         const tag = head ? (head.tag === 'enchant' && item.itemClass === 'Jewels' ? 'explicit' : head.tag) : 'explicit';
-        item.modLines.push(t ? { text: t[1], tag: t[2], tier, range } : { text: l, tag, tier, range });
+        const line = t ? { text: t[1], tag: t[2], tier, range } : { text: l, tag, tier, range };
+        if (tr) line.textRange = tr[1];
+        item.modLines.push(line);
       }
     }
   }
