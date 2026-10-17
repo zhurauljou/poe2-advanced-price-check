@@ -37,6 +37,8 @@ async function loadData(cached) {
   ]);
   const byName = new Map();
   for (const b of Object.values(bases)) if (b.name && !byName.has(b.name)) byName.set(b.name, b);
+  // Строки implicit'ов базы (Spirit у скипетра и т.п.) — их нет в пуле крафта, но в спросе poe.ninja они бывают.
+  for (const b of byName.values()) b.implicitLines = (b.implicits || []).flatMap((id) => (mods[id] ? templates(radiusText(mods[id])) : []));
   // Моды самоцветов лежат в домене 'misc' — для крафта это те же «обычные» моды, что и 'item'.
   const pool = Object.entries(mods)
     .filter(([, m]) => (m.domain === 'item' || m.domain === 'misc' || m.domain === 'desecrated')
@@ -612,4 +614,26 @@ function rollsOn(baseType, template) {
   return data.pool.some((m) => (m.domain === 'item' || m.domain === 'desecrated') && m.lines.includes(want) && canRoll(m, base.tags || []));
 }
 
-module.exports = { advise, load, rollsOn };
+// Может ли мод вообще оказаться на этой базе: выпасть или быть её implicit'ом. Для списков спроса poe.ninja —
+// в его «Rare Sceptre» попадают и палочки (уровни заклинаний, Cast Speed), которых на скипетре не бывает.
+const linesCache = new Map(); // база → все строки модов, которые могут на ней быть
+function canAppear(baseType, template) {
+  if (!data) return null;
+  const base = data.bases.get(baseType);
+  if (!base) return null;
+  if (!linesCache.has(baseType)) {
+    const set = new Set(base.implicitLines || []);
+    for (const m of data.pool) if ((m.domain === 'item' || m.domain === 'desecrated') && canRoll(m, base.tags || [])) for (const l of m.lines) set.add(l);
+    linesCache.set(baseType, set);
+  }
+  return linesCache.get(baseType).has(templates(template)[0]);
+}
+
+// Тот же ли класс вещей у двух баз (null — неизвестно).
+function sameClass(a, b) {
+  const x = data && data.bases.get(a);
+  const y = data && data.bases.get(b);
+  return x && y ? x.item_class === y.item_class : null;
+}
+
+module.exports = { advise, load, rollsOn, canAppear, sameClass };

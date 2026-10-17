@@ -181,6 +181,21 @@ async function tap(key, mod) {
   if (mod) { await sleep(10); uIOhook.keyToggle(mod, 'up'); }
 }
 
+// У оружия poe.ninja считает моды и базы всего оружия персонажа (основное, второе, на смене): в «Rare Sceptre»
+// попадают палочки, посохи, копья — до 44% надеваний (аудит по всем классам). Броня и бижутерия — чистые.
+// Оставляем базы того же класса; мод убираем, только если на этой базе его быть не может, а на чужой базе из списка — может
+// (анойнты, энчанты, руны не трогаем — их нет в пуле ни у кого). Всё, что есть на самой вещи, — всегда.
+function forBase(d, item) {
+  if (!d || !item) return d;
+  const key = (s) => String(s || '').replace(/ \(Local\)$/, '').replace(/\+#/g, '#').toLowerCase();
+  const own = new Set((item.mods || []).map((m) => key(m.template)));
+  const foreign = d.bases.filter((b) => craft.sameClass(item.baseType, b.name) === false).map((b) => b.name);
+  const alien = (name) => craft.canAppear(item.baseType, name) === false && foreign.some((b) => craft.canAppear(b, name));
+  return { ...d,
+    mods: d.mods.filter((r) => own.has(key(r.name)) || !alien(r.name)),
+    bases: d.bases.filter((b) => !foreign.includes(b.name)) };
+}
+
 // Шёпот продавцу в игре: переключаемся в игру, открываем чат (Enter) и вставляем текст (Ctrl+V).
 // Отправляет сам игрок — своим Enter: одно действие на сервере = одно нажатие игрока.
 async function whisperInGame(text) {
@@ -533,7 +548,7 @@ app.whenReady().then(singleInstance).then((ok) => {
     }
     return { ...r, prices, theme: d ? d.themed : [], themeBuilds: d ? d.total : null };
   });
-  ipcMain.handle('demand', (_e, opts) => categoryDemand({ ...opts, league: settings.get().league, limit: 80, minLevel: demandLevel() }, api.fetchBuffer)); // 80 — чтобы найти и моды вещи вне топ-10
+  ipcMain.handle('demand', async (_e, opts) => forBase(await categoryDemand({ ...opts, league: settings.get().league, limit: 80, minLevel: demandLevel() }, api.fetchBuffer), lastItem)); // 80 — чтобы найти и моды вещи вне топ-10
   ipcMain.handle('set-price-currency', (_e, c) => { settings.set({ priceCurrency: c }); });
   ipcMain.handle('copy', (_e, t) => clipboard.writeText(t));
   ipcMain.handle('demand-level', () => settings.get().demandLevel || 90);
