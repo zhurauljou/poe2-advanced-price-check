@@ -241,7 +241,6 @@
     'Greater / Perfect Regal Orb — the same, but only modifiers of level 35+ / 50+': 'Greater / Perfect Regal Orb — то же, но только моды 35+ / 50+ уровня',
     'Omen of Sinistral / Dextral Coronation — the next Regal Orb adds only a prefix / only a suffix':
       'Omen of Sinistral / Dextral Coronation — следующий Regal Orb добавит только префикс / только суффикс',
-    "Hinekora's Lock — see the result of the next currency before using it": "Hinekora's Lock — показывает результат следующей валюты до применения",
     'only prefixes': 'только префиксы',
     'only suffixes': 'только суффиксы',
     "after it's rare: {how}": 'когда станет редкой: {how}',
@@ -268,8 +267,6 @@
     'Catalyst — quality on rings and amulets boosts matching modifiers (life, minion, caster…); with Omen of Catalysing Exaltation the next Exalted Orb favours that type':
       'Catalyst — качество на кольцах и амулетах усиливает моды своего типа (life, minion, caster…); с Omen of Catalysing Exaltation следующий Exalted Orb чаще даёт этот тип',
     'Refined Catalyst — quality on jewels boosts matching modifiers': 'Refined Catalyst — качество на самоцветах усиливает моды своего типа',
-    'Fracturing Orb — locks a random modifier in place (rare with 4+ modifiers); worth it when most modifiers are good':
-      'Fracturing Orb — закрепляет случайный мод (редкая с 4+ модами); стоит, когда большинство модов хорошие',
 
     // ---- главный процесс: статусы, ошибки трейда, трей, уведомления ----
     'Failed to load data: {msg}': 'Не удалось загрузить данные: {msg}',
@@ -296,6 +293,16 @@
     'Goal': 'Цель',
     'Price all and sort': 'Оценить все и отсортировать', 'pricing…': 'оцениваю…',
     'One trade search per row, then the list is sorted by how much each modifier adds to the price': 'По одному поиску на строку, затем список сортируется по приросту цены',
+    'Orb of Alchemy (+ Omen of Sinistral / Dextral Alchemy) — rerolls into a rare with 4 random modifiers instead': 'Orb of Alchemy (+ Omen of Sinistral / Dextral Alchemy) — вместо этого перекатит в редкую с 4 случайными модами',
+    'Desecrate before the Exalted Orbs — on a full item it removes a random modifier': 'Оскверняйте до Exalted Orb — на полной вещи осквернение снимает случайный мод',
+    'Omen of Sinistral / Dextral Necromancy — only a prefix / only a suffix': 'Omen of Sinistral / Dextral Necromancy — только префикс / только суффикс',
+    'Omen of the Sovereign / the Liege / the Blackblooded — guaranteed Ulaman / Amanamu / Kurgal modifier': 'Omen of the Sovereign / the Liege / the Blackblooded — гарантированный мод Ulaman / Amanamu / Kurgal',
+    'This item already has a crafted modifier — Perfect Essences and Alloys cannot be used (one crafted modifier per item)': 'На вещи уже есть crafted-мод — Perfect-эссенции и Alloy не встанут (один crafted-мод на вещь)',
+    'Uses the only crafted-modifier slot (one per item; Alloys too)': 'Занимает единственный crafted-слот (один на вещь; Alloy тоже)',
+    "Hinekora's Lock first — see the result before you commit": "Сначала Hinekora's Lock — увидите результат до применения",
+    'Fracturing Orb — locks a random modifier forever (rare with 4+ modifiers); worth it only when most modifiers are worth keeping': 'Fracturing Orb — навсегда фиксирует случайный мод (редкая с 4+ модами); стоит того, только если почти все моды хорошие',
+    Risky: 'Рискованно',
+    'Most listings are stronger than your item (more ▲ than ▼) — estimated from the weaker ones; your item is likely worth less than the list suggests': 'Большинство лотов сильнее вашей вещи (▲ больше, чем ▼) — оценка по более слабым; ваша вещь, скорее всего, дешевле, чем кажется по списку',
     common: 'частый', uncommon: 'средний', rare: 'редкий', 'chance ?': 'шанс ?',
     'Valuable modifiers cannot be estimated from trade listings — items with them are priced and listed differently': 'Шанс ценных модов по трейду не оценить — вещи с ними выставляют и оценивают иначе',
     'Rough estimate: Exalted Orb + omen of its side gives this modifier about 1 in {n} times': 'Грубая оценка: Exalted Orb с оменом этой стороны даёт этот мод примерно 1 раз из {n}',

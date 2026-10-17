@@ -202,7 +202,7 @@ async function advise(item, demandMods, cached) {
       t('Regal Orb — makes it rare with one random modifier from the whole pool; the popular ones below are only some of the outcomes'),
       t('Greater / Perfect Regal Orb — the same, but only modifiers of level 35+ / 50+'),
       t('Omen of Sinistral / Dextral Coronation — the next Regal Orb adds only a prefix / only a suffix'),
-      t("Hinekora's Lock — see the result of the next currency before using it"),
+      t('Orb of Alchemy (+ Omen of Sinistral / Dextral Alchemy) — rerolls into a rare with 4 random modifiers instead'),
     ] });
   }
 
@@ -233,7 +233,7 @@ async function advise(item, demandMods, cached) {
     else {
       const sameSide = mine.filter((a) => a.side === weak.side && a.tag !== 'fractured').length;
       // Whittling смотрит на ВСЕ моды вещи (кроме fractured), а не только на кандидатов в замену.
-      const lowest = mine.filter((a) => a.mod && a.tag !== 'fractured').sort((a, b) => a.mod.required_level - b.mod.required_level)[0];
+      const lowest = mine.filter((a) => a.mod && !['fractured', 'desecrated', 'crafted'].includes(a.tag)).sort((a, b) => a.mod.required_level - b.mod.required_level)[0];
       const erasure = weak.side === 'prefix' ? 'Omen of Sinistral Erasure' : 'Omen of Dextral Erasure';
       const omen = weak.side === 'prefix' ? 'Omen of Sinistral Annulment' : 'Omen of Dextral Annulment';
       const how = weak.tag === 'desecrated'
@@ -257,16 +257,28 @@ async function advise(item, demandMods, cached) {
   if (!item.desecratedItem && !mine.some((a) => a.tag === 'desecrated')) {
     const des = candidates('desecrated').filter((c) => open[c.side] || (!open.prefix && !open.suffix)).slice(0, 4);
     if (des.length) {
-      sections.push({ kind: 'desecrate', how: [t('Desecrate with {bone} — adds an unrevealed desecrated modifier', { bone: boneFor(tags, ilvl) }) + (!open.prefix && !open.suffix ? ` (${t('replaces a random one when full')})` : '')],
-        candidates: des });
+      // Desecrated — отдельный слот (не crafted), но на полной вещи снимает случайный мод: осквернять ДО Exalt-ов.
+      const lich = tags.includes('weapon') || tags.includes('ring') || tags.includes('amulet') || tags.includes('belt');
+      sections.push({ kind: 'desecrate', how: [
+        t('Desecrate with {bone} — adds an unrevealed desecrated modifier', { bone: boneFor(tags, ilvl) }) + (!open.prefix && !open.suffix ? ` (${t('replaces a random one when full')})` : ''),
+        t('Desecrate before the Exalted Orbs — on a full item it removes a random modifier'),
+        t('Omen of Sinistral / Dextral Necromancy — only a prefix / only a suffix'),
+        ...(lich ? [t('Omen of the Sovereign / the Liege / the Blackblooded — guaranteed Ulaman / Amanamu / Kurgal modifier')] : []),
+      ], candidates: des });
     }
   }
 
   // Perfect-эссенции — только на редких: убирают случайный мод и добавляют свой (у слота свой набор, не тот, что у Greater).
+  // С 0.5 на вещи только один crafted-мод (эссенции, в т.ч. Perfect и порченые, и Alloy). Есть — Perfect/Alloy не встанут.
+  const hasCrafted = mine.some((a) => a.tag === 'crafted');
   const perfect = item.rarity === 'Rare' ? perfectFor(item.itemClass) : [];
-  if (perfect.length) {
+  if (perfect.length && hasCrafted) {
+    sections.push({ kind: 'perfect', how: [t('This item already has a crafted modifier — Perfect Essences and Alloys cannot be used (one crafted modifier per item)')] });
+  } else if (perfect.length) {
     sections.push({ kind: 'perfect', how: [...perfect.map((p) => `${p.name} — ${p.mod}`),
-      t('Omen of Sinistral / Dextral Crystallisation — the Perfect Essence removes only a prefix / only a suffix')] });
+      t('Omen of Sinistral / Dextral Crystallisation — the Perfect Essence removes only a prefix / only a suffix'),
+      t('Uses the only crafted-modifier slot (one per item; Alloys too)'),
+      t("Hinekora's Lock first — see the result before you commit")] });
   }
 
   // 4. Дёшево и без риска.
@@ -278,8 +290,14 @@ async function advise(item, demandMods, cached) {
   if ((tags.includes('ring') || tags.includes('amulet')) && !item.quality) cheap.push(t('Catalyst — quality on rings and amulets boosts matching modifiers (life, minion, caster…); with Omen of Catalysing Exaltation the next Exalted Orb favours that type'));
   if (tags.includes('jewel') && !item.quality) cheap.push(t('Refined Catalyst — quality on jewels boosts matching modifiers'));
   const total = mine.length;
-  if (!magic && total >= 4 && !item.fracturedItem) cheap.push(t('Fracturing Orb — locks a random modifier in place (rare with 4+ modifiers); worth it when most modifiers are good'));
   if (cheap.length) sections.push({ kind: 'cheap', how: cheap });
+  // Fracturing — не «дёшево и без риска»: в 0.5 редкий (только атлас) и фиксирует СЛУЧАЙНЫЙ мод.
+  if (!magic && total >= 4 && !item.fracturedItem) {
+    sections.push({ kind: 'risky', how: [
+      t('Fracturing Orb — locks a random modifier forever (rare with 4+ modifiers); worth it only when most modifiers are worth keeping'),
+      t("Hinekora's Lock first — see the result before you commit"),
+    ] });
+  }
 
   const goal = planGoal(mine, normal, max, want, magic);
   return { open, max, sections, goal, chanceMeta, source: 'RePoE (game files) · demand: poe.ninja' };

@@ -502,3 +502,4 @@ footer::after { display: none; }
 .brow.best { box-shadow: inset 2px 0 var(--good); }
 .brow.best .bname::before { content: var(--best-label, "★ "); color: var(--good); font-weight: 700; }
 .brow.flat { opacity: .55; }
+.hero .ages .warn-t { color: var(--warn); }

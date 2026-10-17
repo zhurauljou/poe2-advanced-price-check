@@ -350,14 +350,20 @@ function renderTradeHero(r) {
   }
   // Возраст лотов: залежавшийся дешёвый лот (неделю+ не купили) завышает картину — за эту цену не берут.
   // Если свежих (≤ 3 дней) лотов хватает, оценку строим по ним; иначе — по всем, но надёжность ниже.
-  const priced = r.listings.filter((l) => l.divine != null).map((l) => ({ div: l.divine, age: ageDays(l.indexed) }))
+  // edge — насколько лот сильнее вашей вещи (▲ минус ▼ по модам): заметно сильнее (≥ 2) не должен тянуть оценку вверх.
+  const priced = r.listings.filter((l) => l.divine != null).map((l) => { const c = cmpCounts(l); return { div: l.divine, age: ageDays(l.indexed), edge: c.better - c.worse }; })
     .sort((a, b) => a.div - b.div);
-  const fresh = priced.filter((l) => l.age <= 3);
-  const basis = fresh.length >= 3 ? fresh.map((l) => l.div) : divs;
+  const stronger = (l) => l.edge >= STRONGER;
+  // Большинство дешёвых лотов сильнее вашей вещи — оцениваем по тем, что не сильнее; таких нет — по самому дешёвому.
+  const mostlyStronger = priced.length >= 3 && priced.slice(0, 5).filter(stronger).length * 2 > Math.min(5, priced.length);
+  const pool = mostlyStronger ? priced.filter((l) => !stronger(l)) : priced;
+  const fresh = pool.filter((l) => l.age <= 3);
+  const basis = mostlyStronger && pool.length < 2 ? [priced[0].div] : fresh.length >= 3 ? fresh.map((l) => l.div) : pool.map((l) => l.div);
   const head = basis.slice(0, 5);
   const est = head[Math.floor((head.length - 1) / 2)];
   const median = divs[Math.floor((divs.length - 1) / 2)];
-  const ageHtml = ageSummary(priced, fresh.length >= 3 && fresh.length < priced.length);
+  const ageHtml = ageSummary(priced, fresh.length >= 3 && fresh.length < priced.length)
+    + (mostlyStronger ? `<div class="ages"><span class="warn-t">${esc(t('Most listings are stronger than your item (more ▲ than ▼) — estimated from the weaker ones; your item is likely worth less than the list suggests'))}</span></div>` : '');
   // Вторая цена: те же моды с любым роллом своего тира — сколько рынок доплачивает за ваши роллы.
   let floorHtml = '';
   const fl = r.floor;
@@ -785,6 +791,8 @@ function renderCraft(r) {
     } else if (s.kind === 'tierup') {
       parts.push(`<div class="craft-sec"><div class="k">${t('Key modifier, weak tier — keep it')}</div>${s.mods.map((m) => `
         <div class="craft-weak">${esc(m.text)} <span class="craft-tier">T${m.tier} → T${m.best}${m.range ? ` (${esc(m.range)})` : ''} · ${esc(t('{pct}% builds', { pct: fmt(m.pct) }))}</span></div>${how(m.how)}`).join('')}</div>`);
+    } else if (s.kind === 'risky') {
+      parts.push(`<div class="craft-sec"><div class="k">${t('Risky')}</div>${how(s.how)}</div>`);
     } else if (s.kind === 'keep') {
       parts.push(`<div class="craft-sec"><div class="k">${t('Full — all modifiers are top tier')}</div><div class="craft-sub">${t('Nothing worth replacing.')}</div></div>`);
     } else if (s.kind === 'cheap') {
@@ -1033,6 +1041,24 @@ function compareModel(t) {
 }
 
 // «▲2 ▼1» в строке лота: сколько модов у конкурента лучше и хуже ваших — без наведения.
+// Сколько модов лота лучше / хуже, чем у вашей вещи (одинаковые моды на трейде — одна сумма, считаем один раз).
+const STRONGER = 2;
+function cmpCounts(l) {
+  if (!l.tip || !state || !state.filters) return { better: 0, worse: 0 };
+  const { classify, key } = compareModel(l.tip);
+  const seen = new Set();
+  let better = 0;
+  let worse = 0;
+  for (const m of l.tip.mods) {
+    if (!m.statId || seen.has(key(m.statId))) continue;
+    seen.add(key(m.statId));
+    const c = classify(m);
+    if (c === 'better') better++;
+    else if (c === 'worse') worse++;
+  }
+  return { better, worse };
+}
+
 function cmpBadge(l) {
   if (!l.tip || !state || !state.filters) return '';
   const { classify, key } = compareModel(l.tip);
