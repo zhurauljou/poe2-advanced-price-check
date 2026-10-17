@@ -470,11 +470,28 @@ async function advise(item, demandMods, cached) {
   const total = mine.length;
   if (cheap.length) sections.push({ kind: 'cheap', how: cheap });
   // Fracturing — не «дёшево и без риска»: в 0.5 редкий (только атлас) и фиксирует СЛУЧАЙНЫЙ мод.
-  if (!magic && total >= 4 && !item.fracturedItem) {
-    sections.push({ kind: 'risky', how: [
-      t('Fracturing Orb — locks a random modifier forever (rare with 4+ modifiers); worth it only when most modifiers are worth keeping'),
-      t("Hinekora's Lock first — see the result before you commit"),
-    ] });
+  // Нужно ≥ 4 модов (desecrated, даже нераскрытый, в счёт входит), но desecrated и уже fractured не фиксируются:
+  // шанс = ключевые / фиксируемые. Приём: 3 обычных мода + Desecrate без раскрытия → 4 мода, шанс 1/3 вместо 1/4
+  // (docs/crafting-tricks.md D-4, T-05).
+  if (!magic && !item.fracturedItem) {
+    const pctOf = (a) => (a.mod ? Math.max(0, ...a.mod.lines.map((l) => want.get(l) || 0)) : 0);
+    const fixable = mine.filter((a) => a.tag !== 'desecrated' && a.tag !== 'fractured');
+    const keys = fixable.filter((a) => pctOf(a) >= KEY_PCT || (a.tier && a.tier <= 2 && pctOf(a) >= 15));
+    const hasDes = mine.some((a) => a.tag === 'desecrated');
+    const how = [];
+    if (keys.length && total >= 4) {
+      how.push(t('Fracturing Orb — locks a random modifier forever: 1 in {n} to lock a key one ({mods})',
+        { n: Math.round(fixable.length / keys.length * 10) / 10, mods: keys.map((a) => a.mod.lines.join(' / ')).join(', ') }));
+      if (!hasDes && fixable.length === 4 && bones.length) how.push(t('Better odds: remove one unwanted modifier, then desecrate and do not reveal — 3 regular + 1 unrevealed gives 1 in {n}', { n: Math.round(3 / keys.length * 10) / 10 }));
+    } else if (keys.length && total === 3 && !hasDes && bones.length) {
+      how.push(t('Fracturing Orb needs 4 modifiers: desecrate first and do not reveal — an unrevealed desecrated modifier counts but cannot be locked: 1 in {n} to lock {mods}',
+        { n: Math.round(3 / keys.length * 10) / 10, mods: keys.map((a) => a.mod.lines.join(' / ')).join(', ') }));
+    }
+    if (how.length) {
+      how.push(t('After it: remove the rest (Annulment) and rebuild around the locked modifier; a miss locks a useless one — the base is spent'));
+      how.push(t("Hinekora's Lock (preview the result first) — only if the item is worth far more than the Lock"));
+      sections.push({ kind: 'risky', how, prices: ['Fracturing Orb', "Hinekora's Lock"] });
+    }
   }
 
   const goal = planGoal(mine, normal, max, want, magic, magicFree);

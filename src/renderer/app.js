@@ -1240,7 +1240,8 @@ function renderCraft(r) {
     } else if (s.kind === 'magicfill') {
       parts.push(`<div class="craft-sec"><div class="k">${t('While it is magic')}</div>${how(s.how)}${s.candidates.length ? `<div class="craft-sub">${t('Popular modifiers for the free slot:')}</div>${craftRows(s.candidates)}` : ''}</div>`);
     } else if (s.kind === 'risky') {
-      parts.push(`<div class="craft-sec"><div class="k">${t('Risky')}</div>${how(s.how)}</div>`);
+      const pr = (s.prices || []).filter((n) => craftPrices[n] != null).map((n) => `${n} ≈ ${money(craftPrices[n])}`).join(' · ');
+      parts.push(`<div class="craft-sec"><div class="k">${t('Risky')}</div>${how(s.how)}${pr ? `<div class="craft-sub">${esc(t('Prices'))} · ${esc(pr)}</div>` : ''}</div>`);
     } else if (s.kind === 'keep') {
       parts.push(`<div class="craft-sec"><div class="k">${t('Full — all modifiers are top tier')}</div><div class="craft-sub">${t('Nothing worth replacing.')}</div></div>`);
     } else if (s.kind === 'cheap') {
