@@ -181,11 +181,13 @@ const NINJA_TYPES = [
 const ninja = { league: null, at: 0, byName: new Map(), byId: new Map(), rates: {} };
 
 let ninjaLoading = null; // { league, promise } — не качаем одно и то же параллельно
+let ninjaWanted = null; // лига последнего запроса: опоздавший ответ прежней лиги не затирает её цены
 
 function loadNinja(league, force = false) {
+  ninjaWanted = league;
   if (!force && ninja.league === league && Date.now() - ninja.at < 15 * 60e3) return Promise.resolve(ninja);
   if (ninjaLoading && ninjaLoading.league === league) return ninjaLoading.promise;
-  const promise = fetchNinja(league).finally(() => { ninjaLoading = null; });
+  const promise = fetchNinja(league).finally(() => { if (ninjaLoading && ninjaLoading.promise === promise) ninjaLoading = null; });
   ninjaLoading = { league, promise };
   return promise;
 }
@@ -217,6 +219,7 @@ async function fetchNinja(league) {
     }
   });
   if (!byName.size) throw new Error('poe.ninja returned no prices for league ' + league);
+  if (league !== ninjaWanted) return ninja; // пока качали, переключили лигу — курсы этой лиги уже не нужны
   Object.assign(ninja, {
     league, at: Date.now(), byName, byId,
     rates: ratesFrom(byId, rates),
@@ -243,6 +246,9 @@ async function fetchUniques(league) {
   const q = encodeURIComponent(league);
   const results = await Promise.all(UNIQUE_TYPES.map((t) =>
     getJson(`${NINJA}/economy/stash/current/item/overview?league=${q}&type=${t}`).catch(() => null)));
+  // Не ответил ни один раздел (нет сети, poe.ninja лежит) — это ошибка, а не «у уников нет цен»: иначе пустой список
+  // запомнился бы на 15 минут.
+  if (results.every((d) => !d)) throw new Error('poe.ninja: no unique prices');
   const map = new Map();
   for (const d of results) {
     for (const ln of (d && d.lines) || []) {

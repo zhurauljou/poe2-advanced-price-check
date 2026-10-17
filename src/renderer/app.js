@@ -17,6 +17,19 @@ function errText(e) {
 // Лимит трейда (⏳) — следующие запросы тоже упадут, серию поисков останавливаем.
 const isLimit = (e) => errText(e).startsWith('⏳');
 
+// Короткий поиск ради цены — один раз на вещь и фильтры: перерисовка (смена языка, крафт после поиска) не тратит лимит
+// трейда. Сбрасывается с новой вещью и сменой лиги; ошибки не запоминаем.
+let quickMemo = new Map();
+function quickPrice(item, filters) {
+  const key = JSON.stringify([item, filters]);
+  if (!quickMemo.has(key)) {
+    const p = window.pc.quickPrice(item, filters);
+    quickMemo.set(key, p);
+    p.catch(() => quickMemo.delete(key));
+  }
+  return quickMemo.get(key);
+}
+
 function fmt(n) {
   if (n == null || !isFinite(n)) return '—';
   const a = Math.abs(n);
@@ -65,7 +78,12 @@ const pct1 = (v) => `${v > 0 ? '+' : ''}${v.toFixed(1)}%`;
 function fit() {
   // Высота содержимого (шапка + main + футер), а не body: body растянут на всё окно ради прокрутки, и по нему
   // окно никогда бы не уменьшалось.
-  requestAnimationFrame(() => window.pc.fit([...document.body.children].reduce((s, el) => s + el.offsetHeight, 0) + 2));
+  // Открытый список лиг — поверх содержимого (position: absolute) и в сумму не входит: окно не короче его низа.
+  requestAnimationFrame(() => {
+    const content = [...document.body.children].reduce((s, el) => s + el.offsetHeight, 0) + 2;
+    const menu = $('leagueMenu');
+    window.pc.fit(Math.max(content, menu && !menu.hidden ? Math.ceil(menu.getBoundingClientRect().bottom) + 8 : 0));
+  });
 }
 
 function setStatus(text, error) {
@@ -297,14 +315,15 @@ document.addEventListener('click', (e) => {
 let elementAlts = null; // { list: [{ element, rune, cost, needSocket, est, wait }], all }
 async function loadElements(seq, all) {
   const vars = await window.pc.elementVariants(state.item, state.filters).catch(() => []);
-  if (seq !== searchSeq || !vars.length) { if (seq === searchSeq) elementAlts = null; return; }
+  // Вариантов нет — убираем и блок прошлого поиска (иначе он оставался на экране).
+  if (seq !== searchSeq || !vars.length) { if (seq === searchSeq) { elementAlts = null; renderElements(); } return; }
   if (!elementAlts || !all) elementAlts = { list: vars.map((v) => ({ ...v, wait: false, est: undefined })), all };
   elementAlts.all = all;
   const todo = all ? elementAlts.list.filter((v) => v.est === undefined) : elementAlts.list.slice(0, 1); // сразу — одна, лучшая по спросу
   for (const v of todo) {
     v.wait = true; renderElements();
     try {
-      const q = await window.pc.quickPrice(state.item, v.filters);
+      const q = await quickPrice(state.item, v.filters);
       if (seq !== searchSeq) return;
       v.est = estimate(q.lots); v.total = q.total;
     } catch (e) {
@@ -533,7 +552,7 @@ async function runImpact() {
     const f = JSON.parse(JSON.stringify(state.filters));
     f.mods[i].enabled = false;
     try {
-      const q = await window.pc.quickPrice(state.item, f);
+      const q = await quickPrice(state.item, f);
       if (seq !== impactSeq) return;
       const without = estimate(q.lots);
       state.impact[i] = { without, total: q.total, share: without == null ? null : Math.max(0, 1 - without / state.est) };
@@ -753,7 +772,7 @@ async function priceCraft(b) {
   try {
     // Магическая вещь после Regal Orb — уже редкая: ищем среди редких.
     const it = state.item.rarity === 'Magic' ? { ...state.item, rarity: 'Rare' } : state.item;
-    const q = await window.pc.quickPrice(it, f);
+    const q = await quickPrice(it, f);
     if (state !== mine) return; // пока искали, проверили другую вещь — её оценку не трогаем
     const v = estimate(q.lots);
     let html;
@@ -969,7 +988,7 @@ async function computeGoal(g) {
   goalBasis = 'exact';
   try {
     const it = state.item.rarity === 'Magic' ? { ...state.item, rarity: 'Rare' } : state.item;
-    const q = await window.pc.quickPrice(it, f);
+    const q = await quickPrice(it, f);
     if (mine !== state) return;
     goalValue = estimate(q.lots);
     // Точно таких нет — похожие: добавленные моды обязательны, у оставшихся — нижняя граница тира, второстепенные выключены.
@@ -981,7 +1000,7 @@ async function computeGoal(g) {
         if (!m.key && (m.importance || 0) < 2.4) m.enabled = false;
         else if (m.range) m.min = Math.ceil(m.range.lo);
       }
-      const q2 = await window.pc.quickPrice(it, loose);
+      const q2 = await quickPrice(it, loose);
       if (mine !== state) return;
       goalValue = estimate(q2.lots);
       if (goalValue != null) goalBasis = 'similar';
@@ -991,7 +1010,7 @@ async function computeGoal(g) {
         const keep = new Set((top.stats || []).map((s) => s.statId));
         const part = JSON.parse(JSON.stringify(loose));
         for (const m of part.mods) if (added.has(m.statId) && !keep.has(m.statId)) m.enabled = false;
-        const q3 = await window.pc.quickPrice(it, part);
+        const q3 = await quickPrice(it, part);
         if (mine !== state) return;
         goalValue = estimate(q3.lots);
         if (goalValue != null) goalBasis = 'partial';
@@ -1207,7 +1226,7 @@ async function computeUniqueTop(rolls) {
     x.min = Math.max(Number(x.min) || m.range.lo, v);
   });
   try {
-    const q = await window.pc.quickPrice(state.item, f);
+    const q = await quickPrice(state.item, f);
     if (mine !== state) return;
     uniqueTop = estimate(q.lots);
   } catch (e) {
@@ -1379,8 +1398,8 @@ function meter(m) {
 function rollInfo(m) {
   if (!m.range || m.roll == null) return '';
   // Пометка max — только у максимального ролла лучшего тира (T1): на других тирах она мало что значит.
-  const max = m.tier === 1 && m.roll >= 0.9 ? `<span class="maxroll" title="${t('Near max roll of the top tier — usually worth more')}">max</span>` : '';
-  return ` <span class="rng" title="${t('Tier range · roll {n}%', { n: Math.round(m.roll * 100) })}">${fmt(m.range.lo)}${m.range.lo < 0 ? ' to ' : '–'}${fmt(m.range.hi)}</span>${max}`;
+  const max = m.tier === 1 && m.roll >= 0.9 ? `<span class="maxroll" title="${t('Near max roll of the top tier — usually worth more')}">${t('max')}</span>` : '';
+  return ` <span class="rng" title="${t('Tier range · roll {n}%', { n: Math.round(m.roll * 100) })}">${fmt(m.range.lo)}${m.range.lo < 0 ? t(' to ') : '–'}${fmt(m.range.hi)}</span>${max}`;
 }
 
 // Какие суммы раскрыты (сбрасывается на новом предмете).
@@ -1692,9 +1711,14 @@ async function runSearch(relax = false) {
     heroRender = () => { renderTradeHero(r); renderResults(r); renderElements(); };
     heroRender();
     loadElements(seq, false);
+    // Советы по крафту считали «продать как есть» без оценки (вкладку открыли до конца поиска — в пошаговом крафте
+    // всегда) или по прежним фильтрам: пересчитываем — сразу, если вкладка открыта, иначе при открытии.
+    if (craftFor === state || (craftFor === null && !$('tab-craft').hidden)) { craftFor = null; if (!$('tab-craft').hidden) loadCraft(); }
   } catch (e) {
     if (seq !== searchSeq) return;
     $('results').hidden = true;
+    elementAlts = null;
+    if ($('elements')) $('elements').hidden = true;
     const err = esc(errText(e));
     heroRender = () => { $('hero').innerHTML = voidState('⚠', t('Search failed'), err, [['retry', t('Try again')]]); };
     heroRender();
@@ -1706,6 +1730,7 @@ async function runSearch(relax = false) {
 
 window.pc.onItem((data) => {
   impactSeq++; // недосчитанный «вклад модов» прежней вещи не должен писать в новую
+  quickMemo = new Map();
   elementAlts = null;
   if ($('elements')) $('elements').hidden = true;
   state = data;
@@ -1779,7 +1804,7 @@ $('tab-demand').addEventListener('click', async (e) => {
   const lv = e.target.closest('[data-lvl]');
   if (lv) {
     demandLevel = +lv.dataset.lvl;
-    await window.pc.setDemandLevel(demandLevel);
+    await window.pc.setDemandLevel(demandLevel).catch(() => {}); // не сохранилось — уровень всё равно действует сейчас
     craftFor = null; // тема крафта — тоже по новому уровню
     loadBuilds();
     loadDemand();
@@ -1919,8 +1944,24 @@ $('leagueMenu').addEventListener('click', async (e) => {
   if (b.dataset.league === state.league) return;
   state.league = b.dataset.league;
   renderLeagues();
-  await window.pc.setLeague(state.league);
-  if (state.searchable) runSearch();
+  setStatus(t('Loading prices for {league}…', { league: state.league }));
+  try {
+    await window.pc.setLeague(state.league);
+  } catch (err) {
+    setStatus(errText(err), true);
+    return;
+  }
+  setStatus('');
+  // Биржевой предмет: его цену (poe.ninja новой лиги) считает главный процесс — проверяем вещь заново.
+  if (!state.searchable) { window.pc.recheck(); return; }
+  // Остальное — тоже по новой лиге: поиск, спрос, цена уника на poe.ninja; советы по крафту пересчитаются после поиска.
+  state.uniqueNinja = null;
+  craftFor = null;
+  quickMemo = new Map();
+  runSearch();
+  loadBuilds();
+  loadDemand();
+  loadUniqueNinja();
 });
 // Клик мимо — закрыть список.
 document.addEventListener('click', (e) => { if (!e.target.closest('#ldrop')) toggleLeagueMenu(false); });

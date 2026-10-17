@@ -26,6 +26,7 @@ contextBridge.exposeInMainWorld('pc', {
   copy: (text) => ipcRenderer.invoke('copy', text),
   openUrl: (url) => ipcRenderer.invoke('open-url', url),
   hide: () => ipcRenderer.invoke('hide'),
+  recheck: () => ipcRenderer.invoke('recheck'),
   elementVariants: (item, filters) => ipcRenderer.invoke('element-variants', item, filters),
   pin: (on) => ipcRenderer.invoke('pin', on),
   fit: (height) => ipcRenderer.invoke('fit', height),

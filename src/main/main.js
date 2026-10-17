@@ -319,7 +319,10 @@ async function useClientLang(lang) {
   clientLangActive = lang;
 }
 
-async function priceCheck(text) {
+// refresh — та же вещь заново (сменили лигу): окно уже открыто, на место у курсора его не переносим.
+let lastText = null;
+async function priceCheck(text, refresh = false) {
+  lastText = text;
   const lang = detectClientLang(text);
   try {
     await useClientLang(lang);
@@ -329,7 +332,8 @@ async function priceCheck(text) {
   if (lang !== 'en') text = clientLang.toEnglish(text, lang);
   const item = parseItem(text);
   if (!item) {
-    log('not an item:', text.slice(0, 80));
+    // Сам текст не пишем: с выключенным «только в игре» это мог быть чужой буфер (пароль, письмо).
+    log(`not an item (${text.length} chars, client ${lang})`);
     return; // курсор не над предметом
   }
   api.newGeneration(); // новая вещь — ещё не отправленные запросы прежней отменяются
@@ -368,7 +372,7 @@ async function priceCheck(text) {
   lastThemeMods = prepared.filters.mods.filter((m) => m.enabled && m.statId && m.tag !== 'pseudo' && m.tag !== 'implicit' && m.tag !== 'rune' && !m.option)
     .sort((a, b) => (b.importance || 0) - (a.importance || 0)).slice(0, 2).map((m) => m.text.split('\n')[0]);
   send('item', { ...prepared, league, leagues, priceCurrency: settings.get().priceCurrency || 'any', hotkey: hotkeyLabel() });
-  show();
+  if (!refresh || !win.isVisible()) show();
 }
 
 function send(ch, data) {
@@ -454,17 +458,26 @@ function setHotkey(hk) {
   syncHotkey();
 }
 
+// Комбинацию заняла другая программа — пишем в лог и говорим в трее один раз, а не каждые 250 мс.
+let hotkeyFailed = null;
 function syncHotkey() {
-  const hk = settings.get().hotkey;
+  const hk = HOTKEYS.some(([k]) => k === settings.get().hotkey) ? settings.get().hotkey : HOTKEYS[0][0];
   let want = true;
   if (settings.get().hotkeyGameOnly) {
     const fg = winapi.foreground();
     if (fg) want = GAME_TITLE.test(winapi.title(fg)) || (win && fg === winapi.hwndOf(win));
   }
   if (want && !hotkeyOn) {
-    hotkeyOn = globalShortcut.register(hk, () => { log('hotkey in', JSON.stringify(winapi.title(winapi.foreground()))); onHotkey(); });
+    try {
+      hotkeyOn = globalShortcut.register(hk, () => { log('hotkey in', JSON.stringify(winapi.title(winapi.foreground()))); onHotkey(); });
+    } catch (e) { hotkeyOn = false; }
     hotkeyBound = hotkeyOn ? hk : null;
-    if (!hotkeyOn) log('Failed to register hotkey', hk);
+    if (!hotkeyOn && hotkeyFailed !== hk) {
+      hotkeyFailed = hk;
+      log('Failed to register hotkey', hk);
+      if (tray) tray.displayBalloon({ title: 'PoE 2 Price Checker', content: t('{key} is taken by another program — choose another hotkey in the tray menu', { key: hotkeyLabel() }) });
+    }
+    if (hotkeyOn) hotkeyFailed = null;
   } else if (!want && hotkeyOn) {
     globalShortcut.unregister(hotkeyBound || hk);
     hotkeyOn = false;
@@ -694,6 +707,7 @@ app.whenReady().then(singleInstance).then((ok) => {
     return pricing.elementVariants(item, filters).map((v) => ({ ...v, cost: (price(v.rune) ?? 0) + (socket || 0), needSocket: !!socket }));
   });
   handle('hide', FROM.overlay, () => hide());
+  handle('recheck', FROM.overlay, () => (lastText ? priceCheck(lastText, true) : null));
   handle('pin', FROM.overlay, (_e, on) => { pinned = !!on; syncEsc(); });
   handle('compare-show', FROM.overlay, (_e, html, y) => {
     if (typeof html !== 'string' || !Number.isFinite(y)) return;

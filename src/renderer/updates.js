@@ -4,6 +4,8 @@ const $ = (id) => document.getElementById(id);
 const { t } = window.i18n;
 window.i18n.setLang(window.upd.uiLang());
 const mb = (b) => `${(b / 1048576).toFixed(1)} MB`;
+// Версия приходит с GitHub (latest.yml) и вставляется в разметку — экранируем.
+const esc = (x) => String(x).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 let page = null;
 let last = null; // последний статус — перерисовать при смене языка
 
@@ -31,19 +33,19 @@ function render(s) {
       action.hidden = false; action.textContent = t('Check again'); action.dataset.do = 'check';
       break;
     case 'available':
-      state = t('Version <b>v{v}</b> is available', { v: s.version });
+      state = t('Version <b>v{v}</b> is available', { v: esc(s.version) });
       action.hidden = false; action.textContent = t('Download'); action.dataset.do = 'download';
       break;
     case 'downloading': {
       const p = s.progress || {};
-      state = t('Downloading <b>v{v}</b>…', { v: s.version });
+      state = t('Downloading <b>v{v}</b>…', { v: esc(s.version) });
       bar.hidden = false;
       bar.firstElementChild.style.width = `${Math.round(p.percent || 0)}%`;
       detail = p.total ? `${Math.round(p.percent)}% · ${t('{a} of {b}', { a: mb(p.transferred), b: mb(p.total) })}${p.speed ? ` · ${mb(p.speed)}/s` : ''}` : t('Starting…');
       break;
     }
     case 'ready':
-      state = `✓ ${t('<b>v{v}</b> is downloaded', { v: s.version })}`;
+      state = `✓ ${t('<b>v{v}</b> is downloaded', { v: esc(s.version) })}`;
       detail = t('Restart to install now — or it installs when you quit the app.');
       action.hidden = false; action.textContent = t('Restart & install'); action.dataset.do = 'install';
       break;
