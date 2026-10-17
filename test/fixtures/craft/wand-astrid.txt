@@ -1,0 +1,17 @@
+Item Class: Wands
+Rarity: Rare
+Doom Song
+Siphoning Wand
+--------
+Requires: Level 78, 125 Int
+--------
+Item Level: 81
+--------
+Can have 1 additional Crafted Modifier (rune)
+--------
+{ Prefix Modifier "Runic" (Tier: 2) — Caster }
+100(90-104)% increased Spell Damage
+{ Suffix Modifier "of the Glacier" (Tier: 2) — Caster, Gem }
++4 to Level of all Cold Spell Skills
+{ Suffix Modifier "of Unmaking" (Tier: 3) — Caster, Critical }
+49(47-53)% increased Critical Hit Chance for Spells

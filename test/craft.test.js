@@ -224,3 +224,12 @@ test('кольцо на миньонов (качество 40%): отработ�
   assert.ok(rm.freeQuality);
   assert.ok(planner.stepCost(rm).cost < 150, 'снятие — десятки div, а не сотни');
 });
+
+test('палочка с руной Astrid\'s Creativity: два crafted-слота — Perfect Essence of Sorcery и Alloy на разные моды; без руны — один', { skip }, async () => {
+  const two = await plan('wand-astrid');
+  const ess2 = two.steps.map((s, i) => (s.act === 'add' && two.cost[i].k === 'essence' ? two.cost[i].currencies[0] : null)).filter(Boolean);
+  assert.equal(ess2.length, 2, 'два шага через crafted-слот');
+  assert.equal(new Set(ess2).size, 2, 'разные источники');
+  const one = await plan('wand-open-prefixes');
+  assert.equal(one.steps.filter((s, i) => s.act === 'add' && one.cost[i].k === 'essence').length, 1);
+});

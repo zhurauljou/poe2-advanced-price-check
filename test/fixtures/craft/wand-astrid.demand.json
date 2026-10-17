@@ -1,0 +1,557 @@
+{
+ "league": "Forbidden Rites",
+ "class": "Wands",
+ "themed": [
+  "#% increased Spell Damage",
+  "# to Level of all Cold Spell Skills"
+ ],
+ "mods": [
+  {
+   "name": "# to Level of all Cold Spell Skills",
+   "count": 1031,
+   "pct": 100
+  },
+  {
+   "name": "#% increased Spell Damage",
+   "count": 1031,
+   "pct": 100
+  },
+  {
+   "name": "# to maximum Mana",
+   "count": 985,
+   "pct": 95.5
+  },
+  {
+   "name": "# to Level of all Spell Skills",
+   "count": 959,
+   "pct": 93
+  },
+  {
+   "name": "#% increased Cast Speed",
+   "count": 880,
+   "pct": 85.4
+  },
+  {
+   "name": "#% increased Spirit",
+   "count": 805,
+   "pct": 78.1
+  },
+  {
+   "name": "Gain #% of Elemental Damage as Extra Cold Damage",
+   "count": 766,
+   "pct": 74.3
+  },
+  {
+   "name": "#% increased Critical Hit Chance for Spells",
+   "count": 760,
+   "pct": 73.7
+  },
+  {
+   "name": "Gain #% of Damage as Extra Cold Damage",
+   "count": 538,
+   "pct": 52.2
+  },
+  {
+   "name": "#% increased Mana Regeneration Rate",
+   "count": 467,
+   "pct": 45.3
+  },
+  {
+   "name": "# to Intelligence",
+   "count": 393,
+   "pct": 38.1
+  },
+  {
+   "name": "#% increased effect of Socketed Augment Items",
+   "count": 382,
+   "pct": 37.1
+  },
+  {
+   "name": "Gain #% of Damage as Extra Lightning Damage",
+   "count": 374,
+   "pct": 36.3
+  },
+  {
+   "name": "Gain #% of Damage as Extra Fire Damage",
+   "count": 282,
+   "pct": 27.4
+  },
+  {
+   "name": "#% increased Elemental Damage",
+   "count": 267,
+   "pct": 25.9
+  },
+  {
+   "name": "Allies in your Presence Regenerate # Life per second",
+   "count": 261,
+   "pct": 25.3
+  },
+  {
+   "name": "# to Level of all Nova Skill Gems",
+   "count": 238,
+   "pct": 23.1
+  },
+  {
+   "name": "#% reduced Attribute Requirements",
+   "count": 216,
+   "pct": 21
+  },
+  {
+   "name": "Minions have #% increased maximum Life",
+   "count": 195,
+   "pct": 18.9
+  },
+  {
+   "name": "Allies in your Presence have #% to all Elemental Resistances",
+   "count": 183,
+   "pct": 17.7
+  },
+  {
+   "name": "#% increased Cold Damage",
+   "count": 160,
+   "pct": 15.5
+  },
+  {
+   "name": "#% increased Light Radius",
+   "count": 150,
+   "pct": 14.5
+  },
+  {
+   "name": "Allies in your Presence have #% increased Cast Speed",
+   "count": 149,
+   "pct": 14.5
+  },
+  {
+   "name": "Forged by the Breath of Aldur",
+   "count": 142,
+   "pct": 13.8
+  },
+  {
+   "name": "Allies in your Presence have #% increased Attack Speed",
+   "count": 136,
+   "pct": 13.2
+  },
+  {
+   "name": "#% increased Critical Spell Damage Bonus",
+   "count": 125,
+   "pct": 12.1
+  },
+  {
+   "name": "# to Strength",
+   "count": 123,
+   "pct": 11.9
+  },
+  {
+   "name": "Allies in your Presence have #% increased Critical Damage Bonus",
+   "count": 119,
+   "pct": 11.5
+  },
+  {
+   "name": "Allies in your Presence deal #% increased Damage",
+   "count": 109,
+   "pct": 10.6
+  },
+  {
+   "name": "#% increased Presence Area of Effect",
+   "count": 107,
+   "pct": 10.4
+  },
+  {
+   "name": "Allies in your Presence have #% increased Critical Hit Chance",
+   "count": 101,
+   "pct": 9.8
+  },
+  {
+   "name": "Allies in your Presence deal # to # added Attack Physical Damage",
+   "count": 94,
+   "pct": 9.1
+  },
+  {
+   "name": "Gain # Mana per enemy killed",
+   "count": 88,
+   "pct": 8.5
+  },
+  {
+   "name": "Allies in your Presence deal # to # added Attack Fire Damage",
+   "count": 87,
+   "pct": 8.4
+  },
+  {
+   "name": "Allies in your Presence deal # to # added Attack Cold Damage",
+   "count": 83,
+   "pct": 8.1
+  },
+  {
+   "name": "Gain #% of Damage as Extra Damage of all Elements",
+   "count": 74,
+   "pct": 7.2
+  },
+  {
+   "name": "Gain # Life per enemy killed",
+   "count": 73,
+   "pct": 7.1
+  },
+  {
+   "name": "Allies in your Presence deal # to # added Attack Lightning Damage",
+   "count": 68,
+   "pct": 6.6
+  },
+  {
+   "name": "#% increased Freeze Buildup",
+   "count": 62,
+   "pct": 6
+  },
+  {
+   "name": "# to Level of all Minion Skills",
+   "count": 50,
+   "pct": 4.8
+  },
+  {
+   "name": "Minions deal #% increased Damage",
+   "count": 32,
+   "pct": 3.1
+  },
+  {
+   "name": "Aura Skills have #% increased Magnitudes",
+   "count": 29,
+   "pct": 2.8
+  },
+  {
+   "name": "# to Level of all Lightning Spell Skills",
+   "count": 25,
+   "pct": 2.4
+  },
+  {
+   "name": "#% increased Spell Physical Damage",
+   "count": 21,
+   "pct": 2
+  },
+  {
+   "name": "#% increased chance to Shock",
+   "count": 18,
+   "pct": 1.7
+  },
+  {
+   "name": "#% increased Fire Damage",
+   "count": 16,
+   "pct": 1.6
+  },
+  {
+   "name": "#% increased Flammability Magnitude",
+   "count": 15,
+   "pct": 1.5
+  },
+  {
+   "name": "#% increased Chaos Damage",
+   "count": 14,
+   "pct": 1.4
+  },
+  {
+   "name": "Can have # additional Crafted Modifier",
+   "count": 14,
+   "pct": 1.4
+  },
+  {
+   "name": "# to Level of all Curse Skills",
+   "count": 13,
+   "pct": 1.3
+  },
+  {
+   "name": "#% reduced Presence Area of Effect",
+   "count": 13,
+   "pct": 1.3
+  },
+  {
+   "name": "Gain #% of Damage as Extra Chaos Damage",
+   "count": 13,
+   "pct": 1.3
+  },
+  {
+   "name": "#% increased Attack Speed",
+   "count": 12,
+   "pct": 1.2
+  },
+  {
+   "name": "#% increased Lightning Damage",
+   "count": 12,
+   "pct": 1.2
+  },
+  {
+   "name": "#% less Mana Regeneration Rate",
+   "count": 12,
+   "pct": 1.2
+  },
+  {
+   "name": "Mana Recovery from Regeneration is also applied to Runic Ward",
+   "count": 12,
+   "pct": 1.2
+  },
+  {
+   "name": "# to Level of all Fire Spell Skills",
+   "count": 11,
+   "pct": 1.1
+  },
+  {
+   "name": "# to Level of all Physical Spell Skills",
+   "count": 10,
+   "pct": 1
+  },
+  {
+   "name": "#% increased Physical Damage",
+   "count": 9,
+   "pct": 0.9
+  },
+  {
+   "name": "Adds # to # Fire Damage",
+   "count": 9,
+   "pct": 0.9
+  },
+  {
+   "name": "# Suffix Modifier allowed",
+   "count": 8,
+   "pct": 0.8
+  },
+  {
+   "name": "# to Level of all Chaos Spell Skills",
+   "count": 7,
+   "pct": 0.7
+  },
+  {
+   "name": "# to Level of all Totem Skill Gems",
+   "count": 7,
+   "pct": 0.7
+  },
+  {
+   "name": "# to maximum number of Elemental Infusions",
+   "count": 7,
+   "pct": 0.7
+  },
+  {
+   "name": "#% chance for Spell Skills to fire # additional Projectiles",
+   "count": 7,
+   "pct": 0.7
+  },
+  {
+   "name": "Bonded: Archon recovery period expires #% faster",
+   "count": 7,
+   "pct": 0.7
+  },
+  {
+   "name": "# to maximum Energy Shield",
+   "count": 6,
+   "pct": 0.6
+  },
+  {
+   "name": "Adds # to # Cold Damage",
+   "count": 6,
+   "pct": 0.6
+  },
+  {
+   "name": "Adds # to # Physical Damage",
+   "count": 6,
+   "pct": 0.6
+  },
+  {
+   "name": "#% increased Cast Speed while on Full Mana",
+   "count": 5,
+   "pct": 0.5
+  },
+  {
+   "name": "#% to all Elemental Resistances",
+   "count": 5,
+   "pct": 0.5
+  },
+  {
+   "name": "Gain #% of Damage as Extra Damage of a random Element",
+   "count": 5,
+   "pct": 0.5
+  },
+  {
+   "name": "Spell Skills have #% increased Area of Effect",
+   "count": 5,
+   "pct": 0.5
+  },
+  {
+   "name": "# to Accuracy Rating",
+   "count": 4,
+   "pct": 0.4
+  },
+  {
+   "name": "# to Dexterity",
+   "count": 4,
+   "pct": 0.4
+  },
+  {
+   "name": "# to Level of all Melee Skills",
+   "count": 4,
+   "pct": 0.4
+  },
+  {
+   "name": "# to Spirit",
+   "count": 4,
+   "pct": 0.4
+  },
+  {
+   "name": "# to maximum Runic Ward",
+   "count": 4,
+   "pct": 0.4
+  },
+  {
+   "name": "#% increased Curse Duration",
+   "count": 4,
+   "pct": 0.4
+  },
+  {
+   "name": "#% increased Elemental Damage with Attacks",
+   "count": 4,
+   "pct": 0.4
+  }
+ ],
+ "bases": [
+  {
+   "name": "Dueling Wand",
+   "count": 766,
+   "pct": 74.3
+  },
+  {
+   "name": "Shrine Sceptre",
+   "count": 653,
+   "pct": 63.3
+  },
+  {
+   "name": "Chiming Staff",
+   "count": 141,
+   "pct": 13.7
+  },
+  {
+   "name": "Attuned Wand",
+   "count": 140,
+   "pct": 13.6
+  },
+  {
+   "name": "Siphoning Wand",
+   "count": 123,
+   "pct": 11.9
+  },
+  {
+   "name": "Stoic Sceptre",
+   "count": 91,
+   "pct": 8.8
+  },
+  {
+   "name": "Omen Sceptre",
+   "count": 74,
+   "pct": 7.2
+  },
+  {
+   "name": "Rattling Sceptre",
+   "count": 21,
+   "pct": 2
+  },
+  {
+   "name": "Wrath Sceptre",
+   "count": 18,
+   "pct": 1.7
+  },
+  {
+   "name": "Galvanic Wand",
+   "count": 14,
+   "pct": 1.4
+  },
+  {
+   "name": "Volatile Wand",
+   "count": 8,
+   "pct": 0.8
+  },
+  {
+   "name": "Nettle Talisman",
+   "count": 6,
+   "pct": 0.6
+  },
+  {
+   "name": "Withered Wand",
+   "count": 6,
+   "pct": 0.6
+  },
+  {
+   "name": "Changeling Talisman",
+   "count": 4,
+   "pct": 0.4
+  },
+  {
+   "name": "Gelid Staff",
+   "count": 4,
+   "pct": 0.4
+  },
+  {
+   "name": "Ashen Staff",
+   "count": 3,
+   "pct": 0.3
+  },
+  {
+   "name": "Bone Wand",
+   "count": 3,
+   "pct": 0.3
+  },
+  {
+   "name": "Flanged Mace",
+   "count": 3,
+   "pct": 0.3
+  },
+  {
+   "name": "Sanctified Staff",
+   "count": 3,
+   "pct": 0.3
+  },
+  {
+   "name": "Siege Crossbow",
+   "count": 3,
+   "pct": 0.3
+  },
+  {
+   "name": "Frenzied Talisman",
+   "count": 2,
+   "pct": 0.2
+  },
+  {
+   "name": "Howling Talisman",
+   "count": 2,
+   "pct": 0.2
+  },
+  {
+   "name": "Ashbark Talisman",
+   "count": 1,
+   "pct": 0.1
+  },
+  {
+   "name": "Cruel Talisman",
+   "count": 1,
+   "pct": 0.1
+  },
+  {
+   "name": "Fungal Talisman",
+   "count": 1,
+   "pct": 0.1
+  },
+  {
+   "name": "Fury Talisman",
+   "count": 1,
+   "pct": 0.1
+  },
+  {
+   "name": "Pyrophyte Staff",
+   "count": 1,
+   "pct": 0.1
+  },
+  {
+   "name": "Rabid Talisman",
+   "count": 1,
+   "pct": 0.1
+  },
+  {
+   "name": "Thunder Talisman",
+   "count": 1,
+   "pct": 0.1
+  }
+ ]
+}

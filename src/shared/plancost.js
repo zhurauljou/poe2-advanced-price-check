@@ -206,7 +206,11 @@
   // десекрейт там выгоднее) уходит в отдельный шаг.
   function withDesecrate(plan) {
     // Сначала crafted-слот (эссенция ставит мод наверняка), потом desecration — на лучший из оставшихся шагов.
-    const out = withSlot(withSlot(plan, 'crafted', 'useCrafted', 'essence'), 'desecrate', 'useDes', 'desecrate');
+    // Crafted-слотов может быть два (руна Astrid's Creativity) — раздаём столько, сколько свободно.
+    const slots = Math.max(1, ...plan.flatMap((s) => (s.act === 'add2' ? s.steps : [s])).map((s) => s.craftedSlots || 0));
+    let withCrafted = plan;
+    for (let i = 0; i < slots; i++) withCrafted = withSlot(withCrafted, 'crafted', 'useCrafted', 'essence');
+    const out = withSlot(withCrafted, 'desecrate', 'useDes', 'desecrate');
     // Порядок добавлений: эссенция первой (пока на стороне меньше модов — выше шанс, что снимет жертву),
     // затем desecrate (на полной вещи он заменяет случайный мод), потом Exalted.
     for (const flag of ['useDes', 'useCrafted']) {
@@ -220,22 +224,35 @@
   // Отдать «одноразовый» способ (desecration, crafted-слот) шагу, где он выгоднее всего относительно Exalted.
   function withSlot(plan, field, flag, kind) {
     // Мод, который даёт только crafted-слот (Alloy), — слот за ним.
-    if (kind === 'essence' && plan.some((s) => s.act === 'add' && s.craftedOnly)) return plan.map((s) => (s.act === 'add' && s.craftedOnly ? { ...s, [flag]: true } : s));
+    if (kind === 'essence' && plan.some((s) => s.act === 'add' && s.craftedOnly && !s[flag])) {
+      let done = false; // по одному слоту за вызов
+      return plan.map((s) => { if (!done && s.act === 'add' && s.craftedOnly && !s[flag]) { done = true; return { ...s, [flag]: true }; } return s; });
+    }
     // Мод, который даёт только Desecrate (моды личей), — desecration за ним.
     if (kind === 'desecrate' && plan.some((s) => s.act === 'add' && s.desecrateOnly)) return plan.map((s) => (s.act === 'add' && s.desecrateOnly ? { ...s, [flag]: true } : s));
     let best = null, ratio = Infinity, top = null;
+    // Источник crafted-слота (эссенция / Alloy) один раз на вещь: занятые уже не предлагаем другим шагам.
+    const used = new Set();
+    if (kind === 'essence') {
+      for (const s of plan.flatMap((y) => (y.act === 'add2' ? y.steps : [y]))) {
+        if (s.act === 'add' && s.useCrafted) { const c = addCost(s, 1); if (c.k === 'essence') used.add(c.currencies[0]); }
+      }
+    }
+    const free = (x) => (kind === 'essence' && x.crafted ? { ...x, crafted: x.crafted.filter((n) => !used.has(n)) } : x);
     plan.forEach((s, i) => {
-      for (const [j, x] of (s.act === 'add2' ? s.steps : s.act === 'add' ? [s] : []).entries()) {
-        if (!x[field] || x.useDes || x.useCrafted) continue;
+      for (const [j, x0] of (s.act === 'add2' ? s.steps : s.act === 'add' ? [s] : []).entries()) {
+        const x = free(x0);
+        if (!x[field] || (Array.isArray(x[field]) && !x[field].length) || x.useDes || x.useCrafted) continue;
         const no = addCost(x, 1).score;
         const yes = addCost({ ...x, [flag]: true }, 1);
         const alt = yes.k === kind ? yes.score : (yes.alts || []).concat(yes.desAlt || []).find((o) => o.k === kind)?.cost;
         if (alt == null || !no) continue;
         const r = !Number.isFinite(no) ? (Number.isFinite(alt) ? 0 : Infinity) : alt / no;
         // Desecrate (6 вариантов на выбор) — самому ценному моду, где он помогает; эссенция — где выгоднее по цене.
-        if (kind === 'desecrate' && (r < 1 || yes.k === kind)) {
+        // Desecrate и crafted-слот — самому ценному моду, где они помогают (а не там, где выигрыш по цене больше).
+        if ((kind === 'desecrate' || kind === 'essence') && (r < 1 || yes.k === kind)) {
           const v = x.worth || 0;
-          if (!top || v > top.v || (v === top.v && r < top.r)) top = { i, j, wins: yes.k === kind, v, r };
+          if (!top || v > top.v || (v === top.v && r < top.r)) top = { i, j, wins: yes.k === kind, v, r, crafted: x.crafted };
         }
         if (r < ratio) { ratio = r; best = { i, j, wins: yes.k === kind }; }
       }
@@ -243,12 +260,13 @@
     // Desecrate помогает нескольким шагам — отдаём самому ценному; не помогает ни одному — покажется как альтернатива.
     if (top) best = top;
     if (!best) return plan;
+    const mark = (x) => ({ ...x, [flag]: true, ...(best.crafted ? { crafted: best.crafted } : {}) });
     return plan.flatMap((s, i) => {
       if (i !== best.i) return [s];
-      if (s.act === 'add') return [{ ...s, [flag]: true }];
-      if (!best.wins) return [{ ...s, steps: s.steps.map((x, j) => (j === best.j ? { ...x, [flag]: true } : x)) }];
+      if (s.act === 'add') return [mark(s)];
+      if (!best.wins) return [{ ...s, steps: s.steps.map((x, j) => (j === best.j ? mark(x) : x)) }];
       // Пара Greater Exaltation через стороны разворачивается в исходные шаги (с оменами стороны).
-      return (s.alt || s.steps).map((x, j) => (j === best.j ? { ...x, [flag]: true } : x));
+      return (s.alt || s.steps).map((x, j) => (j === best.j ? mark(x) : x));
     });
   }
 

@@ -358,10 +358,12 @@ async function advise(item, demandMods, cached) {
       normal.push({ ...c, needs: { rune: r.rune, line: `Can roll ${r.name} modifiers`, free: freeSocket } });
     }
   }
+  // Crafted-слотов на вещи: один, плюс руна Astrid's Creativity — «Can have 1 additional Crafted Modifier».
+  const craftedCap = 1 + (item.modLines || []).reduce((n, l) => { const m = l.text.match(/^Can have (\d+) additional Crafted Modifiers?$/); return n + (m ? +m[1] : 0); }, 0);
   // Крафтовый мод, которого нет обычным аффиксом (Celestial Alloy — «+Accuracy / Attack Speed» на копьях, булавах, луках…):
   // кандидат «только через crafted-слот» (снимает случайный мод стороны и ставит свой). Ценность — по спросу его строк.
   // Берём один лучший: crafted-слот на вещи один.
-  if (!item.affixes.some((a) => a.tag === 'crafted')) {
+  if (item.affixes.filter((a) => a.tag === 'crafted').length < craftedCap) {
     let best = null;
     for (const x of craftedSources) {
       if (!x.side || !['prefix', 'suffix'].includes(x.side)) continue;
@@ -505,7 +507,8 @@ async function advise(item, demandMods, cached) {
     }
     // Гарантированный мод через crafted-слот: Perfect- и порченые эссенции («снимают случайный мод и добавляют свой»).
     const lines = c.text.split(' / ');
-    if (!c.craftedOnly) c.crafted = craftedSources.filter((x) => templates(x.text.replace(/–/g, '-')).some((l) => lines.includes(l))).map((x) => x.name);
+    // Источник подходит, если даёт ВСЕ строки мода (Celestial Alloy «Mana / +1 Spell Skills» — для «+Mana», но не для «Spell Damage / Mana»).
+    if (!c.craftedOnly) c.crafted = craftedSources.filter((x) => { const src = templates(x.text.replace(/–/g, '-').split(' / ').join('\n')); return lines.every((l) => src.includes(l)); }).map((x) => x.name);
     // Блокер (docs/crafting-tricks.md T-08, D-5): на стороне есть частое ненужное семейство — дешёвый мод этой группы
     // (например, выбранный при раскрытии desecrate) закрывает её для следующих Exalted; потом его снимают.
     if (nOf) {
@@ -523,7 +526,7 @@ async function advise(item, demandMods, cached) {
   // Крафтовый гибрид (Alloy) не нужен, если нужный мод сопоставимой ценности ставит эссенция (Perfect Essence of Sorcery +3
   // к уровням на палочке лучше гибрида «mana / spell levels»): crafted-слот один.
   const co = normal.find((c) => c.craftedOnly);
-  if (co && normal.some((c) => c !== co && c.crafted && c.crafted.length && c.pct >= co.pct * 0.6)) normal.splice(normal.indexOf(co), 1);
+  if (co && normal.some((c) => c !== co && c.crafted && c.crafted.some((n) => n !== co.craftedOnly) && c.pct >= co.pct * 0.6)) normal.splice(normal.indexOf(co), 1);
   for (const c of normal) {
     const others = normal.filter((x) => x !== c && x.side === c.side && x.exalt && x.pct >= Math.max(15, c.pct * 0.6));
     if (!others.length || !c.exalt) continue;
@@ -717,7 +720,7 @@ async function advise(item, demandMods, cached) {
     }
   }
 
-  const goal = planGoal(mine, normal, max, want, magic, magicFree, item.itemClass, craftedSources, item.quality || 0);
+  const goal = planGoal(mine, normal, max, want, magic, magicFree, item.itemClass, craftedSources, item.quality || 0, craftedCap);
   // Руны / Soul Cores в гнёзда: аугменты для класса, чьи статы носят билды (спрос ≥ 15%) — лучший по семейству статов.
   const augments = [];
   if (!jewel) {
@@ -827,7 +830,7 @@ const EXALT_MIN = Object.fromEntries(methods.tiers('exalt').map(([, lv], i) => [
 const EXALT_NAME = Object.fromEntries(methods.tiers('exalt').map(([n], i) => [EXALT_KEYS[i], n]));
 const KEY_PCT = 30; // мод, который носит столько % билдов, на другой не меняем
 const KEEP_BONUS = 1.5;
-function planGoal(mine, candidates, max, want, magic, magicFree = [], itemClass = '', craftedSources = [], itemQuality = 0) {
+function planGoal(mine, candidates, max, want, magic, magicFree = [], itemClass = '', craftedSources = [], itemQuality = 0, craftedCap = 1) {
   // Ключевой для слота мод (уровни умений, Spirit, скорость на ботинках…) поднимает цену сильнее, чем говорит его
   // популярность: «+2 к миньонам» на скипетре дороже Mana Regeneration, даже если тот встречается чаще.
   const KEY_BONUS = 2;
@@ -887,8 +890,11 @@ function planGoal(mine, candidates, max, want, magic, magicFree = [], itemClass 
   // Desecration — одна на вещь: можно, если desecrated-мода не останется (нет или убирается Omen of Light).
   const desFree = mine.filter((a) => a.tag === 'desecrated').every((a) => remove.some((r) => r.tag === 'desecrated' && r.text === (a.mod ? a.mod.lines.join(' / ') : a.name)));
   // Crafted-слот — один на вещь: свободен, если crafted-мода не останется и эссенция не ушла на magic → rare.
-  const craftedFree = mine.filter((a) => a.tag === 'crafted').every((a) => remove.some((r) => r.tag === 'crafted' && r.text === (a.mod ? a.mod.lines.join(' / ') : a.name)))
-    && !(magic && add.some((c) => c.essence));
+  // Сколько crafted-слотов свободно после снятий (эссенция magic → rare тоже занимает слот).
+  const craftedLeft = mine.filter((a) => a.tag === 'crafted' && !remove.some((r) => r.tag === 'crafted' && r.text === (a.mod ? a.mod.lines.join(' / ') : a.name))).length
+    + (magic && add.some((c) => c.essence) ? 1 : 0);
+  const craftedSlots = Math.max(0, craftedCap - craftedLeft);
+  const craftedFree = craftedSlots > 0;
   const filled = { prefix: 0, suffix: 0 };
   for (const a of mine) filled[a.side]++;
   const fixed = { prefix: 0, suffix: 0 }; // fractured — Annulment их не снимет
@@ -955,7 +961,7 @@ function planGoal(mine, candidates, max, want, magic, magicFree = [], itemClass 
       desecrate: desFree && c.desecrate && Object.keys(c.desecrate).length ? c.desecrateAny || c.desecrate : null,
       necro: otherOpen ? `Omen of ${S} Necromancy` : null,
       // Perfect/порченая эссенция с этим модом: жертвенный Exalted на сторону → Crystallisation стороны + эссенция.
-      crafted: craftedFree && c.crafted && c.crafted.length ? c.crafted : null, craftedOnly: c.craftedOnly || null, desecrateOnly: c.desecrateOnly || null,
+      crafted: craftedFree && c.crafted && c.crafted.length ? c.crafted : null, craftedOnly: c.craftedOnly || null, desecrateOnly: c.desecrateOnly || null, craftedSlots,
       crystal: `Omen of ${S} Crystallisation`,
       blocker: c.blocker || null,
       currencies: [...Object.keys(c.exalt || { base: 1 }).map((k) => EXALT_NAME[k]), ...(sideOmen ? [sideOmen] : []),
