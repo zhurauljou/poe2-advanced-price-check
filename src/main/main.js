@@ -516,7 +516,15 @@ app.whenReady().then(singleInstance).then((ok) => {
     const d = await categoryDemand({ league, itemClass: lastItem.itemClass, rarity, limit: 80, withMods: lastThemeMods, minLevel: demandLevel() },
       api.fetchBuffer).catch(() => null);
     const r = await craft.advise(lastItem, d && d.mods, api.cached);
-    return { ...r, theme: d ? d.themed : [], themeBuilds: d ? d.total : null };
+    // Цены валюты для расчёта затрат на крафт (div за штуку; нет на poe.ninja — null).
+    const prices = {};
+    for (const s of (r.goal && r.goal.plan) || []) {
+      for (const name of [...s.currencies, ...(s.retry || [])]) {
+        const row = api.ninja.byName.get(name);
+        prices[name] = row ? row.divine : null;
+      }
+    }
+    return { ...r, prices, theme: d ? d.themed : [], themeBuilds: d ? d.total : null };
   });
   ipcMain.handle('demand', (_e, opts) => categoryDemand({ ...opts, league: settings.get().league, limit: 80, minLevel: demandLevel() }, api.fetchBuffer)); // 80 — чтобы найти и моды вещи вне топ-10
   ipcMain.handle('set-price-currency', (_e, c) => { settings.set({ priceCurrency: c }); });

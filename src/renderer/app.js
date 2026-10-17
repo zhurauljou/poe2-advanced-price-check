@@ -714,8 +714,7 @@ function goalHtml(g) {
     ${g.keep.map((x) => row('keep', '✓', x, x.up ? ` <span class="tierup" title="${esc(t('Key modifier with a weak tier — a higher tier is worth more'))}">↑ ${esc(t('tier'))}</span>` : '')).join('')}
     ${g.remove.map((x) => row('remove', '✗', x)).join('')}
     ${g.add.map((x) => row('add', '+', x, ` <span class="dem${x.pct >= 60 ? ' hot' : ''}">${x.pct >= 60 ? '🔥 ' : ''}${esc(t('{pct}% builds', { pct: fmt(x.pct) }))}</span>${chanceTag(x.chance, x.chanceUnknown)}${x.essence ? ` <span class="ess">◈ ${esc(x.essence.short)}</span>` : ''}`)).join('')}
-    <div class="craft-sub">${esc(t('Steps'))}:</div><ol class="goal-steps">${g.steps.map((s) => `<li>${esc(s)}</li>`).join('')}</ol>
-    <button class="link" data-goal>${esc(t('Price the goal'))}</button> <span class="goal-price"></span></div>`;
+</div>`;
 }
 
 // Фильтры «как у готовой вещи»: убранные моды — выключены, добавленные — с нижним роллом тира, их исключение «без мода» — снято.
@@ -732,31 +731,6 @@ function withMods(f, adds) {
   return f;
 }
 
-async function priceGoal(b) {
-  const g = craftGoal;
-  if (!g || !state) return;
-  b.disabled = true;
-  const out = b.parentNode.querySelector('.goal-price');
-  out.textContent = '…';
-  const f = JSON.parse(JSON.stringify(state.filters));
-  const gone = new Set(g.remove.flatMap((r) => r.templates));
-  for (const m of f.mods) if (m.template && gone.has(tplKey(m.template))) m.enabled = false;
-  withMods(f, g.add);
-  try {
-    const it = state.item.rarity === 'Magic' ? { ...state.item, rarity: 'Rare' } : state.item;
-    const q = await window.pc.quickPrice(it, f);
-    const v = estimate(q.lots);
-    const worse = v != null && state.est != null && v <= state.est;
-    out.innerHTML = v == null ? esc(t('none listed'))
-      : `<b class="${worse ? 'down' : 'up'}">${esc(t('Goal ≈ {price}', { price: money(v) }))}</b>${state.est != null ? ` · ${esc(t('now'))} ${money(state.est)}` : ''}`
-        + (worse ? `<br><span class="down">${esc(t('Not worth it — your item is already worth more as it is'))}</span>` : '');
-  } catch (e) {
-    out.textContent = '';
-    setStatus(errText(e), true);
-  }
-  b.disabled = false;
-  fit();
-}
 
 // Примерный шанс мода при Exalted с оменом его стороны: метка «частый / средний / редкий» и «≈ 1 из N».
 function chanceTag(p, unknown) {
@@ -767,8 +741,120 @@ function chanceTag(p, unknown) {
   return ` <span class="chance ${cls}" title="${esc(t('Rough estimate: Exalted Orb + omen of its side gives this modifier about 1 in {n} times', { n: Math.max(1, Math.round(1 / p)) }))}">${esc(label)} · ≈1/${Math.max(1, Math.round(1 / p))}</span>`;
 }
 
+// ---- Крафт для новичка: места на вещи, «продать или крафтить», план с затратами ----
+let craftPrices = {}; // div за штуку валюты из плана (poe.ninja)
+let goalValue; // цена цели: undefined — считаем, null — не нашлось
+
+// Места на вещи кружками: занят (цвет по тиру), свободен; fractured — с рамкой.
+function slotsHtml(r) {
+  const affixes = state.item.affixes || [];
+  const side = (s) => {
+    const mods = affixes.filter((a) => a.side === s);
+    const dots = mods.map((a) => {
+      const cls = a.tier == null ? '' : a.tier <= 2 ? 'top' : a.tier >= 5 ? 'weak' : 'mid';
+      return `<i class="slot ${cls}${a.tag === 'fractured' ? ' frac' : ''}" title="${esc(`${a.name || ''}${a.tier ? ` · T${a.tier}` : ''}`)}">${a.tier ? a.tier : ''}</i>`;
+    });
+    for (let i = mods.length; i < r.max[s]; i++) dots.push(`<i class="slot free" title="${esc(t('free'))}"></i>`);
+    return `<span class="slots-side"><span>${esc(t(s === 'prefix' ? 'Prefixes' : 'Suffixes'))}</span>${dots.join('')}</span>`;
+  };
+  return `<div class="slots">${side('prefix')}${side('suffix')}</div>`;
+}
+
+// Затраты на шаг: сравниваем варианты (с оменом стороны и без) и берём дешевле в среднем.
+function stepCost(s) {
+  const p = (n) => craftPrices[n];
+  const sum = (list) => list.reduce((a, n) => (a == null || p(n) == null ? null : a + p(n)), 0);
+  if (s.act === 'remove') {
+    const plain = p('Orb of Annulment');
+    const omen = sum(s.currencies);
+    const a = plain != null ? plain / s.chanceAll : null;
+    const b = omen != null ? omen / s.chance : null;
+    const useOmen = b != null && (a == null || b < a);
+    return { cost: useOmen ? b : a, chance: useOmen ? s.chance : s.chanceAll, currencies: useOmen ? s.currencies : ['Orb of Annulment'], risky: true };
+  }
+  if (s.act === 'add') {
+    if (s.chance == null) return { cost: null, chance: null, currencies: s.currencies, lottery: true };
+    const ex = p('Exalted Orb');
+    const omen = p(s.currencies[1]);
+    const retry = p('Orb of Annulment') || 0; // неудачный мод надо убрать — грубо: Annulment за каждый промах
+    const variant = (per, pc) => (per + (1 - pc) * retry) / pc;
+    const plain = ex == null ? null : variant(ex, s.otherOpen ? s.chance / 2 : s.chance);
+    const withOmen = ex == null || omen == null || !s.otherOpen ? null : variant(ex + omen, s.chance);
+    const useOmen = withOmen != null && (plain == null || withOmen < plain);
+    return { cost: useOmen ? withOmen : plain, chance: useOmen || !s.otherOpen ? s.chance : s.chance / 2, currencies: useOmen ? s.currencies : ['Exalted Orb'] };
+  }
+  const cost = sum(s.currencies);
+  return { cost, chance: 1, currencies: s.currencies };
+}
+
+const STEP_LABEL = {
+  augment: (s) => t('Add a {side} while it is magic', { side: t(s.side) }),
+  regal: () => t('Make it rare'),
+  essence: (s) => t('Make it rare with {mod}', { mod: s.mod }),
+  remove: (s) => t('Remove {mod}', { mod: s.mod }),
+  add: (s) => t('Add {mod}', { mod: s.mod }),
+};
+
+function planHtml(plan) {
+  return `<ol class="plan">${plan.map((s) => {
+    const c = stepCost(s);
+    const odds = c.chance == null ? t('chance unknown — valuable modifier') : c.chance >= 1 ? t('guaranteed') : t('1 in {n}', { n: Math.round(1 / c.chance) });
+    return `<li><div class="ps-what">${esc(STEP_LABEL[s.act](s))}</div>
+      <div class="ps-how"><span class="game">${esc(c.currencies.join(' + '))}</span> · ${esc(odds)}${c.cost != null ? ` · <b>≈ ${money(c.cost)}</b>` : ''}</div>
+      ${c.risky && c.chance < 1 ? `<div class="ps-risk">${esc(t('A miss removes a good modifier instead'))}</div>` : ''}</li>`;
+  }).join('')}</ol>`;
+}
+
+// Вердикт: продать как есть или крафтить (цена цели − затраты на валюту).
+function verdictHtml(plan) {
+  const costs = plan.map(stepCost);
+  const known = costs.filter((c) => c.cost != null).reduce((a, c) => a + c.cost, 0);
+  const lottery = costs.some((c) => c.cost == null);
+  const risky = costs.some((c) => c.risky && c.chance < 1);
+  const now = state.est;
+  const rows = [
+    `<div><span>${esc(t('Sell as is'))}</span><b>${now != null ? money(now) : '—'}</b></div>`,
+    `<div><span>${esc(t('Goal item'))}</span><b>${goalValue === undefined ? '…' : goalValue == null ? t('none listed') : money(goalValue)}</b></div>`,
+    `<div><span>${esc(t('Currency, on average'))}</span><b>${lottery ? `${esc(t('from'))} ` : ''}${money(known)}</b></div>`,
+  ];
+  let verdict = '';
+  if (goalValue != null && now != null) {
+    const gain = goalValue - now - known;
+    const good = gain > Math.max(now * 0.15, known * 0.5);
+    verdict = `<div class="verdict ${good && !lottery ? 'good' : 'bad'}">${good
+      ? `✅ ${esc(t('Craft: ≈ {gain} more than selling as is', { gain: money(gain) }))}`
+      : `✖ ${esc(t('Selling as is is better'))}`}${lottery ? `<small>${esc(t('A key modifier has unknown odds — this is a gamble'))}</small>` : ''}${risky ? `<small>${esc(t('Removing a modifier can hit a good one — the cost may grow'))}</small>` : ''}</div>`;
+  } else if (now == null) {
+    verdict = `<div class="verdict">${esc(t('Price this item on the Price tab first'))}</div>`;
+  }
+  return `<div class="profit">${rows.join('')}</div>${verdict}`;
+}
+
+// Цена цели — сразу при открытии вкладки (один поиск на трейде), затем перерисовываем вердикт.
+async function computeGoal(g) {
+  const mine = state;
+  goalValue = undefined;
+  const f = JSON.parse(JSON.stringify(state.filters));
+  const gone = new Set(g.remove.flatMap((r) => r.templates));
+  for (const m of f.mods) if (m.template && gone.has(tplKey(m.template))) m.enabled = false;
+  withMods(f, g.add);
+  try {
+    const it = state.item.rarity === 'Magic' ? { ...state.item, rarity: 'Rare' } : state.item;
+    const q = await window.pc.quickPrice(it, f);
+    if (mine !== state) return;
+    goalValue = estimate(q.lots);
+  } catch (e) {
+    if (mine !== state) return;
+    goalValue = null;
+    setStatus(errText(e), true);
+  }
+  const box = document.querySelector('#craft .verdict-box');
+  if (box) { box.innerHTML = verdictHtml(g.plan); fit(); }
+}
+
 function renderCraft(r) {
   craftGoal = r.goal || null;
+  craftPrices = r.prices || {};
   craftCands.clear();
   const head = `<div class="sect"><span>${t('Craft')}</span></div>`;
   if (r.blocked) {
@@ -778,8 +864,16 @@ function renderCraft(r) {
   }
   if (r.note) { $('craft').innerHTML = head + voidState('◇', t('No craft tips'), esc(r.note)); return; }
   const how = (list) => list.map((h) => `<div class="craft-how">${esc(h)}</div>`).join('');
-  const parts = [`<div class="craft-slots">${t('Prefixes')} <b>${r.max.prefix - r.open.prefix}/${r.max.prefix}</b> · ${t('Suffixes')} <b>${r.max.suffix - r.open.suffix}/${r.max.suffix}</b></div>`];
-  if (r.goal) parts.push(goalHtml(r.goal)); // цель — первой: к чему ведут все шаги ниже
+  // Сверху — коротко для новичка: места на вещи, «продать или крафтить», план по шагам с затратами.
+  // Всё остальное (все способы, варианты модов) — свёрнуто ниже.
+  const top = [slotsHtml(r)];
+  if (r.goal && r.goal.plan && r.goal.plan.length) {
+    top.push(`<div class="craft-sec plan-box"><div class="k">${t('Plan')}</div><div class="verdict-box">${verdictHtml(r.goal.plan)}</div>
+      ${planHtml(r.goal.plan)}<details class="why"><summary>${t('Why this plan')}</summary>${goalHtml(r.goal)}</details></div>`);
+  } else {
+    top.push(`<div class="craft-sec plan-box"><div class="verdict">${esc(t('No clear upgrade for this item — selling as is is the simple choice'))}</div></div>`);
+  }
+  const parts = [];
   for (const s of r.sections) {
     if (s.kind === 'open') {
       parts.push(`<div class="craft-sec"><div class="k">${t(`{n} free ${s.side}es`, { n: s.count })}</div>${how(s.how)}
@@ -812,11 +906,13 @@ function renderCraft(r) {
     }
   }
   if (r.theme && r.theme.length) {
-    parts.splice(1, 0, `<div class="craft-theme" title="${t('Demand % below is among {n} builds that wear this item class with these modifiers', { n: r.themeBuilds })}">${t('Demand among builds using')} <b>${r.theme.map(esc).join('</b> + <b>')}</b></div>`);
+    top.splice(1, 0, `<div class="craft-theme" title="${t('Demand % below is among {n} builds that wear this item class with these modifiers', { n: r.themeBuilds })}">${t('Demand among builds using')} <b>${r.theme.map(esc).join('</b> + <b>')}</b></div>`);
   }
   if (r.chanceMeta) parts.push(`<div class="craft-warn">⚠ ${esc(t('Chances are rough estimates from {n} cheap trade listings ({date}) — PoE 2 game files have no modifier weights. Treat them as "common / rare", not exact odds.', { n: r.chanceMeta.items, date: r.chanceMeta.collected }))}</div>`);
   parts.push(`<div class="craft-foot">${t(r.chanceMeta ? 'Mod pool: game files (RePoE).' : "Mod pool: game files (RePoE). Roll chances aren't shown — PoE 2 files have no modifier weights.")}<br>${t('% = share of those builds using the modifier (poe.ninja). «price?» — what your item would cost with it.')}</div>`);
-  $('craft').innerHTML = head + parts.join('');
+  $('craft').innerHTML = head + top.join('')
+    + `<details class="more-ways"><summary>${t('All methods and modifier options')}</summary>${parts.join('')}</details>`;
+  if (r.goal && r.goal.plan && r.goal.plan.length) computeGoal(r.goal);
 }
 
 // Насколько востребовано: < 10% — приглушаем (почти никому не нужно), ≥ 60% — подсвечиваем (нужно почти всем).
@@ -1251,8 +1347,6 @@ $('tabs').addEventListener('click', (e) => {
 });
 
 $('craft').addEventListener('click', (e) => {
-  const g = e.target.closest('[data-goal]');
-  if (g) { priceGoal(g); return; }
   const all = e.target.closest('[data-priceall]');
   if (all) { priceAll(all); return; }
   const b = e.target.closest('[data-ck]');

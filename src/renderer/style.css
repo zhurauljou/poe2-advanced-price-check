@@ -493,3 +493,35 @@ footer::before { bottom: 0; top: -12px; -webkit-backdrop-filter: blur(16px); bac
 .brow .rank { font: 600 11.5px var(--body); color: var(--muted); }
 .bwhat .theme { color: var(--g-mod); font-weight: normal; font-family: var(--game); }
 .bwhat:has(.theme) { white-space: normal; } /* тема спроса — переносится, а не обрезается */
+
+/* ---- Крафт: места кружками, «продать или крафтить», план по шагам, остальное свёрнуто ---- */
+.slots { display: flex; justify-content: center; gap: 18px; flex-wrap: wrap; margin: 2px 0 6px; font-size: 13px; color: var(--label); }
+.slots-side { display: inline-flex; align-items: center; gap: 5px; }
+.slots-side > span { margin-right: 3px; }
+.slot { display: inline-flex; align-items: center; justify-content: center; width: 20px; height: 20px; border-radius: 50%;
+        font: 700 11px var(--body); font-style: normal; color: #1a1408; background: var(--bronze); }
+.slot.top { background: linear-gradient(#f1d79a, #c9a45c); }
+.slot.mid { background: #8c7a55; }
+.slot.weak { background: #6b3a33; color: #f0c4bc; }
+.slot.free { background: none; border: 1px dashed #6b5a3a; }
+.slot.frac { box-shadow: 0 0 0 2px var(--g-fractured); }
+.plan-box { padding: 8px 10px; border: 1px solid #4a3f2c; border-radius: 3px; background: rgba(218, 193, 142, .04); }
+.profit { display: grid; gap: 2px; font-size: 14px; }
+.profit > div { display: flex; justify-content: space-between; gap: 10px; }
+.profit span { color: var(--muted); }
+.profit b { color: var(--cream); font-variant-numeric: tabular-nums; }
+.verdict { margin: 6px 0 4px; padding: 5px 8px; border-radius: 3px; font-weight: 700; color: var(--cream); background: rgba(255, 255, 255, .03); }
+.verdict.good { color: var(--good); background: rgba(111, 207, 122, .08); }
+.verdict.bad { color: #e6a59c; background: rgba(224, 103, 90, .08); }
+.verdict small { display: block; margin-top: 2px; font-weight: 400; font-size: 12.5px; color: var(--muted); }
+.plan { margin: 6px 0 2px; padding-left: 20px; display: grid; gap: 6px; }
+.plan li::marker { color: var(--gold); font-weight: 700; }
+.ps-what { color: var(--cream); font-weight: 700; }
+.ps-how { font-size: 13px; color: var(--muted); }
+.ps-how b { color: var(--gold); }
+.ps-risk { font-size: 12.5px; color: var(--warn); }
+.why, .more-ways { margin-top: 6px; }
+.why > summary, .more-ways > summary { cursor: pointer; font: 700 13px var(--body); color: var(--gold); list-style: none; }
+.why > summary::before, .more-ways > summary::before { content: "▸ "; }
+.why[open] > summary::before, .more-ways[open] > summary::before { content: "▾ "; }
+.more-ways { padding-top: 6px; border-top: 1px solid var(--line2); }

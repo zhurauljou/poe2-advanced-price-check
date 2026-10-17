@@ -437,6 +437,14 @@ function planGoal(mine, candidates, max, want, magic, magicFree = []) {
   }
   if (!add.length) return null;
   add.sort((x, y) => y.pct - x.pct);
+  // План для окна: шаги с валютой и шансом — по ним считаются затраты (цены валюты подставляет main.js по poe.ninja).
+  // retry — чем убирать неудачный результат, чтобы попробовать снова.
+  const plan = [];
+  if (magicFree.length) plan.push({ act: 'augment', side: magicFree[0], currencies: ['Orb of Augmentation'], chance: 1 });
+  if (magic) {
+    const ess = add.find((c) => c.essence);
+    plan.push(ess ? { act: 'essence', mod: ess.text, currencies: [ess.essence.name], chance: 1 } : { act: 'regal', currencies: ['Regal Orb'], chance: 1 });
+  }
   // Шаги: сначала — убрать лишнее и вставить самый востребованный мод.
   const steps = [];
   if (magicFree.length) steps.push(t('Orb of Augmentation — first fill the free {side} while it is magic (cheap)', { side: t(magicFree[0]) }));
@@ -451,10 +459,21 @@ function planGoal(mine, candidates, max, want, magic, magicFree = []) {
     const into = add.filter((c) => c.side === side);
     if (!into.length) continue;
     const S = side === 'prefix' ? 'Sinistral' : 'Dextral';
+    const sideMods = mine.filter((a) => a.side === side && a.tag !== 'fractured').length;
+    const allMods = mine.filter((a) => a.tag !== 'fractured').length;
+    // chance — с оменом стороны (1 из модов стороны), chanceAll — без омена (1 из всех модов).
+    for (const r of out) plan.push({ act: 'remove', side, mod: r.text, currencies: ['Orb of Annulment', `Omen of ${S} Annulment`], chance: 1 / Math.max(1, sideMods), chanceAll: 1 / Math.max(1, allMods) });
+    // Есть ли место на другой стороне: если нет, Exalted и без омена ляжет сюда.
+    const other = side === 'prefix' ? 'suffix' : 'prefix';
+    const otherOpen = max[other] - mine.filter((a) => a.side === other).length + remove.filter((r) => r.side === other).length > 0;
+    for (const c of into) {
+      plan.push({ act: 'add', side, mod: c.text, pct: c.pct, currencies: ['Exalted Orb', `Omen of ${S} Exaltation`],
+        chance: c.chanceUnknown ? null : c.chance || null, otherOpen, retry: ['Orb of Annulment'] });
+    }
     if (out.length) steps.push(t('Remove {mods}: Orb of Annulment + Omen of {S} Annulment (random {side}), or Chaos Orb + Omen of Whittling if it is the lowest-level modifier', { mods: out.map((r) => r.text).join(', '), S, side: t(side) }));
     steps.push(t('Add {mods}: Exalted Orb + Omen of {S} Exaltation', { mods: into.map((c) => c.text).join(', '), S }) + (into.length > 1 ? t(' (Omen of Greater Exaltation adds two)') : ''));
   }
-  return { keep, remove, add: add.map(({ side, text, pct, tier, tiers, range, stats, essence, chance, chanceUnknown }) => ({ side, text, pct, tier, tiers, range, stats, essence, chance, chanceUnknown })), steps };
+  return { keep, remove, add: add.map(({ side, text, pct, tier, tiers, range, stats, essence, chance, chanceUnknown }) => ({ side, text, pct, tier, tiers, range, stats, essence, chance, chanceUnknown })), steps, plan };
 }
 
 // Может ли мод (шаблон poe.ninja: «# to Level of all Spell Skills») встать на эту базу. null — пул модов ещё не загружен.
