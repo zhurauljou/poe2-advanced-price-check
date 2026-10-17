@@ -102,6 +102,16 @@ function guaranteedFor(itemClass) {
   return out;
 }
 
+// Порченые эссенции с их модами для класса — [{ name, text }] (для плана: гарантированный мод через crafted-слот).
+function corruptedFor(itemClass) {
+  guaranteedFor(itemClass); // загрузит данные
+  const out = [];
+  for (const x of (currencyData && currencyData.corruptedEssences) || []) {
+    for (const m of x.mods || []) if (m.classes.includes(itemClass)) out.push({ name: x.name, text: m.text });
+  }
+  return out;
+}
+
 // «Рискованный финал»: порча и освящение (docs/corruption-sanctification.md, data/gamble-currency.json).
 // Шансы — оценки сообщества, GGG их не публикует. Показываем с дисклеймерами.
 let gambleData;
@@ -304,6 +314,8 @@ async function advise(item, demandMods, cached) {
   }
   const bones = bonesFor(tags, ilvl);
   const desecrateOK = !item.desecratedItem;
+  // Что может занять crafted-слот и дать конкретный мод: Perfect-эссенции и порченые эссенции этого класса.
+  const craftedSources = [...perfectFor(item.itemClass).map((x) => ({ name: x.name, text: x.mod })), ...corruptedFor(item.itemClass)];
   for (const c of normal) {
     const lv = sidePool[c.side];
     const mineLv = lv.get(c.type);
@@ -331,6 +343,9 @@ async function advise(item, demandMods, cached) {
       c.desecrate = {};
       for (const b of bones) { const o = at(b.minLevel, desFamilies[c.side]); if (o) c.desecrate[b.name] = o; }
     }
+    // Гарантированный мод через crafted-слот: Perfect- и порченые эссенции («снимают случайный мод и добавляют свой»).
+    const lines = c.text.split(' / ');
+    c.crafted = craftedSources.filter((x) => templates(x.text.replace(/–/g, '-')).some((l) => lines.includes(l))).map((x) => x.name);
   }
   for (const c of normal) c.essence = essenceFor(c.text, item.itemClass);
   if (item.rarity === 'Normal') return { normal: transmuteOptions(normal, sidePool, nOf, ilvl, jewel), popular: normal.slice(0, 8), chanceMeta };
@@ -618,6 +633,9 @@ function planGoal(mine, candidates, max, want, magic, magicFree = []) {
   // Сколько модов на стороне сейчас — меняется по ходу плана (омен стороны нужен, только пока на другой есть место).
   // Desecration — одна на вещь: можно, если desecrated-мода не останется (нет или убирается Omen of Light).
   const desFree = mine.filter((a) => a.tag === 'desecrated').every((a) => remove.some((r) => r.tag === 'desecrated' && r.text === (a.mod ? a.mod.lines.join(' / ') : a.name)));
+  // Crafted-слот — один на вещь: свободен, если crafted-мода не останется и эссенция не ушла на magic → rare.
+  const craftedFree = mine.filter((a) => a.tag === 'crafted').every((a) => remove.some((r) => r.tag === 'crafted' && r.text === (a.mod ? a.mod.lines.join(' / ') : a.name)))
+    && !(magic && add.some((c) => c.essence));
   const filled = { prefix: 0, suffix: 0 };
   for (const a of mine) filled[a.side]++;
   const fixed = { prefix: 0, suffix: 0 }; // fractured — Annulment их не снимет
@@ -664,8 +682,12 @@ function planGoal(mine, candidates, max, want, magic, magicFree = []) {
       // Вместо Exalted — Desecrate (кость + Necromancy-омен на сторону): выбор 1 из 3 при раскрытии. Окно решит, где выгоднее.
       desecrate: desFree && c.desecrate && Object.keys(c.desecrate).length ? c.desecrate : null,
       necro: otherOpen ? `Omen of ${S} Necromancy` : null,
+      // Perfect/порченая эссенция с этим модом: жертвенный Exalted на сторону → Crystallisation стороны + эссенция.
+      crafted: craftedFree && c.crafted && c.crafted.length ? c.crafted : null,
+      crystal: `Omen of ${S} Crystallisation`,
       currencies: [...Object.keys(c.exalt || { base: 1 }).map((k) => EXALT_NAME[k]), ...(sideOmen ? [sideOmen] : []),
-        ...(desFree && c.desecrate ? [...Object.keys(c.desecrate), `Omen of ${S} Necromancy`, 'Omen of Abyssal Echoes', 'Omen of Light'] : [])] });
+        ...(desFree && c.desecrate ? [...Object.keys(c.desecrate), `Omen of ${S} Necromancy`, 'Omen of Abyssal Echoes', 'Omen of Light'] : []),
+        ...(craftedFree && c.crafted ? [...c.crafted, `Omen of ${S} Crystallisation`, 'Exalted Orb'] : [])] });
     // Два мода на одну сторону — можно одним Exalted с Omen of Greater Exaltation (если дешевле, окно так и предложит).
     for (let i = 0; i < into.length; i += 2) {
       if (i + 1 < into.length) {

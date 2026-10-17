@@ -415,6 +415,7 @@
     "After it: remove the rest (Annulment) and rebuild around the locked modifier; a miss locks a useless one — the base is spent": "Дальше: снять остальное (Annulment) и собирать вещь вокруг зафиксированного мода; промах зафиксирует ненужный — база потрачена",
     "Hinekora's Lock (preview the result first) — only if the item is worth far more than the Lock": "Hinekora's Lock (сначала посмотреть результат) — только если вещь стоит намного дороже самого Lock",
     "Hinekora's Lock first — see the result before you commit": "Сначала Hinekora's Lock — посмотреть результат до траты",
+    "Exalt a cheap «sacrificial» modifier onto this side, then {crystal} + {essence}: it removes a modifier from this side and adds its own for sure — uses the only crafted-modifier slot": "Exalted кладёт на эту сторону дешёвый «жертвенный» мод, затем {crystal} + {essence}: снимает мод этой стороны и гарантированно ставит свой — занимает единственный crafted-слот",
     common: 'частый', uncommon: 'средний', rare: 'редкий', 'chance ?': 'шанс ?',
     'Valuable modifiers cannot be estimated from trade listings — items with them are priced and listed differently': 'Шанс ценных модов по трейду не оценить — вещи с ними выставляют и оценивают иначе',
     'Rough estimate: Exalted Orb + omen of its side gives this modifier about 1 in {n} times': 'Грубая оценка: Exalted Orb с оменом этой стороны даёт этот мод примерно 1 раз из {n}',
