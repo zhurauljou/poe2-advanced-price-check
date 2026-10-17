@@ -320,8 +320,49 @@ function renderExchangeHero() {
       <div class="trend"><span class="k">${t('7 days')}</span>${spark(x.spark)}
         ${x.spark && x.spark.length > 1 ? `<span class="tr ${dir}">${pct1(x.spark[0])} → ${pct1(x.spark[x.spark.length - 1])}</span>` : '<span class="v">—</span>'}</div>
       <div><span class="k">${t('24h volume')}</span><span class="v">${fmt(x.volume)} div</span></div>
-    </div>`;
+    </div>${x.onExchange ? liveHtml(shown !== x.id ? shown : x.id === 'exalted' ? 'chaos' : 'exalted') : ''}`;
 }
+
+// ---- живая биржа трейда: лучшие предложения прямо сейчас (у poe.ninja — средняя за час). Лимит у биржи строгий
+// (5 запросов за 15 с) — только по кнопке. ----
+function liveHtml(have) {
+  const lv = state.live;
+  const cur = UNITS.find((d) => d[0] === have)[2];
+  if (!lv || lv.have !== have) {
+    return `<div class="live"><button class="link" data-act="live" data-have="${have}">${esc(t('Live offers on the exchange (in {cur})', { cur }))}</button></div>`;
+  }
+  if (lv.wait) return `<div class="live muted">${esc(t('Loading live offers…'))}</div>`;
+  if (lv.error) return `<div class="live"><span class="bad">${esc(lv.error)}</span> <button class="link" data-act="live" data-have="${have}">${esc(t('Try again'))}</button></div>`;
+  const rows = lv.data.offers.map((o, i) => `<div class="live-row" data-live="${i}" title="${esc(o.whisper ? t('Copy whisper to seller') : '')}">
+      <b>${fmt(o.rate)} ${esc(cur)}</b><span class="muted">${fmt(o.get)} ${esc(t('for'))} ${fmt(o.pay)} ${esc(cur)}</span>
+      <span class="muted">${esc(t('stock {n}', { n: fmt(o.stock) }))}</span><span class="seller"><span class="dot${o.online ? ' on' : ''}"></span>${esc(o.seller || '')}</span></div>`).join('');
+  return `<div class="live"><div class="sect"><span>${esc(t('Live offers · price per unit'))}</span></div>
+    ${rows || `<div class="muted">${esc(t('Nobody online sells it for {cur} right now', { cur }))}</div>`}
+    <button class="link" data-act="live-site">${esc(t('Open the exchange ↗'))}</button></div>`;
+}
+async function loadLive(have) {
+  const mine = state;
+  state.live = { have, wait: true };
+  heroRender();
+  fit();
+  try {
+    const data = await window.pc.exchangeOffers(state.exchange.id, have);
+    if (state !== mine) return;
+    state.live = { have, data };
+  } catch (e) {
+    if (state !== mine) return;
+    state.live = { have, error: errText(e) };
+  }
+  heroRender();
+  fit();
+}
+$('hero').addEventListener('click', (e) => {
+  const row = e.target.closest('[data-live]');
+  const lv = state && state.live;
+  if (!row || !lv || !lv.data) return;
+  const o = lv.data.offers[+row.dataset.live];
+  if (o && o.whisper) { window.pc.copy(o.whisper); setStatus(t('Whisper copied — switch to the game and paste it into chat (Enter, Ctrl+V)')); }
+});
 
 // Пустое состояние: значок, что случилось, пояснение (HTML) и кнопки действий [[data-act, подпись]].
 function voidState(icon, title, html, actions = []) {
@@ -339,6 +380,8 @@ document.addEventListener('click', (e) => {
   if (act === 'trade' && state.tradeUrl) window.pc.openUrl(state.tradeUrl);
   if (act === 'price') setTab('price');
   if (act === 'impact') runImpact();
+  if (act === 'live') loadLive(b.dataset.have);
+  if (act === 'live-site' && state.live && state.live.data) window.pc.openUrl(state.live.data.url);
   if (act === 'elements') loadElements(searchSeq, true);
   if (act === 'session') { startSession(); window.pc.pin(true); craftFor = null; loadCraft(); }
   if (act === 'session-stop') { craftSession = null; window.pc.pin(false); craftFor = null; loadCraft(); }
@@ -1824,7 +1867,8 @@ $('hero').addEventListener('click', (e) => {
   if (!b || !state.exchange) return;
   unit = b.dataset.unit;
   try { localStorage.setItem('exchangeUnit', unit); } catch {}
-  renderExchangeHero();
+  heroRender();
+  fit();
 });
 
 $('tabs').addEventListener('click', (e) => {

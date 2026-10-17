@@ -774,6 +774,10 @@ app.whenReady().then(singleInstance).then((ok) => {
   handle('settings-fit', FROM.settings, (_e, h) => { if (Number.isFinite(h) && setWin) setWin.setContentSize(420, Math.min(Math.ceil(h) + 2, 900)); });
   // Оверлей запоминает переключатели поиска («Buyable now», «Allow 1 minor mod missing») — у следующей вещи такие же.
   handle('set-search-defaults', FROM.overlay, (_e, p) => { applySettings({ searchOnline: p && p.online, searchFlex: p && p.flex }); });
+  handle('exchange-offers', FROM.overlay, (_e, want, have) => {
+    if (!pricing.isExchangeable(want) || !pricing.isExchangeable(have) || want === have) throw new Error('not on the exchange');
+    return api.forCurrent(() => pricing.exchangeOffers(curLeague(), want, have));
+  });
   handle('recheck', FROM.overlay, () => (lastText ? priceCheck(lastText, true, lastHistoryId) : null));
   // История проверок
   handle('history', FROM.overlay, () => history.brief());

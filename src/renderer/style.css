@@ -593,3 +593,13 @@ body.set-page { height: auto; user-select: text; }
 .set-actions { flex-direction: column; align-items: stretch; gap: 8px !important; }
 .set-actions button:not(.link) { height: 32px; }
 .set-actions button.link { align-self: center; }
+
+/* ---- живая биржа в блоке цены валюты ---- */
+.live { margin-top: 10px; display: flex; flex-direction: column; gap: 2px; align-items: stretch; text-align: left; }
+.live > button.link { align-self: center; }
+.live .bad { color: var(--bad); }
+.live-row { display: grid; grid-template-columns: 90px 1fr 70px 110px; gap: 6px; align-items: baseline; padding: 3px 6px;
+            font-size: 13.5px; cursor: pointer; border-bottom: 1px solid var(--line2); }
+.live-row:hover { background: var(--hover); }
+.live-row b { color: var(--cream); white-space: nowrap; }
+.live-row .seller { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: var(--text); }

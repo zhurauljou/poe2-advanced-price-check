@@ -19,6 +19,7 @@ const NINJA = 'https://poe.ninja/poe2/api';
 const limits = {
   search: { rules: [[5, 10]], hits: [], blockedUntil: 0 },
   fetch: { rules: [[12, 4]], hits: [], blockedUntil: 0 },
+  exchange: { rules: [[4, 15]], hits: [], blockedUntil: 0 }, // биржа: 5 за 15 с (политика trade-exchange-request-limit)
 };
 // Дольше этого ждать молча не будем — сразу скажем пользователю.
 const MAX_SILENT_WAIT = 15000;

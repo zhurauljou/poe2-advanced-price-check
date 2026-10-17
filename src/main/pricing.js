@@ -247,7 +247,8 @@ function prepare(item, demand, rollsOn) {
     item.mods = item.mods.filter((m) => !fixed(m));
   }
   const ninjaRow = api.ninja.byName.get(item.name) || (item.rarity === 'Currency' && api.ninja.byName.get(item.baseType));
-  const exchange = ninjaRow ? { ...ninjaRow } : null;
+  // onExchange — есть на живой бирже трейда (id poe.ninja совпадает с id валюты трейда): окно покажет её предложения.
+  const exchange = ninjaRow ? { ...ninjaRow, onExchange: !!(currencyInfo && currencyInfo.has(ninjaRow.id)) } : null;
 
   const searchMods = item.rarity === 'Rare' || item.rarity === 'Magic';
   const props = propFilters(item);
@@ -653,4 +654,27 @@ async function listingUrl(league, item, filters, account) {
   return `${api.TRADE}/trade2/search/poe2/${L}/${s.id}`;
 }
 
-module.exports = { init, prepare, search, quick, listingUrl, elementVariants };
+// Живая биржа (trade2/exchange): лучшие предложения «продать want за have». Лимит у биржи свой и строгий — только по
+// кнопке в окне. → { offers: [{ pay, get, rate (have за 1 want), stock, seller, online, whisper, indexed }], total, url }.
+const isExchangeable = (id) => !!(currencyInfo && currencyInfo.has(id));
+async function exchangeOffers(league, want, have) {
+  const L = encodeURIComponent(league);
+  const r = await api.tradeRequest('exchange', `${api.TRADE}/api/trade2/exchange/poe2/${L}`,
+    { query: { status: { option: 'online' }, have: [have], want: [want] }, sort: { have: 'asc' }, engine: 'new' });
+  const offers = [];
+  for (const x of Object.values(r.result || {})) {
+    const l = x && x.listing;
+    const o = l && (l.offers || [])[0];
+    if (!o || !o.exchange || !o.item || !o.item.amount) continue;
+    // Шёпот: «{0}» — их товар, «{1}» — наша оплата (у каждого — свой шаблон с «{0}» для количества).
+    const whisper = l.whisper ? l.whisper.replace('{0}', o.item.whisper.replace('{0}', o.item.amount))
+      .replace('{1}', o.exchange.whisper.replace('{0}', o.exchange.amount)) : null;
+    offers.push({ pay: o.exchange.amount, get: o.item.amount, rate: o.exchange.amount / o.item.amount, stock: o.item.stock,
+      seller: l.account && (l.account.lastCharacterName || l.account.name), online: !!(l.account && l.account.online),
+      whisper, indexed: l.indexed });
+  }
+  offers.sort((a, b) => a.rate - b.rate);
+  return { offers: offers.slice(0, 6), total: r.total || offers.length, url: `${api.TRADE}/trade2/exchange/poe2/${L}/${r.id}` };
+}
+
+module.exports = { init, prepare, search, quick, listingUrl, elementVariants, exchangeOffers, isExchangeable };
