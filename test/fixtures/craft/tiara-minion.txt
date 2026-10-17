@@ -1,0 +1,28 @@
+Item Class: Helmets
+Rarity: Rare
+Eagle Keep
+Ancestral Tiara
+--------
+Quality: +20% (augmented)
+Energy Shield: 453 (augmented)
+--------
+Requires: Level 80, 115 Int
+--------
+Sockets: S 
+--------
+Item Level: 82
+--------
+18% increased Armour, Evasion and Energy Shield (rune)
+--------
+{ Prefix Modifier "Dazzling" (Tier: 1) — Defences, Energy Shield }
++70(65-76) to maximum Energy Shield
+{ Prefix Modifier "Virile" (Tier: 3) — Life }
++112(110-124) to maximum Life
+{ Prefix Modifier "Unassailable" (Tier: 1) — Defences, Energy Shield }
+93(91-100)% increased Energy Shield
+{ Suffix Modifier "of the Despot" (Tier: 1) — Minion, Gem }
++2 to Level of all Minion Skills
+{ Suffix Modifier "of the Sage" (Tier: 4) — Attribute }
++25(25-27) to Intelligence
+{ Suffix Modifier "of the Furnace" (Tier: 4) — Elemental, Fire, Resistance }
++27(26-30)% to Fire Resistance

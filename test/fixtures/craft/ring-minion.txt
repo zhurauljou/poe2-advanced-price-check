@@ -1,0 +1,26 @@
+Item Class: Rings
+Rarity: Rare
+Fate Grip
+Gold Ring
+--------
+Quality (Minion Modifiers): +40% (augmented)
+--------
+Requires: Level 55
+--------
+Item Level: 80
+--------
+{ Implicit Modifier — Drop }
+9(6-15)% increased Rarity of Items found (implicit)
+--------
+{ Prefix Modifier "Searing" (Tier: 4) — Damage, Elemental, Fire }
+13(13-17)% increased Fire Damage
+{ Prefix Modifier "Gleaming" (Tier: 4) — Damage, Physical, Attack }
+Adds 6(5-7) to 13(11-14) Physical Damage to Attacks
+{ Crafted Prefix Modifier "Breach" — }
++20% to Maximum Quality (crafted)
+{ Suffix Modifier "of Ferocity" (Tier: 1) — Minion, Damage, Critical }
+Minions have 42(36-42)% increased Critical Damage Bonus
+{ Suffix Modifier "of Ambush" (Tier: 1) — Minion, Critical }
+Minions have 47(40-50)% increased Critical Hit Chance
+{ Desecrated Suffix Modifier "of the Abyss" (Tier: 1) — Minion }
+Minions have 40(29-40)% increased Cooldown Recovery Rate

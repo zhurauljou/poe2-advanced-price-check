@@ -1,0 +1,809 @@
+{
+ "league": "Forbidden Rites",
+ "class": "Boots",
+ "themed": [],
+ "mods": [
+  {
+   "name": "#% increased Movement Speed",
+   "count": 52632,
+   "pct": 90.3
+  },
+  {
+   "name": "#% to Lightning Resistance",
+   "count": 29031,
+   "pct": 49.8
+  },
+  {
+   "name": "#% to Fire Resistance",
+   "count": 28013,
+   "pct": 48.1
+  },
+  {
+   "name": "# to maximum Energy Shield",
+   "count": 27903,
+   "pct": 47.9
+  },
+  {
+   "name": "#% to Cold Resistance",
+   "count": 26988,
+   "pct": 46.3
+  },
+  {
+   "name": "#% increased Energy Shield",
+   "count": 23177,
+   "pct": 39.8
+  },
+  {
+   "name": "#% increased Rarity of Items found",
+   "count": 18578,
+   "pct": 31.9
+  },
+  {
+   "name": "#% increased Armour, Evasion and Energy Shield",
+   "count": 18061,
+   "pct": 31
+  },
+  {
+   "name": "# to Stun Threshold",
+   "count": 17026,
+   "pct": 29.2
+  },
+  {
+   "name": "#% increased Evasion and Energy Shield",
+   "count": 13695,
+   "pct": 23.5
+  },
+  {
+   "name": "# to Evasion Rating",
+   "count": 13195,
+   "pct": 22.6
+  },
+  {
+   "name": "# to maximum Life",
+   "count": 12962,
+   "pct": 22.2
+  },
+  {
+   "name": "#% to Chaos Resistance",
+   "count": 12756,
+   "pct": 21.9
+  },
+  {
+   "name": "# to maximum Mana",
+   "count": 11508,
+   "pct": 19.8
+  },
+  {
+   "name": "Can roll Chronomancy modifiers",
+   "count": 10957,
+   "pct": 18.8
+  },
+  {
+   "name": "Gain Deflection Rating equal to #% of Evasion Rating",
+   "count": 9345,
+   "pct": 16
+  },
+  {
+   "name": "#% increased effect of Socketed Augment Items",
+   "count": 8979,
+   "pct": 15.4
+  },
+  {
+   "name": "# to Intelligence",
+   "count": 6727,
+   "pct": 11.5
+  },
+  {
+   "name": "# to Spirit",
+   "count": 6375,
+   "pct": 10.9
+  },
+  {
+   "name": "Skills have #% chance to not remove Charges but still count as consuming them",
+   "count": 6240,
+   "pct": 10.7
+  },
+  {
+   "name": "#% of Armour also applies to Elemental Damage",
+   "count": 5769,
+   "pct": 9.9
+  },
+  {
+   "name": "#% increased Armour",
+   "count": 5329,
+   "pct": 9.1
+  },
+  {
+   "name": "# to Armour",
+   "count": 4785,
+   "pct": 8.2
+  },
+  {
+   "name": "#% reduced Slowing Potency of Debuffs on You",
+   "count": 4715,
+   "pct": 8.1
+  },
+  {
+   "name": "#% increased Evasion Rating",
+   "count": 4614,
+   "pct": 7.9
+  },
+  {
+   "name": "#% increased Skill Effect Duration",
+   "count": 3783,
+   "pct": 6.5
+  },
+  {
+   "name": "#% increased Cooldown Recovery Rate",
+   "count": 3722,
+   "pct": 6.4
+  },
+  {
+   "name": "#% increased Movement Speed when on Low Life",
+   "count": 3550,
+   "pct": 6.1
+  },
+  {
+   "name": "#% increased Runic Ward",
+   "count": 2954,
+   "pct": 5.1
+  },
+  {
+   "name": "#% increased Armour and Evasion",
+   "count": 2837,
+   "pct": 4.9
+  },
+  {
+   "name": "# metres to Dodge Roll distance",
+   "count": 2297,
+   "pct": 3.9
+  },
+  {
+   "name": "# to Dexterity",
+   "count": 2212,
+   "pct": 3.8
+  },
+  {
+   "name": "# Life Regeneration per second",
+   "count": 2033,
+   "pct": 3.5
+  },
+  {
+   "name": "# to Strength",
+   "count": 2015,
+   "pct": 3.5
+  },
+  {
+   "name": "# Suffix Modifier allowed",
+   "count": 2011,
+   "pct": 3.5
+  },
+  {
+   "name": "#% increased Movement Speed while Sprinting",
+   "count": 1650,
+   "pct": 2.8
+  },
+  {
+   "name": "#% reduced Attribute Requirements",
+   "count": 1501,
+   "pct": 2.6
+  },
+  {
+   "name": "#% chance when you gain an Endurance Charge to gain an additional Endurance Charge",
+   "count": 1456,
+   "pct": 2.5
+  },
+  {
+   "name": "#% reduced Freeze Duration on you",
+   "count": 1428,
+   "pct": 2.5
+  },
+  {
+   "name": "#% reduced Chill Duration on you",
+   "count": 1414,
+   "pct": 2.4
+  },
+  {
+   "name": "Your speed is unaffected by Slows",
+   "count": 1287,
+   "pct": 2.2
+  },
+  {
+   "name": "#% increased Energy Shield Recharge Rate",
+   "count": 1282,
+   "pct": 2.2
+  },
+  {
+   "name": "#% increased Armour and Energy Shield",
+   "count": 1261,
+   "pct": 2.2
+  },
+  {
+   "name": "#% reduced Shock duration on you",
+   "count": 1254,
+   "pct": 2.2
+  },
+  {
+   "name": "#% to all Elemental Resistances",
+   "count": 1165,
+   "pct": 2
+  },
+  {
+   "name": "#% increased Skill Effect Duration with Plant Skills",
+   "count": 1051,
+   "pct": 1.8
+  },
+  {
+   "name": "#% to Lightning and Chaos Resistances",
+   "count": 857,
+   "pct": 1.5
+  },
+  {
+   "name": "#% increased total Power counted by Warcries",
+   "count": 818,
+   "pct": 1.4
+  },
+  {
+   "name": "#% to Fire and Chaos Resistances",
+   "count": 804,
+   "pct": 1.4
+  },
+  {
+   "name": "#% to Cold and Chaos Resistances",
+   "count": 715,
+   "pct": 1.2
+  },
+  {
+   "name": "#% increased Stun Threshold",
+   "count": 597,
+   "pct": 1
+  },
+  {
+   "name": "Your speed is Unaffected by Slows while Sprinting",
+   "count": 577,
+   "pct": 1
+  },
+  {
+   "name": "#% increased Freeze Threshold",
+   "count": 572,
+   "pct": 1
+  },
+  {
+   "name": "# to maximum Runic Ward",
+   "count": 506,
+   "pct": 0.9
+  },
+  {
+   "name": "#% of Armour also applies to Lightning Damage",
+   "count": 453,
+   "pct": 0.8
+  },
+  {
+   "name": "Bonded: # to maximum Life",
+   "count": 397,
+   "pct": 0.7
+  },
+  {
+   "name": "Bonded: # to maximum Mana",
+   "count": 397,
+   "pct": 0.7
+  },
+  {
+   "name": "#% to Maximum Lightning Resistance",
+   "count": 355,
+   "pct": 0.6
+  },
+  {
+   "name": "#% to Chaos Resistance for each Corrupted Item Equipped",
+   "count": 342,
+   "pct": 0.6
+  },
+  {
+   "name": "Corrupting will always result in change",
+   "count": 342,
+   "pct": 0.6
+  },
+  {
+   "name": "Debuffs on you expire #% faster",
+   "count": 332,
+   "pct": 0.6
+  },
+  {
+   "name": "#% increased Deflection Rating while moving",
+   "count": 315,
+   "pct": 0.5
+  },
+  {
+   "name": "Bonded: #% increased Cooldown Recovery Rate",
+   "count": 309,
+   "pct": 0.5
+  },
+  {
+   "name": "Regenerate #% of maximum Life per second",
+   "count": 225,
+   "pct": 0.4
+  },
+  {
+   "name": "Increases and Reductions to Movement Speed also\n apply to Energy Shield Recharge Rate",
+   "count": 175,
+   "pct": 0.3
+  },
+  {
+   "name": "Lose #% of maximum Life per second while Sprinting",
+   "count": 173,
+   "pct": 0.3
+  },
+  {
+   "name": "#% reduced Effect of Non-Damaging Ailments on you",
+   "count": 169,
+   "pct": 0.3
+  },
+  {
+   "name": "#% increased Mana Cost Efficiency if you haven't Dodge Rolled Recently",
+   "count": 143,
+   "pct": 0.2
+  },
+  {
+   "name": "Gain Onslaught for # seconds when your Marks Activate",
+   "count": 140,
+   "pct": 0.2
+  },
+  {
+   "name": "Can have # additional Crafted Modifier",
+   "count": 121,
+   "pct": 0.2
+  },
+  {
+   "name": "#% increased Mana Regeneration Rate",
+   "count": 117,
+   "pct": 0.2
+  },
+  {
+   "name": "#% increased Life and Mana Recovery from Flasks",
+   "count": 111,
+   "pct": 0.2
+  },
+  {
+   "name": "Every # seconds, gain Guard equal to #% of maximum Runic Ward for # seconds",
+   "count": 111,
+   "pct": 0.2
+  },
+  {
+   "name": "Corrupted Blood cannot be inflicted on you",
+   "count": 102,
+   "pct": 0.2
+  },
+  {
+   "name": "# to Dexterity and Intelligence",
+   "count": 99,
+   "pct": 0.2
+  },
+  {
+   "name": "#% increased speed of Recoup Effects",
+   "count": 89,
+   "pct": 0.2
+  },
+  {
+   "name": "# to Strength and Intelligence",
+   "count": 86,
+   "pct": 0.1
+  },
+  {
+   "name": "# to Strength and Dexterity",
+   "count": 85,
+   "pct": 0.1
+  },
+  {
+   "name": "#% increased Movement Speed per # Spirit, up to a maximum of #%\nOther Modifiers to Movement Speed except for Sprinting do not apply",
+   "count": 74,
+   "pct": 0.1
+  },
+  {
+   "name": "#% increased Runic Ward Regeneration Rate",
+   "count": 62,
+   "pct": 0.1
+  }
+ ],
+ "bases": [
+  {
+   "name": "Sekhema Sandals",
+   "count": 14040,
+   "pct": 24.1
+  },
+  {
+   "name": "Daggerfoot Shoes",
+   "count": 8019,
+   "pct": 13.8
+  },
+  {
+   "name": "Sandsworn Sandals",
+   "count": 4430,
+   "pct": 7.6
+  },
+  {
+   "name": "Tasalian Greaves",
+   "count": 3226,
+   "pct": 5.5
+  },
+  {
+   "name": "Quickslip Shoes",
+   "count": 2241,
+   "pct": 3.8
+  },
+  {
+   "name": "Luxurious Slippers",
+   "count": 2218,
+   "pct": 3.8
+  },
+  {
+   "name": "Runeforged Blacksteel Sabatons",
+   "count": 2177,
+   "pct": 3.7
+  },
+  {
+   "name": "Drakeskin Boots",
+   "count": 2124,
+   "pct": 3.6
+  },
+  {
+   "name": "Runeforged Sekhema Sandals",
+   "count": 1989,
+   "pct": 3.4
+  },
+  {
+   "name": "Runeforged Daggerfoot Shoes",
+   "count": 1308,
+   "pct": 2.2
+  },
+  {
+   "name": "Charmed Shoes",
+   "count": 1139,
+   "pct": 2
+  },
+  {
+   "name": "Dragonscale Boots",
+   "count": 997,
+   "pct": 1.7
+  },
+  {
+   "name": "Bound Sandals",
+   "count": 945,
+   "pct": 1.6
+  },
+  {
+   "name": "Vaal Greaves",
+   "count": 945,
+   "pct": 1.6
+  },
+  {
+   "name": "Runeforged Cryptic Leggings",
+   "count": 839,
+   "pct": 1.4
+  },
+  {
+   "name": "Ornate Greaves",
+   "count": 698,
+   "pct": 1.2
+  },
+  {
+   "name": "Blacksteel Sabatons",
+   "count": 676,
+   "pct": 1.2
+  },
+  {
+   "name": "Wanderer Shoes",
+   "count": 630,
+   "pct": 1.1
+  },
+  {
+   "name": "Runeforged Sandsworn Sandals",
+   "count": 607,
+   "pct": 1
+  },
+  {
+   "name": "Dunerunner Sandals",
+   "count": 569,
+   "pct": 1
+  },
+  {
+   "name": "Runeforged Tasalian Greaves",
+   "count": 552,
+   "pct": 0.9
+  },
+  {
+   "name": "Cavalry Boots",
+   "count": 545,
+   "pct": 0.9
+  },
+  {
+   "name": "Cinched Boots",
+   "count": 487,
+   "pct": 0.8
+  },
+  {
+   "name": "Fortress Sabatons",
+   "count": 443,
+   "pct": 0.8
+  },
+  {
+   "name": "Runeforged Quickslip Shoes",
+   "count": 435,
+   "pct": 0.7
+  },
+  {
+   "name": "Runeforged Drakeskin Boots",
+   "count": 377,
+   "pct": 0.6
+  },
+  {
+   "name": "Runeforged Luxurious Slippers",
+   "count": 360,
+   "pct": 0.6
+  },
+  {
+   "name": "Treerunner Shoes",
+   "count": 360,
+   "pct": 0.6
+  },
+  {
+   "name": "Noble Sabatons",
+   "count": 320,
+   "pct": 0.5
+  },
+  {
+   "name": "Bulwark Greaves",
+   "count": 308,
+   "pct": 0.5
+  },
+  {
+   "name": "Cryptic Leggings",
+   "count": 307,
+   "pct": 0.5
+  },
+  {
+   "name": "Runeforged Charmed Shoes",
+   "count": 271,
+   "pct": 0.5
+  },
+  {
+   "name": "Serpentscale Boots",
+   "count": 232,
+   "pct": 0.4
+  },
+  {
+   "name": "Veteran Sabatons",
+   "count": 198,
+   "pct": 0.3
+  },
+  {
+   "name": "Runeforged Bound Sandals",
+   "count": 183,
+   "pct": 0.3
+  },
+  {
+   "name": "Warlock Leggings",
+   "count": 181,
+   "pct": 0.3
+  },
+  {
+   "name": "Elegant Slippers",
+   "count": 179,
+   "pct": 0.3
+  },
+  {
+   "name": "Apostle Leggings",
+   "count": 170,
+   "pct": 0.3
+  },
+  {
+   "name": "Carved Greaves",
+   "count": 159,
+   "pct": 0.3
+  },
+  {
+   "name": "Runeforged Dragonscale Boots",
+   "count": 147,
+   "pct": 0.3
+  },
+  {
+   "name": "Runeforged Vaal Greaves",
+   "count": 144,
+   "pct": 0.2
+  },
+  {
+   "name": "Runeforged Wanderer Shoes",
+   "count": 142,
+   "pct": 0.2
+  },
+  {
+   "name": "Runeforged Ornate Greaves",
+   "count": 141,
+   "pct": 0.2
+  },
+  {
+   "name": "Faithful Leggings",
+   "count": 117,
+   "pct": 0.2
+  },
+  {
+   "name": "Runeforged Dunerunner Sandals",
+   "count": 113,
+   "pct": 0.2
+  },
+  {
+   "name": "Runeforged Noble Sabatons",
+   "count": 107,
+   "pct": 0.2
+  },
+  {
+   "name": "Runeforged Fortress Sabatons",
+   "count": 103,
+   "pct": 0.2
+  },
+  {
+   "name": "Bastion Sabatons",
+   "count": 99,
+   "pct": 0.2
+  },
+  {
+   "name": "Runeforged Warlock Leggings",
+   "count": 96,
+   "pct": 0.2
+  },
+  {
+   "name": "Runeforged Treerunner Shoes",
+   "count": 91,
+   "pct": 0.2
+  },
+  {
+   "name": "Runeforged Cavalry Boots",
+   "count": 89,
+   "pct": 0.2
+  },
+  {
+   "name": "Runeforged Cinched Boots",
+   "count": 86,
+   "pct": 0.1
+  },
+  {
+   "name": "Elegant Greaves",
+   "count": 75,
+   "pct": 0.1
+  },
+  {
+   "name": "Shamanistic Leggings",
+   "count": 74,
+   "pct": 0.1
+  },
+  {
+   "name": "Studded Boots",
+   "count": 70,
+   "pct": 0.1
+  },
+  {
+   "name": "Flax Sandals",
+   "count": 68,
+   "pct": 0.1
+  },
+  {
+   "name": "Runeforged Bulwark Greaves",
+   "count": 62,
+   "pct": 0.1
+  },
+  {
+   "name": "Runeforged Apostle Leggings",
+   "count": 59,
+   "pct": 0.1
+  },
+  {
+   "name": "Runeforged Serpentscale Boots",
+   "count": 56,
+   "pct": 0.1
+  },
+  {
+   "name": "Runeforged Veteran Sabatons",
+   "count": 55,
+   "pct": 0.1
+  },
+  {
+   "name": "Steelpoint Shoes",
+   "count": 37,
+   "pct": 0.1
+  },
+  {
+   "name": "Runeforged Carved Greaves",
+   "count": 36,
+   "pct": 0.1
+  },
+  {
+   "name": "Runeforged Faithful Leggings",
+   "count": 35,
+   "pct": 0.1
+  },
+  {
+   "name": "Runeforged Elegant Slippers",
+   "count": 33,
+   "pct": 0.1
+  },
+  {
+   "name": "Runeforged Elegant Greaves",
+   "count": 22,
+   "pct": 0
+  },
+  {
+   "name": "Runeforged Flax Sandals",
+   "count": 22,
+   "pct": 0
+  },
+  {
+   "name": "Hunting Shoes",
+   "count": 20,
+   "pct": 0
+  },
+  {
+   "name": "Runeforged Bastion Sabatons",
+   "count": 19,
+   "pct": 0
+  },
+  {
+   "name": "Reefsteel Greaves",
+   "count": 18,
+   "pct": 0
+  },
+  {
+   "name": "Feathered Sandals",
+   "count": 16,
+   "pct": 0
+  },
+  {
+   "name": "Runeforged Shamanistic Leggings",
+   "count": 16,
+   "pct": 0
+  },
+  {
+   "name": "Runeforged Studded Boots",
+   "count": 14,
+   "pct": 0
+  },
+  {
+   "name": "Flared Boots",
+   "count": 12,
+   "pct": 0
+  },
+  {
+   "name": "Covered Sabatons",
+   "count": 10,
+   "pct": 0
+  },
+  {
+   "name": "Lizardscale Boots",
+   "count": 9,
+   "pct": 0
+  },
+  {
+   "name": "Runeforged Steelpoint Shoes",
+   "count": 9,
+   "pct": 0
+  },
+  {
+   "name": "Stone Greaves",
+   "count": 6,
+   "pct": 0
+  },
+  {
+   "name": "Weaver Leggings",
+   "count": 6,
+   "pct": 0
+  },
+  {
+   "name": "Runeforged Flared Boots",
+   "count": 4,
+   "pct": 0
+  },
+  {
+   "name": "Trimmed Greaves",
+   "count": 4,
+   "pct": 0
+  }
+ ]
+}

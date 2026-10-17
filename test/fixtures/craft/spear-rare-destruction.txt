@@ -1,0 +1,28 @@
+Item Class: Spears
+Rarity: Rare
+Viper Edge
+Soaring Spear
+--------
+Physical Damage: 53-98 (augmented)
+Lightning Damage: 5-92 (lightning)
+Critical Hit Chance: 5.00%
+Attacks per Second: 2.30 (augmented)
+--------
+Requires: Level 70, 41 Str, 115 Dex
+--------
+Sockets: S
+--------
+Item Level: 81
+--------
+Can roll Destruction modifiers (rune)
+--------
+{ Prefix Modifier "Bloodthirsty" (Tier: 4) — Damage, Physical, Attack }
+120(110-134)% increased Physical Damage
+{ Prefix Modifier "Shocking" (Tier: 4) — Damage, Elemental, Lightning, Attack }
+Adds 5(1-6) to 92(85-107) Lightning Damage
+{ Suffix Modifier "of Celebration" (Tier: 1) — Attack, Speed }
+27(26-28)% increased Attack Speed
+{ Suffix Modifier "of the Jaguar" (Tier: 2) — Attribute }
++28(28-30) to Dexterity
+{ Suffix Modifier "of Siphoning" (Tier: 3) — Mana }
+Gain 23(21-27) Mana per enemy killed

@@ -1,0 +1,777 @@
+{
+ "league": "Forbidden Rites",
+ "class": "Sceptres",
+ "themed": [
+  "#% increased Spirit",
+  "Allies in your Presence deal #% increased Damage"
+ ],
+ "mods": [
+  {
+   "name": "#% increased Spirit",
+   "count": 4666,
+   "pct": 100
+  },
+  {
+   "name": "Allies in your Presence deal #% increased Damage",
+   "count": 4666,
+   "pct": 100
+  },
+  {
+   "name": "# to Level of all Minion Skills",
+   "count": 3546,
+   "pct": 76
+  },
+  {
+   "name": "# to maximum Mana",
+   "count": 3433,
+   "pct": 73.6
+  },
+  {
+   "name": "Minions deal #% increased Damage with Command Skills",
+   "count": 1986,
+   "pct": 42.6
+  },
+  {
+   "name": "# maximum stacks of Puppet Master",
+   "count": 1938,
+   "pct": 41.5
+  },
+  {
+   "name": "#% increased Mana Regeneration Rate",
+   "count": 1237,
+   "pct": 26.5
+  },
+  {
+   "name": "# to Intelligence",
+   "count": 1081,
+   "pct": 23.2
+  },
+  {
+   "name": "#% reduced Mana Cost Efficiency of Command Skills",
+   "count": 1010,
+   "pct": 21.6
+  },
+  {
+   "name": "Allies in your Presence Regenerate # Life per second",
+   "count": 956,
+   "pct": 20.5
+  },
+  {
+   "name": "Allies in your Presence have #% increased Critical Damage Bonus",
+   "count": 861,
+   "pct": 18.5
+  },
+  {
+   "name": "Allies in your Presence have #% to all Elemental Resistances",
+   "count": 766,
+   "pct": 16.4
+  },
+  {
+   "name": "Minions have #% increased maximum Life",
+   "count": 764,
+   "pct": 16.4
+  },
+  {
+   "name": "Allies in your Presence have #% increased Critical Hit Chance",
+   "count": 758,
+   "pct": 16.2
+  },
+  {
+   "name": "Allies in your Presence have #% increased Cast Speed",
+   "count": 700,
+   "pct": 15
+  },
+  {
+   "name": "Allies in your Presence have #% increased Attack Speed",
+   "count": 689,
+   "pct": 14.8
+  },
+  {
+   "name": "#% reduced Attribute Requirements",
+   "count": 631,
+   "pct": 13.5
+  },
+  {
+   "name": "#% increased Presence Area of Effect",
+   "count": 591,
+   "pct": 12.7
+  },
+  {
+   "name": "# to Level of all Spell Skills",
+   "count": 580,
+   "pct": 12.4
+  },
+  {
+   "name": "Allies in your Presence deal # to # added Attack Lightning Damage",
+   "count": 533,
+   "pct": 11.4
+  },
+  {
+   "name": "Allies in your Presence deal # to # added Attack Cold Damage",
+   "count": 524,
+   "pct": 11.2
+  },
+  {
+   "name": "Allies in your Presence deal # to # added Attack Physical Damage",
+   "count": 520,
+   "pct": 11.1
+  },
+  {
+   "name": "Allies in your Presence deal # to # added Attack Fire Damage",
+   "count": 503,
+   "pct": 10.8
+  },
+  {
+   "name": "#% increased Cast Speed",
+   "count": 469,
+   "pct": 10.1
+  },
+  {
+   "name": "#% increased effect of Socketed Augment Items",
+   "count": 396,
+   "pct": 8.5
+  },
+  {
+   "name": "#% increased Light Radius",
+   "count": 371,
+   "pct": 8
+  },
+  {
+   "name": "#% increased Spell Damage",
+   "count": 362,
+   "pct": 7.8
+  },
+  {
+   "name": "# to Strength",
+   "count": 328,
+   "pct": 7
+  },
+  {
+   "name": "Gain #% of Elemental Damage as Extra Cold Damage",
+   "count": 318,
+   "pct": 6.8
+  },
+  {
+   "name": "#% Surpassing Chance to gain a Puppet Master stack whenever you use a Command Skill",
+   "count": 307,
+   "pct": 6.6
+  },
+  {
+   "name": "#% increased Critical Hit Chance for Spells",
+   "count": 302,
+   "pct": 6.5
+  },
+  {
+   "name": "Gain #% of Damage as Extra Cold Damage",
+   "count": 281,
+   "pct": 6
+  },
+  {
+   "name": "Gain #% of Damage as Extra Lightning Damage",
+   "count": 280,
+   "pct": 6
+  },
+  {
+   "name": "# to Level of all Cold Spell Skills",
+   "count": 244,
+   "pct": 5.2
+  },
+  {
+   "name": "Gain #% of Damage as Extra Fire Damage",
+   "count": 211,
+   "pct": 4.5
+  },
+  {
+   "name": "#% increased Elemental Damage",
+   "count": 160,
+   "pct": 3.4
+  },
+  {
+   "name": "Aura Skills have #% increased Magnitudes",
+   "count": 155,
+   "pct": 3.3
+  },
+  {
+   "name": "#% increased Physical Damage",
+   "count": 140,
+   "pct": 3
+  },
+  {
+   "name": "# to Level of all Lightning Spell Skills",
+   "count": 135,
+   "pct": 2.9
+  },
+  {
+   "name": "Gain # Life per enemy killed",
+   "count": 131,
+   "pct": 2.8
+  },
+  {
+   "name": "Adds # to # Physical Damage",
+   "count": 122,
+   "pct": 2.6
+  },
+  {
+   "name": "Gain # Mana per enemy killed",
+   "count": 121,
+   "pct": 2.6
+  },
+  {
+   "name": "# to Accuracy Rating",
+   "count": 119,
+   "pct": 2.6
+  },
+  {
+   "name": "#% increased Attack Speed",
+   "count": 103,
+   "pct": 2.2
+  },
+  {
+   "name": "Adds # to # Cold Damage",
+   "count": 98,
+   "pct": 2.1
+  },
+  {
+   "name": "Minions deal #% increased Damage",
+   "count": 90,
+   "pct": 1.9
+  },
+  {
+   "name": "Adds # to # Fire Damage",
+   "count": 83,
+   "pct": 1.8
+  },
+  {
+   "name": "Adds # to # Lightning Damage",
+   "count": 81,
+   "pct": 1.7
+  },
+  {
+   "name": "#% increased Cold Damage",
+   "count": 73,
+   "pct": 1.6
+  },
+  {
+   "name": "# to Level of all Nova Skill Gems",
+   "count": 72,
+   "pct": 1.5
+  },
+  {
+   "name": "#% increased Critical Spell Damage Bonus",
+   "count": 69,
+   "pct": 1.5
+  },
+  {
+   "name": "#% reduced Presence Area of Effect",
+   "count": 63,
+   "pct": 1.4
+  },
+  {
+   "name": "# to Level of all Physical Spell Skills",
+   "count": 62,
+   "pct": 1.3
+  },
+  {
+   "name": "#% increased Flammability Magnitude",
+   "count": 54,
+   "pct": 1.2
+  },
+  {
+   "name": "#% to Critical Hit Chance",
+   "count": 53,
+   "pct": 1.1
+  },
+  {
+   "name": "#% increased Lightning Damage",
+   "count": 52,
+   "pct": 1.1
+  },
+  {
+   "name": "Gain #% of Damage as Extra Damage of all Elements",
+   "count": 52,
+   "pct": 1.1
+  },
+  {
+   "name": "Bonded: #% increased Damage while Shapeshifted",
+   "count": 50,
+   "pct": 1.1
+  },
+  {
+   "name": "Minions have #% increased Magnitude of Damaging Ailments",
+   "count": 49,
+   "pct": 1.1
+  },
+  {
+   "name": "# to Level of all Melee Skills",
+   "count": 47,
+   "pct": 1
+  },
+  {
+   "name": "Forged by the Breath of Aldur",
+   "count": 45,
+   "pct": 1
+  },
+  {
+   "name": "Causes #% increased Stun Buildup",
+   "count": 41,
+   "pct": 0.9
+  },
+  {
+   "name": "#% to Critical Damage Bonus",
+   "count": 38,
+   "pct": 0.8
+  },
+  {
+   "name": "Can have # additional Crafted Modifier",
+   "count": 38,
+   "pct": 0.8
+  },
+  {
+   "name": "#% increased chance to Shock",
+   "count": 37,
+   "pct": 0.8
+  },
+  {
+   "name": "#% increased Elemental Damage with Attacks",
+   "count": 36,
+   "pct": 0.8
+  },
+  {
+   "name": "# to Maximum Rage",
+   "count": 35,
+   "pct": 0.8
+  },
+  {
+   "name": "Companions have #% increased Attack Speed",
+   "count": 34,
+   "pct": 0.7
+  },
+  {
+   "name": "#% increased Spell Physical Damage",
+   "count": 33,
+   "pct": 0.7
+  },
+  {
+   "name": "#% increased Freeze Buildup",
+   "count": 32,
+   "pct": 0.7
+  },
+  {
+   "name": "#% increased Stun Duration",
+   "count": 32,
+   "pct": 0.7
+  },
+  {
+   "name": "# to Level of all Attack Skills",
+   "count": 28,
+   "pct": 0.6
+  },
+  {
+   "name": "#% increased Chaos Damage",
+   "count": 28,
+   "pct": 0.6
+  },
+  {
+   "name": "#% to Block chance",
+   "count": 28,
+   "pct": 0.6
+  },
+  {
+   "name": "# Suffix Modifier allowed",
+   "count": 27,
+   "pct": 0.6
+  },
+  {
+   "name": "#% increased Attack Damage against Rare or Unique Enemies",
+   "count": 26,
+   "pct": 0.6
+  },
+  {
+   "name": "#% less Mana Regeneration Rate",
+   "count": 26,
+   "pct": 0.6
+  },
+  {
+   "name": "Leeches #% of Physical Damage as Life",
+   "count": 26,
+   "pct": 0.6
+  },
+  {
+   "name": "Mana Recovery from Regeneration is also applied to Runic Ward",
+   "count": 26,
+   "pct": 0.6
+  },
+  {
+   "name": "Gain #% of Damage as Extra Chaos Damage",
+   "count": 25,
+   "pct": 0.5
+  }
+ ],
+ "bases": [
+  {
+   "name": "Rattling Sceptre",
+   "count": 2119,
+   "pct": 45.4
+  },
+  {
+   "name": "Shrine Sceptre",
+   "count": 1659,
+   "pct": 35.6
+  },
+  {
+   "name": "Omen Sceptre",
+   "count": 510,
+   "pct": 10.9
+  },
+  {
+   "name": "Stoic Sceptre",
+   "count": 475,
+   "pct": 10.2
+  },
+  {
+   "name": "Dueling Wand",
+   "count": 270,
+   "pct": 5.8
+  },
+  {
+   "name": "Chiming Staff",
+   "count": 233,
+   "pct": 5
+  },
+  {
+   "name": "Wrath Sceptre",
+   "count": 167,
+   "pct": 3.6
+  },
+  {
+   "name": "Siphoning Wand",
+   "count": 78,
+   "pct": 1.7
+  },
+  {
+   "name": "Attuned Wand",
+   "count": 77,
+   "pct": 1.7
+  },
+  {
+   "name": "Galvanic Wand",
+   "count": 45,
+   "pct": 1
+  },
+  {
+   "name": "Changeling Talisman",
+   "count": 34,
+   "pct": 0.7
+  },
+  {
+   "name": "Familial Talisman",
+   "count": 32,
+   "pct": 0.7
+  },
+  {
+   "name": "Frenzied Talisman",
+   "count": 26,
+   "pct": 0.6
+  },
+  {
+   "name": "Withered Wand",
+   "count": 23,
+   "pct": 0.5
+  },
+  {
+   "name": "Cinderbark Talisman",
+   "count": 20,
+   "pct": 0.4
+  },
+  {
+   "name": "Nettle Talisman",
+   "count": 20,
+   "pct": 0.4
+  },
+  {
+   "name": "Maji Talisman",
+   "count": 19,
+   "pct": 0.4
+  },
+  {
+   "name": "Bone Wand",
+   "count": 18,
+   "pct": 0.4
+  },
+  {
+   "name": "Howling Talisman",
+   "count": 14,
+   "pct": 0.3
+  },
+  {
+   "name": "Spiny Talisman",
+   "count": 13,
+   "pct": 0.3
+  },
+  {
+   "name": "Fang Talisman",
+   "count": 10,
+   "pct": 0.2
+  },
+  {
+   "name": "Fury Talisman",
+   "count": 10,
+   "pct": 0.2
+  },
+  {
+   "name": "Thunder Talisman",
+   "count": 10,
+   "pct": 0.2
+  },
+  {
+   "name": "Soaring Spear",
+   "count": 9,
+   "pct": 0.2
+  },
+  {
+   "name": "Primal Talisman",
+   "count": 8,
+   "pct": 0.2
+  },
+  {
+   "name": "Volatile Wand",
+   "count": 8,
+   "pct": 0.2
+  },
+  {
+   "name": "Cruel Talisman",
+   "count": 7,
+   "pct": 0.2
+  },
+  {
+   "name": "Sanctified Staff",
+   "count": 7,
+   "pct": 0.2
+  },
+  {
+   "name": "Fungal Talisman",
+   "count": 6,
+   "pct": 0.1
+  },
+  {
+   "name": "Jade Talisman",
+   "count": 6,
+   "pct": 0.1
+  },
+  {
+   "name": "Rabid Talisman",
+   "count": 6,
+   "pct": 0.1
+  },
+  {
+   "name": "Voltfang Talisman",
+   "count": 6,
+   "pct": 0.1
+  },
+  {
+   "name": "Akoyan Spear",
+   "count": 5,
+   "pct": 0.1
+  },
+  {
+   "name": "Alpha Talisman",
+   "count": 5,
+   "pct": 0.1
+  },
+  {
+   "name": "Paralysing Staff",
+   "count": 5,
+   "pct": 0.1
+  },
+  {
+   "name": "Flying Spear",
+   "count": 4,
+   "pct": 0.1
+  },
+  {
+   "name": "Ironwood Greathammer",
+   "count": 4,
+   "pct": 0.1
+  },
+  {
+   "name": "Siege Crossbow",
+   "count": 4,
+   "pct": 0.1
+  },
+  {
+   "name": "Wildwood Talisman",
+   "count": 4,
+   "pct": 0.1
+  },
+  {
+   "name": "Ashen Staff",
+   "count": 3,
+   "pct": 0.1
+  },
+  {
+   "name": "Roaring Staff",
+   "count": 3,
+   "pct": 0.1
+  },
+  {
+   "name": "Vicious Talisman",
+   "count": 3,
+   "pct": 0.1
+  },
+  {
+   "name": "Ashbark Talisman",
+   "count": 2,
+   "pct": 0
+  },
+  {
+   "name": "Barbed Spear",
+   "count": 2,
+   "pct": 0
+  },
+  {
+   "name": "Gelid Staff",
+   "count": 2,
+   "pct": 0
+  },
+  {
+   "name": "Lumbering Talisman",
+   "count": 2,
+   "pct": 0
+  },
+  {
+   "name": "Massive Greathammer",
+   "count": 2,
+   "pct": 0
+  },
+  {
+   "name": "Pyrophyte Staff",
+   "count": 2,
+   "pct": 0
+  },
+  {
+   "name": "Voltaic Staff",
+   "count": 2,
+   "pct": 0
+  },
+  {
+   "name": "Bombard Crossbow",
+   "count": 1,
+   "pct": 0
+  },
+  {
+   "name": "Branched Spear",
+   "count": 1,
+   "pct": 0
+  },
+  {
+   "name": "Broad Spear",
+   "count": 1,
+   "pct": 0
+  },
+  {
+   "name": "Cannonade Crossbow",
+   "count": 1,
+   "pct": 0
+  },
+  {
+   "name": "Construct Crossbow",
+   "count": 1,
+   "pct": 0
+  },
+  {
+   "name": "Crescent Quarterstaff",
+   "count": 1,
+   "pct": 0
+  },
+  {
+   "name": "Crossblade Spear",
+   "count": 1,
+   "pct": 0
+  },
+  {
+   "name": "Crown Mace",
+   "count": 1,
+   "pct": 0
+  },
+  {
+   "name": "Desolate Crossbow",
+   "count": 1,
+   "pct": 0
+  },
+  {
+   "name": "Disintegrating Maul",
+   "count": 1,
+   "pct": 0
+  },
+  {
+   "name": "Dualstring Bow",
+   "count": 1,
+   "pct": 0
+  },
+  {
+   "name": "Guardian Quarterstaff",
+   "count": 1,
+   "pct": 0
+  },
+  {
+   "name": "Heavy Greathammer",
+   "count": 1,
+   "pct": 0
+  },
+  {
+   "name": "Hunting Spear",
+   "count": 1,
+   "pct": 0
+  },
+  {
+   "name": "Ironhead Spear",
+   "count": 1,
+   "pct": 0
+  },
+  {
+   "name": "Jagged Spear",
+   "count": 1,
+   "pct": 0
+  },
+  {
+   "name": "Obliterator Bow",
+   "count": 1,
+   "pct": 0
+  },
+  {
+   "name": "Reaping Staff",
+   "count": 1,
+   "pct": 0
+  },
+  {
+   "name": "Spiked Spear",
+   "count": 1,
+   "pct": 0
+  },
+  {
+   "name": "Studded Greatclub",
+   "count": 1,
+   "pct": 0
+  },
+  {
+   "name": "Tawhoan Greatclub",
+   "count": 1,
+   "pct": 0
+  },
+  {
+   "name": "Tense Crossbow",
+   "count": 1,
+   "pct": 0
+  },
+  {
+   "name": "Warmonger Bow",
+   "count": 1,
+   "pct": 0
+  },
+  {
+   "name": "Warpick",
+   "count": 1,
+   "pct": 0
+  }
+ ]
+}

@@ -1,0 +1,29 @@
+Item Class: Boots
+Rarity: Rare
+Doom Track
+Sandsworn Sandals
+--------
+Energy Shield: 120 (augmented)
+--------
+Requires: Level 65, 78 Int
+--------
+Sockets: S 
+--------
+Item Level: 82
+--------
+18% increased Armour, Evasion and Energy Shield (rune)
+--------
+{ Prefix Modifier "Hellion's" (Tier: 1) — Speed }
+35% increased Movement Speed
+{ Prefix Modifier "Rotund" (Tier: 1) — Life }
++137(120-149) to maximum Life
+{ Desecrated Prefix Modifier "Unholy" (Tier: 1) — Defences, Energy Shield }
+40(39-42)% increased Energy Shield
+{ Suffix Modifier "of the Kaleidoscope" (Tier: 1) — Elemental, Resistance }
++40(39-42)% to Fire Resistance
+{ Suffix Modifier "of the Glacier" (Tier: 1) — Elemental, Cold, Resistance }
++40(39-42)% to Cold Resistance
+{ Desecrated Suffix Modifier "of Steel" (Tier: 1) — }
++136(95-136) to Stun Threshold
+{ Crafted Suffix Modifier "of Plunder" (Tier: 1) — }
+17(15-18)% increased Rarity of Items found

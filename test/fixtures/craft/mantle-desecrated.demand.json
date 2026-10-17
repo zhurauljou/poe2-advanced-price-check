@@ -1,0 +1,809 @@
+{
+ "league": "Forbidden Rites",
+ "class": "Body Armours",
+ "themed": [],
+ "mods": [
+  {
+   "name": "#% increased Armour, Evasion and Energy Shield",
+   "count": 23342,
+   "pct": 82.6
+  },
+  {
+   "name": "# to maximum Energy Shield",
+   "count": 17742,
+   "pct": 62.8
+  },
+  {
+   "name": "#% to Lightning Resistance",
+   "count": 15744,
+   "pct": 55.7
+  },
+  {
+   "name": "#% to Fire Resistance",
+   "count": 15662,
+   "pct": 55.5
+  },
+  {
+   "name": "#% to Cold Resistance",
+   "count": 15537,
+   "pct": 55
+  },
+  {
+   "name": "#% increased Energy Shield",
+   "count": 14723,
+   "pct": 52.1
+  },
+  {
+   "name": "# to Spirit",
+   "count": 12810,
+   "pct": 45.4
+  },
+  {
+   "name": "# to Evasion Rating",
+   "count": 8626,
+   "pct": 30.5
+  },
+  {
+   "name": "Idols socketed in this item gain the benefits of their Bonded modifiers",
+   "count": 6382,
+   "pct": 22.6
+  },
+  {
+   "name": "# to maximum Life",
+   "count": 5866,
+   "pct": 20.8
+  },
+  {
+   "name": "Gain Deflection Rating equal to #% of Evasion Rating",
+   "count": 5022,
+   "pct": 17.8
+  },
+  {
+   "name": "#% to Chaos Resistance",
+   "count": 4990,
+   "pct": 17.7
+  },
+  {
+   "name": "#% increased Evasion Rating",
+   "count": 4484,
+   "pct": 15.9
+  },
+  {
+   "name": "# to Intelligence",
+   "count": 4286,
+   "pct": 15.2
+  },
+  {
+   "name": "Can roll Soul modifiers",
+   "count": 3646,
+   "pct": 12.9
+  },
+  {
+   "name": "# to Armour",
+   "count": 3582,
+   "pct": 12.7
+  },
+  {
+   "name": "#% increased Evasion and Energy Shield",
+   "count": 3543,
+   "pct": 12.5
+  },
+  {
+   "name": "#% increased Energy Shield Recharge Rate",
+   "count": 3407,
+   "pct": 12.1
+  },
+  {
+   "name": "#% of Armour also applies to Elemental Damage",
+   "count": 3230,
+   "pct": 11.4
+  },
+  {
+   "name": "# Life Regeneration per second",
+   "count": 3177,
+   "pct": 11.2
+  },
+  {
+   "name": "#% increased maximum Mana",
+   "count": 2995,
+   "pct": 10.6
+  },
+  {
+   "name": "#% increased Spirit Reservation Efficiency of Skills",
+   "count": 2991,
+   "pct": 10.6
+  },
+  {
+   "name": "#% increased Armour",
+   "count": 2680,
+   "pct": 9.5
+  },
+  {
+   "name": "# to Stun Threshold",
+   "count": 2174,
+   "pct": 7.7
+  },
+  {
+   "name": "#% increased Rarity of Items found",
+   "count": 1728,
+   "pct": 6.1
+  },
+  {
+   "name": "#% increased Mana Regeneration Rate",
+   "count": 1534,
+   "pct": 5.4
+  },
+  {
+   "name": "#% increased Spirit",
+   "count": 1521,
+   "pct": 5.4
+  },
+  {
+   "name": "#% of Armour also applies to Chaos Damage",
+   "count": 1363,
+   "pct": 4.8
+  },
+  {
+   "name": "#% reduced Attribute Requirements",
+   "count": 1332,
+   "pct": 4.7
+  },
+  {
+   "name": "# to Dexterity",
+   "count": 1161,
+   "pct": 4.1
+  },
+  {
+   "name": "#% reduced Ignite Duration on you",
+   "count": 1101,
+   "pct": 3.9
+  },
+  {
+   "name": "#% reduced Poison Duration on you",
+   "count": 1063,
+   "pct": 3.8
+  },
+  {
+   "name": "#% reduced Duration of Bleeding on You",
+   "count": 1033,
+   "pct": 3.7
+  },
+  {
+   "name": "#% of Damage is taken from Mana before Life",
+   "count": 1029,
+   "pct": 3.6
+  },
+  {
+   "name": "#% increased Movement Speed",
+   "count": 940,
+   "pct": 3.3
+  },
+  {
+   "name": "# to maximum Mana",
+   "count": 909,
+   "pct": 3.2
+  },
+  {
+   "name": "#% to Lightning and Chaos Resistances",
+   "count": 876,
+   "pct": 3.1
+  },
+  {
+   "name": "#% to Fire and Chaos Resistances",
+   "count": 830,
+   "pct": 2.9
+  },
+  {
+   "name": "#% to Cold and Chaos Resistances",
+   "count": 772,
+   "pct": 2.7
+  },
+  {
+   "name": "Hits against you have #% reduced Critical Damage Bonus",
+   "count": 749,
+   "pct": 2.7
+  },
+  {
+   "name": "Skills have #% chance to not remove Charges but still count as consuming them",
+   "count": 701,
+   "pct": 2.5
+  },
+  {
+   "name": "#% increased Armour and Evasion",
+   "count": 658,
+   "pct": 2.3
+  },
+  {
+   "name": "# to Strength",
+   "count": 588,
+   "pct": 2.1
+  },
+  {
+   "name": "#% reduced effect of Curses on you",
+   "count": 536,
+   "pct": 1.9
+  },
+  {
+   "name": "# to Level of all Corrupted Skill Gems",
+   "count": 454,
+   "pct": 1.6
+  },
+  {
+   "name": "#% increased maximum Life",
+   "count": 399,
+   "pct": 1.4
+  },
+  {
+   "name": "#% increased Armour and Energy Shield",
+   "count": 352,
+   "pct": 1.2
+  },
+  {
+   "name": "Regenerate #% of maximum Life per second",
+   "count": 344,
+   "pct": 1.2
+  },
+  {
+   "name": "#% increased Runic Ward",
+   "count": 339,
+   "pct": 1.2
+  },
+  {
+   "name": "Bonded: # to maximum Life",
+   "count": 288,
+   "pct": 1
+  },
+  {
+   "name": "Bonded: # to maximum Mana",
+   "count": 288,
+   "pct": 1
+  },
+  {
+   "name": "#% to all Elemental Resistances",
+   "count": 243,
+   "pct": 0.9
+  },
+  {
+   "name": "#% increased Thorns damage",
+   "count": 223,
+   "pct": 0.8
+  },
+  {
+   "name": "Bonded: #% increased maximum Life",
+   "count": 214,
+   "pct": 0.8
+  },
+  {
+   "name": "Bonded: #% increased maximum Mana",
+   "count": 214,
+   "pct": 0.8
+  },
+  {
+   "name": "#% increased Maximum Life for each Corrupted Item Equipped",
+   "count": 209,
+   "pct": 0.7
+  },
+  {
+   "name": "#% of Damage taken Recouped as Mana",
+   "count": 205,
+   "pct": 0.7
+  },
+  {
+   "name": "# Suffix Modifier allowed",
+   "count": 197,
+   "pct": 0.7
+  },
+  {
+   "name": "#% of Damage taken Recouped as Life",
+   "count": 185,
+   "pct": 0.7
+  },
+  {
+   "name": "Corrupting will always result in change",
+   "count": 185,
+   "pct": 0.7
+  },
+  {
+   "name": "Can roll Ring Modifiers",
+   "count": 181,
+   "pct": 0.6
+  },
+  {
+   "name": "Catalysts can be applied to this item",
+   "count": 181,
+   "pct": 0.6
+  },
+  {
+   "name": "#% reduced Slowing Potency of Debuffs on You",
+   "count": 169,
+   "pct": 0.6
+  },
+  {
+   "name": "# to # Physical Thorns damage",
+   "count": 160,
+   "pct": 0.6
+  },
+  {
+   "name": "#% additional Physical Damage Reduction",
+   "count": 160,
+   "pct": 0.6
+  },
+  {
+   "name": "Gain #% of maximum Life as Extra maximum Runic Ward",
+   "count": 156,
+   "pct": 0.6
+  },
+  {
+   "name": "#% increased Deflection Rating",
+   "count": 148,
+   "pct": 0.5
+  },
+  {
+   "name": "#% of Damage taken bypasses Energy Shield",
+   "count": 144,
+   "pct": 0.5
+  },
+  {
+   "name": "# to Spirit per Idol socketed in your Equipment",
+   "count": 130,
+   "pct": 0.5
+  },
+  {
+   "name": "#% increased Elemental Ailment Threshold",
+   "count": 115,
+   "pct": 0.4
+  },
+  {
+   "name": "# to Spirit per # Levels",
+   "count": 113,
+   "pct": 0.4
+  },
+  {
+   "name": "#% to all Maximum Elemental Resistances",
+   "count": 108,
+   "pct": 0.4
+  },
+  {
+   "name": "#% increased Reservation Efficiency of Companion Skills",
+   "count": 101,
+   "pct": 0.4
+  },
+  {
+   "name": "Bonded: #% of Maximum Life Converted to Energy Shield",
+   "count": 89,
+   "pct": 0.3
+  },
+  {
+   "name": "#% increased Cast Speed",
+   "count": 80,
+   "pct": 0.3
+  },
+  {
+   "name": "#% increased Stun Threshold",
+   "count": 74,
+   "pct": 0.3
+  },
+  {
+   "name": "Remnants can be collected from #% further away",
+   "count": 66,
+   "pct": 0.2
+  },
+  {
+   "name": "#% reduced Duration of Ailments on You",
+   "count": 64,
+   "pct": 0.2
+  },
+  {
+   "name": "# to Armour per # Spirit",
+   "count": 53,
+   "pct": 0.2
+  },
+  {
+   "name": "#% increased Runic Ward Regeneration Rate",
+   "count": 53,
+   "pct": 0.2
+  }
+ ],
+ "bases": [
+  {
+   "name": "Vile Robe",
+   "count": 11937,
+   "pct": 42.3
+  },
+  {
+   "name": "Slipstrike Vest",
+   "count": 3631,
+   "pct": 12.9
+  },
+  {
+   "name": "Sleek Jacket",
+   "count": 2790,
+   "pct": 9.9
+  },
+  {
+   "name": "Warlord Cuirass",
+   "count": 1893,
+   "pct": 6.7
+  },
+  {
+   "name": "Flowing Raiment",
+   "count": 1488,
+   "pct": 5.3
+  },
+  {
+   "name": "Feathered Raiment",
+   "count": 767,
+   "pct": 2.7
+  },
+  {
+   "name": "Sacramental Robe",
+   "count": 754,
+   "pct": 2.7
+  },
+  {
+   "name": "Corsair Coat",
+   "count": 473,
+   "pct": 1.7
+  },
+  {
+   "name": "Falconer's Jacket",
+   "count": 428,
+   "pct": 1.5
+  },
+  {
+   "name": "Soldier Cuirass",
+   "count": 363,
+   "pct": 1.3
+  },
+  {
+   "name": "Sacrificial Regalia",
+   "count": 344,
+   "pct": 1.2
+  },
+  {
+   "name": "Dastard Armour",
+   "count": 327,
+   "pct": 1.2
+  },
+  {
+   "name": "Runeforged Vile Robe",
+   "count": 249,
+   "pct": 0.9
+  },
+  {
+   "name": "Ornate Plate",
+   "count": 236,
+   "pct": 0.8
+  },
+  {
+   "name": "Conjurer Mantle",
+   "count": 228,
+   "pct": 0.8
+  },
+  {
+   "name": "Death Mail",
+   "count": 177,
+   "pct": 0.6
+  },
+  {
+   "name": "Runefather's Grasping Mail",
+   "count": 157,
+   "pct": 0.6
+  },
+  {
+   "name": "Ceremonial Robe",
+   "count": 145,
+   "pct": 0.5
+  },
+  {
+   "name": "Rambler Jacket",
+   "count": 143,
+   "pct": 0.5
+  },
+  {
+   "name": "Wyrmscale Coat",
+   "count": 111,
+   "pct": 0.4
+  },
+  {
+   "name": "Runeforged Sacrificial Regalia",
+   "count": 110,
+   "pct": 0.4
+  },
+  {
+   "name": "Runeforged Sleek Jacket",
+   "count": 103,
+   "pct": 0.4
+  },
+  {
+   "name": "Swiftstalker Coat",
+   "count": 98,
+   "pct": 0.3
+  },
+  {
+   "name": "Runeforged Feathered Raiment",
+   "count": 88,
+   "pct": 0.3
+  },
+  {
+   "name": "Wolfskin Mantle",
+   "count": 77,
+   "pct": 0.3
+  },
+  {
+   "name": "Utzaal Cuirass",
+   "count": 67,
+   "pct": 0.2
+  },
+  {
+   "name": "Shrouded Mail",
+   "count": 65,
+   "pct": 0.2
+  },
+  {
+   "name": "Runeforged Conjurer Mantle",
+   "count": 62,
+   "pct": 0.2
+  },
+  {
+   "name": "Runeforged Sacramental Robe",
+   "count": 55,
+   "pct": 0.2
+  },
+  {
+   "name": "Runeforged Warlord Cuirass",
+   "count": 55,
+   "pct": 0.2
+  },
+  {
+   "name": "Lizardscale Coat",
+   "count": 50,
+   "pct": 0.2
+  },
+  {
+   "name": "Hawker's Jacket",
+   "count": 45,
+   "pct": 0.2
+  },
+  {
+   "name": "Runeforged Flowing Raiment",
+   "count": 45,
+   "pct": 0.2
+  },
+  {
+   "name": "Adherent's Raiment",
+   "count": 44,
+   "pct": 0.2
+  },
+  {
+   "name": "Runeforged Slipstrike Vest",
+   "count": 44,
+   "pct": 0.2
+  },
+  {
+   "name": "Austere Garb",
+   "count": 42,
+   "pct": 0.1
+  },
+  {
+   "name": "Stone Cuirass",
+   "count": 37,
+   "pct": 0.1
+  },
+  {
+   "name": "Thane Mail",
+   "count": 36,
+   "pct": 0.1
+  },
+  {
+   "name": "Runeforged Wolfskin Mantle",
+   "count": 35,
+   "pct": 0.1
+  },
+  {
+   "name": "River Raiment",
+   "count": 25,
+   "pct": 0.1
+  },
+  {
+   "name": "Death Mantle",
+   "count": 22,
+   "pct": 0.1
+  },
+  {
+   "name": "Golden Mail",
+   "count": 20,
+   "pct": 0.1
+  },
+  {
+   "name": "Runeforged Corsair Coat",
+   "count": 20,
+   "pct": 0.1
+  },
+  {
+   "name": "Seastorm Mantle",
+   "count": 20,
+   "pct": 0.1
+  },
+  {
+   "name": "Runeforged Falconer's Jacket",
+   "count": 19,
+   "pct": 0.1
+  },
+  {
+   "name": "Runeforged Death Mail",
+   "count": 18,
+   "pct": 0.1
+  },
+  {
+   "name": "Runeforged Rambler Jacket",
+   "count": 18,
+   "pct": 0.1
+  },
+  {
+   "name": "Heavy Plate",
+   "count": 17,
+   "pct": 0.1
+  },
+  {
+   "name": "Runeforged Soldier Cuirass",
+   "count": 16,
+   "pct": 0.1
+  },
+  {
+   "name": "Runeforged Dastard Armour",
+   "count": 14,
+   "pct": 0
+  },
+  {
+   "name": "Runeforged Ceremonial Robe",
+   "count": 13,
+   "pct": 0
+  },
+  {
+   "name": "Runemastered Grasping Mail",
+   "count": 13,
+   "pct": 0
+  },
+  {
+   "name": "Runner Vest",
+   "count": 13,
+   "pct": 0
+  },
+  {
+   "name": "Trailblazer Armour",
+   "count": 13,
+   "pct": 0
+  },
+  {
+   "name": "Layered Vest",
+   "count": 12,
+   "pct": 0
+  },
+  {
+   "name": "Runeforged Swiftstalker Coat",
+   "count": 12,
+   "pct": 0
+  },
+  {
+   "name": "Runeforged Ornate Plate",
+   "count": 11,
+   "pct": 0
+  },
+  {
+   "name": "Smuggler Coat",
+   "count": 9,
+   "pct": 0
+  },
+  {
+   "name": "Grasping Mail",
+   "count": 8,
+   "pct": 0
+  },
+  {
+   "name": "Elegant Plate",
+   "count": 7,
+   "pct": 0
+  },
+  {
+   "name": "Heartcarver Mantle",
+   "count": 7,
+   "pct": 0
+  },
+  {
+   "name": "Mystic Raiment",
+   "count": 7,
+   "pct": 0
+  },
+  {
+   "name": "Runeforged Utzaal Cuirass",
+   "count": 7,
+   "pct": 0
+  },
+  {
+   "name": "Chieftain Cuirass",
+   "count": 6,
+   "pct": 0
+  },
+  {
+   "name": "Itinerant Jacket",
+   "count": 6,
+   "pct": 0
+  },
+  {
+   "name": "Runeforged Adherent's Raiment",
+   "count": 6,
+   "pct": 0
+  },
+  {
+   "name": "Runeforged River Raiment",
+   "count": 6,
+   "pct": 0
+  },
+  {
+   "name": "Runeforged Seastorm Mantle",
+   "count": 6,
+   "pct": 0
+  },
+  {
+   "name": "Runeforged Lizardscale Coat",
+   "count": 5,
+   "pct": 0
+  },
+  {
+   "name": "Elementalist Robe",
+   "count": 4,
+   "pct": 0
+  },
+  {
+   "name": "Hatungo Garb",
+   "count": 4,
+   "pct": 0
+  },
+  {
+   "name": "Mantled Mail",
+   "count": 4,
+   "pct": 0
+  },
+  {
+   "name": "Runeforged Austere Garb",
+   "count": 4,
+   "pct": 0
+  },
+  {
+   "name": "Runeforged Hawker's Jacket",
+   "count": 4,
+   "pct": 0
+  },
+  {
+   "name": "Runeforged Shrouded Mail",
+   "count": 4,
+   "pct": 0
+  },
+  {
+   "name": "Runeforged Wyrmscale Coat",
+   "count": 4,
+   "pct": 0
+  },
+  {
+   "name": "Ascetic Garb",
+   "count": 3,
+   "pct": 0
+  },
+  {
+   "name": "Plated Vestments",
+   "count": 3,
+   "pct": 0
+  },
+  {
+   "name": "Runeforged Grasping Mail",
+   "count": 3,
+   "pct": 0
+  },
+  {
+   "name": "Runeforged Stone Cuirass",
+   "count": 3,
+   "pct": 0
+  }
+ ]
+}

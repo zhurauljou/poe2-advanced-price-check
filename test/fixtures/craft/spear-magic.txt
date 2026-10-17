@@ -1,0 +1,14 @@
+Item Class: Spears
+Rarity: Magic
+Vicious Akoyan Spear of Celebration
+--------
+Requires: Level 77
+--------
+Sockets: S
+--------
+Item Level: 82
+--------
+{ Prefix Modifier "Vicious" (Tier: 3) — Damage, Physical, Attack }
+150(140-169)% increased Physical Damage
+{ Suffix Modifier "of Celebration" (Tier: 2) — Attack, Speed }
+23(23-25)% increased Attack Speed

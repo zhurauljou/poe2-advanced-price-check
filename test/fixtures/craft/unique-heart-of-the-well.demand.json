@@ -1,0 +1,204 @@
+{
+ "mods": [
+  {
+   "name": "Gain #% of Damage as Extra Lightning Damage",
+   "count": 22575,
+   "pct": 55.1
+  },
+  {
+   "name": "Gain #% of Damage as Extra Cold Damage",
+   "count": 21712,
+   "pct": 53
+  },
+  {
+   "name": "Gain #% of Damage as Extra Fire Damage",
+   "count": 13928,
+   "pct": 34
+  },
+  {
+   "name": "#% increased Critical Damage Bonus",
+   "count": 13408,
+   "pct": 32.7
+  },
+  {
+   "name": "Recover #% of maximum Mana on Kill",
+   "count": 10490,
+   "pct": 25.6
+  },
+  {
+   "name": "#% increased Critical Hit Chance",
+   "count": 10192,
+   "pct": 24.9
+  },
+  {
+   "name": "#% increased Critical Spell Damage Bonus",
+   "count": 7931,
+   "pct": 19.4
+  },
+  {
+   "name": "Gain #% of Damage as Extra Chaos Damage",
+   "count": 6223,
+   "pct": 15.2
+  },
+  {
+   "name": "#% increased Critical Hit Chance for Spells",
+   "count": 5911,
+   "pct": 14.4
+  },
+  {
+   "name": "#% increased Cooldown Recovery Rate",
+   "count": 4791,
+   "pct": 11.7
+  },
+  {
+   "name": "#% increased Attack Speed",
+   "count": 4328,
+   "pct": 10.6
+  },
+  {
+   "name": "Recover #% of maximum Life on Kill",
+   "count": 4072,
+   "pct": 9.9
+  },
+  {
+   "name": "#% increased Skill Effect Duration",
+   "count": 3442,
+   "pct": 8.4
+  },
+  {
+   "name": "#% increased Movement Speed",
+   "count": 3406,
+   "pct": 8.3
+  },
+  {
+   "name": "#% increased Cast Speed",
+   "count": 2155,
+   "pct": 5.3
+  },
+  {
+   "name": "#% chance for Lightning Damage with Hits to be Lucky",
+   "count": 2107,
+   "pct": 5.1
+  },
+  {
+   "name": "#% increased Energy Shield from Equipped Body Armour",
+   "count": 1893,
+   "pct": 4.6
+  },
+  {
+   "name": "Gain # Rage on Melee Hit",
+   "count": 1699,
+   "pct": 4.1
+  },
+  {
+   "name": "#% increased Skill Speed",
+   "count": 1684,
+   "pct": 4.1
+  },
+  {
+   "name": "Damaging Ailments deal damage #% faster",
+   "count": 1474,
+   "pct": 3.6
+  },
+  {
+   "name": "#% increased Mana Cost Efficiency",
+   "count": 1330,
+   "pct": 3.2
+  },
+  {
+   "name": "Gain additional Stun Threshold equal to #% of maximum Energy Shield",
+   "count": 1228,
+   "pct": 3
+  },
+  {
+   "name": "Gain additional Ailment Threshold equal to #% of maximum Energy Shield",
+   "count": 1197,
+   "pct": 2.9
+  },
+  {
+   "name": "#% to Maximum Lightning Resistance",
+   "count": 1169,
+   "pct": 2.9
+  },
+  {
+   "name": "#% increased Evasion Rating from Equipped Body Armour",
+   "count": 1119,
+   "pct": 2.7
+  },
+  {
+   "name": "#% increased Mana Regeneration Rate",
+   "count": 1069,
+   "pct": 2.6
+  },
+  {
+   "name": "#% increased chance to inflict Ailments",
+   "count": 1042,
+   "pct": 2.5
+  },
+  {
+   "name": "#% to Maximum Fire Resistance",
+   "count": 1010,
+   "pct": 2.5
+  },
+  {
+   "name": "#% increased Armour from Equipped Body Armour",
+   "count": 934,
+   "pct": 2.3
+  },
+  {
+   "name": "#% increased Elemental Ailment Threshold",
+   "count": 817,
+   "pct": 2
+  },
+  {
+   "name": "#% of Damage is taken from Mana before Life",
+   "count": 810,
+   "pct": 2
+  },
+  {
+   "name": "#% to Maximum Cold Resistance",
+   "count": 799,
+   "pct": 2
+  },
+  {
+   "name": "#% to all Maximum Elemental Resistances",
+   "count": 775,
+   "pct": 1.9
+  },
+  {
+   "name": "#% reduced Slowing Potency of Debuffs on You",
+   "count": 741,
+   "pct": 1.8
+  },
+  {
+   "name": "#% of Damage taken Recouped as Life",
+   "count": 701,
+   "pct": 1.7
+  },
+  {
+   "name": "#% increased Life Regeneration rate",
+   "count": 675,
+   "pct": 1.6
+  },
+  {
+   "name": "Gain # Rage when Hit by an Enemy",
+   "count": 567,
+   "pct": 1.4
+  },
+  {
+   "name": "Minions have #% increased Critical Hit Chance",
+   "count": 499,
+   "pct": 1.2
+  },
+  {
+   "name": "Debuffs on you expire #% faster",
+   "count": 477,
+   "pct": 1.2
+  },
+  {
+   "name": "#% increased Stun Threshold",
+   "count": 449,
+   "pct": 1.1
+  }
+ ]
+}

@@ -1,0 +1,17 @@
+Item Class: Boots
+Rarity: Rare
+Gloom Track
+Sekhema Sandals
+--------
+Energy Shield: 140 (augmented)
+--------
+Requires: Level 65, 78 Int
+--------
+Item Level: 82
+--------
+{ Prefix Modifier "Seraphim's" (Tier: 2) — Defences, Energy Shield }
+70(65-76)% increased Energy Shield
+{ Suffix Modifier "of the Kaleidoscope" (Tier: 2) — Elemental, Resistance }
++38(36-40)% to Fire Resistance
+{ Suffix Modifier "of the Glacier" (Tier: 2) — Elemental, Cold, Resistance }
++37(36-40)% to Cold Resistance

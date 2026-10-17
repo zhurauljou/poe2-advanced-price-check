@@ -1,0 +1,811 @@
+{
+ "league": "Forbidden Rites",
+ "class": "Helmets",
+ "themed": [
+  "# to Level of all Minion Skills"
+ ],
+ "mods": [
+  {
+   "name": "# to Level of all Minion Skills",
+   "count": 6971,
+   "pct": 100
+  },
+  {
+   "name": "#% increased Energy Shield",
+   "count": 5179,
+   "pct": 74.3
+  },
+  {
+   "name": "# to maximum Energy Shield",
+   "count": 4621,
+   "pct": 66.3
+  },
+  {
+   "name": "#% increased Reservation Efficiency of Minion Skills",
+   "count": 4135,
+   "pct": 59.3
+  },
+  {
+   "name": "# to maximum Life",
+   "count": 3657,
+   "pct": 52.5
+  },
+  {
+   "name": "# to maximum Mana",
+   "count": 3535,
+   "pct": 50.7
+  },
+  {
+   "name": "#% increased Rarity of Items found",
+   "count": 2933,
+   "pct": 42.1
+  },
+  {
+   "name": "#% to Lightning Resistance",
+   "count": 2416,
+   "pct": 34.7
+  },
+  {
+   "name": "#% to Cold Resistance",
+   "count": 2278,
+   "pct": 32.7
+  },
+  {
+   "name": "#% to Fire Resistance",
+   "count": 2182,
+   "pct": 31.3
+  },
+  {
+   "name": "#% increased Armour, Evasion and Energy Shield",
+   "count": 1936,
+   "pct": 27.8
+  },
+  {
+   "name": "# to Intelligence",
+   "count": 1585,
+   "pct": 22.7
+  },
+  {
+   "name": "Raven-Touched",
+   "count": 1415,
+   "pct": 20.3
+  },
+  {
+   "name": "# to Accuracy Rating",
+   "count": 776,
+   "pct": 11.1
+  },
+  {
+   "name": "#% increased Spirit Reservation Efficiency of Skills",
+   "count": 734,
+   "pct": 10.5
+  },
+  {
+   "name": "Allocates Zarokh's Gift",
+   "count": 678,
+   "pct": 9.7
+  },
+  {
+   "name": "Minions have #% increased maximum Life",
+   "count": 572,
+   "pct": 8.2
+  },
+  {
+   "name": "#% to Chaos Resistance",
+   "count": 544,
+   "pct": 7.8
+  },
+  {
+   "name": "# to Evasion Rating",
+   "count": 505,
+   "pct": 7.2
+  },
+  {
+   "name": "#% increased Evasion Rating",
+   "count": 499,
+   "pct": 7.2
+  },
+  {
+   "name": "# to all Attributes",
+   "count": 448,
+   "pct": 6.4
+  },
+  {
+   "name": "#% reduced Attribute Requirements",
+   "count": 401,
+   "pct": 5.8
+  },
+  {
+   "name": "#% increased Evasion and Energy Shield",
+   "count": 368,
+   "pct": 5.3
+  },
+  {
+   "name": "Allocates Gigantic Following",
+   "count": 366,
+   "pct": 5.3
+  },
+  {
+   "name": "# Life Regeneration per second",
+   "count": 346,
+   "pct": 5
+  },
+  {
+   "name": "# to Armour",
+   "count": 308,
+   "pct": 4.4
+  },
+  {
+   "name": "#% increased Energy Shield Recharge Rate",
+   "count": 261,
+   "pct": 3.7
+  },
+  {
+   "name": "#% increased Armour and Energy Shield",
+   "count": 260,
+   "pct": 3.7
+  },
+  {
+   "name": "#% increased Critical Hit Chance",
+   "count": 256,
+   "pct": 3.7
+  },
+  {
+   "name": "#% increased Armour",
+   "count": 183,
+   "pct": 2.6
+  },
+  {
+   "name": "#% of Armour also applies to Elemental Damage",
+   "count": 179,
+   "pct": 2.6
+  },
+  {
+   "name": "#% increased Light Radius",
+   "count": 163,
+   "pct": 2.3
+  },
+  {
+   "name": "#% increased Cost Efficiency",
+   "count": 153,
+   "pct": 2.2
+  },
+  {
+   "name": "Gain Deflection Rating equal to #% of Evasion Rating",
+   "count": 149,
+   "pct": 2.1
+  },
+  {
+   "name": "# to Spirit",
+   "count": 137,
+   "pct": 2
+  },
+  {
+   "name": "#% increased Armour and Evasion",
+   "count": 132,
+   "pct": 1.9
+  },
+  {
+   "name": "#% increased Mana Regeneration Rate",
+   "count": 128,
+   "pct": 1.8
+  },
+  {
+   "name": "# to Dexterity",
+   "count": 127,
+   "pct": 1.8
+  },
+  {
+   "name": "Remove a Damaging Ailment when you use a Command Skill",
+   "count": 127,
+   "pct": 1.8
+  },
+  {
+   "name": "#% increased Area of Effect",
+   "count": 122,
+   "pct": 1.8
+  },
+  {
+   "name": "# to Strength",
+   "count": 108,
+   "pct": 1.5
+  },
+  {
+   "name": "#% increased Archon Buff duration",
+   "count": 104,
+   "pct": 1.5
+  },
+  {
+   "name": "Enemies you Curse take #% increased Damage",
+   "count": 91,
+   "pct": 1.3
+  },
+  {
+   "name": "#% increased Spirit for each Corrupted Item Equipped",
+   "count": 89,
+   "pct": 1.3
+  },
+  {
+   "name": "Corrupting will always result in change",
+   "count": 89,
+   "pct": 1.3
+  },
+  {
+   "name": "# to Maximum Power Charges",
+   "count": 87,
+   "pct": 1.2
+  },
+  {
+   "name": "#% increased Life Regeneration rate",
+   "count": 83,
+   "pct": 1.2
+  },
+  {
+   "name": "#% to Lightning and Chaos Resistances",
+   "count": 78,
+   "pct": 1.1
+  },
+  {
+   "name": "#% to Maximum Cold Resistance",
+   "count": 78,
+   "pct": 1.1
+  },
+  {
+   "name": "Allocates Warlord Leader",
+   "count": 56,
+   "pct": 0.8
+  },
+  {
+   "name": "#% to Cold and Chaos Resistances",
+   "count": 55,
+   "pct": 0.8
+  },
+  {
+   "name": "Allocates Dominion",
+   "count": 55,
+   "pct": 0.8
+  },
+  {
+   "name": "#% to Fire and Chaos Resistances",
+   "count": 52,
+   "pct": 0.7
+  },
+  {
+   "name": "Allocates Replenishing Horde",
+   "count": 48,
+   "pct": 0.7
+  },
+  {
+   "name": "Allocates The Soul Meridian",
+   "count": 42,
+   "pct": 0.6
+  },
+  {
+   "name": "#% increased Cooldown Recovery Rate",
+   "count": 36,
+   "pct": 0.5
+  },
+  {
+   "name": "#% increased Skill Effect Duration",
+   "count": 36,
+   "pct": 0.5
+  },
+  {
+   "name": "#% increased Mana Cost Efficiency",
+   "count": 31,
+   "pct": 0.4
+  },
+  {
+   "name": "Allocates Paragon",
+   "count": 30,
+   "pct": 0.4
+  },
+  {
+   "name": "Allocates Lord of Horrors",
+   "count": 24,
+   "pct": 0.3
+  },
+  {
+   "name": "#% increased Experience gain",
+   "count": 21,
+   "pct": 0.3
+  },
+  {
+   "name": "#% increased Presence Area of Effect",
+   "count": 21,
+   "pct": 0.3
+  },
+  {
+   "name": "Allocates Thaumaturgic Generator",
+   "count": 21,
+   "pct": 0.3
+  },
+  {
+   "name": "#% increased Runic Ward",
+   "count": 18,
+   "pct": 0.3
+  },
+  {
+   "name": "# to Dexterity and Intelligence",
+   "count": 17,
+   "pct": 0.2
+  },
+  {
+   "name": "#% of Elemental Damage taken Recouped as Energy Shield",
+   "count": 16,
+   "pct": 0.2
+  },
+  {
+   "name": "# to Strength and Dexterity",
+   "count": 15,
+   "pct": 0.2
+  },
+  {
+   "name": "#% of Armour also applies to Chaos Damage",
+   "count": 15,
+   "pct": 0.2
+  },
+  {
+   "name": "#% to all Elemental Resistances",
+   "count": 15,
+   "pct": 0.2
+  },
+  {
+   "name": "# to Maximum Rage",
+   "count": 14,
+   "pct": 0.2
+  },
+  {
+   "name": "Allocates Relentless Fallen",
+   "count": 13,
+   "pct": 0.2
+  },
+  {
+   "name": "Bonded: Minions Revive #% faster",
+   "count": 13,
+   "pct": 0.2
+  },
+  {
+   "name": "#% increased maximum Mana",
+   "count": 12,
+   "pct": 0.2
+  },
+  {
+   "name": "Allocates Growing Swarm",
+   "count": 12,
+   "pct": 0.2
+  },
+  {
+   "name": "Pain Attunement",
+   "count": 12,
+   "pct": 0.2
+  },
+  {
+   "name": "Allocates Augmented Flesh",
+   "count": 11,
+   "pct": 0.2
+  },
+  {
+   "name": "Bonded: # to maximum Life",
+   "count": 11,
+   "pct": 0.2
+  },
+  {
+   "name": "Bonded: # to maximum Mana",
+   "count": 11,
+   "pct": 0.2
+  },
+  {
+   "name": "Gain Guard equal to #% of maximum Life for # seconds on taking Savage Hit",
+   "count": 11,
+   "pct": 0.2
+  },
+  {
+   "name": "Increases and Reductions to Life Regeneration Rate also apply to Mana Regeneration Rate",
+   "count": 11,
+   "pct": 0.2
+  }
+ ],
+ "bases": [
+  {
+   "name": "Ancestral Tiara",
+   "count": 2959,
+   "pct": 42.4
+  },
+  {
+   "name": "Kamasan Tiara",
+   "count": 1013,
+   "pct": 14.5
+  },
+  {
+   "name": "Sorcerous Tiara",
+   "count": 375,
+   "pct": 5.4
+  },
+  {
+   "name": "Runeforged Ancestral Tiara",
+   "count": 234,
+   "pct": 3.4
+  },
+  {
+   "name": "Freebooter Cap",
+   "count": 217,
+   "pct": 3.1
+  },
+  {
+   "name": "Skycrown Tiara",
+   "count": 173,
+   "pct": 2.5
+  },
+  {
+   "name": "Grinning Mask",
+   "count": 150,
+   "pct": 2.2
+  },
+  {
+   "name": "Jungle Tiara",
+   "count": 139,
+   "pct": 2
+  },
+  {
+   "name": "Runeforged Kamasan Tiara",
+   "count": 139,
+   "pct": 2
+  },
+  {
+   "name": "Cryptic Crown",
+   "count": 131,
+   "pct": 1.9
+  },
+  {
+   "name": "Trapper Hood",
+   "count": 99,
+   "pct": 1.4
+  },
+  {
+   "name": "Imperial Greathelm",
+   "count": 96,
+   "pct": 1.4
+  },
+  {
+   "name": "Desert Cap",
+   "count": 84,
+   "pct": 1.2
+  },
+  {
+   "name": "Jade Tiara",
+   "count": 66,
+   "pct": 0.9
+  },
+  {
+   "name": "Runeforged Sorcerous Tiara",
+   "count": 65,
+   "pct": 0.9
+  },
+  {
+   "name": "Woven Cap",
+   "count": 64,
+   "pct": 0.9
+  },
+  {
+   "name": "Faridun Mask",
+   "count": 63,
+   "pct": 0.9
+  },
+  {
+   "name": "Soaring Mask",
+   "count": 60,
+   "pct": 0.9
+  },
+  {
+   "name": "Gladiatorial Helm",
+   "count": 48,
+   "pct": 0.7
+  },
+  {
+   "name": "Saintly Crown",
+   "count": 46,
+   "pct": 0.7
+  },
+  {
+   "name": "Sandsworn Tiara",
+   "count": 44,
+   "pct": 0.6
+  },
+  {
+   "name": "Runeforged Skycrown Tiara",
+   "count": 43,
+   "pct": 0.6
+  },
+  {
+   "name": "Brigand Mask",
+   "count": 42,
+   "pct": 0.6
+  },
+  {
+   "name": "Divine Crown",
+   "count": 38,
+   "pct": 0.5
+  },
+  {
+   "name": "Cryptic Helm",
+   "count": 33,
+   "pct": 0.5
+  },
+  {
+   "name": "Runeforged Jungle Tiara",
+   "count": 32,
+   "pct": 0.5
+  },
+  {
+   "name": "Paragon Greathelm",
+   "count": 30,
+   "pct": 0.4
+  },
+  {
+   "name": "Deerstalker Hood",
+   "count": 29,
+   "pct": 0.4
+  },
+  {
+   "name": "Masked Greathelm",
+   "count": 27,
+   "pct": 0.4
+  },
+  {
+   "name": "Champion Helm",
+   "count": 25,
+   "pct": 0.4
+  },
+  {
+   "name": "Avian Mask",
+   "count": 23,
+   "pct": 0.3
+  },
+  {
+   "name": "Druidic Crown",
+   "count": 23,
+   "pct": 0.3
+  },
+  {
+   "name": "Runeforged Jade Tiara",
+   "count": 20,
+   "pct": 0.3
+  },
+  {
+   "name": "Pariah Mask",
+   "count": 19,
+   "pct": 0.3
+  },
+  {
+   "name": "Wrapped Cap",
+   "count": 18,
+   "pct": 0.3
+  },
+  {
+   "name": "Runeforged Sandsworn Tiara",
+   "count": 16,
+   "pct": 0.2
+  },
+  {
+   "name": "Runeforged Cryptic Crown",
+   "count": 15,
+   "pct": 0.2
+  },
+  {
+   "name": "Runeforged Grinning Mask",
+   "count": 14,
+   "pct": 0.2
+  },
+  {
+   "name": "Warded Helm",
+   "count": 14,
+   "pct": 0.2
+  },
+  {
+   "name": "Vermeil Circlet",
+   "count": 13,
+   "pct": 0.2
+  },
+  {
+   "name": "Inquisitor Crown",
+   "count": 12,
+   "pct": 0.2
+  },
+  {
+   "name": "Cassis Helm",
+   "count": 10,
+   "pct": 0.1
+  },
+  {
+   "name": "Runeforged Freebooter Cap",
+   "count": 10,
+   "pct": 0.1
+  },
+  {
+   "name": "Runeforged Soaring Mask",
+   "count": 9,
+   "pct": 0.1
+  },
+  {
+   "name": "Warmonger Greathelm",
+   "count": 9,
+   "pct": 0.1
+  },
+  {
+   "name": "Elegant Greathelm",
+   "count": 8,
+   "pct": 0.1
+  },
+  {
+   "name": "Leatherbound Hood",
+   "count": 8,
+   "pct": 0.1
+  },
+  {
+   "name": "Runeforged Divine Crown",
+   "count": 8,
+   "pct": 0.1
+  },
+  {
+   "name": "Runeforged Faridun Mask",
+   "count": 8,
+   "pct": 0.1
+  },
+  {
+   "name": "Corsair Cap",
+   "count": 7,
+   "pct": 0.1
+  },
+  {
+   "name": "Feathered Tiara",
+   "count": 7,
+   "pct": 0.1
+  },
+  {
+   "name": "Gold Circlet",
+   "count": 7,
+   "pct": 0.1
+  },
+  {
+   "name": "Hallowed Crown",
+   "count": 7,
+   "pct": 0.1
+  },
+  {
+   "name": "Noble Greathelm",
+   "count": 6,
+   "pct": 0.1
+  },
+  {
+   "name": "Runeforged Champion Helm",
+   "count": 6,
+   "pct": 0.1
+  },
+  {
+   "name": "Runeforged Trapper Hood",
+   "count": 6,
+   "pct": 0.1
+  },
+  {
+   "name": "Runeforged Woven Cap",
+   "count": 6,
+   "pct": 0.1
+  },
+  {
+   "name": "Solid Mask",
+   "count": 6,
+   "pct": 0.1
+  },
+  {
+   "name": "Fierce Greathelm",
+   "count": 5,
+   "pct": 0.1
+  },
+  {
+   "name": "Runeforged Avian Mask",
+   "count": 5,
+   "pct": 0.1
+  },
+  {
+   "name": "Runeforged Brigand Mask",
+   "count": 5,
+   "pct": 0.1
+  },
+  {
+   "name": "Runeforged Gladiatorial Helm",
+   "count": 5,
+   "pct": 0.1
+  },
+  {
+   "name": "Runeforged Imperial Greathelm",
+   "count": 5,
+   "pct": 0.1
+  },
+  {
+   "name": "Runeforged Pariah Mask",
+   "count": 5,
+   "pct": 0.1
+  },
+  {
+   "name": "Runeforged Desert Cap",
+   "count": 4,
+   "pct": 0.1
+  },
+  {
+   "name": "Runeforged Druidic Crown",
+   "count": 4,
+   "pct": 0.1
+  },
+  {
+   "name": "Runeforged Paragon Greathelm",
+   "count": 4,
+   "pct": 0.1
+  },
+  {
+   "name": "Runeforged Deerstalker Hood",
+   "count": 3,
+   "pct": 0
+  },
+  {
+   "name": "Runeforged Feathered Tiara",
+   "count": 3,
+   "pct": 0
+  },
+  {
+   "name": "Runeforged Hallowed Crown",
+   "count": 3,
+   "pct": 0
+  },
+  {
+   "name": "Runeforged Vermeil Circlet",
+   "count": 3,
+   "pct": 0
+  },
+  {
+   "name": "Spiritbone Crown",
+   "count": 3,
+   "pct": 0
+  },
+  {
+   "name": "Closed Helm",
+   "count": 2,
+   "pct": 0
+  },
+  {
+   "name": "Hunter Hood",
+   "count": 2,
+   "pct": 0
+  },
+  {
+   "name": "Runeforged Gold Circlet",
+   "count": 2,
+   "pct": 0
+  },
+  {
+   "name": "Runeforged Inquisitor Crown",
+   "count": 2,
+   "pct": 0
+  },
+  {
+   "name": "Runeforged Leatherbound Hood",
+   "count": 2,
+   "pct": 0
+  },
+  {
+   "name": "Runeforged Solid Mask",
+   "count": 2,
+   "pct": 0
+  },
+  {
+   "name": "Runeforged Warded Helm",
+   "count": 2,
+   "pct": 0
+  },
+  {
+   "name": "Runeforged Warmonger Greathelm",
+   "count": 2,
+   "pct": 0
+  }
+ ]
+}

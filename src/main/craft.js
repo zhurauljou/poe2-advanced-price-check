@@ -394,7 +394,7 @@ async function advise(item, demandMods, cached) {
     }
     // Гарантированный мод через crafted-слот: Perfect- и порченые эссенции («снимают случайный мод и добавляют свой»).
     const lines = c.text.split(' / ');
-    c.crafted = craftedSources.filter((x) => templates(x.text.replace(/–/g, '-')).some((l) => lines.includes(l))).map((x) => x.name);
+    if (!c.craftedOnly) c.crafted = craftedSources.filter((x) => templates(x.text.replace(/–/g, '-')).some((l) => lines.includes(l))).map((x) => x.name);
     // Блокер (docs/crafting-tricks.md T-08, D-5): на стороне есть частое ненужное семейство — дешёвый мод этой группы
     // (например, выбранный при раскрытии desecrate) закрывает её для следующих Exalted; потом его снимают.
     if (nOf) {
@@ -409,6 +409,10 @@ async function advise(item, demandMods, cached) {
     }
   }
   for (const c of normal) c.essence = essenceFor(c.text, item.itemClass);
+  // Крафтовый гибрид (Alloy) не нужен, если нужный мод сопоставимой ценности ставит эссенция (Perfect Essence of Sorcery +3
+  // к уровням на палочке лучше гибрида «mana / spell levels»): crafted-слот один.
+  const co = normal.find((c) => c.craftedOnly);
+  if (co && normal.some((c) => c !== co && c.crafted && c.crafted.length && c.pct >= co.pct * 0.6)) normal.splice(normal.indexOf(co), 1);
   for (const c of normal) {
     const others = normal.filter((x) => x !== c && x.side === c.side && x.exalt && x.pct >= Math.max(15, c.pct * 0.6));
     if (!others.length || !c.exalt) continue;

@@ -1,0 +1,809 @@
+{
+ "league": "Forbidden Rites",
+ "class": "Spears",
+ "themed": [],
+ "mods": [
+  {
+   "name": "#% increased Attack Speed",
+   "count": 7799,
+   "pct": 93.4
+  },
+  {
+   "name": "# to Accuracy Rating",
+   "count": 7034,
+   "pct": 84.2
+  },
+  {
+   "name": "Can roll Destruction modifiers",
+   "count": 4334,
+   "pct": 51.9
+  },
+  {
+   "name": "#% increased Explicit Speed Modifier magnitudes",
+   "count": 3972,
+   "pct": 47.6
+  },
+  {
+   "name": "#% increased effect of Socketed Augment Items",
+   "count": 3955,
+   "pct": 47.4
+  },
+  {
+   "name": "Adds # to # Lightning Damage",
+   "count": 3822,
+   "pct": 45.8
+  },
+  {
+   "name": "#% increased Physical Damage",
+   "count": 3784,
+   "pct": 45.3
+  },
+  {
+   "name": "#% to Critical Hit Chance",
+   "count": 3672,
+   "pct": 44
+  },
+  {
+   "name": "Adds # to # Fire Damage",
+   "count": 3087,
+   "pct": 37
+  },
+  {
+   "name": "Adds # to # Physical Damage",
+   "count": 3026,
+   "pct": 36.2
+  },
+  {
+   "name": "Adds # to # Cold Damage",
+   "count": 2809,
+   "pct": 33.6
+  },
+  {
+   "name": "Gain #% of Damage as Extra Damage of all Elements",
+   "count": 2238,
+   "pct": 26.8
+  },
+  {
+   "name": "#% increased Elemental Damage with Attacks",
+   "count": 2214,
+   "pct": 26.5
+  },
+  {
+   "name": "# to Level of all Attack Skills",
+   "count": 2026,
+   "pct": 24.3
+  },
+  {
+   "name": "#% to Critical Damage Bonus",
+   "count": 1998,
+   "pct": 23.9
+  },
+  {
+   "name": "# to Level of all Projectile Skills",
+   "count": 1391,
+   "pct": 16.7
+  },
+  {
+   "name": "#% increased Spirit Reservation Efficiency of Skills",
+   "count": 1241,
+   "pct": 14.9
+  },
+  {
+   "name": "Causes #% increased Stun Buildup",
+   "count": 1083,
+   "pct": 13
+  },
+  {
+   "name": "#% chance to gain Onslaught on Killing Hits with this Weapon",
+   "count": 957,
+   "pct": 11.5
+  },
+  {
+   "name": "# to Dexterity",
+   "count": 949,
+   "pct": 11.4
+  },
+  {
+   "name": "Gain # Mana per enemy killed",
+   "count": 947,
+   "pct": 11.3
+  },
+  {
+   "name": "# Suffix Modifier allowed",
+   "count": 946,
+   "pct": 11.3
+  },
+  {
+   "name": "#% increased Projectile Speed with this Weapon",
+   "count": 935,
+   "pct": 11.2
+  },
+  {
+   "name": "#% reduced Attribute Requirements",
+   "count": 935,
+   "pct": 11.2
+  },
+  {
+   "name": "Gain # Life per enemy killed",
+   "count": 916,
+   "pct": 11
+  },
+  {
+   "name": "#% increased Stun Duration",
+   "count": 809,
+   "pct": 9.7
+  },
+  {
+   "name": "#% increased Attack Damage against Rare or Unique Enemies",
+   "count": 794,
+   "pct": 9.5
+  },
+  {
+   "name": "Leeches #% of Physical Damage as Life",
+   "count": 735,
+   "pct": 8.8
+  },
+  {
+   "name": "Leeches #% of Physical Damage as Mana",
+   "count": 708,
+   "pct": 8.5
+  },
+  {
+   "name": "Grants # Life per Enemy Hit",
+   "count": 505,
+   "pct": 6
+  },
+  {
+   "name": "#% increased Light Radius",
+   "count": 470,
+   "pct": 5.6
+  },
+  {
+   "name": "# to Level of all Spell Skills",
+   "count": 409,
+   "pct": 4.9
+  },
+  {
+   "name": "# to Level of all Melee Skills",
+   "count": 398,
+   "pct": 4.8
+  },
+  {
+   "name": "# to Strength",
+   "count": 349,
+   "pct": 4.2
+  },
+  {
+   "name": "#% increased Melee Strike Range with this weapon",
+   "count": 343,
+   "pct": 4.1
+  },
+  {
+   "name": "#% increased Spell Damage",
+   "count": 336,
+   "pct": 4
+  },
+  {
+   "name": "#% increased Cast Speed",
+   "count": 308,
+   "pct": 3.7
+  },
+  {
+   "name": "Gain #% of Damage as Extra Chaos Damage",
+   "count": 303,
+   "pct": 3.6
+  },
+  {
+   "name": "# to Level of all Nova Skill Gems",
+   "count": 295,
+   "pct": 3.5
+  },
+  {
+   "name": "# to Level of all Fire Spell Skills",
+   "count": 294,
+   "pct": 3.5
+  },
+  {
+   "name": "Adds # to # Chaos damage",
+   "count": 255,
+   "pct": 3.1
+  },
+  {
+   "name": "Grants # Rage on Hit",
+   "count": 233,
+   "pct": 2.8
+  },
+  {
+   "name": "Gain #% of Damage as Extra Fire Damage",
+   "count": 221,
+   "pct": 2.6
+  },
+  {
+   "name": "#% chance to Poison on Hit with this weapon",
+   "count": 220,
+   "pct": 2.6
+  },
+  {
+   "name": "Gain #% of Elemental Damage as Extra Cold Damage",
+   "count": 183,
+   "pct": 2.2
+  },
+  {
+   "name": "Companions have #% increased Attack Speed",
+   "count": 176,
+   "pct": 2.1
+  },
+  {
+   "name": "# to maximum Mana",
+   "count": 161,
+   "pct": 1.9
+  },
+  {
+   "name": "#% increased Fire Damage",
+   "count": 160,
+   "pct": 1.9
+  },
+  {
+   "name": "Forged by the Passion of Aldur",
+   "count": 147,
+   "pct": 1.8
+  },
+  {
+   "name": "#% increased Area of Effect for Attacks",
+   "count": 144,
+   "pct": 1.7
+  },
+  {
+   "name": "#% increased Chaos Damage",
+   "count": 131,
+   "pct": 1.6
+  },
+  {
+   "name": "# to Intelligence",
+   "count": 128,
+   "pct": 1.5
+  },
+  {
+   "name": "#% increased Mana Regeneration Rate",
+   "count": 128,
+   "pct": 1.5
+  },
+  {
+   "name": "Forged by the Betrayal of Aldur",
+   "count": 116,
+   "pct": 1.4
+  },
+  {
+   "name": "#% increased Explicit Fire Modifier magnitudes",
+   "count": 114,
+   "pct": 1.4
+  },
+  {
+   "name": "#% increased Spirit",
+   "count": 113,
+   "pct": 1.4
+  },
+  {
+   "name": "# to all Attributes",
+   "count": 104,
+   "pct": 1.2
+  },
+  {
+   "name": "#% increased Explicit Physical Modifier magnitudes",
+   "count": 99,
+   "pct": 1.2
+  },
+  {
+   "name": "#% chance when you gain a Charge to gain an additional Charge",
+   "count": 92,
+   "pct": 1.1
+  },
+  {
+   "name": "#% chance when you gain a Frenzy Charge to gain an additional Frenzy Charge",
+   "count": 88,
+   "pct": 1.1
+  },
+  {
+   "name": "Bow Attacks fire an additional Arrow",
+   "count": 88,
+   "pct": 1.1
+  },
+  {
+   "name": "#% increased Explicit Critical Modifier magnitudes",
+   "count": 87,
+   "pct": 1
+  },
+  {
+   "name": "Bleeding you inflict deals Damage #% faster",
+   "count": 87,
+   "pct": 1
+  },
+  {
+   "name": "# to Spirit",
+   "count": 86,
+   "pct": 1
+  },
+  {
+   "name": "#% Surpassing chance to fire an additional Arrow",
+   "count": 85,
+   "pct": 1
+  },
+  {
+   "name": "#% increased Explicit Elemental Damage Modifier magnitudes",
+   "count": 79,
+   "pct": 0.9
+  },
+  {
+   "name": "Prevent #% of Damage from Deflected Hits",
+   "count": 71,
+   "pct": 0.9
+  },
+  {
+   "name": "#% increased Flammability Magnitude",
+   "count": 67,
+   "pct": 0.8
+  },
+  {
+   "name": "#% increased Explicit Lightning Modifier magnitudes",
+   "count": 64,
+   "pct": 0.8
+  },
+  {
+   "name": "Companions deal #% increased Damage",
+   "count": 60,
+   "pct": 0.7
+  },
+  {
+   "name": "#% increased Damage while your Companion is in your Presence",
+   "count": 59,
+   "pct": 0.7
+  },
+  {
+   "name": "#% increased Explicit Chaos Modifier magnitudes",
+   "count": 56,
+   "pct": 0.7
+  },
+  {
+   "name": "#% to all Elemental Resistances",
+   "count": 55,
+   "pct": 0.7
+  },
+  {
+   "name": "Gain #% of Damage as Extra Damage of a random Element",
+   "count": 55,
+   "pct": 0.7
+  },
+  {
+   "name": "Can have # additional Crafted Modifier",
+   "count": 54,
+   "pct": 0.6
+  },
+  {
+   "name": "Projectile Attacks have a #% chance to fire two additional Projectiles while moving",
+   "count": 54,
+   "pct": 0.6
+  },
+  {
+   "name": "#% increased Explicit Cold Modifier magnitudes",
+   "count": 52,
+   "pct": 0.6
+  },
+  {
+   "name": "#% increased Cost Efficiency of Attacks",
+   "count": 51,
+   "pct": 0.6
+  },
+  {
+   "name": "Gain #% of Damage as Extra Physical Damage",
+   "count": 44,
+   "pct": 0.5
+  },
+  {
+   "name": "Projectiles deal #% increased Damage with Hits against Enemies further than #m",
+   "count": 44,
+   "pct": 0.5
+  }
+ ],
+ "bases": [
+  {
+   "name": "Soaring Spear",
+   "count": 6918,
+   "pct": 82.8
+  },
+  {
+   "name": "Akoyan Spear",
+   "count": 1776,
+   "pct": 21.3
+  },
+  {
+   "name": "Flying Spear",
+   "count": 926,
+   "pct": 11.1
+  },
+  {
+   "name": "Sinister Quarterstaff",
+   "count": 661,
+   "pct": 7.9
+  },
+  {
+   "name": "Chiming Staff",
+   "count": 222,
+   "pct": 2.7
+  },
+  {
+   "name": "Grand Spear",
+   "count": 75,
+   "pct": 0.9
+  },
+  {
+   "name": "Warmonger Bow",
+   "count": 75,
+   "pct": 0.9
+  },
+  {
+   "name": "Spiked Spear",
+   "count": 65,
+   "pct": 0.8
+  },
+  {
+   "name": "Flanged Mace",
+   "count": 64,
+   "pct": 0.8
+  },
+  {
+   "name": "Shrine Sceptre",
+   "count": 61,
+   "pct": 0.7
+  },
+  {
+   "name": "Guardian Spear",
+   "count": 58,
+   "pct": 0.7
+  },
+  {
+   "name": "Sanctified Staff",
+   "count": 51,
+   "pct": 0.6
+  },
+  {
+   "name": "Winged Spear",
+   "count": 51,
+   "pct": 0.6
+  },
+  {
+   "name": "Seaglass Spear",
+   "count": 50,
+   "pct": 0.6
+  },
+  {
+   "name": "Spiny Talisman",
+   "count": 47,
+   "pct": 0.6
+  },
+  {
+   "name": "Roaring Staff",
+   "count": 43,
+   "pct": 0.5
+  },
+  {
+   "name": "Orichalcum Spear",
+   "count": 42,
+   "pct": 0.5
+  },
+  {
+   "name": "Stalking Spear",
+   "count": 41,
+   "pct": 0.5
+  },
+  {
+   "name": "Striking Quarterstaff",
+   "count": 41,
+   "pct": 0.5
+  },
+  {
+   "name": "Bolting Quarterstaff",
+   "count": 37,
+   "pct": 0.4
+  },
+  {
+   "name": "Ashen Staff",
+   "count": 34,
+   "pct": 0.4
+  },
+  {
+   "name": "Lunar Quarterstaff",
+   "count": 34,
+   "pct": 0.4
+  },
+  {
+   "name": "Pyrophyte Staff",
+   "count": 27,
+   "pct": 0.3
+  },
+  {
+   "name": "Omen Sceptre",
+   "count": 26,
+   "pct": 0.3
+  },
+  {
+   "name": "Razor Quarterstaff",
+   "count": 25,
+   "pct": 0.3
+  },
+  {
+   "name": "Stoic Sceptre",
+   "count": 25,
+   "pct": 0.3
+  },
+  {
+   "name": "Helix Spear",
+   "count": 24,
+   "pct": 0.3
+  },
+  {
+   "name": "Pronged Spear",
+   "count": 24,
+   "pct": 0.3
+  },
+  {
+   "name": "Desolate Crossbow",
+   "count": 19,
+   "pct": 0.2
+  },
+  {
+   "name": "Paralysing Staff",
+   "count": 16,
+   "pct": 0.2
+  },
+  {
+   "name": "Siege Crossbow",
+   "count": 16,
+   "pct": 0.2
+  },
+  {
+   "name": "Jagged Spear",
+   "count": 15,
+   "pct": 0.2
+  },
+  {
+   "name": "Branched Spear",
+   "count": 14,
+   "pct": 0.2
+  },
+  {
+   "name": "Crossblade Spear",
+   "count": 13,
+   "pct": 0.2
+  },
+  {
+   "name": "Aegis Quarterstaff",
+   "count": 12,
+   "pct": 0.1
+  },
+  {
+   "name": "Obliterator Bow",
+   "count": 12,
+   "pct": 0.1
+  },
+  {
+   "name": "Rattling Sceptre",
+   "count": 12,
+   "pct": 0.1
+  },
+  {
+   "name": "Voltaic Staff",
+   "count": 12,
+   "pct": 0.1
+  },
+  {
+   "name": "Skullcrusher Quarterstaff",
+   "count": 10,
+   "pct": 0.1
+  },
+  {
+   "name": "Alpha Talisman",
+   "count": 9,
+   "pct": 0.1
+  },
+  {
+   "name": "Thunder Talisman",
+   "count": 9,
+   "pct": 0.1
+  },
+  {
+   "name": "War Spear",
+   "count": 9,
+   "pct": 0.1
+  },
+  {
+   "name": "Broad Spear",
+   "count": 8,
+   "pct": 0.1
+  },
+  {
+   "name": "Maji Talisman",
+   "count": 8,
+   "pct": 0.1
+  },
+  {
+   "name": "Barbed Spear",
+   "count": 7,
+   "pct": 0.1
+  },
+  {
+   "name": "Gemini Crossbow",
+   "count": 7,
+   "pct": 0.1
+  },
+  {
+   "name": "Gelid Staff",
+   "count": 6,
+   "pct": 0.1
+  },
+  {
+   "name": "Guardian Quarterstaff",
+   "count": 6,
+   "pct": 0.1
+  },
+  {
+   "name": "Ironhead Spear",
+   "count": 6,
+   "pct": 0.1
+  },
+  {
+   "name": "Gemini Bow",
+   "count": 5,
+   "pct": 0.1
+  },
+  {
+   "name": "Wrath Sceptre",
+   "count": 5,
+   "pct": 0.1
+  },
+  {
+   "name": "Forked Spear",
+   "count": 4,
+   "pct": 0
+  },
+  {
+   "name": "Fungal Talisman",
+   "count": 4,
+   "pct": 0
+  },
+  {
+   "name": "Nettle Talisman",
+   "count": 4,
+   "pct": 0
+  },
+  {
+   "name": "Waxing Quarterstaff",
+   "count": 4,
+   "pct": 0
+  },
+  {
+   "name": "Bleak Crossbow",
+   "count": 3,
+   "pct": 0
+  },
+  {
+   "name": "Cinderbark Talisman",
+   "count": 3,
+   "pct": 0
+  },
+  {
+   "name": "Elegant Crossbow",
+   "count": 3,
+   "pct": 0
+  },
+  {
+   "name": "Familial Talisman",
+   "count": 3,
+   "pct": 0
+  },
+  {
+   "name": "Fanatic Bow",
+   "count": 3,
+   "pct": 0
+  },
+  {
+   "name": "Flexed Crossbow",
+   "count": 3,
+   "pct": 0
+  },
+  {
+   "name": "Fury Talisman",
+   "count": 3,
+   "pct": 0
+  },
+  {
+   "name": "Cannonade Crossbow",
+   "count": 2,
+   "pct": 0
+  },
+  {
+   "name": "Dueling Wand",
+   "count": 2,
+   "pct": 0
+  },
+  {
+   "name": "Guardian Bow",
+   "count": 2,
+   "pct": 0
+  },
+  {
+   "name": "Howling Talisman",
+   "count": 2,
+   "pct": 0
+  },
+  {
+   "name": "Lumbering Talisman",
+   "count": 2,
+   "pct": 0
+  },
+  {
+   "name": "Primal Talisman",
+   "count": 2,
+   "pct": 0
+  },
+  {
+   "name": "Siphoning Wand",
+   "count": 2,
+   "pct": 0
+  },
+  {
+   "name": "Structured Hammer",
+   "count": 2,
+   "pct": 0
+  },
+  {
+   "name": "Voltfang Talisman",
+   "count": 2,
+   "pct": 0
+  },
+  {
+   "name": "Withered Wand",
+   "count": 2,
+   "pct": 0
+  },
+  {
+   "name": "Adherent Bow",
+   "count": 1,
+   "pct": 0
+  },
+  {
+   "name": "Akoyan Club",
+   "count": 1,
+   "pct": 0
+  },
+  {
+   "name": "Ashbark Talisman",
+   "count": 1,
+   "pct": 0
+  },
+  {
+   "name": "Attuned Wand",
+   "count": 1,
+   "pct": 0
+  },
+  {
+   "name": "Bandit Mace",
+   "count": 1,
+   "pct": 0
+  },
+  {
+   "name": "Blackfire Crossbow",
+   "count": 1,
+   "pct": 0
+  },
+  {
+   "name": "Bladed Quarterstaff",
+   "count": 1,
+   "pct": 0
+  },
+  {
+   "name": "Crown Mace",
+   "count": 1,
+   "pct": 0
+  }
+ ]
+}

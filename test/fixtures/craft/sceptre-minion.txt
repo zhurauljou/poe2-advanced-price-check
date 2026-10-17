@@ -1,0 +1,23 @@
+Item Class: Sceptres
+Rarity: Rare
+Sol Chant
+Rattling Sceptre
+--------
+Spirit: 190 (augmented)
+--------
+Requires: Level 60
+--------
+Item Level: 79
+--------
+Grants Skill: Level 17 Skeletal Warrior Minion
+--------
+{ Prefix Modifier "Prince's" (Tier: 2) — }
+58(56-60)% increased Spirit
+{ Prefix Modifier "Motivating" (Tier: 3) — Damage }
+Allies in your Presence deal 81(75-89)% increased Damage
+{ Suffix Modifier "of the Proficient" (Tier: 1) — Attribute }
+35% reduced Attribute Requirements
+{ Desecrated Suffix Modifier "of Fury" (Tier: 3) — Damage, Critical }
+Allies in your Presence have 28(25-29)% increased Critical Damage Bonus
+{ Suffix Modifier "of the Troll" (Tier: 5) — Life }
+Allies in your Presence Regenerate 11.1(9.1-13) Life per second
