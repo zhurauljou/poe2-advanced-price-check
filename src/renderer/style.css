@@ -543,3 +543,11 @@ footer::before { bottom: 0; top: -12px; -webkit-backdrop-filter: blur(16px); bac
 .mod .range-in input.max { width: 44px; }
 .mod .range-in input.max.empty { opacity: .45; }
 .mod:hover .range-in input.max.empty, .mod .range-in input.max:focus { opacity: 1; }
+.session { border-left: 2px solid var(--gold); padding-left: 8px; }
+.session .ss { font-size: 13px; color: var(--muted); }
+.session .ss.done { color: var(--good); }
+.session .ss.good { color: var(--good); }
+.session .ss.bad { color: var(--bad); }
+.session .ss-news { margin: 2px 0 6px; font-size: 12.5px; color: var(--muted); }
+.session .ss-next { margin-top: 6px; font-weight: 600; color: var(--gold); }
+.plan-box .session-btn { float: right; font-size: 12px; }

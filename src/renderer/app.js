@@ -286,6 +286,8 @@ document.addEventListener('click', (e) => {
   if (act === 'trade' && state.tradeUrl) window.pc.openUrl(state.tradeUrl);
   if (act === 'price') setTab('price');
   if (act === 'impact') runImpact();
+  if (act === 'session') { startSession(); craftFor = null; loadCraft(); }
+  if (act === 'session-stop') { craftSession = null; craftFor = null; loadCraft(); }
 });
 
 // Пока ищем — заглушки той же формы, что и результат: окно не прыгает, когда приходят цены.
@@ -812,6 +814,7 @@ function planHtml(plan) {
       notes.push(t('Desecrate: reveal it at the Well of Souls and pick 1 of 3 offered modifiers — only one desecrated modifier per item'));
       if (/^Ancient /.test(c.bone)) notes.push(t('Ancient bone — low tiers cut off (level 40+)'));
       if (c.echo) notes.push(t('Omen of Abyssal Echoes — reroll the 3 options once'));
+      notes.push(t('At the reveal pick: {mods}', { mods: [s.mod, ...(s.orMods || [])].join(' › ') }));
       notes.push(t('A miss → Orb of Annulment + Omen of Light removes it ({cost})', { cost: money((craftPrices['Orb of Annulment'] || 0) + (craftPrices['Omen of Light'] || 0)) }));
     }
     if (EXALT_WHY[c.k]) notes.push(t(EXALT_WHY[c.k]));
@@ -926,6 +929,48 @@ async function computeGoal(g) {
   const ol = document.querySelector('#craft .plan-box ol.plan');
   if (ol) ol.outerHTML = planHtml(g.plan);
   fit();
+}
+
+// ---- пошаговое ведение крафта: запомнили вещь и цель; каждое новое копирование той же вещи — что получилось и что дальше ----
+let craftSession = null; // { base, ilvl, name, rarity, goal: { add, remove }, start, before, current, seen }
+// Моды вещи шаблонами (как в цели крафта: нижний регистр, # вместо чисел, без «+»).
+const modKeys = () => new Set(((state.filters && state.filters.mods) || []).filter((m) => m.template && m.tag !== 'pseudo').map((m) => tplKey(m.template)));
+// Та же вещь: база и item level, имя редкой не меняется (магическая → редкая — меняется).
+function sessionMatches() {
+  const s = craftSession, it = state && state.item;
+  return !!(s && it && it.baseType === s.base && it.ilvl === s.ilvl && (it.name === s.name || s.rarity !== 'Rare' || it.rarity !== s.rarity));
+}
+function startSession() {
+  const g = craftGoal;
+  if (!g) return;
+  const keys = modKeys();
+  craftSession = { base: state.item.baseType, ilvl: state.item.ilvl, name: state.item.name, rarity: state.item.rarity,
+    goal: { add: g.add.map((a) => ({ text: a.text, or: a.orMods || [] })), remove: g.remove.map((r) => ({ text: r.text })) },
+    start: keys, before: keys, current: keys, seen: state };
+}
+function sessionHtml(r) {
+  const s = craftSession;
+  const keys = modKeys();
+  if (s.seen !== state) { s.before = s.current; s.current = keys; s.seen = state; } // новая копия вещи — сравниваем с прошлой
+  const has = (text) => text.split(' / ').every((l) => keys.has(l));
+  const goalLines = new Set(s.goal.add.flatMap((a) => a.text.split(' / ')));
+  const added = [...keys].filter((k) => !s.before.has(k));
+  const lost = [...s.before].filter((k) => !keys.has(k));
+  const wanted = new Set([...goalLines, ...[...s.start].filter((k) => !s.goal.remove.some((r) => r.text.split(' / ').includes(k)))]);
+  const news = [
+    ...added.map((k) => (goalLines.has(k) ? `<div class="ss good">✓ ${esc(t('Got {mod}', { mod: k }))}</div>` : `<div class="ss bad">✗ ${esc(t('Got {mod} — not in the goal', { mod: k }))}</div>`)),
+    ...lost.map((k) => (wanted.has(k) ? `<div class="ss bad">✗ ${esc(t('Lost {mod}', { mod: k }))}</div>` : `<div class="ss good">✓ ${esc(t('Removed {mod}', { mod: k }))}</div>`)),
+  ];
+  const rows = [
+    ...s.goal.add.map((a) => `<div class="ss ${has(a.text) ? 'done' : ''}">${has(a.text) ? '✓' : '○'} ${esc(a.text)}</div>`),
+    ...s.goal.remove.map((x) => `<div class="ss ${has(x.text) ? '' : 'done'}">${has(x.text) ? '○' : '✓'} ${esc(t('remove {mod}', { mod: x.text }))}</div>`),
+  ];
+  const done = s.goal.add.every((a) => has(a.text)) && s.goal.remove.every((x) => !has(x.text));
+  const next = r.goal && r.goal.plan && r.goal.plan.length ? expandPlan(r.goal.plan)[0] : null;
+  return `<div class="craft-sec session"><div class="k">${esc(t('Crafting step by step'))} <button class="link" data-act="session-stop">■ ${esc(t('Stop'))}</button></div>
+    ${news.length ? `<div class="ss-news">${esc(t('Since the last copy:'))}${news.join('')}</div>` : `<div class="muted small">${esc(t('Do the next step and copy the item again (Ctrl+C)'))}</div>`}
+    <div class="ss-list">${rows.join('')}</div>
+    ${done ? `<div class="verdict good">🎉 ${esc(t('Goal reached — check the price on the Price tab'))}</div>` : next ? `<div class="ss-next">${esc(t('Next: {step}', { step: STEP_LABEL[next.act](next) }))}</div>` : ''}</div>`;
 }
 
 // ---- белая база: Transmutation (обычная / Greater 44+ / Perfect 70+) → магическая с одним модом ----
@@ -1114,8 +1159,10 @@ function renderCraft(r) {
   // Сверху — коротко для новичка: места на вещи, «продать или крафтить», план по шагам с затратами.
   // Всё остальное (все способы, варианты модов) — свёрнуто ниже.
   const top = [slotsHtml(r)];
+  const inSession = craftSession && sessionMatches();
+  if (inSession) top.unshift(sessionHtml(r));
   if (r.goal && r.goal.plan && r.goal.plan.length) {
-    top.push(`<div class="craft-sec plan-box"><div class="k">${t('Plan')}</div><div class="verdict-box">${verdictHtml(r.goal.plan)}</div>
+    top.push(`<div class="craft-sec plan-box"><div class="k">${t('Plan')}${inSession ? '' : ` <button class="link session-btn" data-act="session" title="${esc(t('Do a step, copy the item again (Ctrl+C) — the window shows what you got and the next step'))}">▶ ${esc(t('Craft step by step'))}</button>`}</div><div class="verdict-box">${verdictHtml(r.goal.plan)}</div>
       ${planHtml(r.goal.plan)}<details class="why"><summary>${t('Why this plan')}</summary>${goalHtml(r.goal)}</details></div>`);
   } else {
     top.push(`<div class="craft-sec plan-box"><div class="verdict">${esc(t('No clear upgrade for this item — selling as is is the simple choice'))}</div></div>`);
@@ -1595,7 +1642,7 @@ window.pc.onItem((data) => {
   fit();
   // Вкладки — только для предметов с поиском на трейде; валюте хватает одной.
   $('tabs').hidden = !state.searchable;
-  setTab('price');
+  setTab(craftSession && sessionMatches() ? 'craft' : 'price');
   if (state.searchable) runSearch(true);
   loadBuilds();
   loadDemand();
