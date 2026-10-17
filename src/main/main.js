@@ -293,6 +293,12 @@ async function priceCheck(text) {
     const q = categoryDemand({ league, itemClass: item.itemClass, rarity: 'Rare', limit: 80, minLevel: demandLevel() },
       api.fetchBuffer).catch((e) => { log('demand', e.message); return null; });
     demand = await Promise.race([q, new Promise((r) => setTimeout(() => r(null), 1500))]);
+  } else if (item.rarity === 'Unique' && item.name) {
+    // Уник: какие из ЕГО модов носят билды — для случайных модов (Heart of the Well) это и есть ключевые.
+    const q = popularBuilds({ league, uniqueName: item.name, limit: 1, minLevel: demandLevel() }, api.fetchBuffer)
+      .then((b) => ({ mods: b.mods })).catch((e) => { log('demand', e.message); return null; });
+    // Ждём дольше, чем у редких: без спроса ключевые моды уника не отличить от второстепенных.
+    demand = await Promise.race([q, new Promise((r) => setTimeout(() => r(null), 4000))]);
   }
   lastItem = item;
   const prepared = pricing.prepare(item, demand, (tpl) => craft.rollsOn(item.baseType, tpl));

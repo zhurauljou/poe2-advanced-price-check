@@ -174,9 +174,14 @@ function grantedSkill(item) {
 // Что показать в оверлее сразу после копирования: разобранный предмет и фильтры по умолчанию.
 // demand — спрос по классу вещей с poe.ninja ({ mods: [{ name: '#% increased Spirit', pct }] }) или null.
 // rollsOn(template) — может ли мод встать на эту базу (true / false / null — неизвестно).
+const UNIQUE_KEY = 40; // % билдов с уником — его случайный мод ключевой
 function prepare(item, demand, rollsOn) {
   const demandPct = new Map((demand && demand.mods || []).map((r) => [r.name.toLowerCase(), r.pct]));
-  const demandOf = (tpl) => (tpl ? demandPct.get(tpl.replace(/ \(Local\)$/, '').toLowerCase()) : undefined);
+  const demandOf = (tpl) => {
+    if (!tpl) return undefined;
+    const k = tpl.replace(/ \(Local\)$/, '').toLowerCase();
+    return demandPct.get(k) ?? demandPct.get(k.replace(/\+#/g, '#')); // у poe.ninja шаблоны без «+»
+  };
   item.baseType = resolveBase(item);
   item.mods = stats.matchMods(item);
   // У уников несопоставленные строки — это флейвор-текст, его не показываем.
@@ -190,6 +195,8 @@ function prepare(item, demand, rollsOn) {
   const mods = item.mods.map((m) => {
     const dp = demandOf(m.template);
     const w = weight(item.itemClass, m.template, m.tier, dp);
+    // Случайный мод уника, который носит заметная часть билдов с этим уником, — ключевой: без него вещь другая.
+    if (item.rarity === 'Unique' && m.tag === 'desecrated' && dp >= UNIQUE_KEY) { w.key = true; w.importance = Math.max(w.importance, 2.4); } // и не снимается ослаблением
     // Мод-вариант (Legacy of … у Mageblood) у уника и есть то, за что платят, — ищем по нему сразу.
     const option = !!m.statId && m.statId.includes('|');
     // У уника цену делают роллы: мод с разбросом значений («(60-80)%») — сразу в поиске, иначе ищем просто по названию.
@@ -198,8 +205,10 @@ function prepare(item, demand, rollsOn) {
     const hotImplicit = m.tag === 'implicit' && !!m.statId && dp >= 60 && searchMods;
     // Минусовые строки (весь диапазон ≤ 0: «-11(-20--5)% to all Elemental Resistances») — недостаток, за него не платят.
     // Desecrated у уника (Heart of the Well) — случайные моды из пула: какие выпали и как — и есть цена.
-    const uniqueRandom = item.rarity === 'Unique' && m.tag === 'desecrated' && !!m.statId;
-    const rolls = item.rarity === 'Unique' && (m.tag === 'explicit' || m.tag === 'desecrated') && !!m.statId && !option && !!m.range && m.range.hi > m.range.lo && m.range.hi > 0;
+    // Почти никому не нужный (< 10% билдов с этим уником) — не включаем: лоты с другим таким же бесполезным модом — те же аналоги.
+    const unwanted = item.rarity === 'Unique' && m.tag === 'desecrated' && demandPct.size > 0 && (dp == null || dp < 10);
+    const uniqueRandom = item.rarity === 'Unique' && m.tag === 'desecrated' && !!m.statId && !unwanted;
+    const rolls = item.rarity === 'Unique' && (m.tag === 'explicit' || m.tag === 'desecrated') && !unwanted && !!m.statId && !option && !!m.range && m.range.hi > m.range.lo && m.range.hi > 0;
     return {
       statId: m.statId,
       text: m.text,
@@ -374,7 +383,7 @@ function flagFilters(item) {
 
 // Второстепенный мод: не сумма, не вариант и не важный (ключевой хорошего тира держим обязательным).
 function isMinor(m) {
-  return m.tag !== 'pseudo' && !m.option && (m.importance == null || m.importance < 2.4);
+  return m.tag !== 'pseudo' && !m.option && !m.key && (m.importance == null || m.importance < 2.4);
 }
 
 function toDivine(amount, currency) {
