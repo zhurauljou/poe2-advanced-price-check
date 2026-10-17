@@ -786,7 +786,7 @@ const EXALT_NAME = { base: 'Exalted Orb', greater: 'Greater Exalted Orb', perfec
 // Попадание в другой лишний мод — не промах, а прогресс. Сравниваем: Annulment по всей вещи или с оменом стороны.
 let restoreCost = null;
 // Цена потери нужного мода: его добавление, но не меньше четверти цены цели — без ключевого мода вещь почти ничего не стоит.
-const restoreValue = () => Math.max(restoreCost ?? (craftPrices['Orb of Annulment'] ?? 0) * 10, goalValue ? goalValue / 4 : 0);
+const restoreValue = () => Math.max(restoreCost ?? (craftPrices['Orb of Annulment'] ?? 0) * 10, goalValue ? goalValue / 4 : 0, state.est ? state.est / 4 : 0);
 function removeCost(s) {
   const p = (n) => craftPrices[n];
   const ann = p('Orb of Annulment');
@@ -1031,12 +1031,20 @@ function verdictHtml(plan) {
     `<div><span>${esc(t('Currency, on average'))}</span><b>${lottery ? `${esc(t('from'))} ` : ''}${money(known)}</b></div>`,
   ];
   let verdict = '';
-  if (goalValue != null && now != null) {
+  // Снятие лишнего Annulment'ами в среднем заденет нужные моды — на такой вещи это почти всегда невыгодно.
+  const hits = Math.max(0, ...costs.map((c) => c.hits || 0));
+  const hitNote = hits >= 1 ? `<small>${esc(t('Removing the unwanted modifiers would hit ≈{n} needed ones on average — on an item like this it is rarely worth it', { n: fmt(Math.round(hits * 10) / 10) }))}</small>` : '';
+  if (goalValue === null && now != null) {
+    // Готовых аналогов на трейде нет — цена цели неизвестна. Затраты уже не меньше цены вещи — проще продать.
+    verdict = known >= now * 0.5
+      ? `<div class="verdict bad">✖ ${esc(t('Selling as is is better: the currency alone costs ≈ {cost}, the item sells for ≈ {now}', { cost: money(known), now: money(now) }))}<small>${esc(t('No finished items like the goal are listed — its price is unknown'))}</small>${hitNote}</div>`
+      : `<div class="verdict">${esc(t('No finished items like the goal are listed — its price is unknown'))}${hitNote}</div>`;
+  } else if (goalValue != null && now != null) {
     const gain = goalValue - now - known;
     const good = gain > Math.max(now * 0.15, known * 0.5);
     verdict = `<div class="verdict ${good && !lottery ? 'good' : 'bad'}">${good
       ? `✅ ${esc(t('Craft: ≈ {gain} more than selling as is', { gain: money(gain) }))}`
-      : `✖ ${esc(t('Selling as is is better'))}`}${lottery ? `<small>${esc(t('A key modifier has unknown odds — this is a gamble'))}</small>` : ''}${risky ? `<small>${esc(t('Removing a modifier can hit a good one — the cost may grow'))}</small>` : ''}</div>`;
+      : `✖ ${esc(t('Selling as is is better'))}`}${lottery ? `<small>${esc(t('A key modifier has unknown odds — this is a gamble'))}</small>` : ''}${hitNote || (risky ? `<small>${esc(t('Removing a modifier can hit a good one — the cost may grow'))}</small>` : '')}</div>`;
   } else if (now == null) {
     verdict = `<div class="verdict">${esc(t('Price this item on the Price tab first'))}</div>`;
   }
