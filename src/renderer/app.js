@@ -286,9 +286,53 @@ document.addEventListener('click', (e) => {
   if (act === 'trade' && state.tradeUrl) window.pc.openUrl(state.tradeUrl);
   if (act === 'price') setTab('price');
   if (act === 'impact') runImpact();
+  if (act === 'elements') loadElements(searchSeq, true);
   if (act === 'session') { startSession(); window.pc.pin(true); craftFor = null; loadCraft(); }
   if (act === 'session-stop') { craftSession = null; window.pc.pin(false); craftFor = null; loadCraft(); }
 });
+
+// ---- руны Альдура: та же вещь в другой стихии (Passion / Ire / Breath / Betrayal) ----
+let elementAlts = null; // { list: [{ element, rune, cost, needSocket, est, wait }], all }
+async function loadElements(seq, all) {
+  const vars = await window.pc.elementVariants(state.item, state.filters).catch(() => []);
+  if (seq !== searchSeq || !vars.length) { if (seq === searchSeq) elementAlts = null; return; }
+  if (!elementAlts || !all) elementAlts = { list: vars.map((v) => ({ ...v, wait: false, est: undefined })), all };
+  elementAlts.all = all;
+  const todo = all ? elementAlts.list.filter((v) => v.est === undefined) : elementAlts.list.slice(0, 1); // сразу — одна, лучшая по спросу
+  for (const v of todo) {
+    v.wait = true; renderElements();
+    try {
+      const q = await window.pc.quickPrice(state.item, v.filters);
+      if (seq !== searchSeq) return;
+      v.est = estimate(q.lots); v.total = q.total;
+    } catch (e) {
+      if (seq !== searchSeq) return;
+      v.est = null; setStatus(errText(e), true);
+    }
+    v.wait = false; renderElements();
+  }
+}
+function renderElements() {
+  let box = $('elements');
+  if (!box) { box = document.createElement('div'); box.id = 'elements'; $('hero').after(box); }
+  if (!elementAlts) { box.innerHTML = ''; box.hidden = true; return; }
+  box.hidden = false;
+  const now = state.est;
+  const rows = elementAlts.list.filter((v) => v.est !== undefined || v.wait).map((v) => {
+    const net = v.est != null ? v.est - v.cost : null;
+    const better = net != null && now != null && net > now * 1.15;
+    return `<div class="el-row${better ? ' better' : ''}"><span>${esc(t('As {element}', { element: v.element }))} <small class="game">${esc(v.rune)}${v.needSocket ? " + Artificer's Orb" : ''} ≈ ${money(v.cost)}</small></span>
+      <b>${v.wait ? '…' : v.est == null ? esc(t('none listed')) : `≈ ${money(v.est)}`}</b></div>`;
+  }).join('');
+  const best = elementAlts.list.filter((v) => v.est != null).sort((a, b) => (b.est - b.cost) - (a.est - a.cost))[0];
+  const tip = best && now != null && best.est - best.cost > now * 1.15
+    ? `<div class="verdict good">${esc(t('Worth more as {element}: socket {rune} and sell for ≈ {price}', { element: best.element, rune: best.rune, price: money(best.est) }))}</div>` : '';
+  const more = !elementAlts.all && elementAlts.list.length > 1 ? `<button class="link" data-act="elements">${esc(t('Check other elements ({n} searches)', { n: elementAlts.list.length - 1 }))}</button>` : '';
+  box.innerHTML = `<div class="sect"><span>${esc(t('Other elements (Runes of Aldur)'))}</span></div>
+    <div class="muted small" title="${esc(t('A Rune of Aldur permanently turns the elemental modifiers of a rare weapon into another element — so buyers of other elements are buyers of this item too'))}">${esc(t('The rune turns the elemental modifiers into another element for good'))}</div>
+    ${rows}${tip}${more}`;
+  fit();
+}
 
 // Пока ищем — заглушки той же формы, что и результат: окно не прыгает, когда приходят цены.
 function renderSearchingHero() {
@@ -1601,8 +1645,9 @@ async function runSearch(relax = false) {
     setStatus(''); // убрать «ждём лимит», если было
     state.tradeUrl = r.url;
     $('open').hidden = false;
-    heroRender = () => { renderTradeHero(r); renderResults(r); };
+    heroRender = () => { renderTradeHero(r); renderResults(r); renderElements(); };
     heroRender();
+    loadElements(seq, false);
   } catch (e) {
     if (seq !== searchSeq) return;
     $('results').hidden = true;
@@ -1617,6 +1662,8 @@ async function runSearch(relax = false) {
 
 window.pc.onItem((data) => {
   impactSeq++; // недосчитанный «вклад модов» прежней вещи не должен писать в новую
+  elementAlts = null;
+  if ($('elements')) $('elements').hidden = true;
   state = data;
   rates = data.rates || {};
   openSums.clear();

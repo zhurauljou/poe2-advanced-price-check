@@ -24,6 +24,7 @@ const SCENARIOS = [
   { name: 'ring-minion', class: 'Rings', theme: [] },
   { name: 'boots-es', class: 'Boots', theme: [] },
   { name: 'wand-magic-levels', class: 'Wands', theme: [] },
+  { name: 'staff-cold', class: 'Staves', theme: [] },
 ];
 const UNIQUES = ['Heart of the Well'];
 const PRICE_TYPES = ['Currency', 'Ritual', 'Abyss', 'Essences', 'Runes', 'Verisium'];

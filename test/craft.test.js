@@ -165,3 +165,14 @@ test('симуляция плана: распределение итога и з
   assert.ok(sim.profit >= 0 && sim.profit <= 1 && sim.full >= 0 && sim.full <= 1);
   assert.equal(PlanCost.create(() => ({ prices, goalValue: null, est: 5 })).simulate(r.goal.plan), null, 'без цены цели — нет симуляции');
 });
+
+test('посох со стихией холода: стихийные моды по спросу лучшей стихии (руны Альдура), цена проверяется в огне первым', { skip }, async () => {
+  const f = await filters('staff-cold', 'staff-cold.demand.json');
+  assert.ok(mod(f, /Extra Cold Damage/).enabled, 'Extra Cold отмечен');
+  const it = item('staff-cold');
+  pricing.prepare(it, json('staff-cold.demand.json'), () => true);
+  const vars = pricing.elementVariants(it, f);
+  assert.equal(vars[0].element, 'Fire');
+  assert.ok(vars[0].filters.mods.some((m) => m.enabled && /Extra Fire Damage/.test(m.text)));
+  assert.ok(vars[0].filters.mods.some((m) => m.enabled && /Level of all Fire Spell Skills/.test(m.text)));
+});

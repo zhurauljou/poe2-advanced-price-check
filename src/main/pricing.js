@@ -179,15 +179,63 @@ function grantedSkill(item) {
 // demand — спрос по классу вещей с poe.ninja ({ mods: [{ name: '#% increased Spirit', pct }] }) или null.
 // rollsOn(template) — может ли мод встать на эту базу (true / false / null — неизвестно).
 const UNIQUE_KEY = 40; // % билдов с уником — его случайный мод ключевой
+// Руны Альдура (Passion / Ire / Breath / Betrayal) навсегда переводят стихийные моды редкого оружия в другую стихию
+// («Gain #% as Extra Cold» → «… Extra Fire», «+# to Level of all Cold Spell Skills» → «… Fire …»). Пока руна не
+// вставлена, стихия на оружии — не окончательная: спрос считаем по лучшей стихии, а цену проверяем и в других.
+const ALDUR = { Fire: 'Passion of Aldur', Cold: 'Breath of Aldur', Lightning: 'Ire of Aldur', Chaos: 'Betrayal of Aldur' };
+const ELEMENT = /\b(Fire|Cold|Lightning)\b/;
+const RUNE_WEAPONS = new Set(['One Hand Maces', 'Two Hand Maces', 'Quarterstaves', 'Bows', 'Crossbows', 'Spears', 'Flails', 'Claws',
+  'Daggers', 'One Hand Swords', 'Two Hand Swords', 'One Hand Axes', 'Two Hand Axes', 'Talismans', 'Wands', 'Staves']);
+const convertible = (item) => item.rarity === 'Rare' && RUNE_WEAPONS.has(item.itemClass)
+  && !(item.modLines || []).some((l) => /^Forged by the \w+ of Aldur$/.test(l.text));
+const swapElement = (s, to) => String(s).replace(new RegExp(ELEMENT.source, 'g'), to);
+let lastDemand = new Map();
+
+// Те же фильтры, но со стихийными модами в другой стихии — по одному набору на руну. → [{ element, rune, filters, score }]
+function elementVariants(item, filters) {
+  if (!convertible(item) || !filters) return [];
+  const mods = filters.mods.filter((m) => m.enabled && m.statId && m.template && m.tag !== 'pseudo' && ELEMENT.test(m.template));
+  if (!mods.length) return [];
+  const out = [];
+  for (const to of Object.keys(ALDUR)) {
+    if (mods.every((m) => m.template.match(ELEMENT)[1] === to)) continue;
+    const f = JSON.parse(JSON.stringify(filters));
+    let score = 0, changed = 0;
+    for (const m of f.mods) {
+      if (!m.enabled || !m.statId || !m.template || m.tag === 'pseudo' || !ELEMENT.test(m.template) || m.template.match(ELEMENT)[1] === to) continue;
+      const text = swapElement(m.text, to);
+      const s = stats.statFor(text.split('\n')[0], m.tag === 'desecrated' ? 'desecrated' : 'explicit', item.itemClass);
+      if (!s) continue;
+      m.statId = s.statId;
+      m.text = text;
+      m.template = swapElement(m.template, to);
+      if (/^Adds /.test(text)) m.min = null; // у «Adds # to #» диапазоны стихий разные — любой ролл
+      score += lastDemand.get(m.template.toLowerCase().replace(/\+#/g, '#')) || 0;
+      changed++;
+    }
+    if (changed) out.push({ element: to, rune: ALDUR[to], filters: f, score });
+  }
+  return out.sort((a, b) => b.score - a.score);
+}
+
 function prepare(item, demand, rollsOn) {
   const demandPct = new Map((demand && demand.mods || []).map((r) => [r.name.toLowerCase(), r.pct]));
   const demandOf = (tpl) => {
     if (!tpl) return undefined;
     const k = tpl.replace(/ \(Local\)$/, '').toLowerCase();
-    return demandPct.get(k) ?? demandPct.get(k.replace(/\+#/g, '#')); // у poe.ninja шаблоны без «+»
+    const one = (x) => demandPct.get(x) ?? demandPct.get(x.replace(/\+#/g, '#')); // у poe.ninja шаблоны без «+»
+    // Стихию на оружии меняет руна Альдура — спрос по лучшей стихии.
+    if (conv && ELEMENT.test(tpl)) {
+      const base = tpl.replace(/ \(Local\)$/, '');
+      const all = ['Fire', 'Cold', 'Lightning', 'Chaos'].map((e) => one(swapElement(base, e).toLowerCase())).filter((v) => v != null);
+      return all.length ? Math.max(...all) : undefined;
+    }
+    return one(k);
   };
   item.baseType = resolveBase(item);
   item.mods = stats.matchMods(item);
+  const conv = convertible(item);
+  lastDemand = demandPct;
   // У уников несопоставленные строки — это флейвор-текст, его не показываем.
   if (item.rarity === 'Unique') item.mods = item.mods.filter((m) => m.statId);
   // Неизменяемые моды уника («Passives in Radius can be Allocated…») есть у каждого экземпляра — на цену не влияют.
@@ -590,4 +638,4 @@ async function listingUrl(league, item, filters, account) {
   return `${api.TRADE}/trade2/search/poe2/${L}/${s.id}`;
 }
 
-module.exports = { init, prepare, search, quick, listingUrl };
+module.exports = { init, prepare, search, quick, listingUrl, elementVariants };

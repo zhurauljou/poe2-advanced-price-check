@@ -568,6 +568,12 @@ app.whenReady().then(singleInstance).then((ok) => {
   ipcMain.handle('upd-fit', (_e, h) => {
     if (updWin && !updWin.isDestroyed()) updWin.setContentSize(380, Math.min(Math.ceil(h) + 2, 400));
   });
+  ipcMain.handle('element-variants', (_e, item, filters) => {
+    const price = (n) => { const row = api.ninja.byName.get(n); return row ? row.divine : null; };
+    const runes = (item.modLines || []).filter((l) => l.tag === 'rune').length;
+    const socket = (item.sockets || 0) > runes ? 0 : price("Artificer's Orb");
+    return pricing.elementVariants(item, filters).map((v) => ({ ...v, cost: (price(v.rune) ?? 0) + (socket || 0), needSocket: !!socket }));
+  });
   ipcMain.handle('hide', () => hide());
   ipcMain.handle('pin', (_e, on) => { pinned = !!on; });
   ipcMain.handle('compare-show', (_e, html, y) => {
