@@ -16,7 +16,7 @@ function weights() {
   return weightsData;
 }
 const { essenceFor, perfectFor } = require('./essences');
-const { isKey, isWeak } = require('./weights');
+const { isKey, isWeak, tierFactor } = require('./weights');
 const methods = require('../shared/methods');
 const { t } = require('../shared/i18n');
 
@@ -504,7 +504,8 @@ async function advise(item, demandMods, cached) {
       best.desecrateOnly = true;
       best.desecrate = {};
       for (const b of bones) {
-        if (mod && mod.required_level > 40 && b.minLevel === 0 && /^Gnawed/.test(b.name)) continue; // Gnawed — только ilvl ≤ 64
+        // Gnawed — вещи до ilvl 64: эксклюзивов 65 уровня (моды личей) не даёт (docs/crafting-tricks.md).
+        if (mod && mod.required_level >= 65 && /^Gnawed/.test(b.name)) continue;
         best.desecrate[b.name] = { pool: fam, good: 1, guess: 1 / fam, chance: 1 / fam };
         if (lichOK) best.desecrate[`${b.name}|${LICH_OMEN[lich]}`] = { pool: lichN, good: 1, guess: 1 / lichN, chance: 1 / lichN, extra: [LICH_OMEN[lich]], lich: { name: lich, n: lichN } };
       }
@@ -656,8 +657,9 @@ async function advise(item, demandMods, cached) {
     const des = candidates('desecrated').filter((c) => open[c.side] || (!open.prefix && !open.suffix)).slice(0, 4);
     if (des.length) {
       // Desecrated — отдельный слот (не crafted), но на полной вещи снимает случайный мод: осквернять ДО Exalt-ов.
-      // Лич-омены — «Weapon or Jewellery» (кольца и амулеты; пояса не подтверждены).
-      const lich = tags.includes('weapon') || tags.includes('ring') || tags.includes('amulet');
+      // Лич-омены — «Weapon or Jewellery» (и пояса — подтверждено, docs/crafting-methods-research.md), моды личей — 65 уровня.
+      // Те же правила, что у плана (LICH_CLASSES): иначе план тратил омен, а подсказка о нём молчала.
+      const lich = ilvl >= 65 && LICH_CLASSES.some((tg) => tags.includes(tg));
       const bodyGear = ['body_armour', 'helmet', 'gloves', 'boots'].some((x) => tags.includes(x));
       sections.push({ kind: 'desecrate', how: [
         t('Desecrate with {bone} — adds an unrevealed desecrated modifier', { bone: boneFor(tags, ilvl) }) + (!open.prefix && !open.suffix ? ` (${t('replaces a random one when full')})` : ''),
@@ -857,7 +859,6 @@ function familyCounts(wc, pctOf) {
 // Цель крафта: какой была бы лучшая вещь из этой базы. На каждой стороне — самые ценные моды из текущих и возможных:
 // ценность = спрос (% билдов) × качество тира; кандидату засчитываем средний тир (что выпадет — неизвестно).
 // Fractured снять нельзя — остаются всегда. Возвращает { keep, remove, add } или null, если улучшать нечего.
-const TIER_VALUE = [0, 1, 0.85, 0.7, 0.6];
 // Greater / Perfect Exalted Orb — только моды этого уровня и выше (src/shared/methods.js — реестр методов крафта).
 const EXALT_KEYS = ['base', 'greater', 'perfect'];
 const EXALT_MIN = Object.fromEntries(methods.tiers('exalt').map(([, lv], i) => [EXALT_KEYS[i], lv]));
@@ -874,7 +875,8 @@ function planGoal(mine, candidates, max, want, magic, magicFree = [], itemClass 
   const boosts = (l) => { const m = l.match(/explicit (\w+)(?: damage)? modifier magnitudes/i); return !!m && myTags.has(m[1].toLowerCase()); };
   const known = want.size > 0; // спрос загружен — правило слота проверяем им
   const keyOf = (lines) => lines.some((l) => boosts(l) || (isKey(itemClass, l) && (!known || (want.get(l) || 0) >= 15)));
-  const value = (pct, tier) => pct * (TIER_VALUE[tier] || 0.5);
+  // Качество тира — та же шкала, что у важности мода в поиске (weights.tierFactor), чтобы цель и цена не спорили.
+  const value = (pct, tier) => pct * tierFactor(tier || null);
   const keep = [], remove = [], add = [];
   for (const side of ['prefix', 'suffix']) {
     const cur = mine.filter((a) => a.side === side).map((a) => {
