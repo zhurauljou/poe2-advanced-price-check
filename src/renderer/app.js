@@ -764,6 +764,7 @@ function slotsHtml(r) {
 function stepCost(s) {
   const p = (n) => craftPrices[n];
   const sum = (list) => list.reduce((a, n) => (a == null || p(n) == null ? null : a + p(n)), 0);
+  if (s.act === 'remove' && s.targeted) return { cost: sum(s.currencies), chance: 1, currencies: s.currencies };
   if (s.act === 'remove') {
     const plain = p('Orb of Annulment');
     const omen = sum(s.currencies);

@@ -429,7 +429,7 @@ function planGoal(mine, candidates, max, want, magic, magicFree = []) {
     const cand = candidates.filter((c) => c.side === side).map((c) => ({ kind: 'add', c, pct: c.pct, v: value(c.pct, 2) }));
     const chosen = [...cur, ...cand].sort((x, y) => y.v - x.v).slice(0, max[side]);
     for (const x of cur) {
-      const info = { side, text: x.a.mod ? x.a.mod.lines.join(' / ') : x.a.name, templates: x.a.mod ? x.a.mod.lines : [], tier: x.a.tier, pct: x.pct,
+      const info = { side, tag: x.a.tag, text: x.a.mod ? x.a.mod.lines.join(' / ') : x.a.name, templates: x.a.mod ? x.a.mod.lines : [], tier: x.a.tier, pct: x.pct,
         up: x.pct >= KEY_PCT && x.a.tier >= 3 }; // ключевой, но слабый тир — «↑ тир»
       (chosen.includes(x) ? keep : remove).push(info);
     }
@@ -462,7 +462,12 @@ function planGoal(mine, candidates, max, want, magic, magicFree = []) {
     const sideMods = mine.filter((a) => a.side === side && a.tag !== 'fractured').length;
     const allMods = mine.filter((a) => a.tag !== 'fractured').length;
     // chance — с оменом стороны (1 из модов стороны), chanceAll — без омена (1 из всех модов).
-    for (const r of out) plan.push({ act: 'remove', side, mod: r.text, currencies: ['Orb of Annulment', `Omen of ${S} Annulment`], chance: 1 / Math.max(1, sideMods), chanceAll: 1 / Math.max(1, allMods) });
+    // Сначала то, что убирается наверняка (desecrated — Omen of Light), потом случайное.
+    for (const r of [...out].sort((x, y) => (y.tag === 'desecrated') - (x.tag === 'desecrated'))) {
+      // Desecrated снимается прицельно: Annulment + Omen of Light убирает только desecrated-мод — гарантированно.
+      if (r.tag === 'desecrated') plan.push({ act: 'remove', side, mod: r.text, currencies: ['Orb of Annulment', 'Omen of Light'], chance: 1, targeted: true });
+      else plan.push({ act: 'remove', side, mod: r.text, currencies: ['Orb of Annulment', `Omen of ${S} Annulment`], chance: 1 / Math.max(1, sideMods), chanceAll: 1 / Math.max(1, allMods) });
+    }
     // Есть ли место на другой стороне: если нет, Exalted и без омена ляжет сюда.
     const other = side === 'prefix' ? 'suffix' : 'prefix';
     const otherOpen = max[other] - mine.filter((a) => a.side === other).length + remove.filter((r) => r.side === other).length > 0;
