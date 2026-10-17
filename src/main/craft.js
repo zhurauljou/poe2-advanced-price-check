@@ -580,6 +580,7 @@ function planGoal(mine, candidates, max, want, magic, magicFree = []) {
     const chosen = [...cur, ...cand].sort((x, y) => y.v - x.v).slice(0, max[side]);
     for (const x of cur) {
       const info = { side, tag: x.a.tag, text: x.a.mod ? x.a.mod.lines.join(' / ') : x.a.name, templates: x.a.mod ? x.a.mod.lines : [], tier: x.a.tier, pct: x.pct,
+        level: x.a.mod ? x.a.mod.required_level : null, // для Whittling (снимает мод с наименьшим уровнем)
         up: x.pct >= KEY_PCT && x.a.tier >= 3 }; // ключевой, но слабый тир — «↑ тир»
       (chosen.includes(x) ? keep : remove).push(info);
     }
@@ -604,21 +605,36 @@ function planGoal(mine, candidates, max, want, magic, magicFree = []) {
   for (const a of mine) filled[a.side]++;
   const fixed = { prefix: 0, suffix: 0 }; // fractured — Annulment их не снимет
   for (const a of mine) if (a.tag === 'fractured') fixed[a.side]++;
+  // 1. Сначала снять всё лишнее («Annul до основы»), потом добавлять. Desecrated — прицельно: Annulment + Omen of Light.
+  for (const r of remove.filter((x) => x.tag === 'desecrated')) {
+    plan.push({ act: 'remove', side: r.side, mod: r.text, currencies: ['Orb of Annulment', 'Omen of Light'], chance: 1, targeted: true });
+    filled[r.side]--;
+  }
+  // Остальное — Annulment'ами (с оменом стороны или без): окно считает попытки и сколько нужных модов заденет.
+  // sides: J — лишних на стороне, K — нужных, которые Annulment может снять (не fractured).
+  const junk = remove.filter((x) => x.tag !== 'desecrated');
+  if (junk.length) {
+    const sides = {};
+    for (const side of ['prefix', 'suffix']) {
+      const J = junk.filter((x) => x.side === side).length;
+      const K = filled[side] - fixed[side] - J;
+      sides[side] = { J, K, omen: `Omen of ${side === 'prefix' ? 'Sinistral' : 'Dextral'} Annulment` };
+    }
+    // Chaos + Omen of Whittling снимает мод с наименьшим уровнем — если лишний мод строго ниже всех остальных снимаемых
+    // (desecrated уже снят), он уйдёт наверняка, но на его место встанет случайный мод.
+    const levels = mine.filter((a) => a.tag !== 'fractured' && a.tag !== 'desecrated').map((a) => (a.mod ? a.mod.required_level : 0));
+    const low = Math.min(...levels);
+    const lowJunk = junk.filter((x) => x.level === low);
+    const whittle = lowJunk.length === 1 && levels.filter((l) => l === low).length === 1 ? lowJunk[0].text : null;
+    plan.push({ act: 'remove', mods: junk.map((x) => x.text), sides, whittle,
+      currencies: ['Orb of Annulment', 'Omen of Sinistral Annulment', 'Omen of Dextral Annulment', ...(whittle ? ['Chaos Orb', 'Omen of Whittling'] : [])] });
+    for (const x of junk) filled[x.side]--;
+  }
+  // 2. Добавить нужное: сначала сторона, где самый востребованный мод.
   for (const side of ['prefix', 'suffix'].sort((x, y) => top(y) - top(x))) {
-    const out = remove.filter((r) => r.side === side);
     const into = add.filter((c) => c.side === side);
     if (!into.length) continue;
     const S = side === 'prefix' ? 'Sinistral' : 'Dextral';
-    const sideMods = mine.filter((a) => a.side === side && a.tag !== 'fractured').length;
-    const allMods = mine.filter((a) => a.tag !== 'fractured').length;
-    // chance — с оменом стороны (1 из модов стороны), chanceAll — без омена (1 из всех модов).
-    // Сначала то, что убирается наверняка (desecrated — Omen of Light), потом случайное.
-    for (const r of [...out].sort((x, y) => (y.tag === 'desecrated') - (x.tag === 'desecrated'))) {
-      // Desecrated снимается прицельно: Annulment + Omen of Light убирает только desecrated-мод — гарантированно.
-      if (r.tag === 'desecrated') plan.push({ act: 'remove', side, mod: r.text, currencies: ['Orb of Annulment', 'Omen of Light'], chance: 1, targeted: true });
-      else plan.push({ act: 'remove', side, mod: r.text, currencies: ['Orb of Annulment', `Omen of ${S} Annulment`], chance: 1 / Math.max(1, sideMods), chanceAll: 1 / Math.max(1, allMods) });
-      filled[side]--;
-    }
     // Есть ли место на другой стороне: если нет, Exalted и без омена ляжет сюда — омен стороны не нужен.
     const other = side === 'prefix' ? 'suffix' : 'prefix';
     const otherOpen = max[other] - filled[other] > 0;

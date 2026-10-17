@@ -765,14 +765,7 @@ function stepCost(s) {
   const p = (n) => craftPrices[n];
   const sum = (list) => list.reduce((a, n) => (a == null || p(n) == null ? null : a + p(n)), 0);
   if (s.act === 'remove' && s.targeted) return { cost: sum(s.currencies), chance: 1, currencies: s.currencies };
-  if (s.act === 'remove') {
-    const plain = p('Orb of Annulment');
-    const omen = sum(s.currencies);
-    const a = plain != null ? plain / s.chanceAll : null;
-    const b = omen != null ? omen / s.chance : null;
-    const useOmen = b != null && (a == null || b < a);
-    return { cost: useOmen ? b : a, chance: useOmen ? s.chance : s.chanceAll, currencies: useOmen ? s.currencies : ['Orb of Annulment'], risky: true };
-  }
+  if (s.act === 'remove') return removeCost(s);
   if (s.act === 'add') return addCost(s, 1);
   if (s.act === 'add2') {
     // Omen of Greater Exaltation: один Exalted — два мода; каждый бросок стоит половину (Exalted + омены).
@@ -788,6 +781,38 @@ function stepCost(s) {
 // Шанс — попасть в нужное семейство в T1–T2; промах убираем Annulment'ом. rolls = 2 — с Omen of Greater Exaltation
 // (тогда s2 — второй мод пары). Шанс неизвестен (ценный мод) — выбираем по guess (все семейства равновероятны), цену не пишем.
 const EXALT_NAME = { base: 'Exalted Orb', greater: 'Greater Exalted Orb', perfect: 'Perfect Exalted Orb' };
+// Снять J лишних модов, когда рядом K нужных (Annulment берёт случайный из J + K): ожидаемо Σ (j+K)/j попыток,
+// из них Σ K/j заденут нужный мод — его придётся добавлять снова (restoreCost — цена одного такого добавления).
+// Попадание в другой лишний мод — не промах, а прогресс. Сравниваем: Annulment по всей вещи или с оменом стороны.
+let restoreCost = null;
+function removeCost(s) {
+  const p = (n) => craftPrices[n];
+  const ann = p('Orb of Annulment');
+  if (ann == null) return { cost: null, chance: null, currencies: ['Orb of Annulment'], lottery: true };
+  const run = (J, K) => { let tries = 0, hits = 0; for (let j = J; j >= 1; j--) { tries += (j + K) / j; hits += K / j; } return { tries, hits }; };
+  // Задетый нужный мод: вернуть его стоит как его добавление, но не меньше четверти цены цели — без ключевого мода
+  // вещь почти ничего не стоит.
+  const restore = Math.max(restoreCost ?? ann * 10, goalValue ? goalValue / 4 : 0);
+  const opts = [];
+  const sides = Object.values(s.sides);
+  const all = run(sides.reduce((a, x) => a + x.J, 0), sides.reduce((a, x) => a + x.K, 0));
+  opts.push({ currencies: ['Orb of Annulment'], tries: all.tries, hits: all.hits, cost: all.tries * ann + all.hits * restore, spent: all.tries * ann });
+  if (sides.every((x) => !x.J || p(x.omen) != null)) {
+    let tries = 0, hits = 0, spent = 0;
+    for (const x of sides) {
+      if (!x.J) continue;
+      const r = run(x.J, x.K);
+      tries += r.tries; hits += r.hits; spent += r.tries * (ann + p(x.omen));
+    }
+    opts.push({ currencies: ['Orb of Annulment', ...sides.filter((x) => x.J).map((x) => x.omen)], tries, hits, spent, cost: spent + hits * restore });
+  }
+  opts.sort((a, b) => a.cost - b.cost);
+  const best = opts[0];
+  const wh = s.whittle && p('Chaos Orb') != null && p('Omen of Whittling') != null ? p('Chaos Orb') + p('Omen of Whittling') : null;
+  return { cost: best.cost, spent: best.spent, tries: best.tries, hits: best.hits, currencies: best.currencies,
+    chance: best.hits > 0.05 ? 0.5 : 1, risky: best.hits > 0.05, whittle: wh, other: opts[1] || null };
+}
+
 // Средняя стоимость до удачи с учётом того, чем снимать промах: per — цена попытки, pc — шанс,
 // removal — [{ a: цена снятия, q: шанс задеть нужный мод }]. Задетый нужный мод придётся добавлять снова (≈ та же
 // стоимость E): E = (per + (1−pc)·a) / (pc − (1−pc)·q). Знаменатель ≤ 0 — путь безнадёжен (Infinity).
@@ -861,6 +886,9 @@ function addCost(s, rolls, s2) {
 
 // add2, если два отдельных Exalted выходят дешевле, — разворачиваем обратно в два шага.
 function expandPlan(plan) {
+  // Цена «вернуть задетый нужный мод» — медиана средних цен добавления в этом плане (для снятия лишнего).
+  const adds = plan.flatMap((s) => (s.act === 'add2' ? s.steps : s.act === 'add' ? [s] : [])).map((x) => addCost(x, 1).score).filter(Number.isFinite).sort((a, b) => a - b);
+  restoreCost = adds.length ? adds[Math.floor(adds.length / 2)] : null;
   plan = withDesecrate(plan);
   return plan.flatMap((s) => {
     if (s.act !== 'add2') return [s];
@@ -905,7 +933,7 @@ const STEP_LABEL = {
   augment: (s) => t('Add a {side} while it is magic', { side: t(s.side) }),
   regal: () => t('Make it rare'),
   essence: (s) => t('Make it rare with {mod}', { mod: s.mod }),
-  remove: (s) => t('Remove {mod}', { mod: s.mod }),
+  remove: (s) => t('Remove {mod}', { mod: s.mod || s.mods.join(', ') }),
   add: (s) => t('Add {mod}', { mod: s.mod }),
   add2: (s) => t('Add {a} and {b}', { a: s.steps[0].mod, b: s.steps[1].mod }),
 };
@@ -923,9 +951,13 @@ function planHtml(plan) {
     if (c.lottery) odds = t('chance unknown — valuable modifier') + (c.hopeless && c.perTry != null ? ` · ${t('one attempt ≈ {cost}', { cost: money(c.perTry) })}` : '');
     else if (c.hopeless) odds = `${t('{odds} at T1–T2', { odds: (c.chances || [c.chance]).map(oneIn).join(' / ') })} · ${t('one attempt ≈ {cost}', { cost: money(c.perTry) })}`;
     else if (c.chances) odds = t('{odds} at T1–T2', { odds: c.chances.map(oneIn).join(' / ') });
+    else if (s.mods) odds = t('≈ {n} attempts', { n: fmt(Math.round(c.tries * 10) / 10) });
     else odds = c.chance >= 1 ? t('guaranteed') : oneIn(c.chance);
     const notes = [];
     if (c.two) notes.push(t('one Exalted Orb adds both modifiers'));
+    if (s.mods) notes.push(c.hits > 0.05
+      ? t('on average ≈{n} needed modifiers get hit too — re-adding them is counted in the price', { n: fmt(Math.round(c.hits * 10) / 10) })
+      : t('only unwanted modifiers can be hit'));
     if (c.hopeless) notes.push(t('One attempt: a miss stays on the item — removing it at random would more likely hit a needed modifier'));
     else if (s.act !== 'remove' && c.k !== 'desecrate' && (s.onSide || s.onItem)) notes.push(t('the average includes misses: an Annulment may hit a needed modifier, which then has to be added again'));
     if (c.k === 'desecrate') {
@@ -940,13 +972,15 @@ function planHtml(plan) {
       ? `${t('Desecrate')}${o.mod ? ` (${o.mod})` : ''}: ${o.currencies.join(' + ')}${o.chances[0] != null ? ` · ${oneIn(o.chances[0])}` : ''}${c.lottery ? '' : ` · ${t('≈ {cost} on average', { cost: money(o.cost) })}`}`
       : `${o.currencies[0]} · ${t('≈ {cost} on average', { cost: money(o.cost) })}`;
     const alts = [...(c.alts || []).filter((o) => o.k !== 'desecrate'), ...(c.desAlt || []).slice(0, 1)].map(altText);
+    if (c.other) alts.push(t('{how}: ≈{n} attempts, ≈{hits} needed modifiers hit, {cost} in currency', { how: c.other.currencies.join(' + '), n: fmt(Math.round(c.other.tries * 10) / 10), hits: fmt(Math.round(c.other.hits * 10) / 10), cost: money(c.other.spent) }));
+    if (c.whittle != null) alts.push(t('{mod}: Chaos Orb + Omen of Whittling removes it for sure (lowest-level modifier), but a random modifier takes its place ({cost} per try)', { mod: s.whittle, cost: money(c.whittle) }));
     const desNote = (c.desAlt || []).length ? t('Desecrate: pick 1 of 3 offered modifiers at the Well of Souls, but a miss costs Orb of Annulment + Omen of Light ({cost})', { cost: money((craftPrices['Orb of Annulment'] || 0) + (craftPrices['Omen of Light'] || 0)) }) : '';
     return `<li><div class="ps-what">${esc(STEP_LABEL[s.act](s))}</div>
       <div class="ps-how"><span class="game">${esc(c.currencies.join(' + '))}</span> · ${esc(odds)}${c.cost != null ? ` · <b>≈ ${money(c.cost)}</b>` : ''}</div>
       ${notes.length ? `<div class="ps-note">${esc(notes.join(' · '))}</div>` : ''}
       ${alts.length ? `<div class="ps-note">${esc(t('Instead: {list}', { list: alts.join('; ') }))}</div>` : ''}
       ${desNote ? `<div class="ps-note">${esc(desNote)}</div>` : ''}
-      ${c.risky && c.chance < 1 ? `<div class="ps-risk">${esc(t('A miss removes a good modifier instead'))}</div>` : ''}</li>`;
+      ${c.risky && c.chance < 1 && !s.mods ? `<div class="ps-risk">${esc(t('A miss removes a good modifier instead'))}</div>` : ''}</li>`;
   }).join('')}</ol>`;
 }
 
@@ -994,7 +1028,11 @@ async function computeGoal(g) {
     setStatus(errText(e), true);
   }
   const box = document.querySelector('#craft .verdict-box');
-  if (box) { box.innerHTML = verdictHtml(g.plan); fit(); }
+  if (box) box.innerHTML = verdictHtml(g.plan);
+  // Шаги тоже: цена задетого нужного мода зависит от цены цели.
+  const ol = document.querySelector('#craft .plan-box ol.plan');
+  if (ol) ol.outerHTML = planHtml(g.plan);
+  fit();
 }
 
 // ---- белая база: Transmutation (обычная / Greater 44+ / Perfect 70+) → магическая с одним модом ----
