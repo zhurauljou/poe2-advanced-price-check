@@ -211,6 +211,14 @@ async function advise(item, demandMods, cached) {
   const sections = [];
 
   // 0. Магическая → редкая: эссенция даёт гарантированный мод, Regal — случайный из всего пула.
+  // Магическая со свободным местом (1 префикс + 1 суффикс): сначала дёшево добить Augmentation, пока она магическая.
+  const magicFree = magic ? ['prefix', 'suffix'].filter((s) => !mine.some((a) => a.side === s)) : [];
+  if (magicFree.length) {
+    sections.push({ kind: 'magicfill', how: [
+      t('Orb of Augmentation — adds a random {side} while the item is magic: the cheapest step, do it before Regal', { side: t(magicFree[0]) }),
+      t('Greater / Perfect Orb of Augmentation — only modifiers of level 44+ / 70+'),
+    ], candidates: normal.filter((c) => c.side === magicFree[0]).slice(0, 6) });
+  }
   if (magic) {
     const sure = normal.filter((c) => c.essence);
     sections.push({ kind: 'upgrade', how: [
@@ -221,7 +229,6 @@ async function advise(item, demandMods, cached) {
       t('Omen of Sinistral / Dextral Coronation — the next Regal Orb adds only a prefix / only a suffix'),
       t('Orb of Alchemy (+ Omen of Sinistral / Dextral Alchemy) — rerolls into a rare with 4 random modifiers instead'),
       // Магическая с одним модом — второй можно добавить до Regal: Greater / Perfect Augmentation даёт только моды высокого уровня.
-      ...(mine.length < 2 ? [t('Greater / Perfect Orb of Augmentation — first add the second magic modifier, only of level 44+ / 70+')] : []),
     ] });
   }
 
@@ -319,7 +326,7 @@ async function advise(item, demandMods, cached) {
     ] });
   }
 
-  const goal = planGoal(mine, normal, max, want, magic);
+  const goal = planGoal(mine, normal, max, want, magic, magicFree);
   return { open, max, sections, goal, chanceMeta, source: 'RePoE (game files) · demand: poe.ninja' };
 }
 
@@ -375,7 +382,7 @@ function familyCounts(wc, pctOf) {
 const TIER_VALUE = [0, 1, 0.85, 0.7, 0.6];
 const KEY_PCT = 30; // мод, который носит столько % билдов, на другой не меняем
 const KEEP_BONUS = 1.5;
-function planGoal(mine, candidates, max, want, magic) {
+function planGoal(mine, candidates, max, want, magic, magicFree = []) {
   const value = (pct, tier) => pct * (TIER_VALUE[tier] || 0.5);
   const keep = [], remove = [], add = [];
   for (const side of ['prefix', 'suffix']) {
@@ -399,6 +406,7 @@ function planGoal(mine, candidates, max, want, magic) {
   add.sort((x, y) => y.pct - x.pct);
   // Шаги: сначала — убрать лишнее и вставить самый востребованный мод.
   const steps = [];
+  if (magicFree.length) steps.push(t('Orb of Augmentation — first fill the free {side} while it is magic (cheap)', { side: t(magicFree[0]) }));
   if (magic) {
     const ess = add.find((c) => c.essence);
     steps.push(ess ? t('{essence} — makes it rare with {mod}', { essence: ess.essence.name, mod: ess.text }) : t('Regal Orb — makes it rare (random modifier)'));

@@ -1,0 +1,10 @@
+Item Class: Jewels
+Rarity: Magic
+Emerald of Blinding
+--------
+Item Level: 81
+--------
+{ Suffix Modifier "of Blinding" (Tier: 1) — Attack }
+5(4-6)% chance to Blind Enemies on Hit with Attacks
+--------
+Place into an allocated Jewel Socket on the Passive Skill Tree. Right click to remove from the Socket.
