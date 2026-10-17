@@ -81,8 +81,8 @@ function fit() {
   // Открытый список лиг — поверх содержимого (position: absolute) и в сумму не входит: окно не короче его низа.
   requestAnimationFrame(() => {
     const content = [...document.body.children].reduce((s, el) => s + el.offsetHeight, 0) + 2;
-    const menu = $('leagueMenu');
-    window.pc.fit(Math.max(content, menu && !menu.hidden ? Math.ceil(menu.getBoundingClientRect().bottom) + 8 : 0));
+    const menus = ['leagueMenu', 'histMenu'].map($).filter((m) => m && !m.hidden);
+    window.pc.fit(Math.max(content, ...menus.map((m) => Math.ceil(m.getBoundingClientRect().bottom) + 8)));
   });
 }
 
@@ -156,7 +156,40 @@ function toggleLeagueMenu(open) {
   const on = open != null ? open : $('leagueMenu').hidden;
   $('leagueMenu').hidden = !on;
   $('ldrop').classList.toggle('open', on);
-  if (on) fit();
+  if (on) { toggleHistory(false); fit(); }
+}
+
+// ---- история проверок: последние вещи с оценкой; клик — проверить снова (окно остаётся на месте) ----
+async function toggleHistory(open) {
+  const on = open != null ? open : $('histMenu').hidden;
+  $('histMenu').hidden = !on;
+  $('hdrop').classList.toggle('open', on);
+  if (!on) return;
+  toggleLeagueMenu(false);
+  const list = await window.pc.history().catch(() => []);
+  $('histMenu').innerHTML = list.length ? list.map((h) => `<button data-hist="${esc(h.id)}"${state && h.id === state.historyId ? ' class="on"' : ''}>
+      <span class="h-name">${esc(h.rarity === 'Rare' || h.rarity === 'Unique' ? h.name : h.baseType || h.name)}</span>
+      ${h.rarity === 'Rare' || h.rarity === 'Unique' ? `<span class="h-base">${esc(h.baseType)}</span>` : ''}
+      <span class="h-est">${h.est != null ? money(h.est) : '—'}</span><span class="h-ago">${ago(h.at)}</span></button>`).join('')
+    : `<div class="h-empty">${esc(t('No checks yet'))}</div>`;
+  fit();
+}
+$('histBtn').addEventListener('click', (e) => { e.stopPropagation(); toggleHistory(); });
+$('histMenu').addEventListener('click', (e) => {
+  const b = e.target.closest('[data-hist]');
+  if (!b) return;
+  toggleHistory(false);
+  window.pc.historyOpen(b.dataset.hist);
+});
+
+// Оценку — в историю, и строка «в прошлый раз» (та же вещь, та же лига) под оценкой.
+function recordPrice(est) {
+  if (state && state.historyId && est != null) window.pc.historyPrice(state.historyId, est).catch(() => {});
+}
+function prevCheckHtml() {
+  const p = state && state.previous;
+  if (!p || p.est == null) return '';
+  return `<div class="prev-check">${esc(t('Last check {ago} ago:', { ago: ago(p.at) }))} <b>≈ ${money(p.est)}</b></div>`;
 }
 
 // Свойство подсказки → фильтр защиты (state.filters.props по key).
@@ -1708,8 +1741,9 @@ async function runSearch(relax = false) {
     setStatus(''); // убрать «ждём лимит», если было
     state.tradeUrl = r.url;
     $('open').hidden = false;
-    heroRender = () => { renderTradeHero(r); renderResults(r); renderElements(); };
+    heroRender = () => { renderTradeHero(r); $('hero').insertAdjacentHTML('beforeend', prevCheckHtml()); renderResults(r); renderElements(); };
     heroRender();
+    recordPrice(state.est);
     loadElements(seq, false);
     // Советы по крафту считали «продать как есть» без оценки (вкладку открыли до конца поиска — в пошаговом крафте
     // всегда) или по прежним фильтрам: пересчитываем — сразу, если вкладка открыта, иначе при открытии.
@@ -1756,7 +1790,12 @@ window.pc.onItem((data) => {
   renderBanner();
   fullNameTitles();
   renderTooltip();
-  if (state.exchange) { heroRender = renderExchangeHero; heroRender(); }
+  if (state.exchange) {
+    heroRender = () => { renderExchangeHero(); $('hero').insertAdjacentHTML('beforeend', prevCheckHtml()); };
+    heroRender();
+    recordPrice(state.exchange.divine);
+  }
+  toggleHistory(false);
   renderFilters();
   if (!state.exchange && !state.searchable) setStatus(t('No price data for this item'));
   fit();
@@ -1934,6 +1973,7 @@ document.addEventListener('keydown', (e) => {
   if (e.key === 'Escape') {
     // Сначала закрываем открытый список лиг, а не всё окно.
     if (!$('leagueMenu').hidden) toggleLeagueMenu(false);
+    else if (!$('histMenu').hidden) toggleHistory(false);
     else window.pc.hide();
   }
 });
@@ -1967,7 +2007,10 @@ $('leagueMenu').addEventListener('click', async (e) => {
   loadUniqueNinja();
 });
 // Клик мимо — закрыть список.
-document.addEventListener('click', (e) => { if (!e.target.closest('#ldrop')) toggleLeagueMenu(false); });
+document.addEventListener('click', (e) => {
+  if (!e.target.closest('#ldrop')) toggleLeagueMenu(false);
+  if (!e.target.closest('#hdrop')) toggleHistory(false);
+});
 
 // ---- язык интерфейса: статичные подписи из index.html (data-i18n) и перерисовка показанного ----
 function applyLang() {

@@ -29,7 +29,22 @@ body { background: linear-gradient(rgba(0, 0, 0, .45), rgba(0, 0, 0, .18) 70px, 
 
 /* ---- полоска для перетаскивания ---- */
 .topbar { position: relative; display: flex; justify-content: center; align-items: center; height: 32px; -webkit-app-region: drag; }
-.topbar .ldrop, .topbar .close { -webkit-app-region: no-drag; }
+.topbar .ldrop, .topbar .close, .topbar .hdrop { -webkit-app-region: no-drag; }
+/* История проверок — часы слева в шапке, список — та же панель, что у лиг, от левого края. */
+.hdrop { position: absolute; left: 6px; top: 50%; transform: translateY(-50%); z-index: 70; }
+.hdrop > button { display: flex; padding: 3px 4px; background: none; border: 0; box-shadow: none; color: var(--bronze); }
+.hdrop > button:hover, .hdrop.open > button { background: none; color: var(--cream); }
+.hdrop > button svg { width: 16px; height: 16px; }
+.lmenu.hmenu { left: -2px; transform: none; min-width: 330px; max-height: 420px; overflow-y: auto; animation: none; }
+.lmenu.hmenu::before { left: 14px; }
+.hmenu button { font: 14px var(--body); letter-spacing: 0; padding: 5px 12px; gap: 10px; }
+.hmenu .h-name { overflow: hidden; text-overflow: ellipsis; max-width: 190px; color: var(--cream); }
+.hmenu .h-base { color: var(--muted); font-size: 12.5px; overflow: hidden; text-overflow: ellipsis; }
+.hmenu .h-est { margin-left: auto; color: var(--gold); font-weight: 700; white-space: nowrap; }
+.hmenu .h-ago { color: var(--muted); font-size: 12px; min-width: 28px; text-align: right; }
+.hmenu .h-empty { padding: 8px 14px; color: var(--muted); }
+.prev-check { margin-top: 6px; color: var(--muted); font-size: 13px; }
+.prev-check b { color: var(--label); }
 /* Лига — золотой текст по центру со стрелкой; список — своя панель в стиле окна (системный не стилизуется). */
 .ldrop { position: relative; }
 .ldrop > button { display: inline-flex; align-items: center; gap: 6px; padding: 2px 6px; background: none; border: 0; box-shadow: none;

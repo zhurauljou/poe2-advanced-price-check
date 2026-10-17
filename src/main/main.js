@@ -12,6 +12,7 @@ const winapi = require('./winapi');
 const updater = require('./updater');
 const { popularBuilds, categoryDemand } = require('./ninjaBuilds');
 const craft = require('./craft');
+const history = require('./history');
 let lastItem = null; // последний разобранный предмет — для советов по крафту
 let lastThemeMods = []; // его ключевые моды — спрос для крафта считаем среди билдов с ними
 const { parseItem } = require('./parser');
@@ -329,10 +330,13 @@ async function useClientLang(lang) {
   clientLangActive = lang;
 }
 
-// refresh — та же вещь заново (сменили лигу): окно уже открыто, на место у курсора его не переносим.
+// refresh — та же вещь заново (сменили лигу, открыли из истории): окно уже открыто, на место у курсора его не переносим.
+// historyId — запись истории этой вещи (иначе — новая запись).
 let lastText = null;
-async function priceCheck(text, refresh = false) {
+let lastHistoryId = null;
+async function priceCheck(text, refresh = false, historyId = null) {
   lastText = text;
+  const rawText = text;
   const lang = detectClientLang(text);
   try {
     await useClientLang(lang);
@@ -385,7 +389,10 @@ async function priceCheck(text, refresh = false) {
   // Тема вещи для советов по крафту: два самых важных включённых мода (без сумм).
   lastThemeMods = prepared.filters.mods.filter((m) => m.enabled && m.statId && m.tag !== 'pseudo' && m.tag !== 'implicit' && m.tag !== 'rune' && !m.option)
     .sort((a, b) => (b.importance || 0) - (a.importance || 0)).slice(0, 2).map((m) => m.text.split('\n')[0]);
-  send('item', { ...prepared, league, leagues, priceCurrency: settings.get().priceCurrency || 'any', hotkey: hotkeyLabel() });
+  const entry = { name: item.name, baseType: item.baseType, rarity: item.rarity, league };
+  lastHistoryId = historyId || history.add({ ...entry, text: rawText });
+  const prev = history.previous(entry, lastHistoryId);
+  send('item', { ...prepared, league, leagues, historyId: lastHistoryId, previous: prev && { est: prev.est, at: prev.estAt || prev.at }, priceCurrency: settings.get().priceCurrency || 'any', hotkey: hotkeyLabel() });
   if (!refresh || !win.isVisible()) show();
 }
 
@@ -767,7 +774,11 @@ app.whenReady().then(singleInstance).then((ok) => {
   handle('settings-fit', FROM.settings, (_e, h) => { if (Number.isFinite(h) && setWin) setWin.setContentSize(420, Math.min(Math.ceil(h) + 2, 900)); });
   // Оверлей запоминает переключатели поиска («Buyable now», «Allow 1 minor mod missing») — у следующей вещи такие же.
   handle('set-search-defaults', FROM.overlay, (_e, p) => { applySettings({ searchOnline: p && p.online, searchFlex: p && p.flex }); });
-  handle('recheck', FROM.overlay, () => (lastText ? priceCheck(lastText, true) : null));
+  handle('recheck', FROM.overlay, () => (lastText ? priceCheck(lastText, true, lastHistoryId) : null));
+  // История проверок
+  handle('history', FROM.overlay, () => history.brief());
+  handle('history-open', FROM.overlay, (_e, id) => { const h = history.get(id); return h ? priceCheck(h.text, true, h.id) : null; });
+  handle('history-price', FROM.overlay, (_e, id, est) => history.setPrice(id, est));
   handle('pin', FROM.overlay, (_e, on) => { pinned = !!on; syncEsc(); });
   handle('compare-show', FROM.overlay, (_e, html, y) => {
     if (typeof html !== 'string' || !Number.isFinite(y)) return;
