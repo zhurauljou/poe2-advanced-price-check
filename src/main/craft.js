@@ -268,6 +268,8 @@ async function advise(item, demandMods, cached) {
   // Строки, которые на вещи уже есть, не делают кандидата востребованным: у гибрида «броня / урон миньонов»
   // спрос считаем по броне — урон миньонов у вещи уже есть (а при спросе «среди билдов с ним» он был бы 100%).
   const own = new Set((item.modLines || []).flatMap((l) => templates(l.text)));
+  // Руна Альдура переведёт стихию — тот же мод в другой стихии на вещи уже «есть» (не кандидат: Fire Spell Skills к Cold).
+  if (aldur) for (const l of [...own]) if (/\b(fire|cold|lightning)\b/.test(l)) for (const e of ELEMENTS) own.add(l.replace(/\b(fire|cold|lightning)\b/g, e.toLowerCase()));
   const candidates = (domain, src = onBase) => {
     const byType = new Map();
     for (const m of src) {
