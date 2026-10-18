@@ -122,3 +122,17 @@ test('Desecrate на полную сторону с одним лишним мо
   const two = p.expandPlan([{ act: 'remove', mods: ['a', 'b'], sides: { prefix: { ...sides.prefix, J: 2, K: 1 } } }, des]);
   assert.equal(two[0].act, 'remove');
 });
+
+test('эссенция / Alloy: на стороне ключевой мод вещи — ставится после нужных модов стороны (промах чаще снимет их, а не ключевой)', () => {
+  const prices = { ...PRICES, "The Runebinder's Alloy": 1, 'Omen of Dextral Crystallisation': 0.5, 'Omen of Dextral Exaltation': 0.1 };
+  const mk = (goalValue) => PlanCost.create(() => ({ prices, goalValue, est: 10 }));
+  // Суффиксы: ключевой +4 к миньонам; план — Exalted на нужный суффикс, затем Alloy (crafted-слот).
+  const regen = add(0.3, { side: 'suffix', mod: 'regen', onSide: 1, onItem: 1 });
+  const alloy = { act: 'add', side: 'suffix', mod: 'puppet', onSide: 2, onItem: 2, craftedOnly: "The Runebinder's Alloy", crafted: ["The Runebinder's Alloy"],
+    crystal: 'Omen of Dextral Crystallisation', atRisk: ['+4 to Level of all Minion Skills'], exalt: { base: { chance: null } } };
+  const order = (goal) => mk(goal).expandPlan([regen, alloy]).map((s) => s.mod);
+  // Дорогая цель: потеря +4 дорога — Alloy после regen (снимет +4 с шансом 1 из 3, а не 1 из 2).
+  assert.deepEqual(order(900), ['regen', 'puppet']);
+  const p = mk(900);
+  near(p.stepCost({ ...alloy }).chance, 1 / 3, 'после regen: жертву снимет 1 из 3');
+});

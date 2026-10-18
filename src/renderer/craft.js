@@ -191,6 +191,15 @@ const curChips = (list) => list.map((n) => `<span class="cur ${curKind(n)}">${es
 // Эссенция / Alloy на редкую: порядок важен — сначала жертвенный мод Exalted'ом на эту сторону, потом омен
 // Crystallisation + эссенция (снимает случайный мод стороны). Без жертвы снимется один из ваших модов — по шагам, с номерами.
 // c.currencies: [эссенция, омен Crystallisation, Exalted Orb, омен стороны?].
+// Шанс, что эссенция снимет ключевой мод вещи (а не жертвенный или добавленный по плану): ключевых на стороне / все моды
+// стороны с жертвой.
+function keyRisk(s) {
+  const n = (s.onSide || 0) + 1;
+  const r = Math.min(s.atRisk.length, n - 1) / n;
+  const odds = r >= 0.5 ? `~${Math.round(r * 100)}%` : oneIn(r);
+  return `<div class="ps-risk">⚠ ${esc(t('{odds}: it removes {mods} instead of the sacrificial modifier', { odds, mods: s.atRisk.map((m) => `«${m}»`).join(t(' or ')) }))}</div>`;
+}
+
 function essenceSeq(s, c) {
   const [ess, crystal, ...sac] = c.currencies;
   const side = t(s.side);
@@ -273,7 +282,7 @@ function planHtml(plan) {
       <div class="ps-how">${c.k === 'essence' ? '' : `${curChips(c.currencies)} · `}${esc(odds)}${c.cost != null ? ` · <b>≈ ${money(c.cost)}</b>` : ''}</div>
       ${key.length ? `<div class="ps-key">${esc(key.join(' · '))}</div>` : ''}
       ${c.risky && c.chance < 1 && !s.mods ? `<div class="ps-risk">${esc(t('A miss removes a good modifier instead'))}</div>` : ''}
-      ${c.k === 'essence' && c.chance < 1 && (s.atRisk || []).length ? `<div class="ps-risk">⚠ ${esc(t('{odds}: it removes {mods} instead of the sacrificial modifier', { odds: 1 - c.chance >= 0.5 ? `~${Math.round((1 - c.chance) * 100)}%` : oneIn(1 - c.chance), mods: s.atRisk.map((m) => `«${m}»`).join(t(' or ')) }))}</div>` : ''}
+      ${c.k === 'essence' && c.chance < 1 && (s.atRisk || []).length ? keyRisk(s) : ''}
       ${more.length ? `<details class="ps-more"><summary>${esc(alts.length ? t('details and alternatives') : t('details'))}</summary>${more.join('')}</details>` : ''}</li>`;
   }).join('')}</ol>`;
 }

@@ -42,6 +42,13 @@
   // Больше доли мода в цене вещи потеря стоить не может: дорогое «добавить заново» — не повод платить больше вещи.
   const valueShare = () => Math.max(C().goalValue ? C().goalValue / 4 : 0, C().est ? C().est / 4 : 0);
   const restoreValue = () => valueShare() || (restoreCost ?? (C().prices['Orb of Annulment'] ?? 0) * 10);
+  // Средняя потеря от промаха эссенции / Alloy на стороне: снимается случайный из onSide нужных модов и жертвы.
+  function essenceLoss(s) {
+    const n = (s.onSide || 0) + 1;
+    const k = Math.min((s.atRisk || []).length, n - 1);
+    const minor = Math.min(restoreCost ?? (C().prices['Orb of Annulment'] ?? 0) * 10, valueShare() ? valueShare() / 2 : Infinity);
+    return (k * restoreValue() + (n - 1 - k) * minor) / n;
+  }
   function removeCost(s) {
     const p = (n) => C().prices[n];
     const ann = p('Orb of Annulment');
@@ -147,12 +154,14 @@
     // стороны + эссенция: снимает случайный мод стороны (жертву — если других снимаемых там нет) и ставит свой мод.
     if (rolls === 1 && (s.useCrafted || s.craftedOnly) && s.crafted) {
       const P = 1 / ((s.onSide || 0) + 1);
-      for (const name of s.crafted) {
+      for (const name of s.crafted || []) {
         const cur = [name, s.crystal, 'Exalted Orb', ...(s.sideOmen ? [s.sideOmen] : [])];
         if (cur.some((n) => p(n) == null)) continue;
         const per = cur.reduce((a, n) => a + p(n), 0);
-        // Промах: эссенция сняла нужный мод (мод эссенции всё равно встал) — вернуть его и снять жертву.
-        const cost = per + (1 - P) * (restoreValue() + (p('Orb of Annulment') ?? 0));
+        // Промах: эссенция сняла нужный мод (мод эссенции всё равно встал) — вернуть его и снять жертву. Ключевой мод
+        // вещи (atRisk: был на ней до крафта) вернуть дорого — restoreValue; добавленный по плану — его повторное добавление.
+        // Поэтому эссенцию выгоднее ставить, когда на стороне уже есть дешёвые нужные моды: промах чаще попадёт в них.
+        const cost = per + essenceLoss(s) + (1 - P) * (p('Orb of Annulment') ?? 0);
         opts.push({ k: 'essence', essence: name, currencies: cur, chances: [P], pool: 0, cost, per, slam: per / P, p: P, ps: [P] });
       }
     }
@@ -268,6 +277,16 @@
         const s = out[d];
         const n = out.slice(first, d).flatMap((x) => (x.act === 'add2' ? x.steps : x.act === 'add' ? [x] : [])).filter((x) => x.side === s.side).length;
         const moved = { ...s, onSide: Math.max(0, (s.onSide || 0) - n), onItem: Math.max(0, (s.onItem || 0) - n) };
+        // Эссенция первой — выше шанс снять жертву, но промах чаще снимает ключевой мод (на стороне меньше других).
+        // Ставим туда, где дешевле в среднем.
+        if (flag === 'useCrafted' && addCost(moved, 1).score > addCost(s, 1).score) continue;
+        // Шаги, перед которыми он встал, — на его стороне теперь на мод больше.
+        const bump = (x) => (x.side === s.side ? { ...x, onSide: (x.onSide || 0) + 1, onItem: (x.onItem || 0) + 1 } : x);
+        for (let i = first; i < d; i++) {
+          const x = out[i];
+          if (x.act === 'add') out[i] = bump(x);
+          else if (x.act === 'add2') out[i] = { ...x, steps: x.steps.map(bump) };
+        }
         out.splice(d, 1);
         out.splice(first, 0, moved);
       }
