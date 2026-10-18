@@ -27,6 +27,7 @@ const SCENES = [
   ['craft-wand-all', fx('craft/wand-open-prefixes.txt'), tab('craft', ".then(()=>{document.querySelector('#craft .more-ways').open=true; document.querySelector('#craft .more-ways').scrollIntoView();})")],
   ['craft-sceptre', fx('craft/sceptre-minion.txt'), tab('craft', ".then(()=>{document.querySelector('#craft .more-ways').open=true; document.querySelector('.craft-foot').scrollIntoView();})")],
   ['craft-magic', fx('magic-helmet.txt'), tab('craft')],
+  ['craft-white', fx('normal-boots.txt'), tab('craft')],
   ['unique-mageblood', fx('unique-mageblood.txt')],
   ['unique-craft', fx('unique-mageblood.txt'), tab('craft')],
   ['jewel', fx('rare-jewel-full.txt')],

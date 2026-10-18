@@ -462,7 +462,23 @@ async function advise(item, demandMods, cached) {
     }
     c.orMods = others.map((x) => x.text);
   }
-  if (item.rarity === 'Normal') return { normal: transmuteOptions(normal, sidePool, nOf, ilvl, jewel), popular: normal.slice(0, 8), chanceMeta };
+  // «Удачный ilvl» (docs/market-notes.md §2): последний уровень, где у нужного билдам семейства открылся тир. Выше него —
+  // только тиры ненужных: для нужных модов база не лучше базы этого уровня, а лишние тиры разбавляют пул (вес семейства
+  // растёт с числом тиров). Для белой / магической базы — подсказка и покупателю, и продавцу.
+  let ilvlHint = null;
+  if (item.rarity === 'Normal' || item.rarity === 'Magic') {
+    const lv = new Map(); // семейство → уровни тиров до ilvl вещи
+    for (const m of onBase) {
+      if (m.domain !== 'item' || m.is_essence_only || m.required_level > ilvl) continue;
+      if (!lv.has(m.type)) lv.set(m.type, { lines: m.lines, levels: [] });
+      lv.get(m.type).levels.push(m.required_level);
+    }
+    const wanted = [...lv.values()].filter((x) => x.lines.some((l) => (want.get(l) || 0) >= WANT_PCT));
+    const top = wanted.length ? Math.max(...wanted.flatMap((x) => x.levels)) : null;
+    const junk = top == null ? [] : [...lv.values()].filter((x) => !wanted.includes(x) && x.levels.some((l) => l > top));
+    if (top != null && top < ilvl && junk.length) ilvlHint = { from: top, ilvl, junk: junk.map((x) => x.lines.join(' / ')).slice(0, 4), more: Math.max(0, junk.length - 4) };
+  }
+  if (item.rarity === 'Normal') return { normal: transmuteOptions(normal, sidePool, nOf, ilvl, jewel), popular: normal.slice(0, 8), chanceMeta, ilvlHint };
   const sections = [];
 
   // 0. Магическая → редкая: эссенция даёт гарантированный мод, Regal — случайный из всего пула.
@@ -665,7 +681,7 @@ async function advise(item, demandMods, cached) {
   }
   const runesIn = (item.modLines || []).filter((l) => l.tag === 'rune').length;
   const gamble = gambleFor(item, tags);
-  return { open, max, sections, goal, gamble, augments, freeSockets: Math.max(0, (item.sockets || 0) - runesIn), chanceMeta, source: 'RePoE (game files) · demand: poe.ninja' };
+  return { open, max, sections, goal, gamble, augments, freeSockets: Math.max(0, (item.sockets || 0) - runesIn), chanceMeta, ilvlHint, source: 'RePoE (game files) · demand: poe.ninja' };
 }
 
 // Белая база → магическая: Orb of Transmutation даёт один случайный мод (префикс или суффикс);

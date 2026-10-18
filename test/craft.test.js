@@ -292,3 +292,11 @@ test('скрижали: все моды находятся на трейде (з
   const chests = (await filters('tablet-irradiated.txt')).mods.find((m) => /Rare Chests/.test(m.text));
   assert.equal(chests.value, 2);
 });
+
+test('белая база: «удачный ilvl» — выше последнего тира нужных модов только тиры ненужных', { skip }, async () => {
+  await init();
+  const it = parseItem(read('../normal-boots.txt'));
+  const r = await craft.advise(it, json('boots-es.demand.json').mods, cached);
+  assert.ok(r.ilvlHint, 'подсказка есть');
+  assert.ok(r.ilvlHint.from < 79 && r.ilvlHint.junk.length);
+});

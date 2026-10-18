@@ -438,16 +438,19 @@ function sessionHtml(r) {
     ${done ? `<div class="verdict good">🎉 ${esc(t('Goal reached — check the price on the Price tab'))}</div>` : next ? `<div class="ss-next">${esc(t('Next: {step}', { step: STEP_LABEL[next.act](next) }))}</div>` : ''}</div>`;
 }
 
-// Шансы — оценка по лотам трейда; собраны в другой лиге — пишем в какой (после патча веса могли измениться).
-function chanceWarn(m) {
-  const date = m.league && state && m.league !== state.league ? `${m.collected}, ${m.league}` : m.collected;
-  return `<div class="craft-warn">⚠ ${esc(t('Chances are rough estimates from {n} cheap trade listings ({date}) — PoE 2 game files have no modifier weights. Treat them as "common / rare", not exact odds.', { n: m.items, date }))}</div>`;
-}
 
-// То же коротко — строкой под таблицей шансов; полный текст — в подсказке.
+// Шансы — оценка по лотам трейда (собраны в другой лиге — пишем в какой: после патча веса могли измениться): коротко
+// строкой под таблицей шансов, полный текст — в подсказке.
 function chanceLine(m) {
   const date = m.league && state && m.league !== state.league ? `${m.collected}, ${m.league}` : m.collected;
   return `<div class="craft-chance-note" title="${esc(t('Chances are rough estimates from {n} cheap trade listings ({date}) — PoE 2 game files have no modifier weights. Treat them as "common / rare", not exact odds.', { n: m.items, date }))}">ⓘ ${esc(t('Chances: a rough estimate from {n} trade listings ({date})', { n: fmt(m.items), date }))}</div>`;
+}
+
+// «Удачный ilvl»: выше уровня последнего нужного тира — только тиры ненужных модов (craft.js ilvlHint).
+function ilvlHintHtml(h) {
+  if (!h) return '';
+  const junk = h.junk.join(', ') + (h.more ? ` ${t('and {n} more', { n: h.more })}` : '');
+  return `<div class="craft-chance-note" title="${esc(t('A modifier family weighs more with each tier it has — extra tiers of unwanted modifiers slightly lower the odds of the wanted ones (community observation, not exact)'))}">ⓘ ${esc(t('Item level {ilvl}: for the wanted modifiers no better than {from} — above it only unwanted ones got new tiers ({junk})', { ilvl: h.ilvl, from: h.from, junk }))}</div>`;
 }
 
 // ---- белая база: Transmutation (обычная / Greater 44+ / Perfect 70+) → магическая с одним модом ----
@@ -483,10 +486,10 @@ function renderNormalCraft(r, head) {
   ];
   const popular = (r.popular || []).map((c, i) => ({ name: `${c.text}${c.tier ? ` · T${c.tier}` : ''}`, pct: c.pct, rank: i + 1 }));
   $('craft').innerHTML = head + `<div class="craft-sec plan-box"><div class="k">${esc(t('White base → magic'))}</div>
-    ${warn}${rows}
+    ${warn}${rows}${ilvlHintHtml(r.ilvlHint)}
     <ol class="plan">${steps.map((s) => `<li><div class="ps-how">${esc(s)}</div></li>`).join('')}</ol></div>
     ${popular.length ? demandList('npop', t('Popular modifiers that can roll here'), popular) : ''}
-    ${r.chanceMeta ? chanceWarn(r.chanceMeta) : ''}`;
+    ${r.chanceMeta ? chanceLine(r.chanceMeta) : ''}`;
 }
 
 // ---- уник: Divine перекатывает значения всех модов разом (сами моды не меняются) ----
@@ -637,7 +640,7 @@ function renderCraft(r) {
   const how = (list) => list.map((h) => `<div class="craft-how">${esc(h)}</div>`).join('');
   // Сверху — коротко для новичка: места на вещи, «продать или крафтить», план по шагам с затратами.
   // Всё остальное (все способы, варианты модов) — свёрнуто ниже.
-  const top = [slotsHtml(r)];
+  const top = [slotsHtml(r) + (state.item.rarity === 'Magic' ? ilvlHintHtml(r.ilvlHint) : '')];
   const inSession = craftSession && sessionMatches();
   if (inSession) top.unshift(sessionHtml(r));
   if (r.goal && r.goal.plan && r.goal.plan.length) {

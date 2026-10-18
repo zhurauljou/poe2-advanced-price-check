@@ -1,0 +1,10 @@
+Item Class: Boots
+Rarity: Normal
+Sandsworn Sandals
+--------
+Evasion Rating: 70
+--------
+Requires: Level 65
+--------
+Item Level: 79
+--------
