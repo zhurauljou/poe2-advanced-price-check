@@ -58,14 +58,26 @@ async function restoreClipboard(snap) {
 async function whisperInGame(text, gameHwnd) {
   const prev = await saveClipboard();
   await clipboard.writeText(text);
-  if (!gameHwnd) return false;
-  winapi.focus(gameHwnd);
-  await sleep(150);
-  if (winapi.foreground() !== gameHwnd) return false;
+  if (!gameHwnd) { log('whisper: no game window (press the hotkey in the game first)'); return false; }
+  // Windows не всегда отдаёт фокус с первого раза — пробуем до секунды. Со второй попытки — с нажатым Alt: Windows
+  // запрещает переключать окна процессу, который не считает активным, а нажатие клавиши этот запрет снимает
+  // (Alt в игре лишь на миг подсвечивает предметы на земле).
+  let focused = false;
+  for (let i = 0; i < 10 && !focused; i++) {
+    if (i > 0) uIOhook.keyToggle(UiohookKey.Alt, 'down');
+    winapi.focus(gameHwnd);
+    if (i > 0) uIOhook.keyToggle(UiohookKey.Alt, 'up');
+    await sleep(100);
+    focused = winapi.foreground() === gameHwnd;
+  }
+  if (!focused) { log('whisper: could not focus the game window'); return false; }
+  await sleep(200); // игра, вернувшись из фона, принимает ввод не сразу
   await tap(UiohookKey.Enter);
-  await sleep(120);
+  await sleep(150);
   await tap(UiohookKey.V, UiohookKey.Ctrl);
-  setTimeout(() => restoreClipboard(prev), 300); // игра читает буфер не мгновенно
+  log(`whisper: pasted (${text.length} chars)`);
+  // Прежний буфер — с запасом: игра, вернувшаяся из фона, могла бы вставить уже его, а не шёпот.
+  setTimeout(() => restoreClipboard(prev), 1500);
   return true;
 }
 

@@ -653,7 +653,14 @@ app.whenReady().then(singleInstance).then((ok) => {
   handle('demand-level', FROM.overlay, () => settings.get().demandLevel || 90);
   handle('set-demand-level', FROM.overlay, (_e, l) => { if (DEMAND_LEVELS.includes(l)) settings.set({ demandLevel: l }); });
   // В чат игры — только шёпот («@Ник текст»): окно не должно уметь напечатать в игре что угодно.
-  handle('whisper-game', FROM.overlay, (_e, t) => (typeof t === 'string' && /^@\S+ /.test(t) && t.length <= 512 && !/[\r\n]/.test(t) ? whisperInGame(t, gameHwnd) : false));
+  // Не похоже на шёпот — в игру не печатаем, но в буфер кладём (вставить руками) и пишем в лог, почему.
+  handle('whisper-game', FROM.overlay, async (_e, t) => {
+    const ok = typeof t === 'string' && /^@\S+ /.test(t) && t.length <= 512 && !/[\r\n]/.test(t);
+    if (ok) return whisperInGame(t, gameHwnd);
+    log(`whisper: not a whisper (${typeof t}, ${String(t).length} chars, starts ${JSON.stringify(String(t).slice(0, 2))})`);
+    await clipboard.writeText(String(t || '').slice(0, 4000));
+    return false;
+  });
   handle('listing-url', FROM.overlay, (_e, item, filters, account) => (demo.mockTrade() ? 'https://www.pathofexile.com/trade2'
     : api.forCurrent(() => pricing.listingUrl(curLeague(), item, filters, account))));
   handle('open-url', FROM.any, (_e, u) => {

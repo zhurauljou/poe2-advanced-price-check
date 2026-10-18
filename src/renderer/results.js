@@ -42,7 +42,11 @@ function renderResults(r) {
         pinnedLot = pinnedLot && pinnedLot.l === l ? null : { l, row };
         box.querySelectorAll('.lot.pinned').forEach((x) => x.classList.remove('pinned'));
         if (pinnedLot) { row.classList.add('pinned'); showCompare(l, row); } else hideCompare();
-      } else if (!(await window.pc.whisperGame(l.whisper))) setStatus(t('Whisper copied — switch to the game and paste it into chat (Enter, Ctrl+V)'));
+      } else {
+        // Ошибка не должна теряться молча: «ничего не происходит» — худший исход.
+        const sent = await window.pc.whisperGame(l.whisper).catch((err) => { setStatus(errText(err), true); return null; });
+        if (sent === false) setStatus(t('Whisper copied — switch to the game and paste it into chat (Enter, Ctrl+V)'));
+      }
       fit();
       return;
     }
