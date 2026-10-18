@@ -44,7 +44,29 @@ const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 
 // Зависшее соединение не должно вешать проверку навсегда (горячая клавиша ждёт конца прошлой проверки).
 const TIMEOUT = 20000;
+// Запись / проигрывание ответов сети (только демо: --tape=<папка> [--record]) — снимки окна без сети повторяются
+// один в один (scripts/visual.js). Ключ — URL и тело запроса.
+let tape = null;
+function setTape(dir, record) { tape = { dir, record }; fs.mkdirSync(dir, { recursive: true }); }
+function tapeKey(url, opts) { return require('crypto').createHash('sha1').update(`${opts.method || 'GET'} ${url}\n${opts.body || ''}`).digest('hex').slice(0, 20); }
+async function tapeFetch(url, opts) {
+  const f = path.join(tape.dir, `${tapeKey(url, opts)}.gz`);
+  const zlib = require('zlib');
+  if (!tape.record) {
+    if (!fs.existsSync(f)) throw new Error(`no recording for ${url}`);
+    const { status, headers, body } = JSON.parse(zlib.gunzipSync(fs.readFileSync(f)));
+    // Тело записано уже распакованным — заголовки сжатия и длины ему не подходят.
+    for (const h of ['content-encoding', 'content-length', 'transfer-encoding']) delete headers[h];
+    return new Response(status === 204 ? null : Buffer.from(body, 'base64'), { status, headers });
+  }
+  const res = await net.fetch(url, { ...opts, signal: AbortSignal.timeout(TIMEOUT) });
+  const body = Buffer.from(await res.arrayBuffer());
+  fs.writeFileSync(f, zlib.gzipSync(JSON.stringify({ url, status: res.status, headers: Object.fromEntries(res.headers), body: body.toString('base64') })));
+  return new Response(res.status === 204 ? null : body, { status: res.status, headers: res.headers });
+}
+
 function netFetch(url, opts = {}) {
+  if (tape) return tapeFetch(url, opts);
   return net.fetch(url, { ...opts, signal: AbortSignal.timeout(TIMEOUT) }).catch((e) => {
     if (e && (e.name === 'TimeoutError' || e.name === 'AbortError')) throw new Error(t('No answer from {host} in {n} s', { host: new URL(url).host, n: TIMEOUT / 1000 }));
     throw e;
@@ -300,5 +322,5 @@ async function uniquePrice(league, name, baseType) {
 }
 
 module.exports = {
-  TRADE, tradeRequest, newGeneration, cacheDir, clearCache, cacheAgeH, limitWait, offline, forCurrent, fetchBuffer, cached, tradeStats, tradeItems, tradeStatic, tradeLeagues, loadNinja, ninja, uniquePrice,
+  TRADE, tradeRequest, newGeneration, cacheDir, clearCache, cacheAgeH, setTape, limitWait, offline, forCurrent, fetchBuffer, cached, tradeStats, tradeItems, tradeStatic, tradeLeagues, loadNinja, ninja, uniquePrice,
 };

@@ -7,3 +7,4 @@ dist.zip
 data/*.partial.json
 data/weights.log
 data/weights-store/
+test/visual/

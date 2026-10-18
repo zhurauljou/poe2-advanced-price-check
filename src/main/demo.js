@@ -6,12 +6,15 @@
 //   --eval=<js>          выполнить в окне перед снимком (открыть меню и т.п.)
 //   --upd='{"state":…}'  снимок окна «Updates» в заданном состоянии
 //   --settings           снимок окна настроек
+//   --tape=<папка> [--record]  ответы сети из записи (без сети — снимки повторяются) или записать их (scripts/visual.js)
 const { app } = require('electron');
 const fs = require('fs');
 
 const arg = (k) => (process.argv.find((a) => a.startsWith(`--${k}=`)) || '').slice(k.length + 3);
 // Только при запуске из исходников: --eval выполняет произвольный код в окне, установленной программе он ни к чему.
 const enabled = !app.isPackaged && !!arg('demo');
+//   --tape=<папка> [--record]  ответы сети — из записи (без сети, снимки повторяются) или записать их туда
+if (enabled && arg('tape')) require('./api').setTape(arg('tape'), process.argv.includes('--record'));
 
 // Подставные лоты для --mock-trade.
 function mockSearch(rates) {
@@ -60,7 +63,9 @@ function run({ ready, priceCheck, openUpdates, openSettings, windows }) {
     }, 3000);
     return;
   }
-  ready.then(() => priceCheck(fs.readFileSync(arg('demo'), 'utf8'))).then(() => {
+  // Окно должно успеть загрузиться: без сети (--tape) справочники готовы раньше него, и предмет ушёл бы в пустоту.
+  const loaded = () => new Promise((r) => { const wc = windows().main && windows().main.webContents; if (!wc || !wc.isLoading()) r(); else wc.once('did-finish-load', r); });
+  ready.then(loaded).then(() => priceCheck(fs.readFileSync(arg('demo'), 'utf8'))).then(() => {
     if (!arg('shot')) return;
     setTimeout(async () => {
       const { main, cmp } = windows();
