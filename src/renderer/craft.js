@@ -27,14 +27,22 @@ const craftCands = new Map();
 const demPct = (c) => (c.shownPct != null ? c.shownPct : c.pct);
 const demTitle = (c) => (c.pctParts && c.pctParts.length > 1 ? c.pctParts.map(([l, p]) => `${l} — ${fmt(p)}%`).join('\n') : '');
 
+// Кандидаты крафта — таблица с подписанными колонками: мод (тир, диапазон; способ получить — строкой ниже) | сколько
+// билдов его носят | шанс за попытку Exalted | цена вещи с ним. Раньше в одной строке без подписей были и спрос (крупно
+// справа, с полосой на фоне), и шанс, и эссенция — спрос легко было принять за шанс.
 function craftRows(list) {
-  const rows = list.map((c) => {
+  const head = `<div class="crow chead"><span>${esc(t('Modifier'))}</span><span>${esc(t('builds'))}</span><span>${esc(t('chance per try'))}</span><span>${esc(t('price with it'))}</span></div>`;
+  const rows = head + list.map((c) => {
     const key = String(craftCands.size);
     craftCands.set(key, c);
-    const btn = c.stats ? `<button class="link cprice" data-ck="${key}" title="${t('Search for your item with this modifier added (lowest roll of the tier)')}">${t('price?')}</button>` : '';
+    const btn = c.stats ? `<button class="link cprice" data-ck="${key}" title="${t('Search for your item with this modifier added (lowest roll of the tier)')}">${t('estimate')}</button>` : '';
+    const via = c.essence ? `<span class="cvia" title="${esc(t('{essence} makes a magic item rare with this modifier: {tiers}', { essence: c.essence.name, tiers: c.essence.tiers.join(' · ') }))}">${esc(t('guaranteed: {how}', { how: c.essence.name }))}</span>` : '';
     return `
-    <div class="brow ${heat(demPct(c))}" data-row="${key}"><span class="bname">${esc(c.text)}<span class="craft-tier">T${c.tier}/${c.tiers}${c.range ? ` · ${esc(c.range)}` : ''}</span>${chanceTag(c.chance, c.chanceUnknown)}${c.essence ? `<span class="ess" title="${esc(t('{essence} makes a magic item rare with this modifier: {tiers}', { essence: c.essence.name, tiers: c.essence.tiers.join(' · ') }))}">◈ ${esc(c.essence.short)}</span>` : ''}${btn}</span>
-      <span class="bpct" title="${esc(demTitle(c))}">${hot(demPct(c))}${fmt(demPct(c))}%</span><span class="bbar"><i data-w="${Math.min(100, demPct(c))}%"></i></span></div>`;
+    <div class="brow crow" data-row="${key}">
+      <span class="bname">${esc(c.text)} <span class="craft-tier" title="${esc(t('Tier {n} of {m} — the best one this item level allows', { n: c.tier, m: c.tiers }))}">T${c.tier}${c.range ? ` · ${esc(c.range)}` : ''}</span>${via}</span>
+      <span class="cdem" title="${esc(demTitle(c) || t('Share of builds that wear this modifier on this item class (poe.ninja)'))}">${hot(demPct(c))}${fmt(demPct(c))}%</span>
+      <span class="cch">${chanceTag(c.chance, c.chanceUnknown)}</span>
+      <span class="cpx">${btn}</span></div>`;
   }).join('');
   // «Оценить все»: по короткому поиску на строку, потом список — по приросту цены, лучший помечен.
   const priceable = list.filter((c) => c.stats).length;
@@ -88,14 +96,17 @@ async function priceCraft(b) {
       const cls = d == null ? '' : d > state.est * 0.1 ? ' up' : d < -state.est * 0.1 ? ' down' : '';
       // Прирост — главное: крупно «+2.1 div», рядом итоговая цена вещи с модом.
       const delta = d == null ? '' : Math.abs(d) < state.est * 0.1 ? t('same') : `${d > 0 ? '+' : '−'}${money(Math.abs(d))}`;
-      html = `<span class="cpr${cls}" title="${t('{n} listed with it · vs your current estimate', { n: q.total })}">${delta ? `<b>${delta}</b> · ` : ''}≈ ${money(v)}</span>`;
+      // В таблице кандидатов колонка узкая — прирост, итоговая цена — в подсказке.
+      html = row && row.classList.contains('crow')
+        ? `<span class="cpr${cls}" title="${t('{n} listed with it · vs your current estimate', { n: q.total })} · ≈ ${money(v)}">${delta ? `<b>${delta}</b>` : `≈ ${money(v)}`}</span>`
+        : `<span class="cpr${cls}" title="${t('{n} listed with it · vs your current estimate', { n: q.total })}">${delta ? `<b>${delta}</b> · ` : ''}≈ ${money(v)}</span>`;
       if (row && d != null) row.dataset.delta = Math.abs(d) < state.est * 0.1 ? 0 : d;
     }
     b.outerHTML = html;
   } catch (e) {
     if (state !== mine) return;
     b.disabled = false;
-    b.textContent = t('price?');
+    b.textContent = b.closest('.crow') ? t('estimate') : t('price?');
     setStatus(errText(e), true);
     if (isLimit(e)) return 'limit';
   }
@@ -129,12 +140,13 @@ function withMods(f, adds) {
 
 
 // Примерный шанс мода при Exalted с оменом его стороны: метка «частый / средний / редкий» и «≈ 1 из N».
+// Шанс за попытку — «1 из 6», цветом по редкости (частый / средний / редкий); неизвестен — «—» с пояснением.
 function chanceTag(p, unknown) {
-  if (unknown) return ` <span class="chance unknown" title="${esc(t('Valuable modifiers cannot be estimated from trade listings — items with them are priced and listed differently'))}">${esc(t('chance ?'))}</span>`;
+  if (unknown) return ` <span class="chance unknown" title="${esc(t('Valuable modifiers cannot be estimated from trade listings — items with them are priced and listed differently'))}">— ⓘ</span>`;
   if (p == null) return '';
   const cls = p >= 0.12 ? 'common' : p >= 0.04 ? 'uncommon' : 'rare';
-  const label = { common: t('common'), uncommon: t('uncommon'), rare: t('rare') }[cls];
-  return ` <span class="chance ${cls}" title="${esc(t('Rough estimate: Exalted Orb + omen of its side gives this modifier about 1 in {n} times', { n: Math.max(1, Math.round(1 / p)) }))}">${esc(label)} · ≈1/${Math.max(1, Math.round(1 / p))}</span>`;
+  const n = Math.max(1, Math.round(1 / p));
+  return ` <span class="chance ${cls}" title="${esc(t('Rough estimate: Exalted Orb + omen of its side gives this modifier about 1 in {n} times', { n }))}">${esc(t('1 in {n}', { n: String(n) }))}</span>`;
 }
 
 // ---- Крафт для новичка: места на вещи, «продать или крафтить», план с затратами ----

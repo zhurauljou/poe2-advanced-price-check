@@ -647,3 +647,15 @@ footer > span:first-child { min-width: 0; overflow: hidden; text-overflow: ellip
 .lot.st-sanctified { box-shadow: inset 3px 0 #f1d79a; }
 .lot.st-corrupted { box-shadow: inset 3px 0 var(--g-corrupted); }
 .lot.st-mirrored, .lot.st-unidentified { box-shadow: inset 3px 0 var(--muted); }
+/* Кандидаты крафта — таблица: мод | нужен билдам | шанс за попытку | цена с ним */
+.crow { display: grid; grid-template-columns: 1fr 66px 70px 76px; column-gap: 8px; align-items: center; padding: 4px 6px; }
+.crow .bname { white-space: normal; }
+.crow .cdem { text-align: right; color: var(--text); font-variant-numeric: tabular-nums; white-space: nowrap; }
+.crow .cch { text-align: right; }
+.crow .cch .chance { margin-left: 0; font-size: 13px; }
+.crow .cpx { text-align: right; }
+.crow .cpx .cprice, .crow .cpx .cpr { margin-left: 0; }
+.crow .cvia { display: block; margin-top: 1px; font-size: 13px; color: #c9a0e8; }
+.crow.chead { padding: 0 6px 2px; border-bottom: 1px solid var(--line2); font: 700 11px/1.2 var(--body); letter-spacing: .3px;
+              text-transform: uppercase; color: var(--muted); }
+.crow.chead span:not(:first-child) { text-align: right; }
