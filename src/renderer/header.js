@@ -140,8 +140,9 @@ function renderTooltip() {
       if (i < 0) i = props.findIndex((x) => x.group === 'map' && x.label === p.k);
       return i < 0 ? `${esc(p.k)}: ${v}` : pick(`p:${i}`, esc(p.k), v, props[i], PROP_OP[props[i].key] || '≥', 'min');
     });
-    // DPS в игровой подсказке нет — показываем отдельной строкой, чтобы по нему тоже можно было искать.
-    const dps = ['dps'].map(propIdx).filter((i) => i >= 0)
+    // DPS в игровой подсказке нет — показываем отдельной строкой, чтобы по нему тоже можно было искать. Использования
+    // скрижали — тоже: в игре это строка implicit'а («6 uses remaining»), а не свойство.
+    const dps = ['dps', 'uses'].map(propIdx).filter((i) => i >= 0)
       .map((i) => pick(`p:${i}`, props[i].label, `<b>${fmt(props[i].value)}</b>`, props[i], '≥', 'min'));
     plines.push(...dps);
     if (plines.length) lines.push(row(plines));

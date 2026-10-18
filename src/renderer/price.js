@@ -381,7 +381,7 @@ async function runImpact() {
       const q = await quickPrice(state.item, f);
       if (seq !== impactSeq) return;
       const without = estimate(q.lots);
-      state.impact[i] = { without, total: q.total, step: step ? m.min : null, share: without == null ? null : Math.max(0, 1 - without / state.est) };
+      state.impact[i] = { without, total: q.total, thin: without != null && q.total < MIN_LOTS, step: step ? m.min : null, share: without == null ? null : Math.max(0, 1 - without / state.est) };
     } catch (e) {
       if (seq !== impactSeq) return;
       state.impact[i] = { error: errText(e) };
@@ -409,6 +409,8 @@ function driveChip(i) {
     return ` <span class="drive big" title="${esc(d.step != null ? t('Nothing listed with {n} instead', { n: d.step }) : t('Nothing listed without it'))}">${esc(t(d.step != null ? 'nothing lower listed' : 'essential'))}</span>`;
   }
   const pct = Math.round(d.share * 100);
+  // 1–2 лота без мода — не оценка: серым с «?».
+  if (d.thin) return ` <span class="drive low" title="${esc(t('Too few listings to price it — one or two prices can be anything'))} · ${t('{n} listed', { n: d.total })}">${esc(t('≈{n}% of price', { n: pct }))}?</span>`;
   const without = d.step != null ? t('With {n}: {price}', { n: d.step, price: money(d.without) }) : t('Without it: {price}', { price: money(d.without) });
   const label = pct < 5 ? t('adds ~0') : d.step != null ? t('+1 ≈ {n}% of price', { n: pct }) : t('≈{n}% of price', { n: pct });
   return ` <span class="drive${pct >= 50 ? ' big' : pct < 10 ? ' low' : ''}" title="${esc(without)} · ${t('{n} listed', { n: d.total })}">${label}</span>`;

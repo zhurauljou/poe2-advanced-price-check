@@ -312,6 +312,7 @@
     chance: 'шанс',
     'details and alternatives': 'подробнее и другие способы',
     details: 'подробнее',
+    'Too few listings to price it — one or two prices can be anything': 'Слишком мало лотов для оценки: одна-две цены бывают какими угодно',
     'Too few listings to price the goal — one or two prices can be anything': 'Слишком мало лотов, чтобы оценить цель: одна-две цены бывают какими угодно',
     '{n} listings': ['{n} лот', '{n} лота', '{n} лотов'],
     'Only {n} listings like the goal — too few to judge the craft by': ['Таких вещей на трейде всего {n} — по одной цене нельзя решать, стоит ли крафтить', 'Таких вещей на трейде всего {n} — по ним нельзя решать, стоит ли крафтить', 'Таких вещей на трейде всего {n} — по ним нельзя решать, стоит ли крафтить'],

@@ -96,7 +96,10 @@ async function priceCraft(b) {
     let html;
     const row = b.closest('.brow');
     if (v == null) html = `<span class="cpr" title="${t('Nothing like it is listed — could be rare and pricey')}">${t('none listed')}</span>`;
-    else {
+    else if (q.total < MIN_LOTS) {
+      // 1–2 лота — не оценка: показываем серым, в сортировке «Оценить всё» — внизу.
+      html = `<span class="cpr thin" title="${esc(t('Too few listings to price it — one or two prices can be anything'))} · ${esc(t('{n} listings', { n: q.total }))}">${money(v)}?</span>`;
+    } else {
       const d = state.est != null ? v - state.est : null;
       const cls = d == null ? '' : d > state.est * 0.1 ? ' up' : d < -state.est * 0.1 ? ' down' : '';
       // Прирост — главное: крупно «+2.1 div», рядом итоговая цена вещи с модом.
@@ -159,9 +162,7 @@ function chanceTag(p, unknown) {
 let craftPrices = {}; // div за штуку валюты из плана (poe.ninja)
 let goalValue; // цена цели: undefined — считаем, null — не нашлось
 let goalBasis = 'exact'; // по чему цена цели: exact — точно такие, similar — похожие, partial — нижняя граница
-// Меньше GOAL_MIN лотов — не оценка: одна-две цены бывают какими угодно (скипетр: 900 div при цене вещи 13 div), а на цене
-// цели держится весь вердикт. Такую цену показываем (goalThin), но решения по ней не принимаем.
-const GOAL_MIN = 3;
+// Цена цели по слишком малому числу лотов (меньше MIN_LOTS, core.js): показываем, но вердикт по ней не строим.
 let goalThin = null; // { value, n } — цена по слишком малому числу лотов
 
 // Места на вещи кружками: занят (цвет по тиру), свободен; fractured — с рамкой.
@@ -347,7 +348,7 @@ async function computeGoal(g) {
   // Цена по ответу поиска: лотов мало — запоминаем как «редкие лоты» и ищем шире.
   const take = (q) => {
     const v = estimate(q.lots);
-    if (v != null && q.total >= GOAL_MIN) return v;
+    if (v != null && q.total >= MIN_LOTS) return v;
     if (v != null && !goalThin) goalThin = { value: v, n: q.total };
     return null;
   };
