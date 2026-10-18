@@ -466,6 +466,9 @@ function itemTip(it) {
     rarity: it.rarity || '',
     ilvl: it.ilvl,
     corrupted: !!it.corrupted,
+    // Гнёзда (рун / Soul Core) и что в них вставлено — их в свойствах трейд не присылает.
+    sockets: (it.sockets || []).length,
+    socketed: (it.socketedItems || []).map((s) => s.typeLine || s.baseType).filter(Boolean),
     // Состояния лота, после которых вещь уже не изменить (поля трейда): окно выделит их в строке лота и в карточке.
     // fractured / desecrated трейд ставит любой вещи с таким модом — это частое и не меняет, что с вещью можно делать.
     states: [['corrupted', 'Corrupted'], ['sanctified', 'Sanctified'], ['duplicated', 'Mirrored']].filter(([k]) => it[k]).map(([, name]) => name)

@@ -201,6 +201,13 @@ function showCompare(l, row) {
     const yours = cls === 'better' || cls === 'worse' ? `<span class="yours">${t('yours {x}', { x: fmt(ourProps.get(p.k)) })}</span>` : '';
     return `<div class="cm ${cls}">${mark[cls] ? `<i>${mark[cls]}</i>` : ''}${esc(p.k)}: <b>${esc(p.v)}</b>${yours}</div>`;
   });
+  // Гнёзда: число (◆ на каждое) и что в них вставлено; сравнение — с гнёздами вашей вещи.
+  if (tip.sockets || item.sockets) {
+    const n = tip.sockets || 0;
+    const cls = compareClass(n, item.sockets || 0);
+    const inside = (tip.socketed || []).length ? ` <span class="yours">${esc(tip.socketed.join(', '))}</span>` : '';
+    props.push(`<div class="cm ${cls}">${mark[cls] ? `<i>${mark[cls]}</i>` : ''}Sockets: <b>${n ? '◆ '.repeat(n).trim() : '—'}</b>${cls && cls !== 'same' ? `<span class="yours">${t('yours {x}', { x: item.sockets || 0 })}</span>` : ''}${inside}</div>`);
+  }
   if (tip.ilvl) {
     const cls = compareClass(tip.ilvl, item.ilvl);
     props.push(`<div class="cm ${cls}">${mark[cls] ? `<i>${mark[cls]}</i>` : ''}Item Level: <b>${tip.ilvl}</b>${cls ? `<span class="yours">${t('yours {x}', { x: item.ilvl })}</span>` : ''}</div>`);
