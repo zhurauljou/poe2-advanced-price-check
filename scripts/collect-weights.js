@@ -265,8 +265,12 @@ async function main() {
         } }, sort: { indexed: 'desc' } };
         const s = await call('search', `${TRADE}/api/trade2/search/poe2/${L}`, query);
         const ids = (s.result || []).filter((id) => !seen.has(id));
+        // Ход работы — после каждого поиска и раз в 5 выборок: иначе на первом круге класс молчит по 10 минут.
+        const label = `${cls}, ilvl ${w.min}${w.max ? `–${w.max}` : '+'}`;
+        say(`${label}: ${ids.length} new listings${ids.length ? ` — reading (~${Math.ceil(ids.length / 10 * MIN_GAP.fetch / 60000)} min)` : ''}`);
         for (let i = 0; i < ids.length && !(max && c.items - before >= max); i += 10) {
           const batch = ids.slice(i, i + 10);
+          if (i && i % 50 === 0) say(`  ${label}: ${i} / ${ids.length} read`);
           const fr = await call('fetch', `${TRADE}/api/trade2/fetch/${batch.join(',')}?query=${s.id}`);
           for (const r of fr.result || []) {
             if (!r || !r.item) continue;
