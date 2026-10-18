@@ -205,12 +205,13 @@
 
 ## 6. Выводы для вкладки Craft (сверка с `src/main/craft.js`, `src/main/essences.js`)
 
-> **Статус (сверено с кодом в v0.3.113, 2026-10-18):** пункты 1–5, 7–9, 13, 16, 17 сделаны — crafted-слот и его
+> **Статус (сверено с кодом в v0.3.113, 2026-10-18):** пункты 1–5, 7–9, 11, 13, 16, 17 сделаны — crafted-слот и его
 > лимит (`craftedCap`, руна Astrid's Creativity), порченые эссенции и Alloys (`data/crafting-currency.json`), омены
 > Desecrate (Necromancy, лич-омены, Abyssal Echoes), Hinekora's Lock и Fracturing Orb — в разделе рискованных шагов,
-> Greater / Perfect Transmutation, Omen of Greater Exaltation в плане, гнёзда Artificer's Orb, Liquid Emotions.
+> Greater / Perfect Transmutation, Omen of Greater Exaltation в плане, гнёзда Artificer's Orb, Liquid Emotions,
+> совет про Omen of Catalysing Exaltation (тратит всё качество).
 > Открыты: 6 (Altered-кости — только упоминание), 10 (снимает ли Whittling desecrated-мод — проверить в игре),
-> 11 (что Catalysing Exaltation тратит качество — проверить текст совета), 12 (подсветка «гарантированно»).
+> 12 (подсветка «гарантированно»).
 > Ниже — исходный список (как был составлен для 0.5.5).
 
 **Несоответствия / устаревшее:**
