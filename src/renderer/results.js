@@ -23,7 +23,7 @@ function renderResults(r) {
     <div class="lots${showAllLots ? ' all' : ''}">${r.listings.map((l, i) => `
       <div class="lot${i >= LOTS_SHOWN ? ' more' : ''}${ageClass(l.indexed)}" data-i="${i}" title="${l.whisper ? t('Copy whisper to seller') : t('Instant buyout — opens the trade site (Travel to Hideout)')}">
         <span class="chip">${l.currencyImage ? `<img src="${esc(l.currencyImage)}" alt="">` : ''}${fmt(l.amount)}${l.currencyImage ? '' : ' ' + esc(l.currencyName)}</span>
-        <span class="eq">${cmpBadge(l)}${l.divine != null && !sameUnit(l) ? '≈ ' + money(l.divine) : ''}</span>
+        <span class="eq">${stateBadge(l)}${cmpBadge(l)}${l.divine != null && !sameUnit(l) ? '≈ ' + money(l.divine) : ''}</span>
         <span class="seller">${l.whisper ? '' : `<b class="ib" title="${t('Instant buyout')}">⚡</b>`}<span class="dot${l.online ? ' on' : ''}"></span>${esc(l.seller)}</span>
         <span class="age">${l.indexed ? ago(l.indexed) : ''}</span>
         <span class="acts">${l.whisper ? `<i data-a="whisper" title="${t('Whisper in game — opens chat with the message, you press Enter')}"><svg viewBox="0 0 16 16"><path d="M2 3h12v8H7l-3 3v-3H2z" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linejoin="round"/></svg></i>` : ''}<i data-a="site" title="${t('Open this listing on the trade site')}">↗</i>${l.tip ? `<i data-a="pin" title="${t('Pin the comparison card')}"><svg viewBox="0 0 16 16"><path d="M10 2l4 4-2 1-2 3 1 2-1 1-3-3-4 4-1-1 4-4-3-3 1-1 2 1 3-2z" fill="none" stroke="currentColor" stroke-width="1.3" stroke-linejoin="round"/></svg></i>` : ''}</span>
@@ -143,6 +143,27 @@ function cmpCounts(l) {
   return { better, worse };
 }
 
+// Состояния вашей вещи и лота (Corrupted, Sanctified, Mirrored…): в строке лота — те, что отличаются от вашей вещи.
+const STATE_SHORT = { Corrupted: 'Corrupted', Sanctified: 'Sanctified', Mirrored: 'Mirrored', Unidentified: 'Unid' };
+function myStates() {
+  const it = state.item;
+  return new Set([it.corrupted && 'Corrupted', it.sanctified && 'Sanctified', it.mirrored && 'Mirrored', it.unidentified && 'Unidentified'].filter(Boolean));
+}
+function stateBadge(l) {
+  const mine = myStates();
+  const diff = ((l.tip && l.tip.states) || []).filter((s) => !mine.has(s));
+  return diff.map((s) => `<span class="lstate s-${s.toLowerCase()}" title="${esc(t('{state} — yours is not', { state: s }))}">${esc(STATE_SHORT[s] || s)}</span>`).join('');
+}
+
+// Состояния лота — наверху карточки, заметно: от них цена меняется сильнее, чем от роллов (освящённую или осквернённую
+// вещь уже не изменить). Отличие от вашей вещи — с пометкой.
+function statesHtml(tip) {
+  const list = tip.states || (tip.corrupted ? ['Corrupted'] : []);
+  if (!list.length) return '';
+  const mine = myStates();
+  return `<div class="cmp-states">${list.map((s) => `<span class="cstate s-${s.toLowerCase()}${mine.has(s) ? ' same' : ''}">${esc(s)}${mine.has(s) ? '' : ` · ${esc(t('yours is not'))}`}</span>`).join('')}</div>`;
+}
+
 function cmpBadge(l) {
   const { better, worse } = cmpCounts(l);
   if (!better && !worse) return '';
@@ -186,10 +207,10 @@ function showCompare(l, row) {
   const html = `
     <div class="banner mini ${esc(tip.rarity)}${two ? '' : ' single'}"><div class="bn-name">${esc(tip.name || tip.base)}</div>${two ? `<div class="bn-base">${esc(tip.base)}</div>` : ''}</div>
     <div class="cmp-body">
+      ${statesHtml(tip)}
       ${props.join('')}
       ${props.length ? '<div class="tt"><div class="sep"></div></div>' : ''}
       ${modLines}
-      ${tip.corrupted ? '<div class="cm corrupt">Corrupted</div>' : ''}
       ${missing ? `<div class="cmp-miss">${t("Yours has, theirs doesn't:")}</div>${missing}` : ''}
       <div class="cmp-legend"><span class="better">▲ ${t('better')}</span> · <span class="worse">▼ ${t('worse')}</span> · <span class="extra">+ ${t("you don't have")}</span> — ${t('than your item')}${tip.mods.some((m) => classify(m) === 'diff') ? ` · <span class="diff">± ${t('depends on the build')}</span>` : ''}</div>
     </div>`;

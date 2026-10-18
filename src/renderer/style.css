@@ -626,3 +626,13 @@ footer > span:first-child { min-width: 0; overflow: hidden; text-overflow: ellip
 /* Свежесть лотов — значок ⓘ у надёжности оценки, подробности в подсказке */
 .ages-i { margin-left: 8px; color: var(--label); font-weight: 400; cursor: help; }
 .ages-i.warn { color: var(--warn); }
+/* Состояние лота (Corrupted, Sanctified…), которого нет у вашей вещи — метка в строке и строка в карточке */
+.lstate { margin-right: 6px; padding: 0 4px; border: 1px solid rgba(224, 88, 74, .5); border-radius: 2px;
+          font: 700 11px/1.4 var(--body); letter-spacing: .3px; text-transform: uppercase; color: var(--g-corrupted); }
+.cm.state { color: var(--g-corrupted); text-align: center; }
+.cmp-states { display: flex; flex-wrap: wrap; justify-content: center; gap: 6px; margin: 2px 0 8px; }
+.cstate { padding: 2px 8px; border: 1px solid var(--g-corrupted); border-radius: 3px; background: rgba(224, 88, 74, .12);
+          font: 700 13px var(--body); letter-spacing: .3px; text-transform: uppercase; color: var(--g-corrupted); }
+.cstate.same { border-color: #3a3f48; background: none; color: var(--muted); }
+/* Освящённый лот — золотистая метка (не красная, как осквернение): их легко различить с одного взгляда */
+.lstate.s-sanctified, .cstate.s-sanctified { border-color: rgba(241, 215, 154, .7); color: #f1d79a; background: rgba(241, 215, 154, .1); }

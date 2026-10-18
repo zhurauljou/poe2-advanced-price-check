@@ -304,6 +304,8 @@
     'The app lives in the tray next to the clock: right-click it for the league, these settings and updates.': 'Программа живёт в трее у часов: правый клик — лига, эти настройки и обновления.',
     'Got it': 'Понятно',
     'Recent checks': 'Недавние проверки',
+    '{state} — yours is not': '{state} — у вашей вещи нет',
+    'yours is not': 'у вашей — нет',
     'Copy link': 'Копировать ссылку',
     'Copy the trade search link': 'Скопировать ссылку на этот поиск на трейде',
     'Link copied': 'Ссылка скопирована',

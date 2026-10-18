@@ -464,6 +464,10 @@ function itemTip(it) {
     rarity: it.rarity || '',
     ilvl: it.ilvl,
     corrupted: !!it.corrupted,
+    // Состояния лота, после которых вещь уже не изменить (поля трейда): окно выделит их в строке лота и в карточке.
+    // fractured / desecrated трейд ставит любой вещи с таким модом — это частое и не меняет, что с вещью можно делать.
+    states: [['corrupted', 'Corrupted'], ['sanctified', 'Sanctified'], ['duplicated', 'Mirrored']].filter(([k]) => it[k]).map(([, name]) => name)
+      .concat(it.identified === false ? ['Unidentified'] : []),
     props: (it.properties || []).filter((p) => p.values && p.values[0])
       .map((p) => ({ k: clean(p.name), v: clean(p.values[0][0]) })),
     mods,
