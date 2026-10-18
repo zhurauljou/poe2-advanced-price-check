@@ -306,6 +306,10 @@ async function priceCheck(text, refresh = false, historyId = null) {
   const sd = settings.get();
   if (typeof sd.searchOnline === 'boolean') prepared.filters.online = sd.searchOnline;
   if (typeof sd.searchFlex === 'boolean') prepared.filters.flex = sd.searchFlex;
+  // База под крафт: ищем «такие же по тирам» — от ступени, где открылся последний тир, до следующей (ilvl 84 = 82).
+  const il = prepared.filters.ilvl;
+  const band = il && il.enabled && (item.rarity === 'Normal' || item.rarity === 'Magic') ? craft.ilvlBand(item.baseType, item.ilvl) : null;
+  if (band) Object.assign(il, { min: band.min, max: band.max, next: band.next });
   // Тема вещи для советов по крафту: два самых важных включённых мода (без сумм).
   lastThemeMods = prepared.filters.mods.filter((m) => m.enabled && m.statId && m.tag !== 'pseudo' && m.tag !== 'implicit' && m.tag !== 'rune' && !m.option)
     .sort((a, b) => (b.importance || 0) - (a.importance || 0)).slice(0, 2).map((m) => m.text.split('\n')[0]);

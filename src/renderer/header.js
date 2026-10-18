@@ -153,7 +153,13 @@ function renderTooltip() {
         ? `Requires: ${pick('m:reqLevel', 'Level', `<b>${item.reqLevel}</b>`, f.reqLevel, '≤', 'max')}${rest ? `<span class="req-rest">, <b>${rest}</b></span>` : ''}`
         : `Requires: <b>${esc(item.requires)}</b>`);
     }
-    if (item.ilvl) meta.push(pick('m:ilvl', 'Item Level', `<b>${item.ilvl}</b>`, f.ilvl, '≥', 'min'));
+    if (item.ilvl) {
+      // База под крафт: границы — ступени тиров (main: craft.ilvlBand); подсказка — что откроется на следующей.
+      let il = pick('m:ilvl', 'Item Level', `<b>${item.ilvl}</b>`, f.ilvl, '≥', 'min');
+      if (f.ilvl && f.ilvl.enabled && state.searchable && f.ilvl.max) il += ` <span class="tp-op">≤</span><input type="number" class="tp-in" data-ref="m:ilvl" data-f="max" value="${f.ilvl.max}">`;
+      if (f.ilvl && f.ilvl.next) il = `<span title="${esc(t('Same modifier tiers up to {max}; at {level} unlocks: {mods}', { max: f.ilvl.next.level - 1, level: f.ilvl.next.level, mods: f.ilvl.next.mods.slice(0, 4).join(', ') }))}">${il}</span>`;
+      meta.push(il);
+    }
     if (item.gemLevel) meta.push(pick('m:gemLevel', 'Level', `<b>${item.gemLevel}</b>`, f.gemLevel, '≥', 'min'));
     if (item.sockets) meta.push(pick('m:sockets', 'Sockets', `<b>${'◆ '.repeat(item.sockets).trim()}</b>`, f.sockets, '≥', 'min'));
     if (meta.length) lines.push(row(meta));

@@ -270,3 +270,13 @@ test('веса палочек и посохов — по базам той же 
   assert.equal(craft.classWeights(W, 'Wands', d.bases.get('Siphoning Wand'), d).items, 150, 'обычная — только обычные');
   assert.equal(craft.classWeights(W, 'Wands', d.bases.get('Frigid Wand'), d).items, items.length, 'холодных меньше 100 — весь класс');
 });
+
+test('белая база: ilvl ищется ступенью тиров — от последнего открытого тира до следующего', { skip }, async () => {
+  await init();
+  const b = craft.ilvlBand('Sandsworn Sandals', 70);
+  assert.deepEqual([b.min, b.max, b.next.level], [68, 70, 71], 'на 71 открываются сопротивления');
+  assert.ok(b.next.mods.some((m) => /fire resistance/.test(m)));
+  const top = craft.ilvlBand('Sandsworn Sandals', 84);
+  assert.deepEqual([top.min, top.max, top.next], [82, null, null], 'выше 82 новых тиров нет: 84 = 82');
+  assert.equal(craft.ilvlBand('No Such Base', 80), null);
+});

@@ -387,7 +387,7 @@ function buildQuery(item, f) {
   }
   const rarity = { Normal: 'normal', Magic: 'magic', Rare: 'nonunique', Unique: 'unique' }[item.rarity];
   if (rarity) type.rarity = { option: rarity };
-  if (f.ilvl && f.ilvl.enabled) type.ilvl = { min: Number(f.ilvl.min) };
+  if (f.ilvl && f.ilvl.enabled) type.ilvl = { min: Number(f.ilvl.min), ...(f.ilvl.max ? { max: Number(f.ilvl.max) } : {}) };
   if (f.quality && f.quality.enabled) type.quality = { min: Number(f.quality.min) };
   if (f.skill && f.skill.enabled) query.stats[0].filters.push({ id: f.skill.statId, value: { min: Number(f.skill.min) } });
   if (f.reqLevel && f.reqLevel.enabled) query.filters.req_filters = { filters: { lvl: { max: Number(f.reqLevel.max) } } };

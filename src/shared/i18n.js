@@ -310,6 +310,7 @@
     chance: 'шанс',
     'details and alternatives': 'подробнее и другие способы',
     details: 'подробнее',
+    'Same modifier tiers up to {max}; at {level} unlocks: {mods}': 'Те же тиры модов до {max}; на {level} откроются: {mods}',
     'Chance per try: Exalted Orb + omen of its side': 'Шанс за одну попытку: Exalted Orb + омен его стороны',
     'unknown': 'неизвестно',
     'Chances: a rough estimate from {n} trade listings ({date})': 'Шансы — приблизительно, по {n} лотам трейда ({date})',

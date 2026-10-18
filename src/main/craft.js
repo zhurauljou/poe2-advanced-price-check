@@ -937,6 +937,26 @@ function rollsOn(baseType, template) {
   return data.pool.some((m) => (m.domain === 'item' || m.domain === 'desecrated') && m.lines.includes(want) && canRoll(m, base.tags || []));
 }
 
+// Уровни предмета, на которых у базы открываются новые тиры модов. Белая / магическая база с ilvl 84 ничем не лучше
+// базы 82, если выше 82 тиров нет, — ищем «такие же по тирам»: от последней ступени до следующей (не включая).
+// null — данных о базе нет. next — следующая ступень и что на ней открывается (для подсказки).
+function ilvlBand(baseType, ilvl) {
+  const data = craftData.current();
+  const base = data && data.bases.get(baseType);
+  if (!base || !ilvl) return null;
+  const at = new Map(); // уровень → семейства, у которых на нём тир
+  for (const m of data.pool) {
+    if (m.domain !== 'item' || m.is_essence_only || !canRoll(m, base.tags || [])) continue;
+    if (!at.has(m.required_level)) at.set(m.required_level, new Set());
+    at.get(m.required_level).add((m.lines || []).join(' / '));
+  }
+  const steps = [...at.keys()].sort((a, b) => a - b);
+  const min = steps.filter((l) => l <= ilvl).pop();
+  const next = steps.find((l) => l > ilvl);
+  if (min == null) return null;
+  return { min, max: next != null ? next - 1 : null, next: next != null ? { level: next, mods: [...at.get(next)] } : null };
+}
+
 // Может ли мод вообще оказаться на этой базе: выпасть или быть её implicit'ом. Для списков спроса poe.ninja —
 // в его «Rare Sceptre» попадают и палочки (уровни заклинаний, Cast Speed), которых на скипетре не бывает.
 const linesCache = new Map(); // база → все строки модов, которые могут на ней быть
@@ -962,4 +982,4 @@ function sameClass(a, b) {
   return x && y ? x.item_class === y.item_class : null;
 }
 
-module.exports = { advise, load, reset: craftData.reset, rollsOn, canAppear, sameClass, gambleFor, classWeights };
+module.exports = { advise, load, reset: craftData.reset, rollsOn, ilvlBand, canAppear, sameClass, gambleFor, classWeights };
