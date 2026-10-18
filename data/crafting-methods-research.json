@@ -704,7 +704,7 @@
   {
    "name": "Vaal Siphoner",
    "category": "Currency (Incubator)",
-   "effect": "Adds a kill threshold to a Corrupted Rare Jewellery item; when it is met, siphons (removes) a random modifier and improves the numeric values of the other modifiers",
+   "effect": "Adds a kill threshold (with a minimum monster level) to a Corrupted Rare ring or amulet; when it is met, one random modifier loses a tier (nothing happens to it if already at the lowest tier) and every other modifier is rerolled between its current value and 110% of its tier maximum; reapplying overwrites the progress (Mobalytics vaal-siphoner, 2026-10-09; older descriptions said the modifier is removed)",
    "applies": {
     "rarity": [
      "Rare (Corrupted)"

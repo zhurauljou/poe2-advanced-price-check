@@ -75,7 +75,7 @@
 | Omen of Answered Prayers | доп. эффект святыни | нет |
 | Ancient Infuser | меняет и коррумпирует Tablet | нет |
 | Core Destabiliser | меняет Soul Core (может уничтожить) | нет |
-| Vaal Siphoner | corrupted rare-бижутерия: после порога убийств снимает случайный мод, улучшает значения остальных | совет (финал) |
+| Vaal Siphoner | corrupted rare-кольцо или амулет: порог убийств (с минимальным уровнем монстров); по его достижении **один случайный мод теряет тир** (на нижнем тире — остаётся как есть), остальные перекатываются от текущего значения до **110% максимума тира**; повторное применение сбрасывает прогресс (Mobalytics [vaal-siphoner](https://mobalytics.gg/poe-2/guides/vaal-siphoner), 2026-10-09, **M**; раньше здесь было «снимает случайный мод» — по старому описанию) | совет (финал) |
 | Orb of Extraction | уничтожает вещь, возвращает аугменты | совет (дорогие ядра и руны) |
 | Artificer's Shard | 10 шт. = Artificer's Orb | нет |
 | Crystallised Corruption | двойная порча гема | нет |
@@ -92,6 +92,10 @@
 | tricks §0 / T2 | «эксклюзивов личей нет в префиксах брони» | Верно для шлема, перчаток, ботинок, тела, щита и баклера. **У фокуса лич-префиксы есть** (Sovereign: spell dmg while melee, +1 spell totem; Liege: curse magnitude, offering; Blackblooded: invocated dmg, spell AoE), но омен на фокусе не работает | H |
 | notes §2.5 / tricks D-8 | лич-омены — только оружие и бижутерия | Подтверждено GGG. Добавить: пояс работает, Gnawed-кость отвергается | H |
 | tricks §5 (цены) | Echoes ~1 div; Light 5+; сторона-Annul ~3.5; Erasure «несколько div»; Astrid's 14–20; Greater Exaltation ~4 ex | Сейчас: Echoes **0.08**; Light **8.8**; Sinistral / Dextral Annulment **19.6 / 12.8**; Erasure **20 / 13.2**; Whittling **14**; Astrid's **3.6**; Greater Exaltation ~14 ex; Perfect Chaos 7.7; Fracturing 10.6; Hinekora 1677; Preserved Cranium 28 | H (снимок) |
+| Vaal Siphoner (§6) | «снимает случайный мод» | понижает тир одного мода, остальные — до 110% максимума (Mobalytics, 2026-10-09); исправлено в §6 и `data/crafting-methods-research.json` | M |
+| `essences.js` (poe2db) | Perfect Battle +2/+3, Horror 60%, Hysteria на фокусе 20–23% | Mobalytics [essences](https://mobalytics.gg/poe-2/guides/essences) (обн. 2026-06-16): +4/+6, 100%, 41–45% — похоже, таблица устарела; оставлено по poe2db, проверить в игре | спорно |
+| tricks D-3 [T15] | Mark (Essence of the Abyss) можно зафиксировать Fracturing Orb | Mobalytics [ssf-crafting](https://mobalytics.gg/poe-2/guides/ssf-crafting) (2026-06-24): Mark — desecrated, фиксировать нельзя (шанс 1/3 вместо 1/4) | спорно |
+| руны | Uhtred's Sidereus — только аугмент ботинок | Mobalytics [runes-of-aldur](https://mobalytics.gg/poe-2/guides/runes-of-aldur) (2026-07-20): вставленная руна открывает вещи моды **Chronomancy** (как руны влияния — свои пулы); в советнике не учтено | M |
 | notes §2.7 | только Runic Ward от Verisium | Добавить Exceptional Verisium (особые базы) и Crest / Starlit Ore — это уники, не крафт | H/M |
 
 ## 8. Что моделировать (приоритет)

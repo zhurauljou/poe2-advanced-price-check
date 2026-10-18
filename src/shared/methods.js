@@ -60,7 +60,7 @@
     { id: 'verisium', op: 'encounter', model: 'ignore', match: /Verisium|Starlit Ore|'s Crest of /,
       reason: 'энкаунтеры Runes of Aldur и улучшение уников (рунная ковка — в самом энкаунтере)' },
     { id: 'vaal-siphoner', op: 'corrupt-siphon', model: 'gap', currencies: ['Vaal Siphoner'],
-      note: 'испорченная редкая бижутерия: после N убийств снимает случайный мод и усиливает остальные' },
+      note: 'осквернённые редкие кольцо или амулет: после N убийств один случайный мод теряет тир, остальные перекатываются до 110% максимума тира (docs/crafting-methods-research.md §6)' },
     { id: 'divine-implicit', op: 'reroll-implicit', model: 'advice', currencies: ['Omen of the Blessed'], note: 'Divine перекатывает только implicit' },
     { id: 'chance', op: 'to-unique', model: 'ignore', currencies: ['Omen of Chance', 'Omen of the Ancients'], reason: 'Orb of Chance — гамбл в уник, не крафт' },
     // ---- не про крафт вещей ----
