@@ -159,6 +159,10 @@ function chanceTag(p, unknown) {
 let craftPrices = {}; // div за штуку валюты из плана (poe.ninja)
 let goalValue; // цена цели: undefined — считаем, null — не нашлось
 let goalBasis = 'exact'; // по чему цена цели: exact — точно такие, similar — похожие, partial — нижняя граница
+// Меньше GOAL_MIN лотов — не оценка: одна-две цены бывают какими угодно (скипетр: 900 div при цене вещи 13 div), а на цене
+// цели держится весь вердикт. Такую цену показываем (goalThin), но решения по ней не принимаем.
+const GOAL_MIN = 3;
+let goalThin = null; // { value, n } — цена по слишком малому числу лотов
 
 // Места на вещи кружками: занят (цвет по тиру), свободен; fractured — с рамкой.
 function slotsHtml(r) {
@@ -298,7 +302,7 @@ function verdictHtml(plan) {
   const now = state.est;
   const rows = [
     `<div><span>${esc(t('Sell as is'))}</span><b>${now != null ? money(now) : '—'}</b></div>`,
-    `<div><span>${esc(t('Goal item'))}${goalValue != null && goalBasis !== 'exact' ? ` <small class="muted" title="${esc(t(goalBasis === 'similar' ? 'No exact matches — priced by similar items: the added modifiers required, the rest at their tier floor' : 'No similar items either — priced by items with only the most valuable added modifier: the real goal is worth more'))}">${esc(t(goalBasis === 'similar' ? '(similar)' : '(at least)'))}</small>` : ''}</span><b>${goalValue === undefined ? '…' : goalValue == null ? t('none listed') : (goalBasis === 'partial' ? '≥ ' : '≈ ') + money(goalValue)}</b></div>`,
+    `<div><span>${esc(t('Goal item'))}${goalValue != null && goalBasis !== 'exact' ? ` <small class="muted" title="${esc(t(goalBasis === 'similar' ? 'No exact matches — priced by similar items: the added modifiers required, the rest at their tier floor' : 'No similar items either — priced by items with only the most valuable added modifier: the real goal is worth more'))}">${esc(t(goalBasis === 'similar' ? '(similar)' : '(at least)'))}</small>` : ''}</span><b>${goalValue === undefined ? '…' : goalValue == null ? (goalThin ? `<span class="muted" title="${esc(t('Too few listings to price the goal — one or two prices can be anything'))}">${money(goalThin.value)}? · ${esc(t('{n} listings', { n: goalThin.n }))}</span>` : t('none listed')) : (goalBasis === 'partial' ? '≥ ' : '≈ ') + money(goalValue)}</b></div>`,
     `<div><span>${esc(t('Currency, on average'))}</span><b>${lottery ? `${esc(t('from'))} ` : ''}${money(known)}</b></div>`,
   ];
   let verdict = '';
@@ -309,10 +313,11 @@ function verdictHtml(plan) {
   if (goalValue != null && known >= goalValue) {
     verdict = `<div class="verdict bad">✖ ${esc(t(goalBasis === 'partial' ? 'Probably not worth it: the currency alone (≈ {cost}) costs more than the lower bound of the goal (≥ {goal})' : 'Not worth it: the currency alone (≈ {cost}) costs more than the finished goal (≈ {goal})', { cost: money(known), goal: money(goalValue) }))}${hitNote}</div>`;
   } else if (goalValue === null && now != null) {
-    // Готовых аналогов на трейде нет — цена цели неизвестна. Затраты уже не меньше цены вещи — проще продать.
+    // Готовых аналогов на трейде нет (или их 1–2) — цена цели неизвестна. Затраты уже не меньше цены вещи — проще продать.
+    const why = goalThin ? t('Only {n} listings like the goal — too few to judge the craft by', { n: goalThin.n }) : t('No finished items like the goal are listed — its price is unknown');
     verdict = known >= now * 0.5
-      ? `<div class="verdict bad">✖ ${esc(t('Selling as is is better: the currency alone costs ≈ {cost}, the item sells for ≈ {now}', { cost: money(known), now: money(now) }))}<small>${esc(t('No finished items like the goal are listed — its price is unknown'))}</small>${hitNote}</div>`
-      : `<div class="verdict">${esc(t('No finished items like the goal are listed — its price is unknown'))}${hitNote}</div>`;
+      ? `<div class="verdict bad">✖ ${esc(t('Selling as is is better: the currency alone costs ≈ {cost}, the item sells for ≈ {now}', { cost: money(known), now: money(now) }))}<small>${esc(why)}</small>${hitNote}</div>`
+      : `<div class="verdict">${esc(why)}${hitNote}</div>`;
   } else if (goalValue != null && now != null) {
     // Симуляция всего плана: распределение итога и шанс, что крафт выгоднее продажи сейчас (src/shared/plancost.js).
     const sim = planner.simulate(plan, { keep: craftGoal ? craftGoal.keep.length : 0 });
@@ -338,11 +343,19 @@ async function computeGoal(g) {
   for (const m of f.mods) if (m.template && gone.has(tplKey(m.template))) m.enabled = false;
   withMods(f, g.add);
   goalBasis = 'exact';
+  goalThin = null;
+  // Цена по ответу поиска: лотов мало — запоминаем как «редкие лоты» и ищем шире.
+  const take = (q) => {
+    const v = estimate(q.lots);
+    if (v != null && q.total >= GOAL_MIN) return v;
+    if (v != null && !goalThin) goalThin = { value: v, n: q.total };
+    return null;
+  };
   try {
     const it = state.item.rarity === 'Magic' ? { ...state.item, rarity: 'Rare' } : state.item;
     const q = await quickPrice(it, f);
     if (mine !== state) return;
-    goalValue = estimate(q.lots);
+    goalValue = take(q);
     // Точно таких нет — похожие: добавленные моды обязательны, у оставшихся — нижняя граница тира, второстепенные выключены.
     if (goalValue == null) {
       const added = new Set(g.add.flatMap((a) => (a.stats || []).map((s) => s.statId)));
@@ -354,7 +367,7 @@ async function computeGoal(g) {
       }
       const q2 = await quickPrice(it, loose);
       if (mine !== state) return;
-      goalValue = estimate(q2.lots);
+      goalValue = take(q2);
       if (goalValue != null) goalBasis = 'similar';
       // И так нет — нижняя граница: вещь только с самым ценным добавленным модом (остальное как у похожих).
       if (goalValue == null && g.add.length > 1) {
@@ -364,7 +377,7 @@ async function computeGoal(g) {
         for (const m of part.mods) if (added.has(m.statId) && !keep.has(m.statId)) m.enabled = false;
         const q3 = await quickPrice(it, part);
         if (mine !== state) return;
-        goalValue = estimate(q3.lots);
+        goalValue = take(q3);
         if (goalValue != null) goalBasis = 'partial';
       }
     }

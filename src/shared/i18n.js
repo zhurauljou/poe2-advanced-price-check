@@ -11,6 +11,8 @@
     '{n} mods in this total': ['{n} mod in this total', '{n} mods in this total'],
     '{n} characters': ['{n} character', '{n} characters'],
     '+{n} mods': ['+{n} mod', '+{n} mods'],
+    '{n} listings': ['{n} listing', '{n} listings'],
+    'Only {n} listings like the goal — too few to judge the craft by': ['Only {n} listing like the goal — too few to judge the craft by', 'Only {n} listings like the goal — too few to judge the craft by'],
     'max roll': 'max', // значок «почти максимальный ролл» — коротко
     '{n} level {lvl}+ characters on poe.ninja use this': ['{n} level {lvl}+ character on poe.ninja uses this', '{n} level {lvl}+ characters on poe.ninja use this'],
     'Check other elements ({n} searches)': ['Check other elements ({n} search)', 'Check other elements ({n} searches)'],
@@ -310,6 +312,9 @@
     chance: 'шанс',
     'details and alternatives': 'подробнее и другие способы',
     details: 'подробнее',
+    'Too few listings to price the goal — one or two prices can be anything': 'Слишком мало лотов, чтобы оценить цель: одна-две цены бывают какими угодно',
+    '{n} listings': ['{n} лот', '{n} лота', '{n} лотов'],
+    'Only {n} listings like the goal — too few to judge the craft by': ['Таких вещей на трейде всего {n} — по одной цене нельзя решать, стоит ли крафтить', 'Таких вещей на трейде всего {n} — по ним нельзя решать, стоит ли крафтить', 'Таких вещей на трейде всего {n} — по ним нельзя решать, стоит ли крафтить'],
     '· with all {n} {side}es filled — {odds}': '· если заполнить все {n} — {odds} (лишние жертвы потом снимать)',
     'first a cheap «sacrificial» {side} — without it {essence} removes one of your {side}es': 'сначала дешёвый «жертвенный» {side} — без него {essence} снимет один из ваших',
     'removes a random {side} and adds its own': 'снимает случайный {side} и ставит свой',
