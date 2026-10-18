@@ -29,6 +29,20 @@ function build(statsJson) {
       enById.set(e.id, e.text);
     }
   }
+  // Пояснение в скобках у трейда, которого нет в игре: «#% increased Gold found in Map (Gold Piles)» на скрижали —
+  // в игре «25% increased Gold found in Map». Ищем и без него, если без скобок такой строки нет.
+  const extra = new Map();
+  for (const list of index.values()) {
+    for (const s of list) {
+      const m = s.text.match(/^(.*\S) \(([^()]+)\)$/);
+      if (!m || VARIANT.test(s.text)) continue;
+      const key = norm(m[1]);
+      if (index.has(key)) continue;
+      if (!extra.has(key)) extra.set(key, []);
+      extra.get(key).push(s);
+    }
+  }
+  for (const [k, v] of extra) index.set(k, v);
 }
 
 // Справочник трейда на языке клиента (ru.pathofexile.com/api/trade2/data/stats): строки модов из буфера — на нём.

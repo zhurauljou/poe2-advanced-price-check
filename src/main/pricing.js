@@ -263,6 +263,8 @@ function prepare(item, demand, rollsOn) {
   lastDemand = demandPct;
   // У уников несопоставленные строки — это флейвор-текст, его не показываем.
   if (item.rarity === 'Unique') item.mods = item.mods.filter((m) => m.statId);
+  // Скрижаль: implicit «Adds Ritual Altars to a Map» на трейде не ищется — тип скрижали задаёт база.
+  if (item.itemClass === 'Tablet') item.mods = item.mods.filter((m) => m.statId || m.tag !== 'implicit');
   // Неизменяемые моды уника («Passives in Radius can be Allocated…») есть у каждого экземпляра — на цену не влияют.
   // Отличить можно только в расширенном формате: там у изменяемых модов есть диапазон или варианты.
   let hiddenFixed = 0;

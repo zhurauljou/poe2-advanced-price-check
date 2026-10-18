@@ -149,7 +149,6 @@ function parseItem(text) {
         item.props[key] = +m[2];
         (item.mapLabels = item.mapLabels || {})[key] = m[1];
       }
-      else if ((m = l.match(/^Uses Remaining: (\d+)/))) item.props.uses = +m[1]; // скрижаль
       else if (l === 'Corrupted') item.corrupted = true;
       else if (l === 'Twice Corrupted') { item.corrupted = true; item.twiceCorrupted = true; }
       else if (l === 'Mirrored') item.mirrored = true;
@@ -218,6 +217,9 @@ function parseItem(text) {
         // У самоцветов «{ Enhancement }» — их собственные моды («Allocates …» у Megalomaniac), а не анойнт: самоцветы не анойнтят.
         const tag = head ? (head.tag === 'enchant' && item.itemClass === 'Jewels' ? 'explicit' : head.tag) : 'explicit';
         const line = t ? { text: t[1], tag: t[2], tier, range } : { text: l, tag, tier, range };
+        // Скрижаль: «6 uses remaining» — implicit-строка, но для поиска это число использований (свойство), а не мод.
+        const uses = item.itemClass === 'Tablet' && line.text.match(/^(\d+) uses? remaining$/i);
+        if (uses) { item.props.uses = +uses[1]; continue; }
         if (tr) line.textRange = tr[1];
         item.modLines.push(line);
         if (head && head.affix) head.affix.lines.push(line.text); // строки аффикса — чтобы различать моды с одинаковым названием

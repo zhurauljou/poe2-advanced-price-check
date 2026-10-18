@@ -1,0 +1,21 @@
+Item Class: Tablet
+Rarity: Rare
+Transcendental Summons
+Ritual Tablet
+--------
+Item Level: 80
+--------
+{ Implicit Modifier }
+Adds Ritual Altars to a Map
+6 uses remaining
+--------
+{ Prefix Modifier "Bountiful" (Tier: 1) }
+25(25-35)% increased Gold found in Map
+{ Prefix Modifier "Collector's" (Tier: 1) }
+10(8-12)% increased Rarity of Items found in Map
+{ Suffix Modifier "of Omens" (Tier: 1) }
+Ritual Favours in Map have 51(35-70)% increased chance to be Omens
+{ Suffix Modifier "of Sacrifice" (Tier: 1) }
+Monsters Sacrificed at Ritual Altars in Map grant 29(18-30)% increased Tribute
+--------
+Can be used in a personal Map Device to add modifiers to a Map.

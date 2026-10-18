@@ -177,9 +177,10 @@ test('путевой камень: свойства — фильтры карт�
   assert.equal(it.modLines.length, 1);
 });
 
-// Текст скрижали собран по памяти (живого образца ещё нет) — проверяем только «Uses Remaining» и фильтр по нему.
-test('скрижаль: использования — свойство, поиск не меньше оставшихся', () => {
-  const it = fixture('tablet-magic.txt');
+test('скрижаль: «6 uses remaining» — число использований (свойство), а не мод', () => {
+  const it = fixture('tablet-rare.txt');
   assert.equal(it.itemClass, 'Tablet');
-  assert.equal(it.props.uses, 10);
+  assert.equal(it.props.uses, 6);
+  assert.ok(!texts(it).some((x) => /uses remaining/.test(x)));
+  assert.ok(texts(it).includes('Adds Ritual Altars to a Map'));
 });
