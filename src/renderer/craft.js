@@ -262,6 +262,7 @@ function planHtml(plan) {
       <div class="ps-how">${curChips(c.currencies)} · ${esc(odds)}${c.cost != null ? ` · <b>≈ ${money(c.cost)}</b>` : ''}</div>
       ${key.length ? `<div class="ps-key">${esc(key.join(' · '))}</div>` : ''}
       ${c.risky && c.chance < 1 && !s.mods ? `<div class="ps-risk">${esc(t('A miss removes a good modifier instead'))}</div>` : ''}
+      ${c.k === 'essence' && c.chance < 1 && (s.atRisk || []).length ? `<div class="ps-risk">⚠ ${esc(t('{odds}: it removes {mods} instead of the sacrificial modifier', { odds: 1 - c.chance >= 0.5 ? `~${Math.round((1 - c.chance) * 100)}%` : oneIn(1 - c.chance), mods: s.atRisk.map((m) => `«${m}»`).join(t(' or ')) }))}</div>` : ''}
       ${more.length ? `<details class="ps-more"><summary>${esc(alts.length ? t('details and alternatives') : t('details'))}</summary>${more.join('')}</details>` : ''}</li>`;
   }).join('')}</ol>`;
 }

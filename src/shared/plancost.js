@@ -262,7 +262,15 @@
     for (const flag of ['useDes', 'useCrafted']) {
       const d = out.findIndex((s) => s.act === 'add' && s[flag]);
       const first = out.findIndex((s) => s.act === 'add' || s.act === 'add2');
-      if (d >= 0 && first >= 0 && first < d) out.splice(first, 0, out.splice(d, 1)[0]);
+      if (d >= 0 && first >= 0 && first < d) {
+        // Шаг встаёт раньше добавлений first..d−1 на своей стороне: модов там к этому моменту меньше (onSide и onItem
+        // в craft.js растут только с добавлениями своей стороны).
+        const s = out[d];
+        const n = out.slice(first, d).flatMap((x) => (x.act === 'add2' ? x.steps : x.act === 'add' ? [x] : [])).filter((x) => x.side === s.side).length;
+        const moved = { ...s, onSide: Math.max(0, (s.onSide || 0) - n), onItem: Math.max(0, (s.onItem || 0) - n) };
+        out.splice(d, 1);
+        out.splice(first, 0, moved);
+      }
     }
     return out;
   }
