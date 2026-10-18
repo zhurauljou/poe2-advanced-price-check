@@ -100,6 +100,8 @@ const PROP_KEY = { Armour: 'ar', 'Evasion Rating': 'ev', 'Energy Shield': 'es', 
   'Physical Damage': 'pdps', 'Fire Damage': 'edps', 'Cold Damage': 'edps', 'Lightning Damage': 'edps',
   'Critical Hit Chance': 'crit', 'Attacks per Second': 'aps', 'Uses Remaining': 'uses' };
 const PROP_OP = { pdps: 'pDPS ≥', edps: 'eDPS ≥', map_tier: '=' };
+// Скрижаль, найденная среди полных (ровно 10 использований), — «= 10», а не «≥».
+const propOp = (p) => (p.key === 'uses' && p.max != null && Number(p.max) === Number(p.min) ? '=' : PROP_OP[p.key] || '≥');
 // Моды путевого камня, опасные для многих билдов.
 const WAYSTONE_DANGER = [
   [/cannot Regenerate/i, 'No regeneration'],
@@ -138,12 +140,12 @@ function renderTooltip() {
       // Свойства путевого камня — по подписи из игры (pricing.propFilters кладёт её в label).
       let i = propIdx(PROP_KEY[p.k]);
       if (i < 0) i = props.findIndex((x) => x.group === 'map' && x.label === p.k);
-      return i < 0 ? `${esc(p.k)}: ${v}` : pick(`p:${i}`, esc(p.k), v, props[i], PROP_OP[props[i].key] || '≥', 'min');
+      return i < 0 ? `${esc(p.k)}: ${v}` : pick(`p:${i}`, esc(p.k), v, props[i], propOp(props[i]), 'min');
     });
     // DPS в игровой подсказке нет — показываем отдельной строкой, чтобы по нему тоже можно было искать. Использования
     // скрижали — тоже: в игре это строка implicit'а («6 uses remaining»), а не свойство.
     const dps = ['dps', 'uses'].map(propIdx).filter((i) => i >= 0)
-      .map((i) => pick(`p:${i}`, props[i].label, `<b>${fmt(props[i].value)}</b>`, props[i], '≥', 'min'));
+      .map((i) => pick(`p:${i}`, props[i].label, `<b>${fmt(props[i].value)}</b>`, props[i], propOp(props[i]), 'min'));
     plines.push(...dps);
     if (plines.length) lines.push(row(plines));
 

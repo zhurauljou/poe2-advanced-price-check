@@ -301,3 +301,11 @@ test('белая база: «удачный ilvl» — выше последне
   assert.ok(r.ilvlHint, 'подсказка есть');
   assert.ok(r.ilvlHint.from < 79 && r.ilvlHint.junk.length);
 });
+
+test('скрижаль: непорченая — среди ровно 10 использований, порченая с 13 — не меньше 13, без пересчёта', { skip }, async () => {
+  const uses = async (file) => (await filters(file)).props.find((p) => p.key === 'uses');
+  const six = await uses('tablet-rare.txt');
+  assert.deepEqual([six.value, six.min, six.max], [6, 10, 10]);
+  const thirteen = await uses('tablet-corrupted-13.txt');
+  assert.deepEqual([thirteen.value, thirteen.min, thirteen.max], [13, 13, undefined]);
+});

@@ -182,6 +182,8 @@ $('tooltip').addEventListener('input', (e) => {
   const flt = filterByRef(t.dataset.ref);
   flt[t.dataset.f] = t.value === '' ? null : Number(t.value);
   if (flt.exact) flt.max = flt.min; // тир путевого камня — ровно такой
+  // Нижняя граница выше верхней (скрижаль «= 10», ввели 12) — верхнюю снимаем, иначе поиск пустой.
+  else if (t.dataset.f === 'min' && flt.max != null && flt.min != null && flt.min > Number(flt.max)) flt.max = null;
 });
 
 $('misc').addEventListener('click', (e) => {
