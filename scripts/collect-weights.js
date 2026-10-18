@@ -92,7 +92,8 @@ function render() {
   out.push(`${C.bold}Сбор весов модов PoE 2${C.reset} — лига ${ui.store ? ui.store.league : '…'}    работает ${dur(now - ui.started)}`);
   out.push(`Состояние: ${state}`);
   out.push(`Сейчас: ${ui.cls ? `круг ${ui.round}, ${C.bold}${ui.cls}${C.reset}${ui.window ? `, ilvl ${ui.window}` : ''}${ui.toRead ? ` — прочитано ${ui.read} из ${ui.toRead}` : ''}` : '—'}`);
-  out.push(`За сессию: +${added} вещей (${hours > 0.05 ? Math.round(added / hours) : '—'} в час), запросов: поиск ${ui.requests.search}, лоты ${ui.requests.fetch}, отказов 429: ${ui.r429}.  Всего в хранилище: ${C.bold}${total}${C.reset}`);
+  out.push(`За сессию: +${added} вещей (${hours > 0.05 ? Math.round(added / hours) : '—'} в час). Всего в хранилище: ${C.bold}${total}${C.reset}`);
+  out.push(`${C.dim}Запросов: поиск ${ui.requests.search}, лоты ${ui.requests.fetch}; отказов 429: ${ui.r429}${C.reset}`);
   out.push('');
   out.push(`${C.dim}${'Класс'.padEnd(17)}${'вещей'.padStart(7)}${'+сессия'.padStart(9)}${'с базой'.padStart(9)}${'точность*'.padStart(11)}   обновлён${C.reset}`);
   if (ui.store) {
