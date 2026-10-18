@@ -205,19 +205,22 @@ async function advise(item, demandMods, cached) {
   const open = { prefix: Math.max(0, max.prefix - used.prefix), suffix: Math.max(0, max.suffix - used.suffix) };
 
   // Востребованные моды (≥ 15% билдов), которые могут встать: лучший доступный по ilvl тир.
-  const want = new Map((demandMods || []).filter((r) => r.pct >= WANT_PCT).map((r) => [r.name.toLowerCase(), r.pct]));
+  // Ключ мода для сравнения: нижний регистр, без «+» перед числом — как строки модов RePoE (templates); у poe.ninja
+  // и трейда плюс бывает и не бывает («+# maximum stacks of Puppet Master» против «# maximum stacks…»).
+  const key = (s) => s.toLowerCase().replace(/\+#/g, '#');
+  const want = new Map((demandMods || []).filter((r) => r.pct >= WANT_PCT).map((r) => [key(r.name), r.pct]));
   // Редкое оружие без руны Альдура: стихию модов можно сменить руной (Passion / Ire / Breath / Betrayal) — спрос на
   // стихийный мод считаем по лучшей стихии (Extra Cold на посохе — как Extra Fire), лучшую стихию — советуем.
   const aldur = item.rarity === 'Rare' && ALDUR_WEAPONS.has(item.itemClass) && !(item.modLines || []).some((l) => /^Forged by the \w+ of Aldur$/.test(l.text));
   const bestElement = {};
   if (aldur) {
-    const all = new Map((demandMods || []).map((r) => [r.name.toLowerCase(), r.pct]));
+    const all = new Map((demandMods || []).map((r) => [key(r.name), r.pct]));
     for (const r of demandMods || []) {
       if (!/\b(fire|cold|lightning)\b/i.test(r.name)) continue;
-      const vs = ELEMENTS.map((e) => [e, all.get(r.name.replace(/\b(Fire|Cold|Lightning)\b/g, e).toLowerCase()) || 0]);
+      const vs = ELEMENTS.map((e) => [e, all.get(key(r.name.replace(/\b(Fire|Cold|Lightning)\b/g, e))) || 0]);
       const top = vs.reduce((a, b) => (b[1] > a[1] ? b : a));
-      if (top[1] >= WANT_PCT) for (const [e] of vs) want.set(r.name.replace(/\b(Fire|Cold|Lightning)\b/g, e).toLowerCase(), top[1]);
-      bestElement[r.name.toLowerCase()] = top;
+      if (top[1] >= WANT_PCT) for (const [e] of vs) want.set(key(r.name.replace(/\b(Fire|Cold|Lightning)\b/g, e)), top[1]);
+      bestElement[key(r.name)] = top;
     }
   }
   // Строки, которые на вещи уже есть, не делают кандидата востребованным: у гибрида «броня / урон миньонов»
@@ -601,7 +604,7 @@ async function advise(item, demandMods, cached) {
         const cur = (l.match(/\b(fire|cold|lightning)\b/) || [])[1];
         const top = bestElement[l];
         if (!cur || !top) continue;
-        const curPct = want.get(l) != null && top[0].toLowerCase() === cur ? top[1] : ((demandMods || []).find((r) => r.name.toLowerCase() === l) || {}).pct || 0;
+        const curPct = want.get(l) != null && top[0].toLowerCase() === cur ? top[1] : ((demandMods || []).find((r) => key(r.name) === l) || {}).pct || 0;
         tally[top[0]] = tally[top[0]] || { gain: 0, from: cur };
         if (top[0].toLowerCase() !== cur) tally[top[0]].gain += top[1] - curPct;
       }

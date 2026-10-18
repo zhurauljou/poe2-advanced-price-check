@@ -244,7 +244,7 @@ function elementVariants(item, filters) {
 }
 
 function prepare(item, demand, rollsOn) {
-  const demandPct = new Map((demand && demand.mods || []).map((r) => [r.name.toLowerCase(), r.pct]));
+  const demandPct = new Map((demand && demand.mods || []).map((r) => [r.name.toLowerCase().replace(/\+#/g, '#'), r.pct]));
   const demandOf = (tpl) => {
     if (!tpl) return undefined;
     const k = tpl.replace(/ \(Local\)$/, '').toLowerCase();
