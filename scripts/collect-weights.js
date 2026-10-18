@@ -64,6 +64,8 @@ const ui = {
   round: 0, cls: null, window: null, read: 0, toRead: 0,
   started: Date.now(), requests: { search: 0, fetch: 0 }, r429: 0,
   sessionNew: {}, classAt: {}, logs: [], store: null,
+  force: false, // F — собирать сейчас, не дожидаясь простоя
+  hold: false, // P — пауза вручную
 };
 const C = { dim: '\x1b[2m', bold: '\x1b[1m', green: '\x1b[32m', yellow: '\x1b[33m', red: '\x1b[31m', cyan: '\x1b[36m', reset: '\x1b[0m' };
 const dur = (ms) => { const s = Math.max(0, Math.round(ms / 1000)); return s >= 3600 ? `${Math.floor(s / 3600)} ч ${Math.floor((s % 3600) / 60)} мин` : s >= 60 ? `${Math.floor(s / 60)} мин ${s % 60} с` : `${s} с`; };
@@ -78,7 +80,8 @@ function render() {
   const added = Object.values(ui.sessionNew).reduce((a, b) => a + b, 0);
   const hours = (now - ui.started) / 3600e3;
   let state;
-  if (ui.mode === 'paused') {
+  if (ui.mode === 'hold') state = `${C.yellow}ПАУЗА (вручную)${C.reset} — P, чтобы продолжить`;
+  else if (ui.mode === 'paused') {
     const left = IDLE_MS - idleMs();
     state = `${C.yellow}ПАУЗА${C.reset} — вы за компьютером; продолжу через ${dur(left > 0 ? left : 0)} без мыши и клавиатуры`;
   } else if (ui.mode === 'wait') state = `${C.cyan}ЖДУ ЛИМИТ ТРЕЙДА${C.reset} (${ui.waitKind === 'search' ? 'поиск' : 'чтение лотов'}) — ещё ${dur(ui.waitUntil - now)}`;
@@ -101,12 +104,19 @@ function render() {
       out.push(`${mark}${cls.padEnd(15)}${String(c.items).padStart(7)}${(ui.sessionNew[cls] ? `+${ui.sessionNew[cls]}` : '').padStart(9)}${String(withBase || '').padStart(9)}${precision(c.items).padStart(11)}   ${ago(ui.classAt[cls] || c.at)}${C.reset}`);
     }
   }
+  if (ui.store) {
+    const cs = Object.values(ui.store.classes);
+    const items = cs.reduce((a, c) => a + c.items, 0);
+    const based = cs.reduce((a, c) => a + (c.rowBase || []).filter((x) => x >= 0).length, 0);
+    out.push(`${C.bold}  ${'Всего'.padEnd(15)}${String(items).padStart(7)}${(added ? `+${added}` : '').padStart(9)}${String(based || '').padStart(9)}${C.reset}`);
+  }
   out.push(`${C.dim}* погрешность частоты редкого мода (~3%) — насколько точны шансы в советах крафта${C.reset}`);
   out.push('');
   out.push(`${C.dim}Лог (полный — data/weights.log):${C.reset}`);
   for (const l of ui.logs) out.push(`${C.dim}${l}${C.reset}`);
   out.push('');
-  out.push(`${C.dim}Ctrl+C — остановить и сохранить. Данные копятся между запусками; data/weights.json обновляется после каждого класса.${C.reset}`);
+  out.push(`${C.bold}F${C.reset} — ${ui.force ? `${C.green}собираю, не дожидаясь простоя${C.reset} (F — снова ждать, пока вы отойдёте)` : 'собирать сейчас, не дожидаясь простоя'}   ${C.bold}P${C.reset} — ${ui.hold ? 'продолжить' : 'пауза'}   ${C.bold}Q / Ctrl+C${C.reset} — остановить и сохранить`);
+  out.push(`${C.dim}Данные копятся между запусками; data/weights.json обновляется после каждого класса.${C.reset}`);
   // Курсор в начало, каждая строка — с очисткой хвоста, ниже — очистить: без мигания всего экрана.
   process.stdout.write(`\x1b[H${out.map((l) => `${l}\x1b[K`).join('\n')}\x1b[J`);
 }
@@ -134,12 +144,20 @@ try {
 } catch {}
 const IDLE_MS = flag('no-idle') ? 0 : Number(arg('idle', 1)) * 60000;
 async function waitIdle() {
-  if (!IDLE_MS || idleMs() >= IDLE_MS) return;
+  if (ui.hold) {
+    say('Paused manually (P)');
+    ui.mode = 'hold';
+    while (ui.hold) await sleep(500);
+    ui.mode = 'run';
+    say('Resumed');
+  }
+  if (ui.force || !IDLE_MS || idleMs() >= IDLE_MS) return;
   say(`Paused: you are at the computer — resuming after ${IDLE_MS / 60000} min without mouse / keyboard`);
   const prev = ui.mode;
   ui.mode = 'paused';
-  while (idleMs() < IDLE_MS) await sleep(2000);
+  while (idleMs() < IDLE_MS && !ui.force && !ui.hold) await sleep(500);
   ui.mode = prev === 'paused' ? 'run' : prev;
+  if (ui.hold) return waitIdle();
   say('Resumed');
 }
 
@@ -319,6 +337,18 @@ async function main() {
   let stopping = false;
   const stop = () => { if (stopping) return; stopping = true; save(); say('Stopped, saved.'); process.exit(0); };
   process.on('SIGINT', stop);
+  // Клавиши в окне: F — собирать сейчас, P — пауза, Q / Ctrl+C — стоп (в «сыром» режиме Ctrl+C приходит символом).
+  if (ui.on && process.stdin.isTTY) {
+    process.stdin.setRawMode(true);
+    process.stdin.resume();
+    process.stdin.on('data', (b) => {
+      const k = b.toString().toLowerCase();
+      if (k === '\u0003' || k === 'q' || k === 'й') stop();
+      else if (k === 'f' || k === 'а') { ui.force = !ui.force; say(ui.force ? 'Forced: collecting while you are at the computer (F)' : 'Auto: collecting only while you are away'); }
+      else if (k === 'p' || k === 'з') ui.hold = !ui.hold;
+      render();
+    });
+  }
   process.on('SIGBREAK', stop);
 
   say(`League ${league}; ${IDLE_MS ? `collecting while idle ${IDLE_MS / 60000}+ min` : 'collecting without pauses'}; Ctrl+C to stop`);
