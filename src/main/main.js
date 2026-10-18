@@ -742,7 +742,7 @@ app.whenReady().then(singleInstance).then((ok) => {
   handle('listing-url', FROM.overlay, (_e, item, filters, account) => (demo.mockTrade() ? 'https://www.pathofexile.com/trade2'
     : api.forCurrent(() => pricing.listingUrl(curLeague(), item, filters, account))));
   handle('open-url', FROM.any, (_e, u) => {
-    if (/^https:\/\/((www\.)?pathofexile\.com|poe\.ninja|github\.com\/zhurauljou\/poe2-advanced-price-check)\//.test(u)) shell.openExternal(u);
+    if (typeof u === 'string' && /^https:\/\/((www\.)?pathofexile\.com|poe\.ninja|poe2db\.tw|github\.com\/zhurauljou\/poe2-advanced-price-check)\//.test(u)) shell.openExternal(u);
   });
   handle('upd-ready', FROM.updates, (e) => e.sender.send('upd-status', updStatus()));
   handle('upd-check', FROM.updates, () => updater.check());

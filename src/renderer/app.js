@@ -1610,7 +1610,7 @@ function renderResults(r) {
         <span class="eq">${cmpBadge(l)}${l.divine != null && !sameUnit(l) ? '≈ ' + money(l.divine) : ''}</span>
         <span class="seller">${l.whisper ? '' : `<b class="ib" title="${t('Instant buyout')}">⚡</b>`}<span class="dot${l.online ? ' on' : ''}"></span>${esc(l.seller)}</span>
         <span class="age">${l.indexed ? ago(l.indexed) : ''}</span>
-        <span class="acts">${l.whisper ? `<i data-a="whisper" title="${t('Whisper in game — opens chat with the message, you press Enter')}"><svg viewBox="0 0 16 16"><path d="M2 3h12v8H7l-3 3v-3H2z" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linejoin="round"/></svg></i>` : ''}<i data-a="site" title="${t('Open this listing on the trade site')}">↗</i></span>
+        <span class="acts">${l.whisper ? `<i data-a="whisper" title="${t('Whisper in game — opens chat with the message, you press Enter')}"><svg viewBox="0 0 16 16"><path d="M2 3h12v8H7l-3 3v-3H2z" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linejoin="round"/></svg></i>` : ''}<i data-a="site" title="${t('Open this listing on the trade site')}">↗</i>${l.tip ? `<i data-a="pin" title="${t('Pin the comparison card')}"><svg viewBox="0 0 16 16"><path d="M10 2l4 4-2 1-2 3 1 2-1 1-3-3-4 4-1-1 4-4-3-3 1-1 2 1 3-2z" fill="none" stroke="currentColor" stroke-width="1.3" stroke-linejoin="round"/></svg></i>` : ''}</span>
       </div>`).join('')}
     </div>
     ${r.listings.length > LOTS_SHOWN ? `<button class="link lots-more">${showAllLots ? t('Show fewer') : t('Show all {n}', { n: r.listings.length })}</button>` : ''}`;
@@ -1621,7 +1621,12 @@ function renderResults(r) {
     if (act) {
       const l = r.listings[+row.dataset.i];
       if (act.dataset.a === 'site') await openListing(r, l);
-      else if (!(await window.pc.whisperGame(l.whisper))) setStatus(t('Whisper copied — switch to the game and paste it into chat (Enter, Ctrl+V)'));
+      else if (act.dataset.a === 'pin') {
+        // Карточка остаётся открытой, пока не открепят: можно навести на другие лоты и вернуться к ней.
+        pinnedLot = pinnedLot && pinnedLot.l === l ? null : { l, row };
+        box.querySelectorAll('.lot.pinned').forEach((x) => x.classList.remove('pinned'));
+        if (pinnedLot) { row.classList.add('pinned'); showCompare(l, row); } else hideCompare();
+      } else if (!(await window.pc.whisperGame(l.whisper))) setStatus(t('Whisper copied — switch to the game and paste it into chat (Enter, Ctrl+V)'));
       fit();
       return;
     }
@@ -1639,7 +1644,7 @@ function renderResults(r) {
   }));
   box.querySelectorAll('.lot').forEach((row) => {
     row.addEventListener('mouseenter', () => showCompare(r.listings[+row.dataset.i], row));
-    row.addEventListener('mouseleave', hideCompare);
+    row.addEventListener('mouseleave', () => (pinnedLot && pinnedLot.row.isConnected ? showCompare(pinnedLot.l, pinnedLot.row) : hideCompare()));
   });
 }
 
@@ -1772,6 +1777,7 @@ function showCompare(l, row) {
   window.pc.compareShow(html, row.getBoundingClientRect().top);
 }
 
+let pinnedLot = null; // { l, row } — закреплённая карточка конкурента
 function hideCompare() {
   window.pc.compareHide();
 }
@@ -1828,6 +1834,7 @@ async function runSearch(relax = false) {
     setStatus(''); // убрать «ждём лимит», если было
     state.tradeUrl = r.url;
     $('open').hidden = false;
+    $('copyLink').hidden = false;
     heroRender = () => { renderTradeHero(r); $('hero').insertAdjacentHTML('beforeend', prevCheckHtml()); renderResults(r); renderElements(); };
     heroRender();
     recordPrice(state.est);
@@ -1889,6 +1896,10 @@ window.pc.onItem((data) => {
   $('hero').hidden = true;
   $('builds').hidden = true;
   $('open').hidden = true;
+  $('copyLink').hidden = true;
+  $('poe2db').hidden = !(state.item.name || state.item.baseType);
+  $('craftBadge').textContent = openSlotsBadge(state.item);
+  pinnedLot = null;
   $('demandBadge').textContent = '';
   renderLeagues();
   renderBanner();
@@ -2090,6 +2101,28 @@ document.addEventListener('keydown', (e) => {
   }
 });
 $('open').addEventListener('click', () => state.tradeUrl && window.pc.openUrl(state.tradeUrl));
+// Ссылка на поиск — поделиться или открыть позже.
+$('copyLink').addEventListener('click', () => {
+  if (!state.tradeUrl) return;
+  window.pc.copy(state.tradeUrl);
+  setStatus(t('Link copied'));
+});
+// Страница вещи на poe2db: уник — по имени, остальное — по базе.
+$('poe2db').addEventListener('click', () => {
+  const it = state && state.item;
+  if (!it) return;
+  const page = it.rarity === 'Unique' && it.name ? it.name : it.baseType || it.name;
+  window.pc.openUrl(`https://poe2db.tw/us/${encodeURIComponent(page.replace(/ /g, '_'))}`);
+});
+
+// Значок на вкладке Craft: свободные места под аффиксы (редкая — 3 + 3, магическая — 1 + 1; самоцветы — 2 + 2).
+function openSlotsBadge(it) {
+  if (!it.advanced || !['Rare', 'Magic'].includes(it.rarity) || it.corrupted || it.mirrored || it.sanctified) return '';
+  const per = it.rarity === 'Magic' ? 1 : it.itemClass === 'Jewels' ? 2 : 3;
+  const used = (side) => (it.affixes || []).filter((a) => a.side === side).length;
+  const free = Math.max(0, per - used('prefix')) + Math.max(0, per - used('suffix'));
+  return free ? t('{n} open', { n: free }) : '';
+}
 $('close').addEventListener('click', () => window.pc.hide());
 $('leagueBtn').addEventListener('click', (e) => { e.stopPropagation(); toggleLeagueMenu(); });
 $('leagueMenu').addEventListener('click', async (e) => {

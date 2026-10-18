@@ -358,7 +358,7 @@ body.cmp-page { background: #0a0d12; }
 
 /* ---- лоты ---- */
 .lots { border: 1px solid #3d3a33; background: rgba(10, 13, 18, .92); }
-.lot { display: grid; grid-template-columns: auto 1fr minmax(0, 130px) 34px 38px; align-items: center; gap: 8px; padding: 5px 8px;
+.lot { display: grid; grid-template-columns: auto 1fr minmax(0, 130px) 34px 56px; align-items: center; gap: 8px; padding: 5px 8px;
        border-bottom: 1px solid var(--line2); cursor: pointer; }
 .lot:last-child { border-bottom: 0; }
 .lot:hover { background: var(--hover); }
@@ -604,3 +604,12 @@ body.set-page { height: auto; user-select: text; }
 .live-row b { color: var(--cream); white-space: nowrap; }
 .live-row .seller { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: var(--text); }
 .tt .danger { color: var(--bad); font-weight: 700; }
+
+/* Закреплённая карточка конкурента: значок виден и подсвечен */
+.lot.pinned .acts { opacity: 1; }
+.lot.pinned .acts [data-a="pin"] { color: var(--gold); }
+/* Подвал: ссылки справа */
+.foot-links { display: flex; gap: 12px; white-space: nowrap; }
+/* Текст, который полезно скопировать (ник продавца, моды, ошибки), выделяется мышью; перетаскивание окна — за шапку */
+.tt, #status, .seller, .void .vd, .craft-how, .note, .cm { user-select: text; }
+footer > span:first-child { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
