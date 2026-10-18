@@ -14,7 +14,8 @@
 // Пока вы за компьютером (мышь / клавиатура трогались последние --idle минут), сбор на паузе: лимит трейда общий на IP,
 // он нужен вам. Остановить — Ctrl+C или закрыть окно (собранное не теряется).
 //
-//   npm run collect-weights -- [--league "Forbidden Rites"] [--classes Boots,Helmets] [--once] [--max 50] [--idle 1 | --no-idle]
+//   npm run collect-weights -- [--league "Forbidden Rites"] [--classes Boots,Helmets] [--once] [--max 50] [--idle 1 | --no-idle] [--plain]
+//   --plain — без экрана-таблицы, просто лог (вывод в файл и т.п.)
 //   --max N — не больше N новых вещей на класс за круг (быстрая проверка, короткая добивка)
 //
 // Ограничения: даже дешёвые лоты кто-то отобрал для продажи, а совсем мусор на трейд не попадает — редкие моды
@@ -51,8 +52,68 @@ const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 const LOG = path.join(DATA, 'weights.log');
 function say(msg) {
   const line = `${new Date().toTimeString().slice(0, 8)} ${msg}`;
-  console.log(line);
+  if (ui.on) { ui.logs.push(line); if (ui.logs.length > 8) ui.logs.shift(); } else console.log(line);
   try { fs.mkdirSync(DATA, { recursive: true }); fs.appendFileSync(LOG, `${line}\n`); } catch {}
+}
+
+// ---- экран сборщика: в консоли — таблица, обновляется раз в секунду; вывод не в консоль — обычный лог ----
+const ui = {
+  on: (!!process.stdout.isTTY || flag('ui')) && !flag('plain'),
+  mode: 'start', // start | run | paused | wait | error | done
+  waitKind: null, waitUntil: 0, error: null,
+  round: 0, cls: null, window: null, read: 0, toRead: 0,
+  started: Date.now(), requests: { search: 0, fetch: 0 }, r429: 0,
+  sessionNew: {}, classAt: {}, logs: [], store: null,
+};
+const C = { dim: '\x1b[2m', bold: '\x1b[1m', green: '\x1b[32m', yellow: '\x1b[33m', red: '\x1b[31m', cyan: '\x1b[36m', reset: '\x1b[0m' };
+const dur = (ms) => { const s = Math.max(0, Math.round(ms / 1000)); return s >= 3600 ? `${Math.floor(s / 3600)} ч ${Math.floor((s % 3600) / 60)} мин` : s >= 60 ? `${Math.floor(s / 60)} мин ${s % 60} с` : `${s} с`; };
+const ago = (t) => (t ? `${dur(Date.now() - t)} назад` : '—');
+// Погрешность (95%) частоты редкого мода (~3%) при n вещах — как точны шансы в советах крафта.
+const precision = (n) => (n ? `±${Math.round(1.96 * Math.sqrt(0.97 / (0.03 * n)) * 100)}%` : '—');
+function render() {
+  if (!ui.on) return;
+  const out = [];
+  const now = Date.now();
+  const total = ui.store ? Object.values(ui.store.classes).reduce((a, c) => a + c.items, 0) : 0;
+  const added = Object.values(ui.sessionNew).reduce((a, b) => a + b, 0);
+  const hours = (now - ui.started) / 3600e3;
+  let state;
+  if (ui.mode === 'paused') {
+    const left = IDLE_MS - idleMs();
+    state = `${C.yellow}ПАУЗА${C.reset} — вы за компьютером; продолжу через ${dur(left > 0 ? left : 0)} без мыши и клавиатуры`;
+  } else if (ui.mode === 'wait') state = `${C.cyan}ЖДУ ЛИМИТ ТРЕЙДА${C.reset} (${ui.waitKind === 'search' ? 'поиск' : 'чтение лотов'}) — ещё ${dur(ui.waitUntil - now)}`;
+  else if (ui.mode === 'error') state = `${C.red}ОСТАНОВЛЕН: ${ui.error}${C.reset}`;
+  else if (ui.mode === 'done') state = `${C.green}ГОТОВО${C.reset}`;
+  else if (ui.mode === 'start') state = 'Загрузка данных игры…';
+  else state = `${C.green}ИДЁТ СБОР${C.reset}`;
+  out.push(`${C.bold}Сбор весов модов PoE 2${C.reset} — лига ${ui.store ? ui.store.league : '…'}    работает ${dur(now - ui.started)}`);
+  out.push(`Состояние: ${state}`);
+  out.push(`Сейчас: ${ui.cls ? `круг ${ui.round}, ${C.bold}${ui.cls}${C.reset}${ui.window ? `, ilvl ${ui.window}` : ''}${ui.toRead ? ` — прочитано ${ui.read} из ${ui.toRead}` : ''}` : '—'}`);
+  out.push(`За сессию: +${added} вещей (${hours > 0.05 ? Math.round(added / hours) : '—'} в час), запросов: поиск ${ui.requests.search}, лоты ${ui.requests.fetch}, отказов 429: ${ui.r429}.  Всего в хранилище: ${C.bold}${total}${C.reset}`);
+  out.push('');
+  out.push(`${C.dim}${'Класс'.padEnd(17)}${'вещей'.padStart(7)}${'+сессия'.padStart(9)}${'с базой'.padStart(9)}${'точность*'.padStart(11)}   обновлён${C.reset}`);
+  if (ui.store) {
+    for (const cls of Object.keys(CLASSES)) {
+      const c = ui.store.classes[cls];
+      if (!c || (!c.items && (c.emptyRounds || 0) >= 1)) continue;
+      const withBase = (c.rowBase || []).filter((x) => x >= 0).length;
+      const mark = cls === ui.cls ? `${C.bold}▶ ` : '  ';
+      out.push(`${mark}${cls.padEnd(15)}${String(c.items).padStart(7)}${(ui.sessionNew[cls] ? `+${ui.sessionNew[cls]}` : '').padStart(9)}${String(withBase || '').padStart(9)}${precision(c.items).padStart(11)}   ${ago(ui.classAt[cls] || c.at)}${C.reset}`);
+    }
+  }
+  out.push(`${C.dim}* погрешность частоты редкого мода (~3%) — насколько точны шансы в советах крафта${C.reset}`);
+  out.push('');
+  out.push(`${C.dim}Лог (полный — data/weights.log):${C.reset}`);
+  for (const l of ui.logs) out.push(`${C.dim}${l}${C.reset}`);
+  out.push('');
+  out.push(`${C.dim}Ctrl+C — остановить и сохранить. Данные копятся между запусками; data/weights.json обновляется после каждого класса.${C.reset}`);
+  // Курсор в начало, каждая строка — с очисткой хвоста, ниже — очистить: без мигания всего экрана.
+  process.stdout.write(`\x1b[H${out.map((l) => `${l}\x1b[K`).join('\n')}\x1b[J`);
+}
+if (ui.on) {
+  process.stdout.write('\x1b[?25l\x1b[2J'); // спрятать курсор, очистить экран
+  setInterval(render, 1000).unref();
+  process.on('exit', () => { render(); process.stdout.write('\x1b[?25h\n'); });
 }
 function writeJson(file, data) { // через временный файл: остановка посреди записи не оставит обрезанный JSON
   fs.mkdirSync(path.dirname(file), { recursive: true });
@@ -75,7 +136,10 @@ const IDLE_MS = flag('no-idle') ? 0 : Number(arg('idle', 1)) * 60000;
 async function waitIdle() {
   if (!IDLE_MS || idleMs() >= IDLE_MS) return;
   say(`Paused: you are at the computer — resuming after ${IDLE_MS / 60000} min without mouse / keyboard`);
-  while (idleMs() < IDLE_MS) await sleep(15000);
+  const prev = ui.mode;
+  ui.mode = 'paused';
+  while (idleMs() < IDLE_MS) await sleep(2000);
+  ui.mode = prev === 'paused' ? 'run' : prev;
   say('Resumed');
 }
 
@@ -105,10 +169,14 @@ async function call(kind, url, body) {
     const wait = Math.max(last[kind] + jitter(MIN_GAP[kind]), blockedUntil[kind]) - Date.now();
     if (wait > 0) {
       if (wait > 15000) say(`  … waiting ${Math.round(wait / 1000)} s (${kind} rate limit)`);
+      Object.assign(ui, { mode: 'wait', waitKind: kind, waitUntil: Date.now() + wait });
       await sleep(wait);
+      ui.mode = 'run';
       await waitIdle();
     }
+    ui.mode = 'run';
     last[kind] = Date.now();
+    ui.requests[kind]++;
     const res = await fetch(url, {
       method: body ? 'POST' : 'GET',
       headers: { 'User-Agent': UA, ...(body ? { 'Content-Type': 'application/json' } : {}) },
@@ -118,6 +186,7 @@ async function call(kind, url, body) {
     if (res.status === 429) {
       const after = Number(res.headers.get('retry-after') || 600);
       strikes++;
+      ui.r429++;
       say(`429 on ${kind} (strike ${strikes}/3), retry after ${after} s; last limits/state ${lastState[kind]}`);
       if (strikes >= 3) throw new Error('three 429 in a row — stopping to avoid a longer ban; run again later to resume');
       MIN_GAP[kind] = Math.min(MIN_GAP[kind] * 2, 60000);
@@ -239,6 +308,8 @@ async function main() {
   };
 
   const store = loadStore(league);
+  ui.store = store;
+  ui.mode = 'run';
   for (const [cls, c] of Object.entries(store.classes)) {
     const fixed = repairClass(c, poolOf(cls), mods);
     if (fixed.remapped || fixed.dropped) say(`${cls}: fixed ${fixed.remapped} entries mapped to another class's modifier, dropped ${fixed.dropped} ambiguous`);
@@ -252,11 +323,13 @@ async function main() {
 
   say(`League ${league}; ${IDLE_MS ? `collecting while idle ${IDLE_MS / 60000}+ min` : 'collecting without pauses'}; Ctrl+C to stop`);
   for (let round = 1; ; round++) {
+    ui.round = round;
     let added = 0;
     for (const [cls, category] of Object.entries(CLASSES)) {
       if (only && !only.includes(cls)) continue;
       const c = store.classes[cls] || (store.classes[cls] = { items: 0, unmatched: 0, types: [], raw: [], ids: [] });
       fillBases(c);
+      Object.assign(ui, { cls, window: null, read: 0, toRead: 0 });
       // Классы, которых на трейде нет (ещё не в игре), — проверяем раз в 6 кругов.
       if ((c.emptyRounds || 0) >= 2 && round % 6) continue;
       const seen = new Set(c.ids);
@@ -274,16 +347,19 @@ async function main() {
         const ids = (s.result || []).filter((id) => !seen.has(id));
         // Ход работы — после каждого поиска и раз в 5 выборок: иначе на первом круге класс молчит по 10 минут.
         const label = `${cls}, ilvl ${w.min}${w.max ? `–${w.max}` : '+'}`;
+        Object.assign(ui, { cls, window: `${w.min}${w.max ? `–${w.max}` : '+'}`, read: 0, toRead: ids.length });
         say(`${label}: ${ids.length} new listings${ids.length ? ` — reading (~${Math.ceil(ids.length / 10 * MIN_GAP.fetch / 60000)} min)` : ''}`);
         for (let i = 0; i < ids.length && !(max && c.items - before >= max); i += 10) {
           const batch = ids.slice(i, i + 10);
           if (i && i % 50 === 0) say(`  ${label}: ${i} / ${ids.length} read`);
+          ui.read = i;
           const fr = await call('fetch', `${TRADE}/api/trade2/fetch/${batch.join(',')}?query=${s.id}`);
           for (const r of fr.result || []) {
             if (!r || !r.item) continue;
             seen.add(r.id);
             c.ids.push(r.id);
             c.items++;
+            ui.sessionNew[cls] = (ui.sessionNew[cls] || 0) + 1;
             // Одна строка мода может принадлежать нескольким аффиксам (гибриды) и наоборот — собираем аффиксы вещи без повторов.
             const affixes = new Map();
             for (const line of r.item.explicitMods || []) {
@@ -312,12 +388,14 @@ async function main() {
       c.emptyRounds = c.items ? 0 : (c.emptyRounds || 0) + 1;
       added += c.items - before;
       save();
+      ui.classAt[cls] = c.at = Date.now();
+      Object.assign(ui, { window: null, read: 0, toRead: 0 });
       say(`${cls}: +${c.items - before} new, ${c.items} total`);
     }
     const total = Object.values(store.classes).reduce((a, c) => a + c.items, 0);
     say(`Round ${round} done: +${added} new items, ${total} in total — ${path.relative(path.join(__dirname, '..'), OUT)} updated`);
-    if (once) break;
+    if (once) { ui.mode = 'done'; break; }
   }
 }
 
-main().catch((e) => { say(`STOPPED: ${e.message}`); process.exit(1); });
+main().catch((e) => { Object.assign(ui, { mode: 'error', error: e.message }); say(`STOPPED: ${e.message}`); process.exit(1); });
