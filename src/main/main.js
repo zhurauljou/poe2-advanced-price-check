@@ -1,8 +1,8 @@
 const {
-  app, BrowserWindow, globalShortcut, clipboard, ClipboardItem, screen, ipcMain, Tray, Menu, shell, nativeImage,
+  app, BrowserWindow, globalShortcut, clipboard, screen, ipcMain, Tray, Menu, shell, nativeImage,
 } = require('electron');
 const path = require('path');
-const { uIOhook, UiohookKey } = require('uiohook-napi');
+const { sleep, copyItem, whisperInGame } = require('./input');
 
 const settings = require('./settings');
 const api = require('./api');
@@ -193,28 +193,6 @@ function hide() {
   syncEsc();
 }
 
-const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
-
-// Ctrl+C «по-человечески»: игра опрашивает клавиатуру раз в кадр и мгновенное нажатие (keyTap) может
-// пропустить — держим C нажатой ~30 мс.
-async function pressCopy() {
-  uIOhook.keyToggle(UiohookKey.Ctrl, 'down');
-  await sleep(15);
-  uIOhook.keyToggle(UiohookKey.C, 'down');
-  await sleep(30);
-  uIOhook.keyToggle(UiohookKey.C, 'up');
-  await sleep(10);
-  uIOhook.keyToggle(UiohookKey.Ctrl, 'up');
-}
-
-async function tap(key, mod) {
-  if (mod) { uIOhook.keyToggle(mod, 'down'); await sleep(15); }
-  uIOhook.keyToggle(key, 'down');
-  await sleep(30);
-  uIOhook.keyToggle(key, 'up');
-  if (mod) { await sleep(10); uIOhook.keyToggle(mod, 'up'); }
-}
-
 // У оружия poe.ninja считает моды и базы всего оружия персонажа (основное, второе, на смене): в «Rare Sceptre»
 // попадают палочки, посохи, копья — до 44% надеваний (аудит по всем классам). Броня и бижутерия — чистые.
 // Оставляем базы того же класса; мод убираем, только если на этой базе его быть не может, а на чужой базе из списка — может
@@ -228,64 +206,6 @@ function forBase(d, item) {
   return { ...d,
     mods: d.mods.filter((r) => own.has(key(r.name)) || !alien(r.name)),
     bases: d.bases.filter((b) => !foreign.includes(b.name)) };
-}
-
-// Буфер обмена в Electron 44 асинхронный (как navigator.clipboard): readText / writeText / read / write — промисы.
-// Снимок буфера пользователя — все типы сразу (текст, HTML, картинка…): ClipboardItem из read() читает данные
-// лениво, после нашей записи там было бы уже другое. Скопированные в Проводнике файлы в read() не попадают.
-async function saveClipboard() {
-  try {
-    const items = await clipboard.read();
-    const snap = await Promise.all(items.map(async (it) => {
-      const data = {};
-      for (const type of it.types) data[type] = await it.getType(type);
-      return data;
-    }));
-    return snap.filter((d) => Object.keys(d).length);
-  } catch (e) {
-    log('clipboard save', e.message);
-    return null;
-  }
-}
-async function restoreClipboard(snap) {
-  if (!snap || !snap.length) return;
-  try { await clipboard.write(snap.map((d) => new ClipboardItem(d))); } catch (e) { log('clipboard restore', e.message); }
-}
-
-// Шёпот продавцу в игре: переключаемся в игру, открываем чат (Enter) и вставляем текст (Ctrl+V).
-// Отправляет сам игрок — своим Enter: одно действие на сервере = одно нажатие игрока.
-// Вставили — возвращаем прежний буфер; не вышло (игры нет) — шёпот остаётся в буфере, его можно вставить руками.
-async function whisperInGame(text) {
-  const prev = await saveClipboard();
-  await clipboard.writeText(text);
-  if (!gameHwnd) return false;
-  winapi.focus(gameHwnd);
-  await sleep(150);
-  if (winapi.foreground() !== gameHwnd) return false;
-  await tap(UiohookKey.Enter);
-  await sleep(120);
-  await tap(UiohookKey.V, UiohookKey.Ctrl);
-  setTimeout(() => restoreClipboard(prev), 300); // игра читает буфер не мгновенно
-  return true;
-}
-
-// Нажимаем Ctrl+C за пользователя и ждём, пока игра положит текст предмета в буфер.
-// Не ответила за 400 мс — пробуем ещё раз.
-async function copyItem() {
-  const prev = await saveClipboard();
-  await clipboard.writeText('');
-  let text = '';
-  for (let attempt = 0; attempt < 2 && !text; attempt++) {
-    await pressCopy();
-    for (let i = 0; i < 20 && !text; i++) {
-      await sleep(20);
-      text = await clipboard.readText();
-    }
-    if (!text) log(`copy: clipboard empty after attempt ${attempt + 1}`);
-  }
-  // Возвращаем пользователю прежний буфер — со всеми форматами, а не только текст (картинку раньше стирали).
-  setTimeout(() => restoreClipboard(prev), 50);
-  return text;
 }
 
 let copying = false;
@@ -467,14 +387,9 @@ const GAME_TITLE = /^Path of Exile( 2)?$/;
 let hotkeyOn = false;
 let hotkeyBound = null; // какая комбинация сейчас занята — чтобы снять её при смене
 
-// Варианты в меню трея. Игра читает клавиатуру напрямую и видит вторую клавишу комбинации, поэтому
-// она не должна ничего делать в игре: D — шаг вправо (уводит от сундука), E по умолчанию свободнее.
-const HOTKEYS = [['CommandOrControl+E', 'Ctrl+E'], ['CommandOrControl+D', 'Ctrl+D'], ['CommandOrControl+Shift+E', 'Ctrl+Shift+E']];
-// Своя комбинация (окно настроек): Ctrl и / или Alt (можно с Shift) + буква, цифра или F1–F12.
-const ACCEL = /^(?:(?:CommandOrControl|Alt|Shift)\+)+(?:[A-Z0-9]|F[1-9]|F1[0-2])$/;
-const validHotkey = (k) => typeof k === 'string' && ACCEL.test(k) && /CommandOrControl|Alt/.test(k);
-const curHotkey = () => (validHotkey(settings.get().hotkey) ? settings.get().hotkey : HOTKEYS[0][0]);
-const hotkeyLabel = () => curHotkey().replace(/CommandOrControl/g, 'Ctrl');
+const { DEFAULT: DEFAULT_HOTKEY, validHotkey, hotkeyText } = require('./hotkeys');
+const curHotkey = () => (validHotkey(settings.get().hotkey) ? settings.get().hotkey : DEFAULT_HOTKEY);
+const hotkeyLabel = () => hotkeyText(curHotkey());
 
 // Смена комбинации. Занята другой программой — оставляем прежнюю и возвращаем false.
 function setHotkey(hk) {
@@ -615,7 +530,7 @@ function applySettings(patch) {
   }
   if (p.hotkey !== undefined && p.hotkey !== curHotkey()) {
     if (!validHotkey(p.hotkey)) error = t('Use Ctrl or Alt with a letter, digit or F1–F12');
-    else if (!setHotkey(p.hotkey)) error = t('{key} is taken by another program', { key: p.hotkey.replace(/CommandOrControl/g, 'Ctrl') });
+    else if (!setHotkey(p.hotkey)) error = t('{key} is taken by another program', { key: hotkeyText(p.hotkey) });
   }
   if (typeof p.hotkeyGameOnly === 'boolean') { settings.set({ hotkeyGameOnly: p.hotkeyGameOnly }); syncHotkey(); }
   if (typeof p.startWithWindows === 'boolean' && app.isPackaged) {
@@ -738,7 +653,7 @@ app.whenReady().then(singleInstance).then((ok) => {
   handle('demand-level', FROM.overlay, () => settings.get().demandLevel || 90);
   handle('set-demand-level', FROM.overlay, (_e, l) => { if (DEMAND_LEVELS.includes(l)) settings.set({ demandLevel: l }); });
   // В чат игры — только шёпот («@Ник текст»): окно не должно уметь напечатать в игре что угодно.
-  handle('whisper-game', FROM.overlay, (_e, t) => (typeof t === 'string' && /^@\S+ /.test(t) && t.length <= 512 && !/[\r\n]/.test(t) ? whisperInGame(t) : false));
+  handle('whisper-game', FROM.overlay, (_e, t) => (typeof t === 'string' && /^@\S+ /.test(t) && t.length <= 512 && !/[\r\n]/.test(t) ? whisperInGame(t, gameHwnd) : false));
   handle('listing-url', FROM.overlay, (_e, item, filters, account) => (demo.mockTrade() ? 'https://www.pathofexile.com/trade2'
     : api.forCurrent(() => pricing.listingUrl(curLeague(), item, filters, account))));
   handle('open-url', FROM.any, (_e, u) => {
