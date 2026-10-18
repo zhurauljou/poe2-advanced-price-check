@@ -102,6 +102,9 @@ const PROP_KEY = { Armour: 'ar', 'Evasion Rating': 'ev', 'Energy Shield': 'es', 
 const PROP_OP = { pdps: 'pDPS ≥', edps: 'eDPS ≥', map_tier: '=' };
 // Скрижаль, найденная среди полных (ровно 10 использований), — «= 10», а не «≥».
 const propOp = (p) => (p.key === 'uses' && p.max != null && Number(p.max) === Number(p.min) ? '=' : PROP_OP[p.key] || '≥');
+// Потраченная скрижаль, оцененная по полным: «6 из 10 · цена по полным» вместо непонятного «6 = 10».
+const usesFromFull = (p) => p.key === 'uses' && p.enabled && p.full && p.value < p.full && Number(p.min) === p.full && state.searchable;
+const usesHtml = (i, p) => `<span class="tp on" data-ref="p:${i}" title="${esc(t('Partly used tablets are rarely listed — priced as a full one, scaled by the uses left (an assumption)'))} · ${esc(t('Searching by this — click to ignore'))}">${esc(p.label)}: <b>${p.value}</b> ${esc(t('of {n}', { n: p.full }))} <span class="tp-op">· ${esc(t('priced from full ones'))}</span></span>`;
 // Моды путевого камня, опасные для многих билдов.
 const WAYSTONE_DANGER = [
   [/cannot Regenerate/i, 'No regeneration'],
@@ -145,7 +148,7 @@ function renderTooltip() {
     // DPS в игровой подсказке нет — показываем отдельной строкой, чтобы по нему тоже можно было искать. Использования
     // скрижали — тоже: в игре это строка implicit'а («6 uses remaining»), а не свойство.
     const dps = ['dps', 'uses'].map(propIdx).filter((i) => i >= 0)
-      .map((i) => pick(`p:${i}`, props[i].label, `<b>${fmt(props[i].value)}</b>`, props[i], propOp(props[i]), 'min'));
+      .map((i) => (usesFromFull(props[i]) ? usesHtml(i, props[i]) : pick(`p:${i}`, props[i].label, `<b>${fmt(props[i].value)}</b>`, props[i], propOp(props[i]), 'min')));
     plines.push(...dps);
     if (plines.length) lines.push(row(plines));
 

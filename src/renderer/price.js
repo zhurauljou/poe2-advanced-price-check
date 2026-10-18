@@ -276,7 +276,7 @@ function renderTradeHero(r) {
     <div class="k">${fl ? t('Like yours') : t('Estimated price')}</div>
     <div class="big">${money(est)}</div>
     <div class="alt">${alt(est)}</div>
-    ${k < 1 ? `<div class="alt" title="${esc(t('Partly used tablets are rarely listed — priced as a full one, scaled by the uses left (an assumption)'))}">${esc(t('{n} of {full} uses: a full one ≈ {price}', { n: state.item.props.uses, full: Math.round(state.item.props.uses / k), price: money(est / k) }))}</div>` : ''}
+    ${k < 1 ? `<div class="alt" title="${esc(t('Partly used tablets are rarely listed — priced as a full one, scaled by the uses left (an assumption)'))}">${esc(t('a full one ({full} uses) ≈ {price}', { full: Math.round(state.item.props.uses / k), price: money(est / k) }))}</div>` : ''}
     ${confidence(r.total, head, priced.slice(0, 5), ageInfo)}
     ${missingKeyHtml()}
     ${floorHtml}
