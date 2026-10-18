@@ -2,12 +2,7 @@
 // Статы с выбором варианта (Legacy of Quicksilver у Mageblood) приходят как «explicit.stat_264262054|8» —
 // id стата и номер варианта; трейд ищет их по этому id целиком: { id: 'explicit.stat_264262054|8' }.
 
-const LOCAL_CLASSES = new Set([
-  'Body Armours', 'Helmets', 'Gloves', 'Boots', 'Shields', 'Bucklers', 'Foci',
-  'One Hand Maces', 'Two Hand Maces', 'Quarterstaves', 'Bows', 'Crossbows', 'Spears', 'Flails',
-  'Wands', 'Sceptres', 'Staves', 'Claws', 'Daggers', 'One Hand Swords', 'Two Hand Swords',
-  'One Hand Axes', 'Two Hand Axes', 'Talismans', 'Traps',
-]);
+const LOCAL_CLASSES = new Set(require('../shared/item-classes').LOCAL_CLASSES);
 
 const NUM = /[+-]?\d+(?:\.\d+)?/g;
 
@@ -261,4 +256,7 @@ function optionCount(statId) {
   return ids.size;
 }
 
-module.exports = { build, buildLocal, matchMods, find, statFor, ordinal, optionCount, localToEnglish };
+// Шаблон мода как ключ сравнения (моды вещи, спрос poe.ninja): без «(Local)» / «(Jewel)», «+#» → «#», нижний регистр.
+const templateKey = (s) => String(s || '').replace(VARIANT, '').replace(/\+#/g, '#').toLowerCase();
+
+module.exports = { build, buildLocal, matchMods, find, statFor, ordinal, optionCount, localToEnglish, templateKey };

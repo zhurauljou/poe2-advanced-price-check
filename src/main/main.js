@@ -221,7 +221,7 @@ async function tap(key, mod) {
 // (анойнты, энчанты, руны не трогаем — их нет в пуле ни у кого). Всё, что есть на самой вещи, — всегда.
 function forBase(d, item) {
   if (!d || !item) return d;
-  const key = (s) => String(s || '').replace(/ \(Local\)$/, '').replace(/\+#/g, '#').toLowerCase();
+  const key = stats.templateKey;
   const own = new Set((item.mods || []).map((m) => key(m.template)));
   const foreign = d.bases.filter((b) => craft.sameClass(item.baseType, b.name) === false).map((b) => b.name);
   const alien = (name) => craft.canAppear(item.baseType, name) === false && foreign.some((b) => craft.canAppear(b, name));

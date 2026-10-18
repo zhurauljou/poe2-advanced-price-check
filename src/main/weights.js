@@ -4,10 +4,8 @@
 // По важности выбираются галочки по умолчанию и порядок снятия фильтров при автоослаблении.
 // Шаблоны — тексты статов трейда (# вместо чисел).
 
-const WEAPONS = new Set([
-  'One Hand Maces', 'Two Hand Maces', 'Quarterstaves', 'Bows', 'Crossbows', 'Spears', 'Flails', 'Claws', 'Daggers',
-  'One Hand Swords', 'Two Hand Swords', 'One Hand Axes', 'Two Hand Axes', 'Talismans',
-]);
+const { MARTIAL_WEAPONS } = require('../shared/item-classes');
+const WEAPONS = new Set(MARTIAL_WEAPONS);
 const CASTER = new Set(['Wands', 'Staves', 'Sceptres', 'Foci']);
 
 const ANY_KEY = [/^# to Level of all .*Skills$/, /^# to Spirit$/];

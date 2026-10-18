@@ -204,8 +204,7 @@ const UNIQUE_KEY = 40; // % билдов с уником — его случай
 // вставлена, стихия на оружии — не окончательная: спрос считаем по лучшей стихии, а цену проверяем и в других.
 const ALDUR = { Fire: 'Passion of Aldur', Cold: 'Breath of Aldur', Lightning: 'Ire of Aldur', Chaos: 'Betrayal of Aldur' };
 const ELEMENT = /\b(Fire|Cold|Lightning)\b/;
-const RUNE_WEAPONS = new Set(['One Hand Maces', 'Two Hand Maces', 'Quarterstaves', 'Bows', 'Crossbows', 'Spears', 'Flails', 'Claws',
-  'Daggers', 'One Hand Swords', 'Two Hand Swords', 'One Hand Axes', 'Two Hand Axes', 'Talismans', 'Wands', 'Staves']);
+const RUNE_WEAPONS = new Set(require('../shared/item-classes').ALDUR_WEAPONS);
 const convertible = (item) => item.rarity === 'Rare' && RUNE_WEAPONS.has(item.itemClass)
   && !(item.modLines || []).some((l) => /^Forged by the \w+ of Aldur$/.test(l.text));
 const swapElement = (s, to) => String(s).replace(new RegExp(ELEMENT.source, 'g'), to);
@@ -330,7 +329,7 @@ function prepare(item, demand, rollsOn) {
   const pseudo = searchMods ? pseudoFilters(mods) : [];
   // Ключевой мод, которого нет: его носят почти все билды (≥ KEY_MISSING%), он может встать на эту базу, а на вещи его нет.
   // Похожие лоты с ним стоят в разы дороже — поэтому по умолчанию ищем вещи БЕЗ него (честное сравнение).
-  const key = (tpl) => String(tpl || '').replace(/ \(Local\)$/, '').replace(/\+#/g, '#').toLowerCase();
+  const key = stats.templateKey;
   const have = new Set(item.mods.map((m) => key(m.template)));
   const exclude = !searchMods ? [] : (demand && demand.mods || [])
     .filter((r) => r.pct >= KEY_MISSING && !have.has(key(r.name)) && (!rollsOn || rollsOn(r.name) !== false))

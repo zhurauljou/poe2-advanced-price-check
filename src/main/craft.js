@@ -125,8 +125,10 @@ function guaranteedFor(itemClass) {
 
 const ELEMENTS = ['Fire', 'Cold', 'Lightning', 'Chaos'];
 const ALDUR_RUNE = { Fire: 'Passion of Aldur', Cold: 'Breath of Aldur', Lightning: 'Ire of Aldur', Chaos: 'Betrayal of Aldur' };
-const ALDUR_WEAPONS = new Set(['One Hand Maces', 'Two Hand Maces', 'Quarterstaves', 'Bows', 'Crossbows', 'Spears', 'Flails', 'Claws',
-  'Daggers', 'One Hand Swords', 'Two Hand Swords', 'One Hand Axes', 'Two Hand Axes', 'Talismans', 'Wands', 'Staves']);
+// Мод «нужен» (востребован), если его носят от стольких % билдов класса (poe.ninja): ниже — не советуем, не ценим.
+const WANT_PCT = 15;
+const classes = require('../shared/item-classes');
+const ALDUR_WEAPONS = new Set(classes.ALDUR_WEAPONS);
 
 // Лич-омены: гарантированный мод лича при Desecrate (только оружие и бижутерия; моды личей — уровня 65).
 const LICH_OMEN = { ulaman: 'Omen of the Sovereign', amanamu: 'Omen of the Liege', kurgal: 'Omen of the Blackblooded' };
@@ -147,10 +149,9 @@ const INF_TAG = Object.fromEntries(INFLUENCE_RUNES.map((r) => [r.name, r.tag]));
 // Классы вещей для целей аугментов («Martial Weapon», «Wand or Staff», «Armour», «All Equipment», ["Boots"]…).
 const AUG_GROUPS = {
   'all equipment': null, // любой
-  armour: ['Body Armours', 'Helmets', 'Gloves', 'Boots', 'Shields', 'Bucklers', 'Foci'],
-  'martial weapon': ['One Hand Maces', 'Two Hand Maces', 'Quarterstaves', 'Bows', 'Crossbows', 'Spears', 'Flails', 'Claws', 'Daggers',
-    'One Hand Swords', 'Two Hand Swords', 'One Hand Axes', 'Two Hand Axes', 'Talismans'],
-  'caster weapon': ['Wands', 'Staves'],
+  armour: classes.ARMOUR,
+  'martial weapon': classes.MARTIAL_WEAPONS,
+  'caster weapon': classes.CASTER_WEAPONS,
 };
 AUG_GROUPS.weapon = [...AUG_GROUPS['martial weapon'], ...AUG_GROUPS['caster weapon'], 'Sceptres'];
 const AUG_SINGLE = { staff: 'Staves', quarterstaff: 'Quarterstaves', wand: 'Wands', sceptre: 'Sceptres', bow: 'Bows', crossbow: 'Crossbows', spear: 'Spears',
@@ -324,7 +325,7 @@ async function advise(item, demandMods, cached) {
   const open = { prefix: Math.max(0, max.prefix - used.prefix), suffix: Math.max(0, max.suffix - used.suffix) };
 
   // Востребованные моды (≥ 15% билдов), которые могут встать: лучший доступный по ilvl тир.
-  const want = new Map((demandMods || []).filter((r) => r.pct >= 15).map((r) => [r.name.toLowerCase(), r.pct]));
+  const want = new Map((demandMods || []).filter((r) => r.pct >= WANT_PCT).map((r) => [r.name.toLowerCase(), r.pct]));
   // Редкое оружие без руны Альдура: стихию модов можно сменить руной (Passion / Ire / Breath / Betrayal) — спрос на
   // стихийный мод считаем по лучшей стихии (Extra Cold на посохе — как Extra Fire), лучшую стихию — советуем.
   const aldur = item.rarity === 'Rare' && ALDUR_WEAPONS.has(item.itemClass) && !(item.modLines || []).some((l) => /^Forged by the \w+ of Aldur$/.test(l.text));
@@ -335,7 +336,7 @@ async function advise(item, demandMods, cached) {
       if (!/\b(fire|cold|lightning)\b/i.test(r.name)) continue;
       const vs = ELEMENTS.map((e) => [e, all.get(r.name.replace(/\b(Fire|Cold|Lightning)\b/g, e).toLowerCase()) || 0]);
       const top = vs.reduce((a, b) => (b[1] > a[1] ? b : a));
-      if (top[1] >= 15) for (const [e] of vs) want.set(r.name.replace(/\b(Fire|Cold|Lightning)\b/g, e).toLowerCase(), top[1]);
+      if (top[1] >= WANT_PCT) for (const [e] of vs) want.set(r.name.replace(/\b(Fire|Cold|Lightning)\b/g, e).toLowerCase(), top[1]);
       bestElement[r.name.toLowerCase()] = top;
     }
   }
@@ -407,7 +408,7 @@ async function advise(item, demandMods, cached) {
       if (lines.every((l) => own.has(l))) continue; // такой мод на вещи уже есть (гибрид с одной общей строкой — можно)
       const ps = lines.map((l) => want.get(l) || 0).sort((a, b) => b - a);
       const pct = (ps[0] || 0) + (ps[1] || 0) / 2; // гибрид: лучшая строка + половина второй
-      if (pct >= 15 && (!best || pct > best.pct)) best = { side: x.side, pct, text: lines.join(' / '), tier: null, tiers: 1, range: null, level: 0,
+      if (pct >= WANT_PCT && (!best || pct > best.pct)) best = { side: x.side, pct, text: lines.join(' / '), tier: null, tiers: 1, range: null, level: 0,
         stats: tradeStats({ text: raw }, 'item', item.itemClass), type: 'crafted:' + x.name, crafted: [x.name], craftedOnly: x.name };
     }
     if (best) normal.push(best);
@@ -471,7 +472,7 @@ async function advise(item, demandMods, cached) {
     let best = null;
     for (const c of candidates('desecrated')) {
       if (normal.some((x) => x.type === c.type || x.text === c.text)) continue;
-      if (c.pct >= 15 && (!best || c.pct > best.pct)) best = c;
+      if (c.pct >= WANT_PCT && (!best || c.pct > best.pct)) best = c;
     }
     // Altered Collarbone (бижутерия): Desecrate «с шансом на потусторонние моды» — свой пул Breach-модов
     // (тег breach_desecration, уровень 1 — Whittling снимет их первыми). Доля потусторонних среди вариантов неизвестна.
@@ -480,7 +481,7 @@ async function advise(item, demandMods, cached) {
       const altered = d.pool.filter((m) => m.domain === 'desecrated' && canRoll(m, [...tags, 'breach_desecration']) && !canRoll(m, tags));
       for (const c of candidates('desecrated', altered)) {
         if (normal.some((x) => x.type === c.type || x.text === c.text)) continue;
-        if (c.pct >= 15 && (!best || c.pct > best.pct)) {
+        if (c.pct >= WANT_PCT && (!best || c.pct > best.pct)) {
           const n = new Set(altered.filter((m) => m.generation_type === c.side && !(m.groups || []).some((g) => present.has(g))).map((m) => m.type)).size || 1;
           best = { ...c, altered: n };
         }
@@ -738,7 +739,7 @@ async function advise(item, demandMods, cached) {
   if (!magic && !item.fracturedItem) {
     const pctOf = (a) => (a.mod ? Math.max(0, ...a.mod.lines.map((l) => want.get(l) || 0)) : 0);
     const fixable = mine.filter((a) => a.tag !== 'desecrated' && a.tag !== 'fractured');
-    const keys = fixable.filter((a) => pctOf(a) >= KEY_PCT || (a.tier && a.tier <= 2 && pctOf(a) >= 15));
+    const keys = fixable.filter((a) => pctOf(a) >= KEY_PCT || (a.tier && a.tier <= 2 && pctOf(a) >= WANT_PCT));
     const hasDes = mine.some((a) => a.tag === 'desecrated');
     const how = [];
     if (keys.length && total >= 4) {
@@ -768,7 +769,7 @@ async function advise(item, demandMods, cached) {
       const kind = methods.byName(a.name);
       if ((kind && ['rune-influence', 'rune-aldur', 'rune-special'].includes(kind.id)) || /Legacy/.test(a.limit || '') || /^Legacy of /.test(a.name)) continue;
       const pct = Math.max(0, ...cat.lines.map((l) => want.get(l) || 0));
-      if (pct < 15) continue;
+      if (pct < WANT_PCT) continue;
       const key = cat.lines.join('|');
       const rank = (n) => (/^Perfect /.test(n) ? 3 : /^Greater /.test(n) ? 2 : /^Lesser /.test(n) ? 0 : 1);
       const prev = fam.get(key);
@@ -874,7 +875,7 @@ function planGoal(mine, candidates, max, want, magic, magicFree = [], itemClass 
   const myTags = new Set(mine.flatMap((a) => (a.mod ? a.mod.implicit_tags || [] : [])));
   const boosts = (l) => { const m = l.match(/explicit (\w+)(?: damage)? modifier magnitudes/i); return !!m && myTags.has(m[1].toLowerCase()); };
   const known = want.size > 0; // спрос загружен — правило слота проверяем им
-  const keyOf = (lines) => lines.some((l) => boosts(l) || (isKey(itemClass, l) && (!known || (want.get(l) || 0) >= 15)));
+  const keyOf = (lines) => lines.some((l) => boosts(l) || (isKey(itemClass, l) && (!known || (want.get(l) || 0) >= WANT_PCT)));
   // Качество тира — та же шкала, что у важности мода в поиске (weights.tierFactor), чтобы цель и цена не спорили.
   const value = (pct, tier) => pct * tierFactor(tier || null);
   const keep = [], remove = [], add = [];
@@ -894,7 +895,7 @@ function planGoal(mine, candidates, max, want, magic, magicFree = [], itemClass 
       return { kind: 'cur', a, pct, v: locked ? Infinity : value(pct, a.tier) * KEEP_BONUS * desSlot * (a.mod && keyOf(a.mod.lines) ? KEY_BONUS : 1) };
     });
     // Гибрид с мусорной половиной («Light Radius / Mana Regeneration») ценнее пустого места, но хуже чистого мода.
-    const worth = (c) => value(c.pct, 2) * (keyOf(c.text.split(' / ')) ? KEY_BONUS : 1) * (c.text.split(' / ').some((l) => isWeak(l) && !((want.get(l) || 0) >= 15)) ? 0.6 : 1);
+    const worth = (c) => value(c.pct, 2) * (keyOf(c.text.split(' / ')) ? KEY_BONUS : 1) * (c.text.split(' / ').some((l) => isWeak(l) && !((want.get(l) || 0) >= WANT_PCT)) ? 0.6 : 1);
     const cand = candidates.filter((c) => c.side === side).map((c) => ({ kind: 'add', c, pct: c.pct, v: worth(c) }));
     const chosen = [...cur, ...cand].sort((x, y) => y.v - x.v).slice(0, max[side]);
     for (const x of cur) {
