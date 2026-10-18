@@ -33,10 +33,10 @@ contextBridge.exposeInMainWorld('pc', {
   historyOpen: (id) => ipcRenderer.invoke('history-open', id),
   historyPrice: (id, est) => ipcRenderer.invoke('history-price', id, est),
   setSearchDefaults: (p) => ipcRenderer.invoke('set-search-defaults', p),
-  onRefit: (cb) => ipcRenderer.on('refit', () => cb()),
+  onRefit: (cb) => ipcRenderer.on('refit', (_e, d) => cb(d)),
   elementVariants: (item, filters) => ipcRenderer.invoke('element-variants', item, filters),
   pin: (on) => ipcRenderer.invoke('pin', on),
-  fit: (height) => ipcRenderer.invoke('fit', height),
+  fit: (height, wide) => ipcRenderer.invoke('fit', height, wide),
   // карточка конкурента в окне сбоку
   compareShow: (html, y) => ipcRenderer.invoke('compare-show', html, y),
   compareHide: () => ipcRenderer.invoke('compare-hide'),

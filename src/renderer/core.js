@@ -101,14 +101,30 @@ function spark(vals, { w = 96, h = 26 } = {}) {
 
 const pct1 = (v) => `${v > 0 ? '+' : ''}${v.toFixed(1)}%`;
 
+// Широкое окно: в одну колонку вещь не помещается по высоте экрана — окно расширяется в две (цена: оценка и лоты |
+// фильтры, спрос: билды | моды, крафт: план | все способы). Сбрасывается с новой вещью; настройка «никогда» — allowWide.
+let wide = false;
+let allowWide = true;
+function setWide(on) {
+  wide = !!on;
+  document.body.classList.toggle('wide', wide);
+  if (wide) document.querySelectorAll('#craft .more-ways').forEach((d) => { d.open = true; });
+}
+
 function fit() {
   // Высота содержимого (шапка + main + футер), а не body: body растянут на всё окно ради прокрутки, и по нему
   // окно никогда бы не уменьшалось.
   // Открытый список лиг — поверх содержимого (position: absolute) и в сумму не входит: окно не короче его низа.
-  requestAnimationFrame(() => {
+  requestAnimationFrame(async () => {
+    // Высота шапки и футера — для закреплённых вкладок и кнопки «Поиск» (position: sticky).
+    document.body.style.setProperty('--head-h', `${document.querySelector('.head').offsetHeight}px`);
+    document.body.style.setProperty('--foot-h', `${document.querySelector('footer').offsetHeight}px`);
     const content = [...document.body.children].reduce((s, el) => s + el.offsetHeight, 0) + 2;
     const menus = ['leagueMenu', 'histMenu'].map($).filter((m) => m && !m.hidden);
-    window.pc.fit(Math.max(content, ...menus.map((m) => Math.ceil(m.getBoundingClientRect().bottom) + 8)));
+    const r = await window.pc.fit(Math.max(content, ...menus.map((m) => Math.ceil(m.getBoundingClientRect().bottom) + 8)), wide);
+    // Упёрлись в высоту экрана — пробуем две колонки (экран узкий — окно останется узким, main это решит сам).
+    if (r && r.capped && !wide && allowWide && state) { setWide(true); fit(); }
+    else if (r && wide && !r.wide) setWide(false);
   });
 }
 

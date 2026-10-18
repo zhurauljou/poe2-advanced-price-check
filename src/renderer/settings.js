@@ -33,6 +33,7 @@ function render(s) {
   }
   $('uiLang').value = s.uiLang;
   $('clientLang').value = s.clientLang;
+  $('wideWindow').value = s.wideWindow;
   $('scale').innerHTML = '';
   for (const k of s.scales) {
     const b = document.createElement('button');
@@ -110,6 +111,7 @@ $('startWithWindows').addEventListener('change', (e) => set({ startWithWindows: 
 $('league').addEventListener('change', (e) => set({ league: e.target.value }));
 $('uiLang').addEventListener('change', (e) => set({ uiLang: e.target.value }));
 $('clientLang').addEventListener('change', (e) => set({ clientLang: e.target.value }));
+$('wideWindow').addEventListener('change', (e) => set({ wideWindow: e.target.value }));
 $('scale').addEventListener('click', (e) => {
   const b = e.target.closest('[data-scale]');
   if (b) set({ uiScale: Number(b.dataset.scale) });

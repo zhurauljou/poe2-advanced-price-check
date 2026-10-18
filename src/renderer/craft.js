@@ -697,7 +697,8 @@ function renderCraft(r) {
   if (r.gamble && r.goal && r.goal.plan && r.goal.plan.length) parts.push(gambleHtml(r.gamble)); // в конце, после всех безопасных способов
   // Источники — справка, а не решение: значком с подсказкой.
   parts.push(`<div class="craft-foot"><span class="ages-i" title="${esc(t(r.chanceMeta ? 'Mod pool: game files (RePoE).' : "Mod pool: game files (RePoE). Roll chances aren't shown — PoE 2 files have no modifier weights."))} ${esc(t('Demand: builds on poe.ninja. Prices: poe.ninja and the trade site.'))}">ⓘ ${esc(t('Sources'))}</span></div>`);
-  $('craft').innerHTML = head + top.join('')
-    + `<details class="more-ways"><summary>${t('All methods and modifier options')}</summary>${parts.join('')}</details>`;
+  // Широкое окно: план слева, все способы справа (раскрыты).
+  $('craft').innerHTML = head + `<div class="craft-cols"><div class="craft-l">${top.join('')}</div>`
+    + `<details class="more-ways"${wide ? ' open' : ''}><summary>${t('All methods and modifier options')}</summary>${parts.join('')}</details></div>`;
   if (r.goal && r.goal.plan && r.goal.plan.length) computeGoal(r.goal);
 }

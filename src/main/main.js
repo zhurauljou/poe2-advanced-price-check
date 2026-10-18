@@ -26,6 +26,9 @@ const WIDTH = 480;
 const SCALES = [0.8, 0.9, 1, 1.1, 1.25, 1.5];
 const uiScale = () => (SCALES.includes(settings.get().uiScale) ? settings.get().uiScale : 1);
 const W = () => Math.round(WIDTH * uiScale());
+// Широкое окно (две колонки) — когда в одну колонку содержимое не помещается по высоте экрана (окно решает само).
+const WIDE = 900;
+const WW = () => Math.round(WIDE * uiScale());
 const ICON = path.join(__dirname, '../../assets/icon.png');
 
 let win = null;
@@ -316,7 +319,7 @@ async function priceCheck(text, refresh = false, historyId = null) {
   const entry = { name: item.name, baseType: item.baseType, rarity: item.rarity, league };
   lastHistoryId = historyId || history.add({ ...entry, text: rawText });
   const prev = history.previous(entry, lastHistoryId);
-  send('item', { ...prepared, league, leagues, historyId: lastHistoryId, offline: api.offline.host, previous: prev && { est: prev.est, at: prev.estAt || prev.at }, priceCurrency: settings.get().priceCurrency || 'any', hotkey: hotkeyLabel() });
+  send('item', { ...prepared, league, leagues, historyId: lastHistoryId, offline: api.offline.host, previous: prev && { est: prev.est, at: prev.estAt || prev.at }, priceCurrency: settings.get().priceCurrency || 'any', hotkey: hotkeyLabel(), allowWide: settings.get().wideWindow !== 'never' });
   if (!refresh || !win.isVisible()) show();
   if (unknownToTrade(item)) refreshTradeData(rawText).catch((e) => log('trade data refresh', e.message));
 }
@@ -557,7 +560,7 @@ function settingsSnapshot() {
   const s = settings.get();
   return { hotkey: curHotkey(), hotkeyLabel: hotkeyLabel(), hotkeyGameOnly: !!s.hotkeyGameOnly, startWithWindows: !!s.startWithWindows,
     packaged: app.isPackaged, uiLang: i18n.getLang(), clientLang: s.clientLang || 'auto', league: s.league, leagues,
-    uiScale: uiScale(), scales: SCALES, windowPos: !!s.windowPos };
+    uiScale: uiScale(), scales: SCALES, windowPos: !!s.windowPos, wideWindow: s.wideWindow === 'never' ? 'never' : 'auto' };
 }
 // → { ok, error? }: неизвестное или неверное значение не сохраняется.
 function applySettings(patch) {
@@ -582,6 +585,10 @@ function applySettings(patch) {
     settings.set({ uiScale: p.uiScale });
     applyScale();
     if (win && win.isVisible()) win.webContents.send('refit');
+  }
+  if (['auto', 'never'].includes(p.wideWindow)) {
+    settings.set({ wideWindow: p.wideWindow });
+    if (win && win.isVisible()) win.webContents.send('refit', { allowWide: p.wideWindow !== 'never' });
   }
   if (typeof p.searchOnline === 'boolean') settings.set({ searchOnline: p.searchOnline });
   if (typeof p.searchFlex === 'boolean') settings.set({ searchFlex: p.searchFlex });
@@ -761,14 +768,20 @@ app.whenReady().then(singleInstance).then((ok) => {
   });
   handle('compare-fit', FROM.compare, (_e, h) => { if (Number.isFinite(h) && win.isVisible()) placeCompare(h * uiScale()); });
   handle('compare-hide', FROM.overlay, () => cmpWin.hide());
-  handle('fit', FROM.overlay, (_e, h) => {
-    if (!Number.isFinite(h)) return;
+  // → { capped }: окно упёрлось в высоту экрана (содержимое прокручивается) — повод окну перейти в две колонки.
+  handle('fit', FROM.overlay, (_e, h, wide) => {
+    if (!Number.isFinite(h)) return null;
     const area = screen.getDisplayMatching(win.getBounds()).workArea;
-    const height = Math.min(Math.ceil(h * uiScale()), area.height - 20);
+    const want = Math.ceil(h * uiScale());
+    const height = Math.min(want, area.height - 20);
     const b = win.getBounds();
+    const width = wide && WW() <= area.width - 20 ? WW() : W();
     // Держим верх на месте; вверх сдвигаем, только пока окно не влезает, и возвращаем, когда снова влезает.
     const y = Math.max(area.y, Math.min(anchorY, area.y + area.height - height));
-    place({ x: b.x, y, width: W(), height });
+    // Шире стало — не вылезаем за правый край экрана (сдвигаем влево).
+    const x = Math.max(area.x, Math.min(b.x, area.x + area.width - width));
+    place({ x, y, width, height });
+    return { capped: want > height, wide: width > W() };
   });
 });
 

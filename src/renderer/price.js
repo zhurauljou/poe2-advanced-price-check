@@ -122,7 +122,7 @@ document.addEventListener('click', (e) => {
   if (act === 'live-site' && state.live && state.live.data) window.pc.openUrl(state.live.data.url);
   if (act === 'elements') loadElements(searchSeq, true);
   if (act === 'session') { startSession(); window.pc.pin(true); craftFor = null; loadCraft(); }
-  if (act === 'session-stop') { craftSession = null; window.pc.pin(false); craftFor = null; loadCraft(); }
+  if (act === 'session-stop') { craftSession = null; window.pc.pin(userPinned); craftFor = null; loadCraft(); }
 });
 
 // ---- руны Альдура: та же вещь в другой стихии (Passion / Ire / Breath / Betrayal) ----

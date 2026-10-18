@@ -678,3 +678,23 @@ details.gamble > summary::before { content: '▸ '; } details.gamble[open] > sum
             font-size: 11px; line-height: 16px; text-align: center; }
 .craft-how .dem { color: var(--muted); font-size: 13px; white-space: nowrap; }
 .cpr.thin { color: var(--muted); font-weight: 400; }
+/* ---- кнопка «закрепить окно» (слева от крестика) ---- */
+.pinb { position: absolute; right: 34px; top: 50%; transform: translateY(-50%); display: flex; padding: 3px 4px; background: none; border: 0;
+        box-shadow: none; color: var(--bronze); -webkit-app-region: no-drag; }
+.pinb:hover { background: none; color: var(--cream); }
+.pinb.on { color: var(--gold); }
+.pinb.on svg path { fill: rgba(218, 193, 142, .25); }
+.pinb svg { width: 15px; height: 15px; }
+/* ---- вкладки и «Поиск» не уезжают при прокрутке ---- */
+.tabs { position: sticky; top: var(--head-h, 96px); z-index: 30; }
+#search { position: sticky; bottom: var(--foot-h, 32px); z-index: 20; }
+/* ---- широкое окно: две колонки ---- */
+body.wide #tab-price:not([hidden]) { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); column-gap: 16px; align-items: start;
+  grid-template-areas: "hero filters" "results filters" "results note"; }
+body.wide #hero { grid-area: hero; } body.wide #filters { grid-area: filters; } body.wide #results { grid-area: results; } body.wide #note { grid-area: note; }
+body.wide #tab-demand:not([hidden]) { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); column-gap: 16px; align-items: start; }
+body.wide .craft-cols { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); column-gap: 16px; align-items: start; }
+body.wide .craft-cols > .more-ways > summary { pointer-events: none; }
+.set-hint { margin-top: 4px; font-size: 13px; color: var(--muted); }
+/* Колонки крафта — те же отступы, что у .builds (в обычном блоке отступы схлопывались бы) */
+.craft-cols, .craft-l { display: flex; flex-direction: column; gap: 4px; }

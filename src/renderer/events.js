@@ -9,6 +9,8 @@ window.pc.onItem((data) => {
   if ($('elements')) $('elements').hidden = true;
   state = data;
   rates = data.rates || {};
+  allowWide = data.allowWide !== false;
+  setWide(false); // новая вещь — сначала в одну колонку, fit решит, нужна ли вторая
   openSums.clear();
   openDemand.clear();
   showAllLots = false;
@@ -49,7 +51,7 @@ window.pc.onItem((data) => {
   // Окно закреплено, только пока показана вещь пошагового крафта: проверили другую — оно снова прячется как обычно
   // (сессия остаётся: вернулись к той вещи — снова закреплено).
   const inSession = !!(craftSession && sessionMatches());
-  window.pc.pin(inSession);
+  window.pc.pin(inSession || userPinned);
   setTab(inSession ? 'craft' : 'price');
   if (state.searchable) runSearch(true);
   loadBuilds();
@@ -297,7 +299,20 @@ function applyLang() {
 }
 applyLang();
 
-window.pc.onRefit(() => fit()); // сменили масштаб — окно подгоняется под содержимое
+// Сменили масштаб или «широкое окно» в настройках — окно подгоняется под содержимое.
+window.pc.onRefit((d) => {
+  if (d && typeof d.allowWide === 'boolean') { allowWide = d.allowWide; if (!allowWide) setWide(false); }
+  if (state) setWide(false);
+  fit();
+});
+
+// Закрепить окно: не прячется при клике в игру, Esc остаётся игре (как при пошаговом крафте). Держится и для следующих вещей.
+let userPinned = false;
+$('pinBtn').addEventListener('click', () => {
+  userPinned = !userPinned;
+  $('pinBtn').classList.toggle('on', userPinned);
+  window.pc.pin(userPinned || !!(craftSession && sessionMatches()));
+});
 
 window.pc.onUiLang((lang) => {
   window.i18n.setLang(lang);
