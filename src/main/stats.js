@@ -35,11 +35,14 @@ function build(statsJson) {
   for (const list of index.values()) {
     for (const s of list) {
       const m = s.text.match(/^(.*\S) \(([^()]+)\)$/);
-      if (!m || VARIANT.test(s.text)) continue;
-      const key = norm(m[1]);
-      if (index.has(key)) continue;
-      if (!extra.has(key)) extra.set(key, []);
-      extra.get(key).push(s);
+      // «Map contains an additional Rare Chest» на трейде — в игре «Map contains 2 additional Rare Chests» (окончание
+      // «s» lookup отбрасывает сам).
+      const keys = [m && !VARIANT.test(s.text) ? m[1] : null, / an additional /.test(s.text) ? s.text.replace(/ an additional /, ' # additional ') : null];
+      for (const k of keys.filter(Boolean).map(norm)) {
+        if (index.has(k)) continue;
+        if (!extra.has(k)) extra.set(k, []);
+        extra.get(k).push(s);
+      }
     }
   }
   for (const [k, v] of extra) index.set(k, v);

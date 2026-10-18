@@ -280,3 +280,15 @@ test('белая база: ilvl ищется ступенью тиров — о�
   assert.deepEqual([top.min, top.max, top.next], [82, null, null], 'выше 82 новых тиров нет: 84 = 82');
   assert.equal(craft.ilvlBand('No Such Base', 80), null);
 });
+
+test('скрижали: все моды находятся на трейде (золото «(Gold Piles)», «2 additional Rare Chests»), использования — фильтр', { skip }, async () => {
+  for (const [file, uses] of [['tablet-rare.txt', 6], ['tablet-irradiated.txt', 10]]) {
+    const f = await filters(file);
+    const bad = f.mods.filter((m) => !m.statId).map((m) => m.text);
+    assert.deepEqual(bad, [], `${file}: без стата`);
+    const u = f.props.find((p) => p.key === 'uses');
+    assert.ok(u && u.enabled && u.min === uses, `${file}: uses ≥ ${uses}`);
+  }
+  const chests = (await filters('tablet-irradiated.txt')).mods.find((m) => /Rare Chests/.test(m.text));
+  assert.equal(chests.value, 2);
+});
