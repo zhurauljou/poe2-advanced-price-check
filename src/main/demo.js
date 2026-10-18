@@ -44,7 +44,7 @@ const wait = (ms) => new Promise((r) => setTimeout(r, ms));
 function run({ ready, priceCheck, openUpdates, openSettings, windows }) {
   if (!enabled) return;
   if (process.argv.includes('--settings')) {
-    ready.catch(() => {}).then(() => openSettings());
+    ready.catch(() => {}).then(() => openSettings(process.argv.includes('--welcome')));
     setTimeout(async () => {
       if (arg('eval')) { await windows().set.webContents.executeJavaScript(arg('eval')); await wait(800); }
       fs.writeFileSync(arg('shot'), (await windows().set.webContents.capturePage()).toPNG());

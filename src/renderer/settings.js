@@ -11,8 +11,14 @@ function applyLang() {
   document.querySelectorAll('[data-i18n-title]').forEach((el) => { el.title = t(el.dataset.i18nTitle); });
 }
 
+// Первый запуск: карточка приветствия сверху (окно открыто с ?welcome).
+const welcome = new URLSearchParams(location.search).has('welcome');
+$('welcome').hidden = !welcome;
+$('welcomeOk').addEventListener('click', () => window.cfg.action('close'));
+
 function render(s) {
   cur = s;
+  $('welcomeKey').textContent = t('Hover an item in the game and press {key} — the price shows up next to it.', { key: s.hotkeyLabel });
   if (!capturing) $('hotkey').textContent = s.hotkeyLabel;
   $('hotkeyGameOnly').checked = s.hotkeyGameOnly;
   $('startWithWindows').checked = s.startWithWindows;

@@ -175,7 +175,7 @@ const STEP_LABEL = {
   add2: (s) => t('Add {a} and {b}', { a: s.steps[0].mod, b: s.steps[1].mod }),
 };
 
-const oneIn = (c) => t('1 in {n}', { n: Math.round(1 / c) });
+const oneIn = (c) => oddsText(1 / c);
 const EXALT_WHY = {
   greater: 'low tiers cut off (level 35+; a family without such tiers rolls its best one)',
   perfect: 'low tiers cut off (level 50+; a family without such tiers rolls its best one)',
@@ -481,7 +481,7 @@ function renderUniqueCraft(r, head) {
       ${cats.length ? `<div class="craft-warn">⚠ ${esc(t('Divine also rerolls {mods} — each becomes a random one of its variants (1 in {n} to keep it)', { mods: cats.map((m) => m.text.split('\n')[0]).join(', '), n: cats.map((m) => m.categorical.n).join(' / ') }))}</div>` : ''}
       ${qs.length ? `<div class="craft-how">${esc(t('Chance the rolls get better overall: {pct}%', { pct: Math.round(betterOdds(qs) * 100) }))}</div>` : ''}
       <div class="craft-how">${esc(low
-        ? t(key.length < rolls.length ? 'Key modifiers in the top quarter: about 1 in {n}' : 'All modifiers in the top quarter: about 1 in {n}', { n: tries })
+        ? t(key.length < rolls.length ? 'Key modifiers in the top quarter: {odds}' : 'All modifiers in the top quarter: {odds}', { odds: oddsText(tries) })
         : t('All rolls are already in the top quarter — a Divine is more likely to make it worse'))}</div>
       ${low ? `<div class="verdict-box">${uniqueVerdictHtml(tries)}</div>` : ''}</div>`);
   }
@@ -497,7 +497,7 @@ function uniqueVerdictHtml(tries) {
   const rows = [
     `<div><span>${esc(t('Sell as is'))}</span><b>${now != null ? money(now) : '—'}</b></div>`,
     `<div><span>${esc(t('With top-quarter key rolls'))}</span><b>${uniqueTop === undefined ? '…' : uniqueTop == null ? t('none listed') : money(uniqueTop)}</b></div>`,
-    `<div><span>${esc(t('Divine Orbs, on average'))}</span><b>${cost != null ? `${tries} · ${money(cost)}` : tries}</b></div>`,
+    `<div><span>${esc(t('Divine Orbs, on average'))}</span><b>${esc(t('{n} pcs', { n: countText(tries) }))}${cost != null ? ` ≈ ${money(cost)}` : ''}</b></div>`,
   ];
   let verdict = '';
   if (uniqueTop != null && now != null && cost != null) {

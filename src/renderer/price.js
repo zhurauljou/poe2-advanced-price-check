@@ -9,10 +9,12 @@ function alt(div, selfId) {
   if (div >= 1) {
     if (rates.mirror && div >= rates.mirror / 2) out.push(`${fmt(div / rates.mirror)} mirror`);
   } else {
+    // Крупно — в своей валюте (money): здесь — в остальных.
+    const u = moneyUnit(div);
     out.push(`${fmt(div)} div`);
-    if (rates.exalted && selfId !== 'exalted') out.push(`${fmt(div * rates.exalted)} ex`);
+    if (u === 'chaos' && rates.exalted && selfId !== 'exalted') out.push(`${fmt(div * rates.exalted)} ex`);
     // Дешевле chaos — понятнее «сколько штук за 1 chaos», чем «0.0148 chaos».
-    if (rates.chaos && div * rates.chaos < 0.5) out.push(t('{x} per {cur}', { x: fmt(1 / (div * rates.chaos)), cur: 'chaos' }));
+    if (u === 'ex' && rates.chaos && selfId !== 'chaos') out.push(t('{x} per {cur}', { x: fmt(1 / (div * rates.chaos)), cur: 'chaos' }));
   }
   return out.join(' · ');
 }
@@ -182,7 +184,7 @@ function renderSearchingHero() {
 // Оценка — медиана самых дешёвых (до 5) лотов: один демпингующий продавец её не уронит.
 // Насколько верить оценке: сколько похожих лотов и насколько разбросаны цены самых дешёвых.
 // Разброс — во сколько раз самая дорогая из (до 5) самых дешёвых дороже самой дешёвой.
-function confidence(total, head, cheapest = []) {
+function confidence(total, head, cheapest = [], extra = '') {
   const spread = head.length > 1 && head[0] > 0 ? head[head.length - 1] / head[0] : 1;
   const allStale = cheapest.length >= 3 && cheapest.every((l) => l.age >= 7);
   let level = 2;
@@ -193,7 +195,7 @@ function confidence(total, head, cheapest = []) {
   else if (allStale) why = t('all cheapest listings are a week+ old — those prices may not be real');
   else if (spread > 4) why = t('cheapest prices differ ×{x} — someone may be underpricing', { x: fmt(spread) });
   const label = t({ 3: 'Reliable', 2: 'Some data', 1: 'Few listings' }[level]);
-  return `<div class="conf c${level}" title="${esc(why)}">${'●'.repeat(level)}${'○'.repeat(3 - level)} ${label}</div>`;
+  return `<div class="conf c${level}"><span title="${esc(why)}">${'●'.repeat(level)}${'○'.repeat(3 - level)} ${label}</span>${extra}</div>`;
 }
 
 // Сколько дней назад лот выставлен или переоценён (трейд: listing.indexed).
@@ -202,21 +204,24 @@ const mid = (a) => a[Math.floor((a.length - 1) / 2)];
 const ageDays = (iso) => (iso ? (Date.now() - new Date(iso).getTime()) / 86400e3 : 99);
 
 // Строка про возраст лотов: свежие за сутки, залежавшийся самый дешёвый, тренд «свежие дешевле/дороже».
+// Свёрнуто в значок ⓘ у надёжности оценки (подробности — в подсказке): строка целиком перегружала блок цены.
+// Залежавшийся самый дешёвый лот — значок предупреждающего цвета.
 function ageSummary(priced, usedFresh) {
   if (priced.length < 2) return '';
   const bits = [];
   const day = priced.filter((l) => l.age <= 1);
-  if (day.length) bits.push(t('Fresh (24h): <b>{n}</b> from {price}', { n: day.length, price: money(day[0].div) }));
-  if (priced[0].age >= 7) bits.push(`<span class="stale">${t('cheapest hung {n}d — likely overpriced', { n: Math.round(priced[0].age) })}</span>`);
+  if (day.length) bits.push(t('Fresh (24h): <b>{n}</b> from {price}', { n: day.length, price: money(day[0].div) }).replace(/<\/?b>/g, ''));
+  const stale = priced[0].age >= 7;
+  if (stale) bits.push(t('cheapest hung {n}d — likely overpriced', { n: Math.round(priced[0].age) }));
   const newer = priced.filter((l) => l.age <= 3).map((l) => l.div);
   const older = priced.filter((l) => l.age > 3).map((l) => l.div);
   if (newer.length >= 2 && older.length >= 2) {
     const k = mid(newer) / mid(older);
-    if (k < 0.85) bits.push(`<span class="down">↓ ${t('newer listings are cheaper')}</span>`);
-    else if (k > 1.15) bits.push(`<span class="up">↑ ${t('newer listings are pricier')}</span>`);
+    if (k < 0.85) bits.push(`↓ ${t('newer listings are cheaper')}`);
+    else if (k > 1.15) bits.push(`↑ ${t('newer listings are pricier')}`);
   }
   if (usedFresh) bits.push(t('estimate from listings ≤ 3 days old'));
-  return bits.length ? `<div class="ages">${bits.join(' · ')}</div>` : '';
+  return bits.length ? ` <span class="ages-i${stale ? ' warn' : ''}" title="${esc(bits.join('\n'))}">ⓘ</span>` : '';
 }
 
 function renderTradeHero(r) {
@@ -246,8 +251,8 @@ function renderTradeHero(r) {
   const head = basis.slice(0, 5);
   const est = mid(head);
   const median = mid(divs);
-  const ageHtml = ageSummary(priced, fresh.length >= 3 && fresh.length < priced.length)
-    + (mostlyStronger ? `<div class="ages"><span class="warn-t">${esc(t('Most listings are stronger than your item (more ▲ than ▼) — estimated from the weaker ones; your item is likely worth less than the list suggests'))}</span></div>` : '');
+  const ageInfo = ageSummary(priced, fresh.length >= 3 && fresh.length < priced.length);
+  const ageHtml = (mostlyStronger ? `<div class="ages"><span class="warn-t">${esc(t('Most listings are stronger than your item (more ▲ than ▼) — estimated from the weaker ones; your item is likely worth less than the list suggests'))}</span></div>` : '');
   // Вторая цена: те же моды с любым роллом своего тира — сколько рынок доплачивает за ваши роллы.
   let floorHtml = '';
   const fl = r.floor;
@@ -264,7 +269,7 @@ function renderTradeHero(r) {
     <div class="k">${fl ? t('Like yours') : t('Estimated price')}</div>
     <div class="big">${money(est)}</div>
     <div class="alt">${alt(est)}</div>
-    ${confidence(r.total, head, priced.slice(0, 5))}
+    ${confidence(r.total, head, priced.slice(0, 5), ageInfo)}
     ${missingKeyHtml()}
     ${floorHtml}
     <div class="ninja-u">${ninjaLine()}</div>

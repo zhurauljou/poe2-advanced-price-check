@@ -549,7 +549,8 @@ function applySettings(patch) {
 }
 
 let setWin = null;
-function openSettings() {
+// welcome — первый запуск: сверху карточка «что нужно знать» (режим экрана, горячая клавиша, трей).
+function openSettings(welcome = false) {
   if (setWin && !setWin.isDestroyed()) { setWin.show(); setWin.focus(); return; }
   setWin = new BrowserWindow({
     width: 420, height: 520, frame: false, resizable: false, alwaysOnTop: true, fullscreenable: false, show: false,
@@ -557,7 +558,7 @@ function openSettings() {
     webPreferences: { ...SECURE, preload: path.join(__dirname, 'preload-settings.js') },
   });
   setWin.setAlwaysOnTop(true, 'screen-saver');
-  setWin.loadFile(path.join(__dirname, '../renderer/settings.html'));
+  setWin.loadFile(path.join(__dirname, '../renderer/settings.html'), welcome ? { query: { welcome: '1' } } : undefined);
   setWin.once('ready-to-show', () => setWin.show());
   setWin.on('closed', () => { if (capturing) { capturing = false; syncHotkey(); } setWin = null; });
 }
@@ -585,6 +586,11 @@ app.whenReady().then(singleInstance).then((ok) => {
   if (!ok) { app.quit(); return; }
   // Запустили ещё раз (ярлык на рабочем столе) — программа уже в трее: показываем настройки, а не молчим.
   app.on('second-instance', () => openSettings());
+  // Первый запуск (лига ещё не выбрана — не обновление): программа не уходит молча в трей, а объясняет, как ей пользоваться.
+  if (!settings.get().welcomed) {
+    if (!settings.get().league && !demo.enabled) setTimeout(() => openSettings(true), 1500);
+    settings.set({ welcomed: true });
+  }
   i18n.setLang(settings.get().uiLang);
   ipcMain.on('ui-lang-get', (e) => { e.returnValue = i18n.getLang(); });
   createOverlay();

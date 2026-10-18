@@ -250,7 +250,7 @@ function openSlotsBadge(it) {
   const per = it.rarity === 'Magic' ? 1 : it.itemClass === 'Jewels' ? 2 : 3;
   const used = (side) => (it.affixes || []).filter((a) => a.side === side).length;
   const free = Math.max(0, per - used('prefix')) + Math.max(0, per - used('suffix'));
-  return free ? t('{n} open', { n: free }) : '';
+  return free ? t('+{n} mods', { n: free }) : '';
 }
 $('close').addEventListener('click', () => window.pc.hide());
 $('leagueBtn').addEventListener('click', (e) => { e.stopPropagation(); toggleLeagueMenu(); });

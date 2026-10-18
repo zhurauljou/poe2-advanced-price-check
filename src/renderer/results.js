@@ -4,8 +4,8 @@
 // ---- лоты ----
 // Лот и так в той валюте, в которой мы показываем, — «≈» не нужен.
 function sameUnit(l) {
-  const unit = money(l.divine).split(' ')[1];
-  return (unit === 'chaos' && l.currency === 'chaos') || (unit === 'div' && l.currency === 'divine');
+  const unit = moneyUnit(l.divine);
+  return (unit === 'chaos' && l.currency === 'chaos') || (unit === 'div' && l.currency === 'divine') || (unit === 'ex' && l.currency === 'exalted');
 }
 
 // Сразу видно 5 самых дешёвых лотов — остальные по «Show all»: окно короче.

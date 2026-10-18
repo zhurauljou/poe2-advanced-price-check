@@ -42,10 +42,29 @@ function fmt(n) {
 }
 
 // Цена в дивайнах → понятная строка: от 1 div — в div, дешевле — в chaos.
+// Большое количество — коротко: 38 416 → «38k» (рус. «38 тыс.»).
+function countText(n) {
+  const v = Math.round(n);
+  if (v >= 1e6) return t('{n}M', { n: fmt(v / 1e6) });
+  if (v >= 1e4) return t('{n}k', { n: String(Math.round(v / 1000)) });
+  return v.toLocaleString('en-US');
+}
+// Шанс «1 из N»; от тысячи — словами: «почти невозможно (1 из 38 тыс.)».
+function oddsText(n) {
+  const s = t('1 in {n}', { n: countText(n) });
+  return n >= 1000 ? t('almost impossible ({odds})', { odds: s }) : s;
+}
+
+// Цена — в той валюте, где число не меньше 1: от 1 div — div, от 1 chaos — chaos, дешевле — exalted.
+function moneyUnit(div) {
+  if (div >= 1 || !rates.chaos) return 'div';
+  if (div * rates.chaos >= 1 || !rates.exalted) return 'chaos';
+  return 'ex';
+}
 function money(div) {
   if (div == null) return '—';
-  if (div < 1 && rates.chaos) return `${fmt(div * rates.chaos)} chaos`;
-  return `${fmt(div)} div`;
+  const u = moneyUnit(div);
+  return `${fmt(u === 'div' ? div : u === 'chaos' ? div * rates.chaos : div * rates.exalted)} ${u}`;
 }
 
 function ago(iso) {

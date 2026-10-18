@@ -4,7 +4,9 @@
   color-scheme: dark;
   --bg: #0b1017; --line2: #1c222c; --hover: #161d28;
   --text: #b6b6b6; --muted: #8c8c8c; --gold: #dac18e; --cream: #f1e4c2; --bronze: #837053; --label: #a99a7c;
-  --good: #6fcf7a; --bad: #e0675a; --warn: #e0b35a;
+  /* Один смысл на цвет: зелёный — «хорошо для вас / есть у вашей вещи», красный — «плохо / не хватает»;
+     движение цены — свои цвета (рост голубой, падение янтарный), свежесть лота — просто ярче. */
+  --good: #6fcf7a; --bad: #e0675a; --warn: #e0b35a; --rise: #8ec5ff; --fall: #e0a35a;
   --input: #07090d; --input-line: #2c2f35;
   /* цвета игры */
   --r-normal: #c8c8c8; --r-magic: #8888ff; --r-rare: #ffff77; --r-unique: #af6025; --r-gem: #1ba29b; --r-currency: #aa9e82;
@@ -14,6 +16,9 @@
   --body: "Alegreya Sans", "Segoe UI", sans-serif;
   --game: "Fontin SmallCaps", "Cormorant SC", Georgia, serif;
   --sc: "Cormorant SC", Georgia, serif;
+  /* Строки модов (фильтры, карточка конкурента, крафт) — обычным шрифтом: длинные строки капителью читаются тяжело.
+     Капитель игры — для названий и подсказки предмета. */
+  --mod-font: 15px/1.3 var(--body);
 }
 
 * { box-sizing: border-box; }
@@ -39,16 +44,16 @@ body { background: linear-gradient(rgba(0, 0, 0, .45), rgba(0, 0, 0, .18) 70px, 
 .lmenu.hmenu::before { left: 14px; }
 .hmenu button { font: 14px var(--body); letter-spacing: 0; padding: 5px 12px; gap: 10px; }
 .hmenu .h-name { overflow: hidden; text-overflow: ellipsis; max-width: 190px; color: var(--cream); }
-.hmenu .h-base { color: var(--muted); font-size: 12.5px; overflow: hidden; text-overflow: ellipsis; }
+.hmenu .h-base { color: var(--muted); font-size: 13.5px; overflow: hidden; text-overflow: ellipsis; }
 .hmenu .h-est { margin-left: auto; color: var(--gold); font-weight: 700; white-space: nowrap; }
-.hmenu .h-ago { color: var(--muted); font-size: 12px; min-width: 28px; text-align: right; }
+.hmenu .h-ago { color: var(--muted); font-size: 13px; min-width: 28px; text-align: right; }
 .hmenu .h-empty { padding: 8px 14px; color: var(--muted); }
 .prev-check { margin-top: 6px; color: var(--muted); font-size: 13px; }
 .prev-check b { color: var(--label); }
 /* Лига — золотой текст по центру со стрелкой; список — своя панель в стиле окна (системный не стилизуется). */
 .ldrop { position: relative; }
 .ldrop > button { display: inline-flex; align-items: center; gap: 6px; padding: 2px 6px; background: none; border: 0; box-shadow: none;
-                  font: 700 15px var(--sc); letter-spacing: .4px; color: var(--gold); }
+                  font: 700 15px var(--sc); letter-spacing: .4px; color: var(--cream); }
 .ldrop > button:hover { background: none; color: #fff4b4; }
 .ldrop > button svg { width: 9px; height: 6px; transition: transform .15s; }
 .ldrop.open > button svg { transform: rotate(180deg); }
@@ -63,12 +68,12 @@ body { background: linear-gradient(rgba(0, 0, 0, .45), rgba(0, 0, 0, .18) 70px, 
                 background: none; border: 0; border-radius: 0; box-shadow: none; text-align: left;
                 font: 700 15px var(--sc); letter-spacing: .3px; color: var(--text); }
 .lmenu button:hover { background: rgba(218, 193, 142, .08); color: var(--cream); }
-.lmenu button.on { color: var(--gold); box-shadow: inset 2px 0 var(--gold); background: rgba(218, 193, 142, .05); }
-.lmenu button .chk { margin-left: auto; color: var(--gold); font-family: var(--body); }
+.lmenu button.on { color: var(--cream); box-shadow: inset 2px 0 var(--label); background: rgba(218, 193, 142, .05); }
+.lmenu button .chk { margin-left: auto; color: var(--cream); font-family: var(--body); }
 .lmenu .hc { padding: 0 4px; border: 1px solid rgba(224, 103, 90, .5); border-radius: 2px; color: var(--bad);
-             font: 700 10px/1.5 var(--body); letter-spacing: .4px; }
+             font: 700 11px/1.5 var(--body); letter-spacing: .4px; }
 .lmenu .cur { padding: 0 5px; border-radius: 2px; color: #1a1408; background: linear-gradient(#f1d79a, #c9a45c);
-              font: 700 10px/1.5 var(--body); letter-spacing: .4px; text-transform: uppercase; box-shadow: 0 0 8px rgba(255, 190, 80, .3); }
+              font: 700 11px/1.5 var(--body); letter-spacing: .4px; text-transform: uppercase; box-shadow: 0 0 8px rgba(255, 190, 80, .3); }
 .lmenu .lsep { height: 1px; margin: 4px 10px; background: linear-gradient(90deg, transparent, #4a3a22, transparent); }
 .close { position: absolute; right: 10px; top: 50%; transform: translateY(-50%); padding: 2px 4px; font-size: 16px; line-height: 1;
          color: var(--bronze); cursor: pointer; }
@@ -115,7 +120,7 @@ button { cursor: pointer; background: linear-gradient(#2b2013, #17110a); border-
          box-shadow: inset 0 1px 0 rgba(255, 224, 138, .12); }
 button:hover { background: linear-gradient(#3a2a14, #20170b); border-color: #b08a45; color: #fff4b4; }
 button:disabled { opacity: .5; cursor: default; }
-button.link { background: none; border: 0; box-shadow: none; padding: 0; color: var(--gold); font: 700 13px var(--body); }
+button.link { background: none; border: 0; box-shadow: none; padding: 0; color: var(--label); font: 700 13px var(--body); }
 button.link:hover { background: none; color: #fff4b4; text-decoration: underline; }
 /* Выбор — маленькая галочка вместо системного чекбокса: снятая — едва видная серая, выбранная — золотая. */
 input[type=checkbox] { appearance: none; flex: none; width: 12px; height: 12px; margin: 0; padding: 0; border: 0; border-radius: 0;
@@ -151,7 +156,7 @@ footer { display: flex; justify-content: space-between; gap: 8px; padding: 6px 1
 .tp:not(.on) { text-decoration: underline dotted #6b5a3a; text-underline-offset: 3px; }
 .tp:hover { border-color: #3d3a33; background: rgba(255, 255, 255, .03); }
 .tp.on { border-color: #6b5a3a; background: rgba(218, 193, 142, .08); box-shadow: 0 0 8px rgba(218, 193, 142, .12); }
-.tp-op { color: var(--gold); }
+.tp-op { color: var(--label); }
 .tt .flag.corrupt { color: var(--g-corrupt); }
 .tt .flag.neg:not(.on) { color: #7d7d8a; } /* «Not corrupted» — подсказка, пока не включена */
 .tp-in { width: 54px; height: 22px; margin-left: 2px; padding: 0 4px; font: 700 14px var(--body); vertical-align: 1px; }
@@ -168,7 +173,7 @@ footer { display: flex; justify-content: space-between; gap: 8px; padding: 6px 1
 @keyframes pulse { 50% { opacity: .4; } }
 .hero .alt { color: var(--muted); font-size: 14px; }
 /* Надёжность оценки: ●●● Reliable / ●●○ Some data / ●○○ Few listings */
-.conf { display: inline-block; margin-top: 4px; font: 700 12.5px var(--body); letter-spacing: .5px; cursor: help; }
+.conf { display: inline-block; margin-top: 4px; font: 700 13.5px var(--body); letter-spacing: .5px; cursor: help; }
 .conf.c3 { color: var(--good); } .conf.c2 { color: var(--warn); } .conf.c1 { color: var(--bad); }
 .hero .floor { margin-top: 6px; font-size: 14px; color: var(--label); }
 .hero .ages { margin-top: 4px; font-size: 13px; color: var(--muted); }
@@ -178,10 +183,10 @@ footer { display: flex; justify-content: space-between; gap: 8px; padding: 6px 1
 .lots:not(.all) .lot.more { display: none; }
 .lots.all { max-height: 280px; overflow-y: auto; } /* все лоты — прокрутка внутри списка, окно не растёт за экран */
 .lot.stale { opacity: .55; }
-.lot.fresh .age { color: var(--good); }
+.lot.fresh .age { color: var(--cream); font-weight: 700; }
 .lots-more { display: block; margin: 6px auto 0; }
 .hero .floor b { color: var(--cream); }
-.hero .floor .prem { margin-left: 6px; padding: 0 6px; border-radius: 2px; font: 700 12px/1.5 var(--body); color: #1a1408;
+.hero .floor .prem { margin-left: 6px; padding: 0 6px; border-radius: 2px; font: 700 13px/1.5 var(--body); color: #1a1408;
                      background: linear-gradient(#f1d79a, #c9a45c); box-shadow: 0 0 8px rgba(255, 190, 80, .3); }
 .hero .seg.units { margin-top: 8px; }
 .grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 4px 10px; margin-top: 10px; padding-top: 10px;
@@ -189,13 +194,13 @@ footer { display: flex; justify-content: space-between; gap: 8px; padding: 6px 1
 .grid > div { min-width: 0; }
 .grid .k { display: block; font: 400 13.5px var(--body); color: var(--muted); letter-spacing: 0; }
 .grid .v { display: flex; align-items: center; gap: 6px; color: var(--cream); font-weight: 700; font-variant-numeric: tabular-nums; white-space: nowrap; }
-.up { color: var(--good); } .down { color: var(--bad); }
+.up { color: var(--rise); } .down { color: var(--fall); }
 /* График тренда — как во флиппере: пунктир нуля, выше зелёный, ниже красный. */
 .spark { display: block; overflow: visible; }
 .spark polyline { fill: none; stroke-width: 1.5; stroke-linejoin: round; stroke-linecap: round; }
 .spark line.z { stroke: var(--muted); stroke-width: 1; stroke-dasharray: 2 2; opacity: .6; }
-.spark polyline.pos { stroke: var(--good); } .spark polyline.neg { stroke: var(--bad); }
-.spark circle.pos { fill: var(--good); } .spark circle.neg { fill: var(--bad); }
+.spark polyline.pos { stroke: var(--rise); } .spark polyline.neg { stroke: var(--fall); }
+.spark circle.pos { fill: var(--rise); } .spark circle.neg { fill: var(--fall); }
 .grid .trend .tr { display: block; font-size: 13px; font-weight: 700; font-variant-numeric: tabular-nums; white-space: nowrap; }
 
 /* ---- вкладки Price / Demand (как «Flip cycles · Pairs» во флиппере) ---- */
@@ -209,12 +214,12 @@ footer { display: flex; justify-content: space-between; gap: 8px; padding: 6px 1
 .tabs button + button { border-left: 1px solid #3d3a33; }
 .tabs button:hover { background: rgba(218, 193, 142, .05); color: var(--cream); }
 .tabs button.on { color: var(--cream); text-shadow: 0 0 14px rgba(241, 228, 194, .25);
-                  background: linear-gradient(#2a2620, #15130f); box-shadow: inset 0 -2px 0 var(--gold), inset 0 1px 0 rgba(255, 224, 138, .12); }
+                  background: linear-gradient(#2a2620, #15130f); box-shadow: inset 0 -2px 0 var(--cream), inset 0 1px 0 rgba(255, 224, 138, .12); }
 .tabs .ticon { width: 16px; height: 16px; opacity: .85; }
 /* Бейдж на вкладке Demand: доля билдов, носящих такой предмет (🔥 — если что-то почти у всех). */
 /* Контуром, без заливки: High — золотой, Med — бронзовый, Low — серый. */
-.tabs .badge { padding: 0 7px; border: 1px solid #dac18e; border-radius: 9px; font: 700 12px/1.4 var(--body); letter-spacing: 0; white-space: nowrap;
-               color: #f1d79a; background: none; text-shadow: 0 0 8px rgba(255, 190, 80, .4); box-shadow: 0 0 8px rgba(255, 190, 80, .2); }
+.tabs .badge { padding: 0 7px; border: 1px solid var(--label); border-radius: 9px; font: 700 13px/1.4 var(--body); letter-spacing: 0; white-space: nowrap;
+               color: var(--cream); background: none; }
 .tabs .badge:empty { display: none; }
 .tabs .badge.med { color: #c9b48a; border-color: #7d6a46; text-shadow: none; box-shadow: none; }
 .tabs .badge.low { color: var(--muted); border-color: #3a3f48; text-shadow: none; box-shadow: none; }
@@ -231,7 +236,7 @@ footer { display: flex; justify-content: space-between; gap: 8px; padding: 6px 1
 .brow.hot .bpct { color: #ffd27a; text-shadow: 0 0 10px rgba(255, 190, 80, .5); }
 .brow.hot .bbar i { border-right-color: #ffd27a; background: linear-gradient(90deg, rgba(176, 122, 40, .2), rgba(255, 210, 122, .34)); }
 .brow.hot.mine .bname { color: #9cf0a6; }
-.flame { font-size: 11px; margin-right: 3px; }
+.flame { font-size: 12px; margin-right: 3px; }
 .brow.mine .bbar i { border-right-color: var(--good); background: linear-gradient(90deg, rgba(47, 107, 58, .15), rgba(111, 207, 122, .28)); }
 
 /* ---- карточка конкурента при наведении на лот ---- */
@@ -241,10 +246,10 @@ body.cmp-page { background: #0a0d12; }
 .cmp .banner.mini { height: 48px; margin: 0; padding: 0 50px; }
 .cmp .banner.mini.single { height: 36px; }
 .cmp .banner.mini .bn-name, .cmp .banner.mini .bn-base { font-size: 16px; }
-.cmp-body { padding: 6px 12px 0; text-align: left; font: 15px/1.35 var(--game); color: var(--g-mod); }
+.cmp-body { padding: 6px 12px 0; text-align: left; font: var(--mod-font); color: var(--g-mod); }
 /* Значок ▲▼+ — в левом поле строки; моды по левому краю, как в фильтрах. */
 .cm { position: relative; padding: 0 0 0 18px; }
-.cm i { position: absolute; left: 0; top: 0; width: 14px; text-align: center; font-style: normal; font: 700 12px/1.6 var(--body); }
+.cm i { position: absolute; left: 0; top: 0; width: 14px; text-align: center; font-style: normal; font: 700 13px/1.6 var(--body); }
 .cm b { font-weight: normal; color: var(--cream); }
 .cmp-body > .cm:not([class*="d-"]) { color: var(--g-prop); }
 .cm.d-rune { color: var(--g-rune); } .cm.d-desecrated { color: var(--g-desecrated); } .cm.d-fractured { color: var(--g-fractured); }
@@ -256,22 +261,22 @@ body.cmp-page { background: #0a0d12; }
 .cm.worse { opacity: .8; }
 .cm.missing { color: #8a6a6a; } .cm.missing i { color: var(--bad); }
 .cm.corrupt { color: var(--g-corrupt); }
-.cmp-miss { margin-top: 6px; font: 700 12.5px var(--body); letter-spacing: .2px; color: var(--label); }
-.cmp-legend { margin-top: 6px; font: 12.5px var(--body); color: var(--muted); }
+.cmp-miss { margin-top: 6px; font: 700 13.5px var(--body); letter-spacing: .2px; color: var(--label); }
+.cmp-legend { margin-top: 6px; font: 13.5px var(--body); color: var(--muted); }
 
 /* ---- вкладка Craft ---- */
 .craft-slots { text-align: center; color: var(--label); font-size: 14px; }
 .craft-slots b { color: var(--cream); }
-.craft-theme { text-align: center; font-size: 12.5px; color: var(--muted); margin-top: 2px; }
-.craft-theme b { color: var(--g-mod); font-weight: normal; font-family: var(--game); }
+.craft-theme { text-align: center; font-size: 13.5px; color: var(--muted); margin-top: 2px; }
+.craft-theme b { color: var(--g-mod); font-weight: normal; }
 .craft-sec { margin-top: 6px; }
 .craft-sec .k { font: 700 14px var(--body); letter-spacing: .2px; color: var(--cream); margin-bottom: 3px; }
-.craft-how { display: flex; gap: 6px; font-size: 14px; color: var(--gold); margin: 2px 0; }
+.craft-how { display: flex; gap: 6px; font-size: 14px; color: var(--text); margin: 2px 0; }
 .craft-how::before { content: "◆"; font-size: 8px; line-height: 20px; color: #9a7a3e; flex: none; }
-.craft-weak { font: 14px/1.3 var(--game); color: var(--g-mod); margin: 2px 0 4px; }
-.craft-sub { font-size: 12.5px; color: var(--muted); margin: 6px 0 2px; }
-.craft-tier { color: #8a867e; font-size: 12px; white-space: nowrap; margin-left: 6px; }
-.craft-foot { margin-top: 8px; font-size: 12px; color: var(--muted); text-align: center; }
+.craft-weak { font: var(--mod-font); color: var(--g-mod); margin: 2px 0 4px; }
+.craft-sub { font-size: 13.5px; color: var(--muted); margin: 6px 0 2px; }
+.craft-tier { color: #8a867e; font-size: 13px; white-space: nowrap; margin-left: 6px; }
+.craft-foot { margin-top: 8px; font-size: 13px; color: var(--muted); text-align: center; }
 
 /* ---- популярные билды ---- */
 .center { text-align: center; }
@@ -279,14 +284,14 @@ body.cmp-page { background: #0a0d12; }
 .builds { display: flex; flex-direction: column; gap: 4px; }
 .builds .sect { margin-bottom: 0; }
 .bshare { text-align: center; color: var(--text); }
-.bshare b { color: var(--gold); }
+.bshare b { color: var(--cream); }
 .bwhat { text-align: center; font-size: 13px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .bcols { display: grid; grid-template-columns: 1fr 1fr; gap: 4px 16px; margin-top: 4px; }
 /* Строка с долей: полоса — заливка за текстом (как столбик графика), процент справа. */
 .brow { position: relative; isolation: isolate; display: grid; grid-template-columns: 1fr auto; column-gap: 6px; align-items: center;
         margin-bottom: 2px; padding: 2px 6px; font-size: 14px; }
 .bname { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: var(--cream); }
-.bpct { color: var(--gold); font-weight: 700; font-variant-numeric: tabular-nums; }
+.bpct { color: var(--cream); font-weight: 700; font-variant-numeric: tabular-nums; }
 .bbar { position: absolute; inset: 0; z-index: -1; background: rgba(255, 255, 255, .02); }
 .bbar i { display: block; height: 100%; border-right: 1px solid rgba(218, 193, 142, .45);
           background: linear-gradient(90deg, rgba(107, 82, 40, .12), rgba(218, 193, 142, .2)); }
@@ -297,19 +302,19 @@ body.cmp-page { background: #0a0d12; }
 .mod { display: flex; gap: 8px; align-items: center; padding: 1px 6px; border-radius: 2px; }
 .mod:hover { background: var(--hover); }
 .mod label { flex: 1; display: flex; gap: 7px; align-items: center; cursor: pointer; min-width: 0;
-             font: 14.5px/1.22 var(--game); color: var(--g-mod); }
+             font: var(--mod-font); color: var(--g-mod); }
 /* Колонки фиксированной ширины — текст модов начинается ровно на одной вертикали. */
 .mod .cb { width: 12px; flex: none; }
 .mod .imp { width: 16px; }
 .mod .tcol { width: 26px; flex: none; text-align: center; }
 .mod .tcol .tag { display: inline-block; min-width: 0; width: 100%; }
-.mod .tcol.sigma { color: var(--gold); font: 700 15px var(--body); }
+.mod .tcol.sigma { color: var(--label); font: 700 15px var(--body); }
 .mod .txt { flex: 1; min-width: 0; white-space: pre-line; }
-.mod .txt .tag { font-size: 9.5px; padding: 0 3px; vertical-align: 2px; }
-.mod .dem { font: 700 11px var(--body); color: #b89a5e; letter-spacing: 0; white-space: nowrap; }
+.mod .txt .tag { font-size: 11px; padding: 0 3px; vertical-align: 2px; }
+.mod .dem { font: 700 12px var(--body); color: #b89a5e; letter-spacing: 0; white-space: nowrap; }
 .mod .dem.hot { color: #ffd27a; text-shadow: 0 0 8px rgba(255, 190, 80, .35); }
-.mod .rng { font: 12px var(--body); color: #8a867e; letter-spacing: 0; white-space: nowrap; }
-.mod .maxroll { margin-left: 4px; padding: 0 4px; border-radius: 2px; font: 700 10px/1.5 var(--body); letter-spacing: .3px;
+.mod .rng { font: 13px var(--body); color: #8a867e; letter-spacing: 0; white-space: nowrap; }
+.mod .maxroll { margin-left: 4px; padding: 0 4px; border-radius: 2px; font: 700 11px/1.5 var(--body); letter-spacing: .3px;
                 color: #1a1408; background: linear-gradient(#f1d79a, #c9a45c); vertical-align: 1px; }
 .mod.off .maxroll { opacity: .6; }
 .mod.t-crafted label { color: var(--g-crafted); }
@@ -322,10 +327,10 @@ body.cmp-page { background: #0a0d12; }
 .mod.off label { color: #7d7d8a; }
 .mod.nomatch label { color: #696973; cursor: default; }
 .mod input[type=number] { width: 56px; height: 24px; padding: 1px 4px; }
-.tag { font: 700 10.5px/1.5 var(--body); text-transform: uppercase; letter-spacing: .4px; color: var(--bronze); border: 1px solid #2c2a25;
+.tag { font: 700 11.5px/1.5 var(--body); text-transform: uppercase; letter-spacing: .4px; color: var(--bronze); border: 1px solid #2c2a25;
        border-radius: 2px; padding: 0 4px; flex: none; }
 .tag.tier { min-width: 23px; text-align: center; }
-.tag.tier.top { color: var(--gold); border-color: #6b5a3a; }
+.tag.tier.top { color: var(--cream); border-color: #6b5a3a; }
 /* Тег — в цвет своего мода, с лёгкой подложкой того же цвета. */
 .tag.implicit { --c: var(--g-mod); } .tag.crafted { --c: var(--g-crafted); } .tag.enchant { --c: var(--g-enchant); }
 .tag.rune { --c: var(--g-rune); } .tag.desecrated { --c: var(--g-desecrated); } .tag.fractured { --c: var(--g-fractured); }
@@ -337,9 +342,9 @@ body.cmp-page { background: #0a0d12; }
 .imp i { width: 4px; border-radius: 1px; background: #2a2e36; }
 .imp i:nth-child(1) { height: 6px; } .imp i:nth-child(2) { height: 9px; } .imp i:nth-child(3) { height: 12px; }
 .imp.i1 i:nth-child(-n+1), .imp.i2 i:nth-child(-n+2), .imp.i3 i { background: var(--bronze); }
-.imp.key.i1 i:nth-child(-n+1), .imp.key.i2 i:nth-child(-n+2), .imp.key.i3 i { background: var(--gold); box-shadow: 0 0 4px rgba(255, 190, 80, .4); }
-.sum-v { color: var(--gold); }
-.sum-toggle { margin: -2px 0 2px 57px; font-size: 12.5px; color: var(--bronze); cursor: pointer; user-select: none; }
+.imp.key.i1 i:nth-child(-n+1), .imp.key.i2 i:nth-child(-n+2), .imp.key.i3 i { background: var(--cream); }
+.sum-v { color: var(--cream); }
+.sum-toggle { margin: -2px 0 2px 57px; font-size: 13.5px; color: var(--bronze); cursor: pointer; user-select: none; }
 .sum-toggle:hover { color: var(--cream); }
 .sum-parts { margin-left: 18px; padding-left: 6px; border-left: 1px solid #2c2a25; }
 .misc { display: flex; flex-wrap: wrap; justify-content: center; gap: 6px 16px; margin: 6px 0 4px; padding-top: 8px; border-top: 1px solid var(--line2); }
@@ -376,12 +381,12 @@ body.cmp-page { background: #0a0d12; }
 
 /* ---- окно «Updates» ---- */
 body.upd-page { height: auto; }
-.upd-title { font: 700 15px var(--sc); letter-spacing: .5px; color: var(--gold); }
+.upd-title { font: 700 15px var(--sc); letter-spacing: .5px; color: var(--label); }
 .upd { padding: 6px 18px 16px; text-align: center; gap: 8px; }
 .upd-ver { color: var(--muted); font-size: 14px; }
 .upd-ver b { color: var(--cream); }
 .upd-state { font: 700 18px var(--sc); letter-spacing: .3px; color: var(--cream); }
-.upd-state b { color: var(--gold); }
+.upd-state b { color: var(--cream); }
 .upd-detail { color: var(--muted); font-size: 13.5px; min-height: 18px; }
 .upd-bar { height: 6px; background: #1a1f27; border: 1px solid #2c2a25; overflow: hidden; }
 .upd-bar i { display: block; height: 100%; width: 0; background: linear-gradient(90deg, #6b5228, #dac18e);
@@ -397,7 +402,7 @@ body.upd-page { height: auto; }
 /* «Level: 65, 78 Int» — без лишнего пробела перед запятой (у значения-переключателя есть поля) */
 .tt .req-rest { margin-left: -5px; }
 /* ▲▼ в строке лота: сколько модов у конкурента лучше и хуже ваших */
-.cmpc { margin-right: 6px; font: 700 12px var(--body); }
+.cmpc { margin-right: 6px; font: 700 13px var(--body); }
 .cmpc i { font-style: normal; margin-left: 3px; }
 .cmpc .b { color: var(--good); } .cmpc .w { color: var(--bad); }
 /* Фильтры поменяли после поиска — Search подсвечен */
@@ -427,27 +432,27 @@ body.upd-page { height: auto; }
 .grid.sell { text-align: center; }
 .grid.sell .v.copy { position: relative; margin: 0 auto; cursor: pointer; width: fit-content; text-decoration: underline dotted #6b5a3a; text-underline-offset: 3px; }
 .grid.sell .v.copy:hover { color: #fff4b4; text-decoration-color: var(--gold); }
-.grid.sell .v.copy::after { position: absolute; left: 100%; margin-left: 4px; content: "⧉"; font-size: 11px; color: var(--bronze); opacity: 0; transition: opacity .12s; }
+.grid.sell .v.copy::after { position: absolute; left: 100%; margin-left: 4px; content: "⧉"; font-size: 12px; color: var(--bronze); opacity: 0; transition: opacity .12s; }
 .grid.sell .v.copy:hover::after { opacity: 1; }
-.sect .cnt { margin-left: 6px; padding: 0 6px; border: 1px solid #3d3a33; border-radius: 8px; font: 700 11.5px/1.5 var(--body);
+.sect .cnt { margin-left: 6px; padding: 0 6px; border: 1px solid #3d3a33; border-radius: 8px; font: 700 12.5px/1.5 var(--body);
              letter-spacing: 0; color: var(--cream); vertical-align: 1px; }
 .drive-btn { display: block; margin: 10px auto 0; }
 /* Вклад мода в цену — после поиска без него */
-.drive { margin-left: 6px; padding: 0 5px; border: 1px solid #6b5a3a; border-radius: 2px; font: 700 11px/1.5 var(--body);
-         letter-spacing: 0; color: var(--gold); white-space: nowrap; vertical-align: 1px; }
-.drive.big { border-color: #dac18e; color: #ffe3a3; box-shadow: 0 0 8px rgba(255, 190, 80, .25); }
+.drive { margin-left: 6px; padding: 0 5px; border: 1px solid #6b5a3a; border-radius: 2px; font: 700 12px/1.5 var(--body);
+         letter-spacing: 0; color: var(--label); white-space: nowrap; vertical-align: 1px; }
+.drive.big { border-color: var(--label); color: var(--cream); box-shadow: 0 0 8px rgba(255, 190, 80, .25); }
 .drive.low { border-color: #2c2f35; color: var(--muted); }
 .drive.wait { border-color: #2c2f35; color: var(--muted); animation: pulse 1.2s ease-in-out infinite; }
 /* Цена после крафта у кандидата */
-.cprice { margin-left: 8px; font-size: 12px; }
-.cpr { margin-left: 8px; font: 700 12px var(--body); color: var(--cream); }
+.cprice { margin-left: 8px; font-size: 13px; }
+.cpr { margin-left: 8px; font: 700 13px var(--body); color: var(--cream); }
 .cpr.up { color: var(--good); } .cpr.down { color: var(--bad); }
 #craft .bname { white-space: normal; } /* у кандидатов крафта текст + тир + цена — переносим, а не обрезаем */
 /* Цены для выставления — по центру своих колонок */
 /* Карточка конкурента — моды по левому краю, как в фильтрах: так проще сопоставлять построчно */
 .cmp-body .tt, .cmp-miss, .cmp-legend { text-align: center; }
-.cm .yours { margin-left: 6px; font: 12px var(--body); color: var(--muted); white-space: nowrap; }
-.ess { margin-left: 6px; font: 700 11.5px var(--body); color: #c9a0e8; white-space: nowrap; } /* эссенция гарантирует мод */
+.cm .yours { margin-left: 6px; font: 13px var(--body); color: var(--muted); white-space: nowrap; }
+.ess { margin-left: 6px; font: 700 12.5px var(--body); color: #c9a0e8; white-space: nowrap; } /* эссенция гарантирует мод */
 .hero .ninja-u { margin-top: 4px; font-size: 13.5px; color: var(--label); } .hero .ninja-u b { color: var(--cream); } .hero .ninja-u:empty { display: none; }
 /* Действия у лота: шёпот в игре и переход на трейд — проявляются при наведении */
 .lot .acts { display: flex; justify-content: flex-end; gap: 6px; opacity: 0; transition: opacity .12s; }
@@ -455,32 +460,32 @@ body.upd-page { height: auto; }
 .lot .acts i { font-style: normal; font-size: 13px; color: var(--bronze); cursor: pointer; }
 .lot .acts i:hover { color: #fff4b4; }
 .lot .acts svg { width: 13px; height: 13px; vertical-align: -2px; }
-.lot .ib { margin-right: 5px; font-size: 11px; color: #ffd27a; font-weight: normal; } /* мгновенный выкуп */
-.lvl-row { display: flex; justify-content: center; align-items: center; gap: 8px; margin: 2px 0 4px; } .seg.lvl button { padding: 1px 8px; font-size: 12.5px; }
-.tt .flag small { font-size: 11px; color: var(--muted); }
+.lot .ib { margin-right: 5px; font-size: 12px; color: #ffd27a; font-weight: normal; } /* мгновенный выкуп */
+.lvl-row { display: flex; justify-content: center; align-items: center; gap: 8px; margin: 2px 0 4px; } .seg.lvl button { padding: 1px 8px; font-size: 13.5px; }
+.tt .flag small { font-size: 12px; color: var(--muted); }
 /* Нет ключевого мода — предупреждение в оценке и строка-исключение в фильтрах */
 .hero .miss-key { margin: 6px auto 2px; max-width: 92%; padding: 5px 8px; border: 1px solid rgba(224, 179, 90, .45); border-radius: 3px;
                   background: rgba(224, 179, 90, .07); color: #f0c674; font-size: 13.5px; line-height: 1.35; }
-.hero .miss-key small { display: block; margin-top: 2px; color: var(--muted); font-size: 12px; }
+.hero .miss-key small { display: block; margin-top: 2px; color: var(--muted); font-size: 13px; }
 .mod.excl label { color: #f0c674; }
 .mod.excl.off label { color: #7d7d8a; }
 .mod.excl .tcol { color: var(--warn); font: 700 14px var(--body); }
 /* Цель крафта */
 .craft-sec.goal { padding: 6px 8px; border: 1px solid #4a3f2c; border-radius: 3px; background: rgba(218, 193, 142, .04); }
-.goal .g { position: relative; padding-left: 16px; font: 14px/1.35 var(--game); }
-.goal .g i { position: absolute; left: 0; font: 700 12px/1.6 var(--body); font-style: normal; }
+.goal .g { position: relative; padding-left: 16px; font: var(--mod-font); }
+.goal .g i { position: absolute; left: 0; font: 700 13px/1.6 var(--body); font-style: normal; }
 .goal .g.keep { color: #9a9aa8; } .goal .g.keep i { color: var(--muted); }
 .goal .g.remove { color: #8a6a6a; text-decoration: line-through; } .goal .g.remove i { color: var(--bad); }
 .goal .g.add { color: var(--good); } .goal .g.add i { color: var(--good); }
-.goal-steps { margin: 2px 0 4px 18px; padding: 0; font-size: 13.5px; color: var(--gold); }
+.goal-steps { margin: 2px 0 4px 18px; padding: 0; font-size: 13.5px; color: var(--label); }
 .goal-steps li { margin: 2px 0; }
 .goal .goal-price { font-size: 13.5px; }
-.goal .tierup { margin-left: 4px; font: 700 11.5px var(--body); color: var(--warn); }
+.goal .tierup { margin-left: 4px; font: 700 12.5px var(--body); color: var(--warn); }
 /* Примерный шанс мода (оценка по трейду) и предупреждение о точности */
-.chance { margin-left: 6px; font: 700 11px var(--body); white-space: nowrap; letter-spacing: 0; }
+.chance { margin-left: 6px; font: 700 12px var(--body); white-space: nowrap; letter-spacing: 0; }
 .chance.common { color: var(--good); } .chance.uncommon { color: var(--warn); } .chance.rare { color: var(--bad); }
 .craft-warn { margin-top: 8px; padding: 5px 8px; border-left: 2px solid var(--warn); background: rgba(224, 179, 90, .06);
-              font-size: 12.5px; color: #e6c98a; }
+              font-size: 13.5px; color: #e6c98a; }
 .chance.unknown { color: var(--muted); font-weight: 400; }
 
 /* ---- окно выше экрана: прокрутка, шапка и футер закреплены (как во флиппере — прогрессивное размытие) ---- */
@@ -499,14 +504,14 @@ footer::before { bottom: 0; top: -12px; -webkit-backdrop-filter: blur(16px); bac
   background: linear-gradient(rgba(var(--shade), 0) 0%, rgba(var(--shade), .7) 25%, rgba(var(--shade), .97) 55%);
   -webkit-mask-image: linear-gradient(transparent 0%, #000 35%); mask-image: linear-gradient(transparent 0%, #000 35%); }
 /* Варианты крафта по приросту цены */
-.cprice-all { display: block; margin: 2px 0 4px auto; font-size: 12.5px; }
+.cprice-all { display: block; margin: 2px 0 4px auto; font-size: 13.5px; }
 .cpr b { font-size: 13px; }
 .brow.best { box-shadow: inset 2px 0 var(--good); }
 .brow.best .bname::before { content: var(--best-label, "★ "); color: var(--good); font-weight: 700; }
 .brow.flat { opacity: .55; }
 .hero .ages .warn-t { color: var(--warn); }
-.brow .rank { font: 600 11.5px var(--body); color: var(--muted); }
-.bwhat .theme { color: var(--g-mod); font-weight: normal; font-family: var(--game); }
+.brow .rank { font: 600 12.5px var(--body); color: var(--muted); }
+.bwhat .theme { color: var(--g-mod); font-weight: normal; }
 .bwhat:has(.theme) { white-space: normal; } /* тема спроса — переносится, а не обрезается */
 
 /* ---- Крафт: места кружками, «продать или крафтить», план по шагам, остальное свёрнуто ---- */
@@ -514,7 +519,7 @@ footer::before { bottom: 0; top: -12px; -webkit-backdrop-filter: blur(16px); bac
 .slots-side { display: inline-flex; align-items: center; gap: 5px; }
 .slots-side > span { margin-right: 3px; }
 .slot { display: inline-flex; align-items: center; justify-content: center; width: 20px; height: 20px; border-radius: 50%;
-        font: 700 11px var(--body); font-style: normal; color: #1a1408; background: var(--bronze); }
+        font: 700 12px var(--body); font-style: normal; color: #1a1408; background: var(--bronze); }
 .slot.top { background: linear-gradient(#f1d79a, #c9a45c); }
 .slot.mid { background: #8c7a55; }
 .slot.weak { background: #6b3a33; color: #f0c4bc; }
@@ -528,16 +533,16 @@ footer::before { bottom: 0; top: -12px; -webkit-backdrop-filter: blur(16px); bac
 .verdict { margin: 6px 0 4px; padding: 5px 8px; border-radius: 3px; font-weight: 700; color: var(--cream); background: rgba(255, 255, 255, .03); }
 .verdict.good { color: var(--good); background: rgba(111, 207, 122, .08); }
 .verdict.bad { color: #e6a59c; background: rgba(224, 103, 90, .08); }
-.verdict small { display: block; margin-top: 2px; font-weight: 400; font-size: 12.5px; color: var(--muted); }
+.verdict small { display: block; margin-top: 2px; font-weight: 400; font-size: 13.5px; color: var(--muted); }
 .plan { margin: 6px 0 2px; padding-left: 20px; display: grid; gap: 6px; }
-.plan li::marker { color: var(--gold); font-weight: 700; }
+.plan li::marker { color: var(--label); font-weight: 700; }
 .ps-what { color: var(--cream); font-weight: 700; }
 .ps-how { font-size: 13px; color: var(--muted); }
-.ps-how b { color: var(--gold); }
-.ps-risk { font-size: 12.5px; color: var(--warn); }
-.ps-note { font-size: 12.5px; color: var(--muted); opacity: .85; }
+.ps-how b { color: var(--cream); }
+.ps-risk { font-size: 13.5px; color: var(--warn); }
+.ps-note { font-size: 13.5px; color: var(--muted); opacity: .85; }
 .why, .more-ways { margin-top: 6px; }
-.why > summary, .more-ways > summary { cursor: pointer; font: 700 13px var(--body); color: var(--gold); list-style: none; }
+.why > summary, .more-ways > summary { cursor: pointer; font: 700 13px var(--body); color: var(--label); list-style: none; }
 .why > summary::before, .more-ways > summary::before { content: "▸ "; }
 .why[open] > summary::before, .more-ways[open] > summary::before { content: "▾ "; }
 .more-ways { padding-top: 6px; border-top: 1px solid var(--line2); }
@@ -546,9 +551,9 @@ footer::before { bottom: 0; top: -12px; -webkit-backdrop-filter: blur(16px); bac
 .profit-row { padding: 5px 0; border-top: 1px solid var(--line, rgba(255,255,255,.06)); }
 .profit-row:first-of-type { border-top: 0; }
 .profit-row small { color: var(--muted); }
-.profit-row .rec { margin-left: 6px; font-size: 11px; color: var(--good); border: 1px solid var(--good); border-radius: 3px; padding: 0 4px; }
+.profit-row .rec { margin-left: 6px; font-size: 12px; color: var(--good); border: 1px solid var(--good); border-radius: 3px; padding: 0 4px; }
 .cm.diff i, .cmp-legend .diff { color: var(--warn); }
-.ps-how .cur { display: inline-block; padding: 0 5px; margin: 1px 0; border-radius: 3px; border: 1px solid; font-size: 12.5px; line-height: 1.5; }
+.ps-how .cur { display: inline-block; padding: 0 5px; margin: 1px 0; border-radius: 3px; border: 1px solid; font-size: 13.5px; line-height: 1.5; }
 .ps-how .cur.orb { color: #e8c674; border-color: rgba(232, 198, 116, .45); background: rgba(232, 198, 116, .08); }
 .ps-how .cur.omen { color: #c9a0ff; border-color: rgba(201, 160, 255, .45); background: rgba(201, 160, 255, .08); }
 .ps-how .cur.bone { color: #ff9b8a; border-color: rgba(255, 155, 138, .45); background: rgba(255, 155, 138, .08); }
@@ -558,16 +563,16 @@ footer::before { bottom: 0; top: -12px; -webkit-backdrop-filter: blur(16px); bac
 .mod .range-in input.max { width: 44px; }
 .mod .range-in input.max.empty { opacity: .45; }
 .mod:hover .range-in input.max.empty, .mod .range-in input.max:focus { opacity: 1; }
-.session { border-left: 2px solid var(--gold); padding-left: 8px; }
+.session { border-left: 2px solid var(--label); padding-left: 8px; }
 .session .ss { font-size: 13px; color: var(--muted); }
 .session .ss.done { color: var(--good); }
 .session .ss.good { color: var(--good); }
 .session .ss.bad { color: var(--bad); }
-.session .ss-news { margin: 2px 0 6px; font-size: 12.5px; color: var(--muted); }
-.session .ss-next { margin-top: 6px; font-weight: 600; color: var(--gold); }
-.plan-box .session-btn { float: right; font-size: 12px; }
+.session .ss-news { margin: 2px 0 6px; font-size: 13.5px; color: var(--muted); }
+.session .ss-next { margin-top: 6px; font-weight: 600; color: var(--cream); }
+.plan-box .session-btn { float: right; font-size: 13px; }
 .session .ss-how { margin: 4px 0 6px; font-size: 13px; color: var(--text, #e8dcc4); line-height: 1.6; }
-kbd { display: inline-block; padding: 0 6px; border: 1px solid var(--gold); border-bottom-width: 2px; border-radius: 4px; color: var(--gold); font: 600 12.5px var(--body); background: rgba(232, 198, 116, .08); }
+kbd { display: inline-block; padding: 0 6px; border: 1px solid var(--label); border-bottom-width: 2px; border-radius: 4px; color: var(--cream); font: 600 13.5px var(--body); background: rgba(232, 198, 116, .08); }
 #elements { margin: 6px 0; }
 #elements .el-row { display: flex; justify-content: space-between; gap: 8px; padding: 3px 0; font-size: 13.5px; }
 #elements .el-row small { color: var(--muted); margin-left: 4px; }
@@ -607,9 +612,17 @@ body.set-page { height: auto; user-select: text; }
 
 /* Закреплённая карточка конкурента: значок виден и подсвечен */
 .lot.pinned .acts { opacity: 1; }
-.lot.pinned .acts [data-a="pin"] { color: var(--gold); }
+.lot.pinned .acts [data-a="pin"] { color: var(--cream); }
 /* Подвал: ссылки справа */
 .foot-links { display: flex; gap: 12px; white-space: nowrap; }
 /* Текст, который полезно скопировать (ник продавца, моды, ошибки), выделяется мышью; перетаскивание окна — за шапку */
 .tt, #status, .seller, .void .vd, .craft-how, .note, .cm { user-select: text; }
 footer > span:first-child { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+/* Первый запуск: карточка «что нужно знать» в окне настроек */
+.welcome { padding: 10px 12px; border: 1px solid var(--label); border-radius: 4px; background: rgba(218, 193, 142, .05); }
+.welcome-title { font: 700 16px var(--sc); letter-spacing: .4px; color: var(--cream); }
+.welcome ol { margin: 4px 0 6px 18px; padding: 0; display: flex; flex-direction: column; gap: 6px; color: var(--text); }
+.welcome .primary-go { align-self: center; min-width: 140px; height: 32px; color: #1a1408; background: linear-gradient(#f1d79a, #c9a45c); border-color: #f1d79a; }
+/* Свежесть лотов — значок ⓘ у надёжности оценки, подробности в подсказке */
+.ages-i { margin-left: 8px; color: var(--label); font-weight: 400; cursor: help; }
+.ages-i.warn { color: var(--warn); }
