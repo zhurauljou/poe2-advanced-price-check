@@ -21,9 +21,9 @@ function renderResults(r) {
   box.innerHTML = `
     <div class="sect"><span>${t('Cheapest listings')} <b class="cnt">${r.total.toLocaleString('en-US')}</b></span></div>
     <div class="lots${showAllLots ? ' all' : ''}">${r.listings.map((l, i) => `
-      <div class="lot${i >= LOTS_SHOWN ? ' more' : ''}${ageClass(l.indexed)}" data-i="${i}" title="${l.whisper ? t('Copy whisper to seller') : t('Instant buyout — opens the trade site (Travel to Hideout)')}">
+      <div class="lot${i >= LOTS_SHOWN ? ' more' : ''}${ageClass(l.indexed)}${stateRowClass(l)}" data-i="${i}" title="${l.whisper ? t('Copy whisper to seller') : t('Instant buyout — opens the trade site (Travel to Hideout)')}">
         <span class="chip">${l.currencyImage ? `<img src="${esc(l.currencyImage)}" alt="">` : ''}${fmt(l.amount)}${l.currencyImage ? '' : ' ' + esc(l.currencyName)}</span>
-        <span class="eq">${stateBadge(l)}${cmpBadge(l)}${l.divine != null && !sameUnit(l) ? '≈ ' + money(l.divine) : ''}</span>
+        <span class="eq"><span class="st">${stateBadge(l)}</span>${cmpBadge(l)}<span class="ap">${l.divine != null && !sameUnit(l) ? '≈ ' + money(l.divine) : ''}</span></span>
         <span class="seller">${l.whisper ? '' : `<b class="ib" title="${t('Instant buyout')}">⚡</b>`}<span class="dot${l.online ? ' on' : ''}"></span>${esc(l.seller)}</span>
         <span class="age">${l.indexed ? ago(l.indexed) : ''}</span>
         <span class="acts">${l.whisper ? `<i data-a="whisper" title="${t('Whisper in game — opens chat with the message, you press Enter')}"><svg viewBox="0 0 16 16"><path d="M2 3h12v8H7l-3 3v-3H2z" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linejoin="round"/></svg></i>` : ''}<i data-a="site" title="${t('Open this listing on the trade site')}">↗</i>${l.tip ? `<i data-a="pin" title="${t('Pin the comparison card')}"><svg viewBox="0 0 16 16"><path d="M10 2l4 4-2 1-2 3 1 2-1 1-3-3-4 4-1-1 4-4-3-3 1-1 2 1 3-2z" fill="none" stroke="currentColor" stroke-width="1.3" stroke-linejoin="round"/></svg></i>` : ''}</span>
@@ -144,15 +144,17 @@ function cmpCounts(l) {
 }
 
 // Состояния вашей вещи и лота (Corrupted, Sanctified, Mirrored…): в строке лота — те, что отличаются от вашей вещи.
-const STATE_SHORT = { Corrupted: 'Corrupted', Sanctified: 'Sanctified', Mirrored: 'Mirrored', Unidentified: 'Unid' };
+// В строке лота — буква в своей колонке (ширина строки не позволяет слово, а колонки не должны скакать) и полоса слева;
+// полное название — в подсказке и наверху карточки.
+const STATE_SHORT = { Corrupted: 'C', Sanctified: 'S', Mirrored: 'M', Unidentified: 'U' };
+const diffStates = (l) => ((l.tip && l.tip.states) || []).filter((s) => !myStates().has(s));
+const stateRowClass = (l) => { const d = diffStates(l); return d.length ? ` st-${d[0].toLowerCase()}` : ''; };
 function myStates() {
   const it = state.item;
   return new Set([it.corrupted && 'Corrupted', it.sanctified && 'Sanctified', it.mirrored && 'Mirrored', it.unidentified && 'Unidentified'].filter(Boolean));
 }
 function stateBadge(l) {
-  const mine = myStates();
-  const diff = ((l.tip && l.tip.states) || []).filter((s) => !mine.has(s));
-  return diff.map((s) => `<span class="lstate s-${s.toLowerCase()}" title="${esc(t('{state} — yours is not', { state: s }))}">${esc(STATE_SHORT[s] || s)}</span>`).join('');
+  return diffStates(l).map((s) => `<span class="lstate s-${s.toLowerCase()}" title="${esc(t('{state} — yours is not', { state: s }))}">${esc(STATE_SHORT[s] || s)}</span>`).join('');
 }
 
 // Состояния лота — наверху карточки, заметно: от них цена меняется сильнее, чем от роллов (освящённую или осквернённую
@@ -164,10 +166,11 @@ function statesHtml(tip) {
   return `<div class="cmp-states">${list.map((s) => `<span class="cstate s-${s.toLowerCase()}${mine.has(s) ? ' same' : ''}">${esc(s)}${mine.has(s) ? '' : ` · ${esc(t('yours is not'))}`}</span>`).join('')}</div>`;
 }
 
+// ▲ и ▼ — каждая в своей колонке (пустая, если нуля), чтобы между строками ничего не сдвигалось.
 function cmpBadge(l) {
   const { better, worse } = cmpCounts(l);
-  if (!better && !worse) return '';
-  return `<span class="cmpc" title="${t('Modifiers better / worse than yours')}">${better ? `<i class="b">▲${better}</i>` : ''}${worse ? `<i class="w">▼${worse}</i>` : ''}</span>`;
+  const title = t('Modifiers better / worse than yours');
+  return `<i class="b" title="${title}">${better ? `▲${better}` : ''}</i><i class="w" title="${title}">${worse ? `▼${worse}` : ''}</i>`;
 }
 
 function compareClass(theirs, ours) {

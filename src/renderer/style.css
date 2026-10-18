@@ -363,7 +363,7 @@ body.cmp-page { background: #0a0d12; }
 
 /* ---- лоты ---- */
 .lots { border: 1px solid #3d3a33; background: rgba(10, 13, 18, .92); }
-.lot { display: grid; grid-template-columns: auto 1fr minmax(0, 130px) 34px 56px; align-items: center; gap: 8px; padding: 5px 8px;
+.lot { display: grid; grid-template-columns: 74px 1fr minmax(0, 130px) 34px 56px; align-items: center; gap: 8px; padding: 5px 8px;
        border-bottom: 1px solid var(--line2); cursor: pointer; }
 .lot:last-child { border-bottom: 0; }
 .lot:hover { background: var(--hover); }
@@ -636,3 +636,14 @@ footer > span:first-child { min-width: 0; overflow: hidden; text-overflow: ellip
 .cstate.same { border-color: #3a3f48; background: none; color: var(--muted); }
 /* Освящённый лот — золотистая метка (не красная, как осквернение): их легко различить с одного взгляда */
 .lstate.s-sanctified, .cstate.s-sanctified { border-color: rgba(241, 215, 154, .7); color: #f1d79a; background: rgba(241, 215, 154, .1); }
+
+/* Строка лота — постоянные колонки: цена лота | состояние | ▲ | ▼ | «≈ цена» справа */
+.lot .chip { min-width: 0; overflow: hidden; }
+.lot .eq { display: grid; grid-template-columns: 18px 26px 26px 1fr; align-items: center; column-gap: 2px; }
+.lot .eq .ap { text-align: right; }
+.lot .eq i { font: 700 13px var(--body); font-style: normal; text-align: left; }
+.lot .eq i.b { color: var(--good); } .lot .eq i.w { color: var(--bad); }
+.lot .lstate { display: inline-block; width: 16px; margin: 0; padding: 0; text-align: center; font-size: 11px; line-height: 15px; }
+.lot.st-sanctified { box-shadow: inset 3px 0 #f1d79a; }
+.lot.st-corrupted { box-shadow: inset 3px 0 var(--g-corrupted); }
+.lot.st-mirrored, .lot.st-unidentified { box-shadow: inset 3px 0 var(--muted); }
