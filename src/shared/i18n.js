@@ -312,6 +312,8 @@
     chance: 'шанс',
     'details and alternatives': 'подробнее и другие способы',
     details: 'подробнее',
+    Sources: 'Источники',
+    'Demand: builds on poe.ninja. Prices: poe.ninja and the trade site.': 'Спрос — билды на poe.ninja. Цены — poe.ninja и трейд.',
     'of {n}': 'из {n}',
     'priced from full ones': 'цена по полным',
     'Partly used tablets are rarely listed — priced as a full one, scaled by the uses left (an assumption)': 'Неполные скрижали выставляют редко — цена полной, умноженная на долю оставшихся использований (предположение)',
