@@ -98,7 +98,7 @@ function prevCheckHtml() {
 // Строка свойства → фильтр трейда. Урон по типам ищется как DPS: физический — pDPS, стихийный — eDPS.
 const PROP_KEY = { Armour: 'ar', 'Evasion Rating': 'ev', 'Energy Shield': 'es', Spirit: 'spirit',
   'Physical Damage': 'pdps', 'Fire Damage': 'edps', 'Cold Damage': 'edps', 'Lightning Damage': 'edps',
-  'Critical Hit Chance': 'crit', 'Attacks per Second': 'aps' };
+  'Critical Hit Chance': 'crit', 'Attacks per Second': 'aps', 'Uses Remaining': 'uses' };
 const PROP_OP = { pdps: 'pDPS ≥', edps: 'eDPS ≥', map_tier: '=' };
 // Моды путевого камня, опасные для многих билдов.
 const WAYSTONE_DANGER = [

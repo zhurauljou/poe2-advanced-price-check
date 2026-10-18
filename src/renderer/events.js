@@ -246,7 +246,7 @@ $('poe2db').addEventListener('click', () => {
 
 // Значок на вкладке Craft: свободные места под аффиксы (редкая — 3 + 3, магическая — 1 + 1; самоцветы — 2 + 2).
 function openSlotsBadge(it) {
-  if (!it.advanced || !['Rare', 'Magic'].includes(it.rarity) || it.corrupted || it.mirrored || it.sanctified) return '';
+  if (!it.advanced || !['Rare', 'Magic'].includes(it.rarity) || it.itemClass === 'Tablet' || it.corrupted || it.mirrored || it.sanctified) return '';
   const per = it.rarity === 'Magic' ? 1 : it.itemClass === 'Jewels' ? 2 : 3;
   const used = (side) => (it.affixes || []).filter((a) => a.side === side).length;
   const free = Math.max(0, per - used('prefix')) + Math.max(0, per - used('suffix'));

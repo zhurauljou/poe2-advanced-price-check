@@ -310,6 +310,7 @@
     chance: 'шанс',
     'details and alternatives': 'подробнее и другие способы',
     details: 'подробнее',
+    'No craft tips for tablets yet. The Price tab searches by their modifiers and uses left.': 'Для скрижалей советов по крафту пока нет. Во вкладке «Цена» поиск — по их модам и оставшимся использованиям.',
     'Same modifier tiers up to {max}; at {level} unlocks: {mods}': 'Те же тиры модов до {max}; на {level} откроются: {mods}',
     'Chance per try: Exalted Orb + omen of its side': 'Шанс за одну попытку: Exalted Orb + омен его стороны',
     'unknown': 'неизвестно',

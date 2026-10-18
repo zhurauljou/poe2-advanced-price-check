@@ -176,3 +176,10 @@ test('путевой камень: свойства — фильтры карт�
   assert.equal(it.mapLabels.map_packsize, 'Monster Pack Size');
   assert.equal(it.modLines.length, 1);
 });
+
+// Текст скрижали собран по памяти (живого образца ещё нет) — проверяем только «Uses Remaining» и фильтр по нему.
+test('скрижаль: использования — свойство, поиск не меньше оставшихся', () => {
+  const it = fixture('tablet-magic.txt');
+  assert.equal(it.itemClass, 'Tablet');
+  assert.equal(it.props.uses, 10);
+});

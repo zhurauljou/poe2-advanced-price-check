@@ -105,6 +105,8 @@ const PROPS = [
   { key: 'map_revives', label: 'Revives', covers: null, group: 'map' },
   { key: 'map_gold', label: 'Gold', covers: null, group: 'map' },
   { key: 'map_experience', label: 'Experience', covers: null, group: 'map' },
+  // Скрижаль: сколько использований осталось — у трейда это псевдо-стат.
+  { key: 'uses', label: 'Uses Remaining', covers: null, group: 'pseudo', statId: 'pseudo.pseudo_number_of_uses_remaining' },
 ];
 
 const PROP_MIN = 0.97;
@@ -119,6 +121,10 @@ function propFilters(item) {
   const unique = item.rarity === 'Unique';
   // Магическая вещь — заготовка: её покупают ради модов и их тиров, а не ради DPS/защиты — свойства по желанию.
   const magic = item.rarity === 'Magic';
+  // Скрижаль: потраченная дешевле полной — ищем не меньше использований, чем осталось.
+  if (item.itemClass === 'Tablet') {
+    return PROPS.filter((p) => p.key === 'uses' && item.props.uses > 0).map((p) => ({ ...p, value: item.props.uses, min: item.props.uses, enabled: true }));
+  }
   if (item.itemClass === 'Waystones') {
     return PROPS.filter((p) => p.group === 'map' && item.props[p.key] > 0).map((p) => ({
       ...p,
@@ -345,7 +351,8 @@ function prepare(item, demand, rollsOn) {
     hiddenFixed, // сколько неизменяемых модов уника скрыто
     props,
     // ilvl важен для баз под крафт (обычные/магические) — там включён сразу; у остальных — по желанию.
-    ilvl: item.ilvl ? { enabled: item.rarity === 'Normal' || item.rarity === 'Magic', min: item.ilvl } : null,
+    // У скрижалей ilvl на цену почти не влияет — покупают ради модов и использований.
+    ilvl: item.ilvl ? { enabled: (item.rarity === 'Normal' || item.rarity === 'Magic') && item.itemClass !== 'Tablet', min: item.ilvl } : null,
     reqLevel: item.reqLevel ? { enabled: false, max: item.reqLevel } : null,
     sockets: item.sockets ? { enabled: true, min: item.sockets } : null, // гнёзда сильно влияют на цену — сразу
     gemLevel: item.gemLevel ? { enabled: true, min: item.gemLevel } : null,
@@ -423,7 +430,8 @@ function buildQuery(item, f) {
   const mapF = {};
   for (const p of f.props || []) {
     if (!p.enabled || p.min === '' || p.min == null) continue;
-    if (p.group === 'map') mapF[p.key] = p.max != null && p.max !== '' ? { min: Number(p.min), max: Number(p.max) } : { min: Number(p.min) };
+    if (p.group === 'pseudo') query.stats[0].filters.push({ id: p.statId, value: { min: Number(p.min) } });
+    else if (p.group === 'map') mapF[p.key] = p.max != null && p.max !== '' ? { min: Number(p.min), max: Number(p.max) } : { min: Number(p.min) };
     else equip[p.key] = { min: Number(p.min) };
   }
   if (Object.keys(mapF).length) query.filters.map_filters = { filters: mapF };

@@ -149,6 +149,7 @@ function parseItem(text) {
         item.props[key] = +m[2];
         (item.mapLabels = item.mapLabels || {})[key] = m[1];
       }
+      else if ((m = l.match(/^Uses Remaining: (\d+)/))) item.props.uses = +m[1]; // скрижаль
       else if (l === 'Corrupted') item.corrupted = true;
       else if (l === 'Twice Corrupted') { item.corrupted = true; item.twiceCorrupted = true; }
       else if (l === 'Mirrored') item.mirrored = true;

@@ -322,11 +322,12 @@ async function priceCheck(text, refresh = false, historyId = null) {
 }
 
 // Мод или база, которых нет в справочнике трейда, — скорее всего, патч вышел, а справочник в кэше ещё вчерашний.
-// У уников несопоставленные строки — флейвор-текст, их не считаем.
+// У уников несопоставленные строки — флейвор-текст, их не считаем; implicit'ы тоже (у скрижалей «Adds Breaches to a Map»
+// на трейде нет — это и так видно по базе).
 function unknownToTrade(item) {
   if (!['Rare', 'Magic', 'Normal', 'Unique'].includes(item.rarity)) return false;
   if (!pricing.knownBase(item.baseType)) return true;
-  return item.rarity !== 'Unique' && item.mods.some((m) => !m.statId && ['explicit', 'implicit', 'fractured', 'desecrated'].includes(m.tag));
+  return item.rarity !== 'Unique' && item.mods.some((m) => !m.statId && ['explicit', 'fractured', 'desecrated'].includes(m.tag));
 }
 
 // Свежий справочник трейда и та же вещь заново. Не чаще раза в час и только если справочнику больше 2 ч — иначе мод

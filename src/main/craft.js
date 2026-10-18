@@ -128,6 +128,8 @@ const range = (text) => {
 // item — разобранный предмет (item.affixes из расширенного формата), demandMods — [{ name, pct }] с poe.ninja.
 async function advise(item, demandMods, cached) {
   if (!['Rare', 'Magic', 'Unique', 'Normal'].includes(item.rarity)) return { note: t('Craft tips are for rare, magic, unique items and white bases.') };
+  // Скрижали: моды и их пул не как у экипировки (порча с гнёздами, 3 + 3 места) — советы были бы неверными.
+  if (item.itemClass === 'Tablet') return { note: t('No craft tips for tablets yet. The Price tab searches by their modifiers and uses left.') };
   if (item.corrupted || item.mirrored || item.sanctified) {
     return { blocked: item.corrupted ? 'Corrupted' : item.mirrored ? 'Mirrored' : 'Sanctified' };
   }
