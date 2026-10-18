@@ -676,3 +676,4 @@ details.gamble > summary::before { content: '▸ '; } details.gamble[open] > sum
 .ps-seq > div { font-size: 13px; color: var(--text); margin: 2px 0; }
 .ps-seq b { display: inline-block; width: 16px; height: 16px; margin-right: 4px; border-radius: 50%; background: var(--line2); color: var(--cream);
             font-size: 11px; line-height: 16px; text-align: center; }
+.craft-how .dem { color: var(--muted); font-size: 13px; white-space: nowrap; }
