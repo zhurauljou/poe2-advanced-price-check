@@ -857,7 +857,9 @@ function planGoal(mine, candidates, max, want, magic, magicFree = [], itemClass 
         const src = craftedSources.find((x) => templates(x.text.replace(/–/g, '-').replace(/ \/ /g, '\n')).some((l) => a.mod.lines.includes(l)));
         return src ? src.name : null;
       });
-      sides[side] = { J, K, restore, omen: `Omen of ${side === 'prefix' ? 'Sinistral' : 'Dextral'} Annulment` };
+      // full — на стороне нет места: Desecrate с Necromancy этой стороны сам снимет случайный мод (проверено в игре).
+      sides[side] = { J, K, restore, omen: `Omen of ${side === 'prefix' ? 'Sinistral' : 'Dextral'} Annulment`, full: filled[side] >= max[side],
+        necro: `Omen of ${side === 'prefix' ? 'Sinistral' : 'Dextral'} Necromancy` };
     }
     // Chaos + Omen of Whittling снимает мод с наименьшим уровнем — если лишний мод строго ниже всех остальных снимаемых
     // (desecrated уже снят), он уйдёт наверняка, но на его место встанет случайный мод.

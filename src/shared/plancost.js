@@ -72,6 +72,14 @@
       }
       opts.push({ currencies: ['Orb of Annulment', ...sides.filter((x) => x.J).map((x) => x.omen)], tries, hits, spent, cost: spent + lost });
     }
+    // Первую попытку снять лишний мод этой стороны уже сделал Desecrate (desFirst) — она не нужна.
+    if (s.desMerge) {
+      const x = s.sides[s.desMerge.side];
+      for (const o of opts) {
+        const one = ann + (o.currencies.includes(x.omen) ? p(x.omen) : 0);
+        o.tries -= 1; o.spent -= one; o.cost -= one;
+      }
+    }
     opts.sort((a, b) => a.cost - b.cost);
     const best = opts[0];
     const chaos = M.tiers('chaos').filter(([n]) => p(n) != null);
@@ -85,7 +93,7 @@
       erasure.push({ side, orb: n, omen, chance: x.J / (x.J + x.K), cost: p(n) + p(omen) });
     }
     return { cost: best.cost, spent: best.spent, tries: best.tries, hits: best.hits, currencies: best.currencies,
-      chance: best.hits > 0.05 ? 0.5 : 1, risky: best.hits > 0.05, whittle: wh.length ? wh : null, erasure, other: opts[1] || null };
+      chance: best.hits > 0.05 ? 0.5 : 1, risky: best.hits > 0.05, whittle: wh.length ? wh : null, erasure, other: opts[1] || null, desMerge: s.desMerge || null };
   }
 
   // Средняя стоимость до удачи с учётом того, чем снимать промах: per — цена попытки, pc — шанс,
@@ -191,7 +199,7 @@
     // Цена «вернуть задетый нужный мод» — медиана средних цен добавления в этом плане (для снятия лишнего).
     const adds = plan.flatMap((s) => (s.act === 'add2' ? s.steps : s.act === 'add' ? [s] : [])).map((x) => addCost(x, 1).score).filter(Number.isFinite).sort((a, b) => a - b);
     restoreCost = adds.length ? adds[Math.floor(adds.length / 2)] : null;
-    plan = pairUp(withDesecrate(plan));
+    plan = desFirst(pairUp(withDesecrate(plan)));
     return plan.flatMap((s) => {
       if (s.act !== 'add2') return [s];
       const two = stepCost(s);
@@ -220,6 +228,28 @@
   // Desecration одна на вещь — отдаём её шагу, где она выгоднее всего относительно Exalted. Дешевле — станет основным
   // способом шага, нет — покажется в «Вместо этого» (видно шанс и цену). Мод из пары Greater Exaltation (только если
   // десекрейт там выгоднее) уходит в отдельный шаг.
+  // Desecrate на полную сторону (с Necromancy этой стороны) сам снимает случайный мод стороны — проверено в игре
+  // (2026-10-18). Если на стороне один лишний мод, это ровно одна попытка Annulment стороны: лишний уходит с тем же
+  // шансом 1 из (J + K), промах снимает нужный так же. Поэтому Desecrate — до снятий: экономит одну Annulment с оменом.
+  function desFirst(plan) {
+    const p = (n) => C().prices[n];
+    const r = plan.findIndex((s) => s.act === 'remove' && s.sides);
+    if (r < 0) return plan;
+    const d = plan.findIndex((s, i) => i > r && s.act === 'add' && s.useDes);
+    if (d < 0) return plan;
+    const D = plan[d];
+    const x = plan[r].sides[D.side];
+    if (!x || x.J !== 1 || !x.full || p(x.necro) == null || addCost(D, 1).k !== 'desecrate') return plan;
+    const D2 = { ...D, necro: x.necro, desFirst: true };
+    // Омен Necromancy и так был нужен — экономия вся; не был — его цена вычитается из сэкономленной Annulment.
+    const extra = D.necro ? 0 : p(x.necro);
+    const R2 = { ...plan[r], desMerge: { side: D.side, extra, mod: D.mod } };
+    if (removeCost(plan[r]).cost - removeCost(R2).cost <= extra) return plan;
+    const out = plan.filter((_, i) => i !== d);
+    out.splice(r, 1, D2, R2);
+    return out;
+  }
+
   function withDesecrate(plan) {
     // Сначала crafted-слот (эссенция ставит мод наверняка), потом desecration — на лучший из оставшихся шагов.
     // Crafted-слотов может быть два (руна Astrid's Creativity) — раздаём столько, сколько свободно.

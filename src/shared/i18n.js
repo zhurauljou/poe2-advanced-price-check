@@ -310,6 +310,8 @@
     chance: 'шанс',
     'details and alternatives': 'подробнее и другие способы',
     details: 'подробнее',
+    'The {side}es are full: with {omen} the desecration itself removes a random {side} — the same as one Annulment attempt, so do this before removing': 'Места под {side} заняты: с {omen} Desecrate сам снимет случайный {side} — это как одна попытка Annulment, поэтому делать до снятия',
+    'One attempt fewer: the desecration in the previous step already removed a random {side}': 'На одну попытку меньше: Desecrate на прошлом шаге уже снял случайный {side}',
     'No craft tips for tablets yet. The Price tab searches by their modifiers and uses left.': 'Для скрижалей советов по крафту пока нет. Во вкладке «Цена» поиск — по их модам и оставшимся использованиям.',
     'Same modifier tiers up to {max}; at {level} unlocks: {mods}': 'Те же тиры модов до {max}; на {level} откроются: {mods}',
     'Chance per try: Exalted Orb + omen of its side': 'Шанс за одну попытку: Exalted Orb + омен его стороны',

@@ -102,3 +102,23 @@ test('два Exalted подряд на одну сторону — снова в
   const dear = PlanCost.create(() => ({ prices: { ...prices, 'Omen of Greater Exaltation': 50 }, goalValue: null, est: null }));
   assert.deepEqual(dear.expandPlan([step('A'), step('B')]).map((s) => s.act), ['add', 'add']);
 });
+
+test('Desecrate на полную сторону с одним лишним модом — до снятий: заменяет одну попытку Annulment стороны', () => {
+  const prices = { ...PRICES, 'Gnawed Jawbone': 0.01, 'Omen of Sinistral Necromancy': 0.02, 'Omen of Light': 0.3 };
+  const p = PlanCost.create(() => ({ prices, goalValue: null, est: null }));
+  const sides = { prefix: { J: 1, K: 2, omen: 'Omen of Sinistral Annulment', full: true, necro: 'Omen of Sinistral Necromancy' } };
+  // Exalted мода почти не даёт (1%), Desecrate — 50%: шаг уйдёт в Desecrate.
+  const des = add(0.01, { side: 'prefix', onSide: 2, onItem: 2, desecrate: { 'Gnawed Jawbone': { chance: 0.5, guess: 0.5, good: 0.5, pool: 10 } } });
+  const plan = p.expandPlan([{ act: 'remove', mods: ['junk'], sides }, des]);
+  assert.equal(plan[0].act, 'add', 'Desecrate — первым');
+  assert.ok(plan[0].desFirst);
+  assert.equal(plan[0].necro, 'Omen of Sinistral Necromancy');
+  const before = p.removeCost({ act: 'remove', sides });
+  const after = p.stepCost(plan[1]);
+  near(after.tries, before.tries - 1, 'на одну попытку меньше');
+  // Нужные моды задеваются так же: Desecrate снимает случайный мод стороны, как Annulment.
+  near(after.hits, before.hits, 'hits');
+  // Два лишних на стороне — не трогаем (после замены одного сторона уже не полная).
+  const two = p.expandPlan([{ act: 'remove', mods: ['a', 'b'], sides: { prefix: { ...sides.prefix, J: 2, K: 1 } } }, des]);
+  assert.equal(two[0].act, 'remove');
+});
