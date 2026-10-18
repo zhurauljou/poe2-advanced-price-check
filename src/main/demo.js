@@ -25,9 +25,10 @@ function mockSearch(rates) {
   return { total: 37, url: 'https://www.pathofexile.com/trade2', listings, rates, filters: null, dropped: [] };
 }
 
-// Подставная короткая цена: случайная, чтобы видеть разные исходы (дешевле / дороже).
+// Подставная короткая цена: разные исходы (дешевле / дороже) по кругу — не случайные, чтобы снимки повторялись.
+let quickN = 0;
 function mockQuick() {
-  const base = [0.2, 0.5, 1, 2, 4][Math.floor(Math.random() * 5)];
+  const base = [0.2, 0.5, 1, 2, 4][quickN++ % 5];
   const lots = [1, 1.1, 1.3, 1.6, 2].map((k, i) => ({ div: base * k, indexed: new Date(Date.now() - i * 20 * 3600e3).toISOString() }));
   return new Promise((r) => setTimeout(() => r({ total: 20, divs: lots.map((l) => l.div), lots, url: 'https://www.pathofexile.com/trade2' }), 400));
 }

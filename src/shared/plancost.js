@@ -1,4 +1,4 @@
-// Модель стоимости плана крафта — общая для окна (<script> до app.js) и для тестов / симуляции (require).
+// Модель стоимости плана крафта — общая для окна (<script> до частей окна) и для тестов / симуляции (require).
 // create(ctx): ctx() → { prices: { валюта: div }, goalValue: цена цели | null | undefined, est: цена вещи сейчас }.
 // Всё про выбор способа шага: Exalted / Greater / Perfect (с оменами), Desecrate, эссенции и Alloys (crafted-слот),
 // Omen of Greater Exaltation (пары), снятие лишнего Annulment'ами с учётом задетых нужных модов.
