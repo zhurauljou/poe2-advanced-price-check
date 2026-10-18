@@ -136,3 +136,12 @@ test('эссенция / Alloy: на стороне ключевой мод ве
   const p = mk(900);
   near(p.stepCost({ ...alloy }).chance, 1 / 3, 'после regen: жертву снимет 1 из 3');
 });
+
+test('Desecrate: в тройке варианты без повторов, реролл Abyssal Echoes — новая тройка', () => {
+  const prices = { ...PRICES, 'Gnawed Jawbone': 0.01, 'Omen of Abyssal Echoes': 0.01, 'Omen of Light': 0.3 };
+  const p = PlanCost.create(() => ({ prices, goalValue: null, est: null }));
+  const step = add(0.001, { desecrateOnly: true, useDes: true, desecrate: { 'Gnawed Jawbone': { chance: 0.05, guess: 0.05, good: 1, pool: 20 } } });
+  const c = p.addCost(step, 1);
+  // 1 подходящий из 20 равновероятных: тройка — 3/20 (с повторами было бы 1 − 0.95³ ≈ 0.143), две тройки — 1 − (17/20)².
+  near(c.chance, c.echo ? 1 - 0.85 * 0.85 : 0.15, `шанс (echo: ${c.echo})`);
+});

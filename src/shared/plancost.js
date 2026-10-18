@@ -174,7 +174,10 @@
           if (cur.some((n) => p(n) == null)) continue;
           const one = lottery ? o.guess : o.chance;
           // Подходящих модов на стороне ≤ 3 — нужный гарантированно среди вариантов (остаётся только тир).
-          const pc = o.pool <= 3 ? o.good : 1 - Math.pow(1 - one, echo ? 6 : 3);
+          // В тройке варианты не повторяются (выбор без возврата), а реролл Abyssal Echoes — новая независимая тройка:
+          // шанс тройки 1 − Π (1 − g / (N − i)), g = one·N «подходящих» из N семейств; с Echoes — две тройки.
+          const three = o.pool > 3 ? 1 - [0, 1, 2].reduce((a, i) => a * Math.max(0, 1 - (one * o.pool) / (o.pool - i)), 1) : null;
+          const pc = o.pool <= 3 ? o.good : three != null ? 1 - Math.pow(1 - three, echo ? 2 : 1) : 1 - Math.pow(1 - one, echo ? 6 : 3);
           const per = cur.reduce((a, n) => a + p(n), 0);
           opts.push({ k: 'desecrate', bone: boneName, lich: o.lich || null, echo, currencies: cur, chances: [lottery ? null : pc], pool: o.pool, cost: tries(per, pc, [{ a: desRetry, q: 0 }]), per, slam: per / pc, p: pc, ps: [pc], rem: { a: desRetry, q: 0 } });
         }
