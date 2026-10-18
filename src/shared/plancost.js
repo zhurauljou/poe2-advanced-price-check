@@ -191,7 +191,7 @@
     // Цена «вернуть задетый нужный мод» — медиана средних цен добавления в этом плане (для снятия лишнего).
     const adds = plan.flatMap((s) => (s.act === 'add2' ? s.steps : s.act === 'add' ? [s] : [])).map((x) => addCost(x, 1).score).filter(Number.isFinite).sort((a, b) => a - b);
     restoreCost = adds.length ? adds[Math.floor(adds.length / 2)] : null;
-    plan = withDesecrate(plan);
+    plan = pairUp(withDesecrate(plan));
     return plan.flatMap((s) => {
       if (s.act !== 'add2') return [s];
       const two = stepCost(s);
@@ -199,6 +199,22 @@
       const sep = one.every((c) => c.cost != null) ? one[0].cost + one[1].cost : null;
       return two.cost != null && sep != null && sep < two.cost ? (s.alt || s.steps) : [s];
     });
+  }
+
+  // Два Exalted подряд на одну сторону — снова в пару (Omen of Greater Exaltation + омен стороны: омены складываются).
+  // Пара могла распасться, когда один её мод забрал Desecrate или crafted-слот; дешевле ли пара — решит expandPlan.
+  function pairUp(plan) {
+    const solo = (s) => s && s.act === 'add' && !s.useDes && !s.useCrafted && !s.craftedOnly && !s.desecrateOnly && s.exalt;
+    const out = [];
+    for (let i = 0; i < plan.length; i++) {
+      const a = plan[i], b = plan[i + 1];
+      if (solo(a) && solo(b) && a.side === b.side) {
+        out.push({ act: 'add2', side: a.side, steps: [a, b], sideOmen: a.sideOmen, otherOpen: a.otherOpen, retry: a.retry,
+          currencies: [...new Set([...(a.currencies || []), ...(b.currencies || []), 'Omen of Greater Exaltation'])] });
+        i++;
+      } else out.push(a);
+    }
+    return out;
   }
 
   // Desecration одна на вещь — отдаём её шагу, где она выгоднее всего относительно Exalted. Дешевле — станет основным

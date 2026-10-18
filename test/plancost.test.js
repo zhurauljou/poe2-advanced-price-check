@@ -90,3 +90,15 @@ test('симуляция плана: с одним генератором рез
   // Без цены цели симулировать нечего.
   assert.equal(planner().simulate(plan), null);
 });
+
+test('два Exalted подряд на одну сторону — снова в пару с Omen of Greater Exaltation (если так дешевле)', () => {
+  const step = (mod) => ({ ...add(0.5, { sideOmen: 'Omen of Sinistral Exaltation', otherOpen: true }), side: 'prefix', mod,
+    currencies: ['Exalted Orb', 'Omen of Sinistral Exaltation'] });
+  const prices = { ...PRICES, 'Omen of Sinistral Exaltation': 0.3 };
+  // Омен Greater Exaltation дёшев — один Exalted на два мода выгоднее двух попыток.
+  const cheap = PlanCost.create(() => ({ prices: { ...prices, 'Omen of Greater Exaltation': 0.01 }, goalValue: null, est: null }));
+  assert.deepEqual(cheap.expandPlan([step('A'), step('B')]).map((s) => s.act), ['add2']);
+  // Дорогой — остаются два отдельных шага.
+  const dear = PlanCost.create(() => ({ prices: { ...prices, 'Omen of Greater Exaltation': 50 }, goalValue: null, est: null }));
+  assert.deepEqual(dear.expandPlan([step('A'), step('B')]).map((s) => s.act), ['add', 'add']);
+});
