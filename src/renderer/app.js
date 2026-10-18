@@ -93,6 +93,33 @@ function setStatus(text, error) {
   s.classList.toggle('error', !!error);
 }
 
+// ---- обратный отсчёт: элементы с data-until (время в мс) показывают оставшиеся секунды; дошёл до нуля — строка
+// статуса гаснет, а data-then="search:<seq>" повторяет поиск (если вещь та же и окно открыто) ----
+// Текст с «{n}» → разметка с отсчётом на месте числа.
+function untilHtml(key, until) {
+  const [a, b] = t(key, { n: '\u0001' }).split('\u0001');
+  return `${esc(a)}<span data-until="${until}"></span>${esc(b || '')}`;
+}
+function waitStatus(until) {
+  const s = $('status');
+  s.hidden = false;
+  s.classList.remove('error');
+  s.innerHTML = untilHtml('Waiting for the trade site rate limit… {n} s', until);
+  tick();
+}
+function tick() {
+  for (const el of document.querySelectorAll('[data-until]')) {
+    const left = Math.ceil((Number(el.dataset.until) - Date.now()) / 1000);
+    el.textContent = Math.max(0, left);
+    if (left > 0) continue;
+    el.removeAttribute('data-until');
+    if (el.closest('#status')) setStatus('');
+    const then = el.dataset.then;
+    if (then && then === `search:${searchSeq}` && !document.hidden) runSearch();
+  }
+}
+setInterval(tick, 500);
+
 function setNote(text) {
   const n = $('note');
   n.hidden = !text;
@@ -1813,6 +1840,23 @@ async function runSearch(relax = false) {
     $('results').hidden = true;
     elementAlts = null;
     if ($('elements')) $('elements').hidden = true;
+    // Лимит трейда: ждём, пока освободится, и ищем снова сами (та же вещь, окно открыто) — с отсчётом.
+    if (isLimit(e)) {
+      const ms = await window.pc.limitWait().catch(() => 0);
+      if (seq !== searchSeq) return;
+      if (ms > 0 && ms < 30 * 60e3) {
+        const until = Date.now() + ms;
+        const msg = esc(errText(e));
+        heroRender = () => {
+          $('hero').innerHTML = voidState('⏳', t('Trade site rate limit'),
+            `${msg}<br>${untilHtml('Searching again in {n} s', until).replace('<span data-until', `<span data-then="search:${seq}" data-until`)}`,
+            [['retry', t('Try now')]]);
+        };
+        heroRender();
+        tick();
+        return;
+      }
+    }
     const err = esc(errText(e));
     heroRender = () => { $('hero').innerHTML = voidState('⚠', t('Search failed'), err, [['retry', t('Try again')]]); };
     heroRender();
@@ -1858,6 +1902,7 @@ window.pc.onItem((data) => {
   toggleHistory(false);
   renderFilters();
   if (!state.exchange && !state.searchable) setStatus(t('No price data for this item'));
+  else if (state.offline) setStatus(t('No connection to {host} — using saved data', { host: state.offline }), true);
   fit();
   // Вкладки — только для предметов с поиском на трейде; валюте хватает одной.
   $('tabs').hidden = !state.searchable;
@@ -1926,7 +1971,11 @@ $('tab-demand').addEventListener('click', async (e) => {
   if (b) window.pc.openUrl(b.dataset.url);
 });
 
-window.pc.onStatus((s) => { setStatus(s.error || s.text, !!s.error); fit(); });
+window.pc.onStatus((s) => {
+  if (s.waitUntil) waitStatus(s.waitUntil);
+  else setStatus(s.error || s.text, !!s.error);
+  fit();
+});
 
 // ---- изменения фильтров ----
 $('mods').addEventListener('click', (e) => {

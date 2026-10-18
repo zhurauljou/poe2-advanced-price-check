@@ -392,7 +392,7 @@ async function priceCheck(text, refresh = false, historyId = null) {
   const entry = { name: item.name, baseType: item.baseType, rarity: item.rarity, league };
   lastHistoryId = historyId || history.add({ ...entry, text: rawText });
   const prev = history.previous(entry, lastHistoryId);
-  send('item', { ...prepared, league, leagues, historyId: lastHistoryId, previous: prev && { est: prev.est, at: prev.estAt || prev.at }, priceCurrency: settings.get().priceCurrency || 'any', hotkey: hotkeyLabel() });
+  send('item', { ...prepared, league, leagues, historyId: lastHistoryId, offline: api.offline.host, previous: prev && { est: prev.est, at: prev.estAt || prev.at }, priceCurrency: settings.get().priceCurrency || 'any', hotkey: hotkeyLabel() });
   if (!refresh || !win.isVisible()) show();
 }
 
@@ -688,7 +688,7 @@ app.whenReady().then(singleInstance).then((ok) => {
     if (s.state === 'available' || s.state === 'ready') lastNotified = key;
   });
   tray.on('balloon-click', openUpdates);
-  api.onWait = (ms) => send('status', { text: t('Waiting for the trade site rate limit… {n} s', { n: Math.ceil(ms / 1000) }) });
+  api.onWait = (ms) => send('status', { waitUntil: Date.now() + ms }); // окно ведёт обратный отсчёт
   ensureReady().catch(() => {});
 
   if (!demo.enabled) {
@@ -778,6 +778,7 @@ app.whenReady().then(singleInstance).then((ok) => {
     if (!pricing.isExchangeable(want) || !pricing.isExchangeable(have) || want === have) throw new Error('not on the exchange');
     return api.forCurrent(() => pricing.exchangeOffers(curLeague(), want, have));
   });
+  handle('limit-wait', FROM.overlay, () => api.limitWait());
   handle('recheck', FROM.overlay, () => (lastText ? priceCheck(lastText, true, lastHistoryId) : null));
   // История проверок
   handle('history', FROM.overlay, () => history.brief());

@@ -91,6 +91,18 @@ async function waitSlot(kind) {
   if (L.hits.length > 100) L.hits.splice(0, L.hits.length - 100);
 }
 
+// Через сколько мс можно будет искать снова (бан и окна лимита) — окно покажет отсчёт и повторит поиск само.
+function limitWait(kind = 'search') {
+  const L = limits[kind];
+  const now = Date.now();
+  let wait = Math.max(0, getBan() - now, L.blockedUntil - now);
+  for (const [hits, period] of L.rules) {
+    const inWin = L.hits.filter((x) => now - x < period * 1000);
+    if (inWin.length >= hits) wait = Math.max(wait, inWin[0] + period * 1000 - now + 50);
+  }
+  return wait;
+}
+
 const parseRules = (h) => (h ? h.split(',').map((r) => r.split(':').map(Number)) : []);
 
 function learnRules(kind, res) {
@@ -142,6 +154,9 @@ function cacheFile(name) {
   return path.join(cacheDir(), name);
 }
 
+// Справочник взят из старого кэша, потому что сеть не ответила: { host, at } — окно скажет, что данные не свежие.
+const offline = { host: null, at: 0 };
+
 async function cached(name, url, maxAgeH = 24) {
   const f = cacheFile(name);
   try {
@@ -150,10 +165,13 @@ async function cached(name, url, maxAgeH = 24) {
   try {
     const data = await getJson(url);
     writeFileAtomic(f, JSON.stringify(data));
+    if (offline.host === new URL(url).host) offline.host = null;
     return data;
   } catch (e) {
     // Нет сети — берём старый кэш (битый — как будто его нет: ошибка сети понятнее, чем «Unexpected end of JSON»).
-    try { return JSON.parse(fs.readFileSync(f, 'utf8')); } catch {}
+    let old = null;
+    try { old = JSON.parse(fs.readFileSync(f, 'utf8')); } catch {}
+    if (old) { Object.assign(offline, { host: new URL(url).host, at: Date.now() }); return old; }
     throw e;
   }
 }
@@ -274,5 +292,5 @@ async function uniquePrice(league, name, baseType) {
 }
 
 module.exports = {
-  TRADE, tradeRequest, newGeneration, cacheDir, clearCache, forCurrent, fetchBuffer, cached, tradeStats, tradeItems, tradeStatic, tradeLeagues, loadNinja, ninja, uniquePrice,
+  TRADE, tradeRequest, newGeneration, cacheDir, clearCache, limitWait, offline, forCurrent, fetchBuffer, cached, tradeStats, tradeItems, tradeStatic, tradeLeagues, loadNinja, ninja, uniquePrice,
 };

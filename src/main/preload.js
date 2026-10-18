@@ -27,6 +27,7 @@ contextBridge.exposeInMainWorld('pc', {
   openUrl: (url) => ipcRenderer.invoke('open-url', url),
   hide: () => ipcRenderer.invoke('hide'),
   recheck: () => ipcRenderer.invoke('recheck'),
+  limitWait: () => ipcRenderer.invoke('limit-wait'),
   exchangeOffers: (want, have) => ipcRenderer.invoke('exchange-offers', want, have),
   history: () => ipcRenderer.invoke('history'),
   historyOpen: (id) => ipcRenderer.invoke('history-open', id),
