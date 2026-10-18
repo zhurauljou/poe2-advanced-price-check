@@ -95,14 +95,14 @@ function render() {
   out.push(`За сессию: +${added} вещей (${hours > 0.05 ? Math.round(added / hours) : '—'} в час). Всего в хранилище: ${C.bold}${total}${C.reset}`);
   out.push(`${C.dim}Запросов: поиск ${ui.requests.search}, лоты ${ui.requests.fetch}; отказов 429: ${ui.r429}${C.reset}`);
   out.push('');
-  out.push(`${C.dim}${'Класс'.padEnd(17)}${'вещей'.padStart(7)}${'+сессия'.padStart(9)}${'с базой'.padStart(9)}${'точность*'.padStart(11)}   обновлён${C.reset}`);
+  out.push(`${C.dim}${'Класс'.padEnd(17)}${'вещей'.padStart(7)}${'+сессия'.padStart(9)}${'с базой'.padStart(9)}${'точность*: в начале'.padStart(21)}${'сейчас'.padStart(8)}   обновлён${C.reset}`);
   if (ui.store) {
     for (const cls of Object.keys(CLASSES)) {
       const c = ui.store.classes[cls];
       if (!c || (!c.items && (c.emptyRounds || 0) >= 1)) continue;
       const withBase = (c.rowBase || []).filter((x) => x >= 0).length;
       const mark = cls === ui.cls ? `${C.bold}▶ ` : '  ';
-      out.push(`${mark}${cls.padEnd(15)}${String(c.items).padStart(7)}${(ui.sessionNew[cls] ? `+${ui.sessionNew[cls]}` : '').padStart(9)}${String(withBase || '').padStart(9)}${precision(c.items).padStart(11)}   ${ago(ui.classAt[cls] || c.at)}${C.reset}`);
+      out.push(`${mark}${cls.padEnd(15)}${String(c.items).padStart(7)}${(ui.sessionNew[cls] ? `+${ui.sessionNew[cls]}` : '').padStart(9)}${String(withBase || '').padStart(9)}${precision(c.items - (ui.sessionNew[cls] || 0)).padStart(21)}${(ui.sessionNew[cls] ? `${C.green}${precision(c.items)}${C.reset}${cls === ui.cls ? C.bold : ''}` : precision(c.items)).padStart(ui.sessionNew[cls] ? 8 + C.green.length + C.reset.length + (cls === ui.cls ? C.bold.length : 0) : 8)}   ${ago(ui.classAt[cls] || c.at)}${C.reset}`);
     }
   }
   if (ui.store) {
