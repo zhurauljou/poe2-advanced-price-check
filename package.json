@@ -14,6 +14,7 @@
     "lint": "eslint .",
     "dist": "electron-builder --win nsis",
     "release": "node scripts/release.js",
+    "check-patch": "node scripts/check-patch.js",
     "collect-weights": "node scripts/collect-weights.js"
   },
   "devDependencies": {

@@ -1,0 +1,36 @@
+# Раз в неделю (и вручную — Actions → patch-check → Run workflow): изменились ли данные игры относительно снимка, на
+# котором проверена программа (scripts/check-patch.js). Изменились — issue с отчётом (одно открытое: дальше — комментарии).
+# Трейд с серверов GitHub может не отвечать — тогда отчёт только по RePoE (это видно в разделе «Не удалось проверить»).
+name: patch-check
+on:
+  schedule:
+    - cron: '0 6 * * 1'
+  workflow_dispatch:
+permissions:
+  contents: read
+  issues: write
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - id: check
+        run: |
+          set +e
+          node scripts/check-patch.js --md report.md
+          echo "code=$?" >> "$GITHUB_OUTPUT"
+      - if: steps.check.outputs.code == '1'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh label create patch-check --color d93f0b --description "Данные игры изменились" 2>/dev/null || true
+          n=$(gh issue list --label patch-check --state open --json number --jq '.[0].number')
+          if [ -n "$n" ]; then gh issue comment "$n" --body-file report.md
+          else gh issue create --title "Данные игры изменились — проверить программу" --label patch-check --body-file report.md; fi
+      - if: steps.check.outputs.code == '2'
+        run: |
+          cat report.md
+          exit 1
