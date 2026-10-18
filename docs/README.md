@@ -49,5 +49,7 @@
 3. `node scripts/audit-craft.js` — советник на 840 случайных вещах: 0 нарушений.
 4. Сверить вручную собранное (`data/crafting-currency.json`, `data/gamble-currency.json`, `src/main/essences.js`,
    `src/shared/methods.js`) с патчноутом и poe2db; обновить «Патч / проверено» в таблице выше.
-5. `node scripts/collect-weights.js` — оценка весов модов для новой лиги (долго, часы).
+5. Оценка весов модов для новой лиги — `Collect weights.bat` (или `npm run collect-weights -- --league "<лига>"`):
+   ходит по классам по кругу, пока вы не за компьютером, и копит новые лоты в `data/weights-store/` (локально, не в git);
+   `data/weights.json` пересобирается после каждого класса — закоммитить, когда наберётся (часы / ночь).
 6. `node scripts/snapshot-test-data.js` — новый снимок данных для тестов.

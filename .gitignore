@@ -6,3 +6,4 @@ PoE 2 Price Checker/
 dist.zip
 data/*.partial.json
 data/weights.log
+data/weights-store/
