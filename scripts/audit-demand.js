@@ -20,7 +20,6 @@ const CLASSES = ['Body Armours', 'Helmets', 'Gloves', 'Boots', 'Shields', 'Buckl
     if (!d.category) { out.push(`${cls}: нет категории на poe.ninja`); continue; }
     // Представитель класса — самая носимая база, у которой класс совпадает с остальными большинством.
     const byClass = new Map();
-    for (const b of d.bases) { const x = require(dir + 'repoe-base-items.json'); break; }
     const bases = await cached('repoe-base-items.json');
     const clsOf = new Map(Object.values(bases).map((b) => [b.name, b.item_class]));
     for (const b of d.bases) { const c = clsOf.get(b.name); if (c) byClass.set(c, (byClass.get(c) || 0) + b.count); }

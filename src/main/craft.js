@@ -3,7 +3,6 @@
 // Весов выпадения в файлах PoE 2 нет (только «может / не может»), поэтому вероятностей не считаем —
 // показываем, какие ВОСТРЕБОВАННЫЕ (по poe.ninja) моды могут встать и каким способом.
 
-const stats = require('./stats');
 const fsW = require('fs');
 const pathW = require('path');
 const craftData = require('./craft-data');
@@ -157,7 +156,7 @@ async function advise(item, demandMods, cached) {
     if (!same.length) same = d.pool.filter((m) => m.name === a.name && m.generation_type === a.side && m.domain !== 'desecrated' === (a.tag !== 'desecrated'));
     // Имя не латиницей — клиент не на английском: ищем по строкам. Английское имя, которого нет в RePoE (устарело), —
     // мод неизвестен, как и раньше (план его не трогает).
-    if (!same.length) return /[^\x00-\x7F]/.test(a.name || '') ? findByLines(a, pool) : null;
+    if (!same.length) return /[^\p{ASCII}]/u.test(a.name || '') ? findByLines(a, pool) : null;
     if (same.length > 1 && !(a.lines || []).length) return null;
     if (same.length <= 1 || !(a.lines || []).length) return same[0] || null;
     const lines = new Set((a.lines || []).flatMap((l) => templates(l)));

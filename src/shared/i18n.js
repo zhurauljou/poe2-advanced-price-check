@@ -10,6 +10,7 @@
     '{n} free suffixes': ['{n} free suffix', '{n} free suffixes'],
     '{n} mods in this total': ['{n} mod in this total', '{n} mods in this total'],
     '{n} characters': ['{n} character', '{n} characters'],
+    'max roll': 'max', // значок «почти максимальный ролл» — коротко
     '{n} level {lvl}+ characters on poe.ninja use this': ['{n} level {lvl}+ character on poe.ninja uses this', '{n} level {lvl}+ characters on poe.ninja use this'],
     'Check other elements ({n} searches)': ['Check other elements ({n} search)', 'Check other elements ({n} searches)'],
     '{n} listings in other currencies are not counted: no poe.ninja exchange rates for this league yet': ['{n} listing in another currency is not counted: no poe.ninja exchange rates for this league yet', '{n} listings in other currencies are not counted: no poe.ninja exchange rates for this league yet'],
@@ -133,7 +134,7 @@
       'У {pct}% билдов {lvl}+ уровня с вещью этого класса есть этот мод (poe.ninja)',
     '{pct}% builds': '{pct}% билдов',
     min: 'мин',
-    max: 'макс',
+    'max roll': 'макс',
     ' to ': ' до ',
     '{n} mods in this total': ['{n} мод в этой сумме', '{n} мода в этой сумме', '{n} модов в этой сумме'],
     'Which currency listings to search': 'Лоты в какой валюте искать',

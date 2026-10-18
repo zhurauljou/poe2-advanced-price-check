@@ -1,4 +1,4 @@
-# Тесты на каждый пуш и PR: парсер, крафт (на снимке данных test/fixtures/data), модель стоимости плана.
+# Линтер и тесты на каждый пуш и PR: парсер, крафт (на снимке данных test/fixtures/data), модель стоимости плана.
 # Electron и нативные модули тестам не нужны — ставим без скриптов (без скачивания Electron и сборки uiohook / koffi).
 name: test
 on:
@@ -14,4 +14,5 @@ jobs:
           node-version: 22
           cache: npm
       - run: npm ci --ignore-scripts
+      - run: npm run lint
       - run: npm test

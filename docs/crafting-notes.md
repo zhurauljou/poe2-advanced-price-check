@@ -205,6 +205,14 @@
 
 ## 6. Выводы для вкладки Craft (сверка с `src/main/craft.js`, `src/main/essences.js`)
 
+> **Статус (сверено с кодом в v0.3.113, 2026-10-18):** пункты 1–5, 7–9, 13, 16, 17 сделаны — crafted-слот и его
+> лимит (`craftedCap`, руна Astrid's Creativity), порченые эссенции и Alloys (`data/crafting-currency.json`), омены
+> Desecrate (Necromancy, лич-омены, Abyssal Echoes), Hinekora's Lock и Fracturing Orb — в разделе рискованных шагов,
+> Greater / Perfect Transmutation, Omen of Greater Exaltation в плане, гнёзда Artificer's Orb, Liquid Emotions.
+> Открыты: 6 (Altered-кости — только упоминание), 10 (снимает ли Whittling desecrated-мод — проверить в игре),
+> 11 (что Catalysing Exaltation тратит качество — проверить текст совета), 12 (подсветка «гарантированно»).
+> Ниже — исходный список (как был составлен для 0.5.5).
+
 **Несоответствия / устаревшее:**
 1. **Нет учёта лимита «1 crafted-мод».** `advise()` предлагает эссенцию для magic→rare и одновременно секцию `perfect` (Perfect-эссенции) для rare, не проверяя, есть ли уже crafted/essence-мод. Если на вещи есть мод эссенции/Alloy (tag `crafted` в Advanced Mod Descriptions, у Mark of the Abyssal Lord — тоже), Perfect-эссенции, corrupted-эссенции и Alloys неприменимы (ошибка «This item already has a crafted modifier»). Нужно: скрывать/помечать секцию `perfect` при наличии crafted-мода; в `planGoal` для magic не обещать «эссенция + позже Perfect».
 2. **Perfect-эссенция = crafted-слот.** В секции `perfect` стоит предупредить: «займёт единственный crafted-слот; после неё эссенции/Alloy уже не встанут».
