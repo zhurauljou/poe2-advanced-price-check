@@ -215,20 +215,21 @@ function planHtml(plan) {
     else if (s.mods) odds = t('≈ {n} attempts', { n: fmt(Math.round(c.tries * 10) / 10) });
     else odds = c.chance >= 1 ? t('guaranteed') : oneIn(c.chance);
     const notes = [];
+    const key = []; // без этого шаг не сделать — видно сразу; остальное — под «подробнее»
     if (c.two) notes.push(t('one Exalted Orb adds both modifiers'));
     if (s.mods) notes.push(c.hits > 0.05
       ? t('on average ≈{n} needed modifiers get hit too — re-adding them is counted in the price', { n: fmt(Math.round(c.hits * 10) / 10) })
       : t('only unwanted modifiers can be hit'));
-    if (c.hopeless) notes.push(t('One attempt: a miss stays on the item — removing it at random would more likely hit a needed modifier'));
+    if (c.hopeless) key.push(t('One attempt: a miss stays on the item — removing it at random would more likely hit a needed modifier'));
     else if (s.act !== 'remove' && c.k !== 'desecrate' && c.k !== 'essence' && (s.onSide || s.onItem)) notes.push(t('the average includes misses: an Annulment may hit a needed modifier, which then has to be added again'));
-    if (c.k === 'essence') notes.push(t('Exalt a cheap «sacrificial» modifier onto this side, then {crystal} + {essence}: it removes a modifier from this side and adds its own for sure — uses the only crafted-modifier slot', { crystal: s.crystal, essence: c.currencies[0] }));
+    if (c.k === 'essence') key.push(t('Exalt a cheap «sacrificial» modifier onto this side, then {crystal} + {essence}: it removes a modifier from this side and adds its own for sure — uses the only crafted-modifier slot', { crystal: s.crystal, essence: c.currencies[0] }));
     if (c.k === 'desecrate') {
       notes.push(t('Desecrate: reveal it at the Well of Souls and pick 1 of 3 offered modifiers — only one desecrated modifier per item'));
       if (/^Ancient /.test(c.bone)) notes.push(t('Ancient bone — low tiers cut off (level 40+)'));
       if (c.echo) notes.push(t('Omen of Abyssal Echoes — reroll the 3 options once'));
       if (c.bone === 'Altered Collarbone') notes.push(t('Altered Collarbone: desecrates jewellery with a chance for otherworldly (Breach) modifiers — how often they show up among the options is unknown'));
       if (c.lich) notes.push(t(c.lich.n <= 3 ? 'Lich omen: all options come from {lich}\'s pool — {n} on this side, so the modifier is guaranteed' : 'Lich omen: all options come from {lich}\'s pool — {n} on this side', { lich: c.lich.name[0].toUpperCase() + c.lich.name.slice(1), n: c.lich.n }));
-      notes.push(t('At the reveal pick: {mods}', { mods: [s.mod, ...(s.orMods || [])].join(' › ') }));
+      key.push(t('At the reveal pick: {mods}', { mods: [s.mod, ...(s.orMods || [])].join(' › ') }));
       notes.push(t('A miss → Orb of Annulment + Omen of Light removes it ({cost})', { cost: money((craftPrices['Orb of Annulment'] || 0) + (craftPrices['Omen of Light'] || 0)) }));
     }
     if (EXALT_WHY[c.k]) notes.push(t(EXALT_WHY[c.k]));
@@ -251,12 +252,15 @@ function planHtml(plan) {
     for (const e of c.erasure || []) alts.push(t('{orb} + {omen}: removes a random {side} ({odds} hits an unwanted one) and adds a random modifier, ≈ {cost} per try', { orb: e.orb, omen: e.omen, side: t(e.side), odds: e.chance >= 0.5 ? `~${Math.round(e.chance * 100)}%` : t('1 in {n}', { n: Math.round(1 / e.chance * 10) / 10 }), cost: money(e.cost) }));
     if (c.regal && c.regal.length) notes.push(t('Greater / Perfect Regal Orb: the random modifier is level 35+ / 50+ — instead: {list}', { list: c.regal.map((o) => `${o.orb} ≈ ${money(o.cost)}`).join('; ') }));
     const desNote = (c.desAlt || []).some((o) => o.k === 'desecrate') ? t('Desecrate: pick 1 of 3 offered modifiers at the Well of Souls, but a miss costs Orb of Annulment + Omen of Light ({cost})', { cost: money((craftPrices['Orb of Annulment'] || 0) + (craftPrices['Omen of Light'] || 0)) }) : '';
+    // Пояснения и другие способы — свёрнуты: в шаге на виду только что сделать, чем, шанс и цена.
+    const more = [...notes.map((n) => `<div class="ps-note">${esc(n)}</div>`),
+      ...(alts.length ? [`<div class="ps-note">${esc(t('Instead: {list}', { list: alts.join('; ') }))}</div>`] : []),
+      ...(desNote ? [`<div class="ps-note">${esc(desNote)}</div>`] : [])];
     return `<li><div class="ps-what">${esc(STEP_LABEL[s.act](s))}</div>
       <div class="ps-how">${curChips(c.currencies)} · ${esc(odds)}${c.cost != null ? ` · <b>≈ ${money(c.cost)}</b>` : ''}</div>
-      ${notes.length ? `<div class="ps-note">${esc(notes.join(' · '))}</div>` : ''}
-      ${alts.length ? `<div class="ps-note">${esc(t('Instead: {list}', { list: alts.join('; ') }))}</div>` : ''}
-      ${desNote ? `<div class="ps-note">${esc(desNote)}</div>` : ''}
-      ${c.risky && c.chance < 1 && !s.mods ? `<div class="ps-risk">${esc(t('A miss removes a good modifier instead'))}</div>` : ''}</li>`;
+      ${key.length ? `<div class="ps-key">${esc(key.join(' · '))}</div>` : ''}
+      ${c.risky && c.chance < 1 && !s.mods ? `<div class="ps-risk">${esc(t('A miss removes a good modifier instead'))}</div>` : ''}
+      ${more.length ? `<details class="ps-more"><summary>${esc(alts.length ? t('details and alternatives') : t('details'))}</summary>${more.join('')}</details>` : ''}</li>`;
   }).join('')}</ol>`;
 }
 

@@ -308,6 +308,8 @@
     builds: 'нужен билдам',
     'chance per try': 'шанс за попытку',
     chance: 'шанс',
+    'details and alternatives': 'подробнее и другие способы',
+    details: 'подробнее',
     'Chance per try: Exalted Orb + omen of its side': 'Шанс за одну попытку: Exalted Orb + омен его стороны',
     'unknown': 'неизвестно',
     'Chances: a rough estimate from {n} trade listings ({date})': 'Шансы — приблизительно, по {n} лотам трейда ({date})',

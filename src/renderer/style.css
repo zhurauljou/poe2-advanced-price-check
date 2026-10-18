@@ -667,3 +667,8 @@ footer > span:first-child { min-width: 0; overflow: hidden; text-overflow: ellip
 .craft-sec.alt > .k { color: var(--muted); font-size: 14px; }
 details.gamble > summary { cursor: pointer; list-style: none; }
 details.gamble > summary::before { content: '▸ '; } details.gamble[open] > summary::before { content: '▾ '; }
+/* Шаг плана: пояснения и другие способы — под «подробнее» */
+.ps-key { font-size: 13.5px; color: var(--text); }
+.ps-more > summary { cursor: pointer; list-style: none; font-size: 12.5px; color: var(--label); }
+.ps-more > summary::before { content: '▸ '; } .ps-more[open] > summary::before { content: '▾ '; }
+.ps-more[open] { margin-bottom: 2px; }
