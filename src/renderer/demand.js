@@ -67,7 +67,8 @@ async function loadDemand() {
 }
 
 // Шаблон мода, как у ninja: «# to maximum Life», «#% to Fire Resistance» — наш шаблон трейда без «(Local)».
-const ninjaTemplate = (t) => (t || '').replace(/ \(Local\)$/, '').toLowerCase();
+// У poe.ninja шаблоны без «+» («# maximum stacks of Puppet Master»), а у трейда крафтовые — с ним («+# maximum stacks…»).
+const ninjaTemplate = (t) => (t || '').replace(/ \(Local\)$/, '').replace(/\+#/g, '#').toLowerCase();
 
 function renderDemand(d) {
   const { item, filters: f } = state;
@@ -81,7 +82,7 @@ function renderDemand(d) {
   const TOP = 10;
   // Моды темы у таких билдов по определению на 100% — в списке они ничего не говорят.
   const themeSet = new Set((d.themed || []).map((x) => x.toLowerCase()));
-  const all = d.mods.filter((r) => !themeSet.has(r.name.toLowerCase())).map((r, i) => ({ ...r, rank: i + 1, mine: mine.has(r.name.toLowerCase()) }));
+  const all = d.mods.filter((r) => !themeSet.has(r.name.toLowerCase())).map((r, i) => ({ ...r, rank: i + 1, mine: mine.has(ninjaTemplate(r.name)) }));
   const modRows = all.filter((r) => r.rank <= TOP || r.mine);
   const hits = all.filter((r) => r.mine && r.rank <= TOP).length;
   const baseRows = d.bases.slice(0, TOP).map((r) => ({ ...r, mine: r.name === item.baseType }));
