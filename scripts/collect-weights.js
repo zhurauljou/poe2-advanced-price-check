@@ -14,7 +14,7 @@
 // Пока вы за компьютером (мышь / клавиатура трогались последние --idle минут), сбор на паузе: лимит трейда общий на IP,
 // он нужен вам. Остановить — Ctrl+C или закрыть окно (собранное не теряется).
 //
-//   npm run collect-weights -- [--league "Forbidden Rites"] [--classes Boots,Helmets] [--once] [--max 50] [--idle 3 | --no-idle]
+//   npm run collect-weights -- [--league "Forbidden Rites"] [--classes Boots,Helmets] [--once] [--max 50] [--idle 1 | --no-idle]
 //   --max N — не больше N новых вещей на класс за круг (быстрая проверка, короткая добивка)
 //
 // Ограничения: даже дешёвые лоты кто-то отобрал для продажи, а совсем мусор на трейд не попадает — редкие моды
@@ -71,7 +71,7 @@ try {
   const tick = kernel32.func('uint32 __stdcall GetTickCount()');
   idleMs = () => { const info = { cbSize: 8, dwTime: 0 }; return getLastInput(info) ? (tick() - info.dwTime) >>> 0 : Infinity; };
 } catch {}
-const IDLE_MS = flag('no-idle') ? 0 : Number(arg('idle', 3)) * 60000;
+const IDLE_MS = flag('no-idle') ? 0 : Number(arg('idle', 1)) * 60000;
 async function waitIdle() {
   if (!IDLE_MS || idleMs() >= IDLE_MS) return;
   say(`Paused: you are at the computer — resuming after ${IDLE_MS / 60000} min without mouse / keyboard`);
