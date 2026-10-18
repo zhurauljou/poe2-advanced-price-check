@@ -314,6 +314,32 @@ async function priceCheck(text, refresh = false, historyId = null) {
   const prev = history.previous(entry, lastHistoryId);
   send('item', { ...prepared, league, leagues, historyId: lastHistoryId, offline: api.offline.host, previous: prev && { est: prev.est, at: prev.estAt || prev.at }, priceCurrency: settings.get().priceCurrency || 'any', hotkey: hotkeyLabel() });
   if (!refresh || !win.isVisible()) show();
+  if (unknownToTrade(item)) refreshTradeData(rawText).catch((e) => log('trade data refresh', e.message));
+}
+
+// Мод или база, которых нет в справочнике трейда, — скорее всего, патч вышел, а справочник в кэше ещё вчерашний.
+// У уников несопоставленные строки — флейвор-текст, их не считаем.
+function unknownToTrade(item) {
+  if (!['Rare', 'Magic', 'Normal', 'Unique'].includes(item.rarity)) return false;
+  if (!pricing.knownBase(item.baseType)) return true;
+  return item.rarity !== 'Unique' && item.mods.some((m) => !m.statId && ['explicit', 'implicit', 'fractured', 'desecrated'].includes(m.tag));
+}
+
+// Свежий справочник трейда и та же вещь заново. Не чаще раза в час и только если справочнику больше 2 ч — иначе мод
+// просто не ищется на трейде, и скачивание ничего не даст.
+let tradeDataAt = 0;
+async function refreshTradeData(rawText) {
+  if (Date.now() - tradeDataAt < 3600e3 || api.cacheAgeH('stats.json') < 2) return;
+  tradeDataAt = Date.now();
+  log('unknown mod or base — refreshing trade data');
+  api.clearCache(/^(stats|items|static)(-\w+)?\.json$/);
+  await pricing.init();
+  if (clientLangActive !== 'en') {
+    const lang = clientLangActive;
+    clientLangActive = 'en';
+    await useClientLang(lang);
+  }
+  if (lastText === rawText) await priceCheck(rawText, true, lastHistoryId);
 }
 
 function send(ch, data) {
@@ -349,6 +375,16 @@ async function refreshLeagues() {
   const ids = (await api.tradeLeagues()).result.map((l) => l.id);
   const changed = ids.join('|') !== leagues.join('|');
   leagues = ids;
+  // Новая лига — значит, вышел патч: справочники трейда и RePoE в кэше устарели (новые моды, базы, веса).
+  // Обновляем сами — игрок не знает, что после патча что-то надо нажимать. Первый запуск — только запоминаем.
+  const known = settings.get().knownLeagues;
+  if (!Array.isArray(known) || ids.some((id) => !known.includes(id))) {
+    settings.set({ knownLeagues: ids });
+    if (Array.isArray(known)) {
+      log('new league:', ids.filter((id) => !known.includes(id)).join(', '), '— refreshing game data');
+      Promise.resolve(ready).catch(() => {}).then(() => refreshData(true));
+    }
+  }
   if (!settings.get().league || !leagues.includes(settings.get().league)) {
     const main = leagues.find((l) => !/^(HC |Hardcore|Standard)/.test(l)) || leagues[0];
     if (settings.get().league) log('league ended:', settings.get().league, '→', main);
@@ -358,7 +394,8 @@ async function refreshLeagues() {
 }
 
 // «Обновить данные игры» (день патча): свежие справочники трейда, RePoE и названия на языке клиента — без перезапуска.
-async function refreshData() {
+// quiet — запустили сами (новая лига): сообщаем только об ошибке.
+async function refreshData(quiet = false) {
   api.clearCache();
   craft.reset();
   clientLang.reset();
@@ -368,6 +405,7 @@ async function refreshData() {
   try {
     await ensureReady();
     await craft.load(api.cached);
+    if (quiet) return;
     tray.displayBalloon({ title: 'PoE 2 Price Checker', content: t('Game data updated') });
   } catch (e) {
     tray.displayBalloon({ title: 'PoE 2 Price Checker', content: t('Failed to load data: {msg}', { msg: e.message }) });
@@ -496,8 +534,6 @@ function buildTray() {
         submenu: leagues.map((l) => ({ label: l, type: 'radio', checked: l === cur, click: () => applySettings({ league: l }) })),
       },
       { label: t('Settings…'), click: () => openSettings() },
-      // После патча игры: новые моды и базы — сразу, а не через сутки (справочники трейда) или неделю (RePoE).
-      { label: t('Refresh game data (after a patch)'), click: () => refreshData() },
       { type: 'separator' },
       updateItem(),
       { type: 'separator' },

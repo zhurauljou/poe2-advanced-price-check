@@ -177,12 +177,20 @@ async function cached(name, url, maxAgeH = 24) {
 }
 
 // «Обновить данные игры» (после патча): стираем справочники — следующая загрузка скачает свежие.
-function clearCache() {
+// only — стереть только подходящие файлы (свежий справочник трейда без RePoE и цен).
+function clearCache(only = null) {
   for (const f of fs.readdirSync(cacheDir())) {
+    if (only && !only.test(f)) continue;
     try { fs.unlinkSync(path.join(cacheDir(), f)); } catch {}
   }
+  if (only) return;
   ninja.at = 0;
   uniques.at = 0;
+}
+
+// Возраст файла кэша в часах (нет файла — бесконечность).
+function cacheAgeH(name) {
+  try { return (Date.now() - fs.statSync(cacheFile(name)).mtimeMs) / 3600e3; } catch { return Infinity; }
 }
 
 const tradeStats = () => cached('stats.json', `${TRADE}/api/trade2/data/stats`);
@@ -292,5 +300,5 @@ async function uniquePrice(league, name, baseType) {
 }
 
 module.exports = {
-  TRADE, tradeRequest, newGeneration, cacheDir, clearCache, limitWait, offline, forCurrent, fetchBuffer, cached, tradeStats, tradeItems, tradeStatic, tradeLeagues, loadNinja, ninja, uniquePrice,
+  TRADE, tradeRequest, newGeneration, cacheDir, clearCache, cacheAgeH, limitWait, offline, forCurrent, fetchBuffer, cached, tradeStats, tradeItems, tradeStatic, tradeLeagues, loadNinja, ninja, uniquePrice,
 };

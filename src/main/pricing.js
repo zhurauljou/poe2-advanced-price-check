@@ -716,4 +716,7 @@ async function exchangeOffers(league, want, have) {
   return { offers: offers.slice(0, 6), total: r.total || offers.length, url: `${api.TRADE}/trade2/exchange/poe2/${L}/${r.id}` };
 }
 
-module.exports = { init, prepare, search, quick, listingUrl, elementVariants, exchangeOffers, isExchangeable };
+// База есть в справочнике трейда (справочник не загружен — не знаем, считаем, что есть).
+const knownBase = (b) => !types || !b || types.has(b);
+
+module.exports = { init, knownBase, prepare, search, quick, listingUrl, elementVariants, exchangeOffers, isExchangeable };

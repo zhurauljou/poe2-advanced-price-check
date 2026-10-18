@@ -38,9 +38,9 @@ function reset() {
 
 async function loadData(cached) {
   const [mods, bases, augments] = await Promise.all([
-    cached('repoe-mods.json', `${REPOE}/mods.min.json`, 24 * 7),
-    cached('repoe-base-items.json', `${REPOE}/base_items.min.json`, 24 * 7),
-    cached('repoe-augments.json', `${REPOE}/augments.min.json`, 24 * 7).catch(() => ({})),
+    cached('repoe-mods.json', `${REPOE}/mods.min.json`, 24),
+    cached('repoe-base-items.json', `${REPOE}/base_items.min.json`, 24),
+    cached('repoe-augments.json', `${REPOE}/augments.min.json`, 24).catch(() => ({})),
   ]);
   const byName = new Map();
   for (const b of Object.values(bases)) if (b.name && !byName.has(b.name)) byName.set(b.name, b);
