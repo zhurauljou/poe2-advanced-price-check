@@ -466,7 +466,8 @@
    "(15-25)% increased Armour and Energy Shield (only str_int_armour bases)"
   ],
   "Bucklers": [
-   "(15-25)% increased Evasion Rating",
+   "(15-25)% increased Evasion Rating (only dex_armour bases)",
+   "(15-25)% increased Armour and Evasion (only str_dex_armour bases)",
    "(10-20)% reduced Attribute Requirements",
    "(40-50)% increased Thorns damage",
    "(10-15)% increased Block chance",

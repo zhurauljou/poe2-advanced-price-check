@@ -947,4 +947,4 @@ function sameClass(a, b) {
   return x && y ? x.item_class === y.item_class : null;
 }
 
-module.exports = { advise, load, reset: craftData.reset, rollsOn, canAppear, sameClass };
+module.exports = { advise, load, reset: craftData.reset, rollsOn, canAppear, sameClass, gambleFor };

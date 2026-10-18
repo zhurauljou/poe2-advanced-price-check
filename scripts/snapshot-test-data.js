@@ -16,8 +16,8 @@ const bases = read('repoe-base-items.json');
 const augments = read('repoe-augments.json');
 const stats = read('stats.json');
 
-// Базы: предметы (item) и то, что вставляется в гнёзда (аугменты ссылаются на них по id).
-const keepBase = (id, b) => b.domain === 'item' || augments[id];
+// Базы: предметы (item), самоцветы (misc) и то, что вставляется в гнёзда (аугменты ссылаются на них по id).
+const keepBase = (id, b) => b.domain === 'item' || b.domain === 'misc' || augments[id];
 const outBases = {};
 for (const [id, b] of Object.entries(bases)) {
   if (keepBase(id, b)) outBases[id] = pick(b, ['name', 'tags', 'implicits', 'item_class', 'release_state', 'domain']);
