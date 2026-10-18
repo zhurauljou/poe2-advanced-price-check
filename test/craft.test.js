@@ -258,3 +258,15 @@ test('скипетр на миньонов: crafted «maximum stacks of Puppet M
   const m = mod(f, /maximum stacks of Puppet Master/);
   assert.ok(m && m.enabled, 'Puppet Master включён');
 });
+
+test('веса палочек и посохов — по базам той же стихии, если таких вещей от 100', { skip }, async () => {
+  await init();
+  const d = await craft.load(cached);
+  const rows = (n, base) => Array.from({ length: n }, () => ({ base }));
+  const items = [...rows(120, 'Volatile Wand'), ...rows(150, 'Attuned Wand'), ...rows(40, 'Frigid Wand'), ...rows(60, null)];
+  const bases = ['Volatile Wand', 'Attuned Wand', 'Frigid Wand'];
+  const W = { classes: { Wands: { items: items.length, types: ['X'], raw: items.map(() => [[0, 1]]), bases, rowBase: items.map((x) => bases.indexOf(x.base)) } } };
+  assert.equal(craft.classWeights(W, 'Wands', d.bases.get('Volatile Wand'), d).items, 120, 'огненная — только огненные базы');
+  assert.equal(craft.classWeights(W, 'Wands', d.bases.get('Siphoning Wand'), d).items, 150, 'обычная — только обычные');
+  assert.equal(craft.classWeights(W, 'Wands', d.bases.get('Frigid Wand'), d).items, items.length, 'холодных меньше 100 — весь класс');
+});

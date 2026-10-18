@@ -47,7 +47,12 @@ async function loadData(cached) {
   // Теги no_fire/cold/lightning/chaos/physical_spell_mods (на базах посохов и палочек и в adds_tags модов стихий) игра
   // не применяет: на трейде есть Ashen Staff (база огня) с increased Cold Damage. Убираем — иначе советы теряют моды.
   const NO_SPELL = /^no_\w+_spell_mods$/;
-  for (const b of byName.values()) b.tags = (b.tags || []).filter((t) => !NO_SPELL.test(t));
+  // Сами теги в пул не пускаем, но запоминаем как «стихию базы»: шансы модов своей стихии на ней выше (Craft of Exile:
+  // 5550 против 3000) — статистику весов программа берёт по базам той же стихии (craft.js classWeights).
+  for (const b of byName.values()) {
+    b.spellAffinity = (b.tags || []).filter((t) => NO_SPELL.test(t)).sort().join(',');
+    b.tags = (b.tags || []).filter((t) => !NO_SPELL.test(t));
+  }
   for (const m of Object.values(mods)) if (m.adds_tags) m.adds_tags = m.adds_tags.filter((t) => !NO_SPELL.test(t));
   // Строки implicit'ов базы (Spirit у скипетра и т.п.) — их нет в пуле крафта, но в спросе poe.ninja они бывают.
   for (const b of byName.values()) b.implicitLines = (b.implicits || []).flatMap((id) => (mods[id] ? templates(radiusText(mods[id])) : []));

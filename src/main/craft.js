@@ -309,7 +309,7 @@ async function advise(item, demandMods, cached) {
   }
   let nOf = null; // частота семейства по собранной статистике (если есть)
   const W = weights();
-  const wc = W && W.classes[item.itemClass];
+  const wc = classWeights(W, item.itemClass, base, d);
   let chanceMeta = null;
   if (wc && wc.items >= 50) {
     chanceMeta = { items: wc.items, collected: W.meta.collected, league: W.meta.league };
@@ -718,6 +718,19 @@ function eligibleShare(d, base) {
 // носят ≥ SALE_REASON% билдов: вещь выставили ради него, а остальные её моды выпали случайно.
 const SALE_REASON = 30;
 const SMOOTH = 1; // +1 к каждому семейству: единичные находки не раздуваются, ненайденные не уходят в ноль
+// Статистика весов для вещи. Палочки и посохи со стихией (Volatile Wand — огонь, Frigid — холод…): если на базах той же
+// стихии набралось от 100 вещей — по ним (моды своей стихии там выпадают чаще); иначе — по всему классу.
+function classWeights(W, itemClass, base, d) {
+  const wc = W && W.classes[itemClass];
+  if (!wc || !wc.rowBase || !(wc.bases || []).length || !base) return wc;
+  const sig = base.spellAffinity || '';
+  const same = new Set();
+  wc.bases.forEach((name, i) => { const b = d.bases.get(name); if (b && (b.spellAffinity || '') === sig) same.add(i); });
+  const raw = wc.raw.filter((_, i) => same.has(wc.rowBase[i]));
+  if (raw.length < 100 || raw.length === wc.raw.length) return wc;
+  return { ...wc, raw, items: raw.length };
+}
+
 function familyCounts(wc, pctOf) {
   if (!wc.raw) return {};
   const kept = {}, raw = {};
@@ -947,4 +960,4 @@ function sameClass(a, b) {
   return x && y ? x.item_class === y.item_class : null;
 }
 
-module.exports = { advise, load, reset: craftData.reset, rollsOn, canAppear, sameClass, gambleFor };
+module.exports = { advise, load, reset: craftData.reset, rollsOn, canAppear, sameClass, gambleFor, classWeights };

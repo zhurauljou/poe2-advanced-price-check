@@ -186,7 +186,7 @@ const storeFile = (league) => path.join(STORE_DIR, `${league.replace(/[^\w-]+/g,
 function loadStore(league) {
   try {
     const s = JSON.parse(fs.readFileSync(storeFile(league), 'utf8'));
-    if (s.league === league) return s;
+    if (s.league === league) { for (const c of Object.values(s.classes)) fillBases(c); return s; }
   } catch {}
   const store = { version: 1, league, started: new Date().toISOString(), classes: {} };
   // Первый запуск — начинаем с уже собранного data/weights.json той же лиги (у тех лотов id не сохранены).
@@ -202,10 +202,16 @@ function loadStore(league) {
   } catch {}
   return store;
 }
+// База каждой вещи (rowBase[i] — индекс в bases); у вещей, собранных до этого, базы нет (-1).
+function fillBases(c) {
+  c.bases = c.bases || [];
+  c.rowBase = c.rowBase || [];
+  while (c.rowBase.length < c.raw.length) c.rowBase.unshift(-1);
+}
 // data/weights.json для программы — из хранилища (без id).
 function buildOut(store) {
   const classes = {};
-  for (const [cls, c] of Object.entries(store.classes)) if (c.items) classes[cls] = { items: c.items, unmatched: c.unmatched, types: c.types, raw: c.raw, done: true };
+  for (const [cls, c] of Object.entries(store.classes)) if (c.items) classes[cls] = { items: c.items, unmatched: c.unmatched, types: c.types, raw: c.raw, bases: c.bases || [], rowBase: c.rowBase || [], done: true };
   writeJson(OUT, { meta: { version: VERSION, league: store.league, collected: new Date().toISOString().slice(0, 10), started: store.started.slice(0, 10),
     method: `rare uncorrupted listings up to ${PRICE_MAX} ex, newest first, ilvl 75+, accumulated`,
     note: 'Estimated from trade listings — not game data. Rare modifiers are underestimated.' }, classes });
@@ -250,6 +256,7 @@ async function main() {
     for (const [cls, category] of Object.entries(CLASSES)) {
       if (only && !only.includes(cls)) continue;
       const c = store.classes[cls] || (store.classes[cls] = { items: 0, unmatched: 0, types: [], raw: [], ids: [] });
+      fillBases(c);
       // Классы, которых на трейде нет (ещё не в игре), — проверяем раз в 6 кругов.
       if ((c.emptyRounds || 0) >= 2 && round % 6) continue;
       const seen = new Set(c.ids);
@@ -287,6 +294,10 @@ async function main() {
                 affixes.set(`${m.name}|${m.tier}`, { name: m.name, side, tier: +String(m.tier).slice(1), level: m.level });
               }
             }
+            // База вещи — для палочек и посохов шансы зависят от стихии базы (программа считает по базам той же стихии).
+            const baseName = r.item.baseType || r.item.typeLine;
+            if (!c.bases.includes(baseName)) c.bases.push(baseName);
+            c.rowBase.push(c.bases.indexOf(baseName));
             const row = [];
             for (const a of affixes.values()) {
               const type = pool.byKey.get(`${a.name}|${a.side}|${a.level}`) || pool.byName.get(`${a.name}|${a.side}`);
