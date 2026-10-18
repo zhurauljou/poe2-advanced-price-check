@@ -310,6 +310,8 @@
     chance: 'шанс',
     'details and alternatives': 'подробнее и другие способы',
     details: 'подробнее',
+    'first a cheap «sacrificial» {side} — without it {essence} removes one of your {side}es': 'сначала дешёвый «жертвенный» {side} — без него {essence} снимет один из ваших',
+    'removes a random {side} and adds its own': 'снимает случайный {side} и ставит свой',
     '{odds}: it removes {mods} instead of the sacrificial modifier': '{odds}: снимет {mods}, а не жертвенный мод',
     ' or ': ' или ',
     'The {side}es are full: with {omen} the desecration itself removes a random {side} — the same as one Annulment attempt, so do this before removing': 'Места под {side} заняты: с {omen} Desecrate сам снимет случайный {side} — это как одна попытка Annulment, поэтому делать до снятия',

@@ -188,6 +188,16 @@ function curKind(n) {
 }
 const curChips = (list) => list.map((n) => `<span class="cur ${curKind(n)}">${esc(n)}</span>`).join('<span class="plus">+</span>');
 
+// Эссенция / Alloy на редкую: порядок важен — сначала жертвенный мод Exalted'ом на эту сторону, потом омен
+// Crystallisation + эссенция (снимает случайный мод стороны). Без жертвы снимется один из ваших модов — по шагам, с номерами.
+// c.currencies: [эссенция, омен Crystallisation, Exalted Orb, омен стороны?].
+function essenceSeq(s, c) {
+  const [ess, crystal, ...sac] = c.currencies;
+  const side = t(s.side);
+  return `<div class="ps-seq"><div><b>1</b> ${curChips(sac)} <span>— ${esc(t('first a cheap «sacrificial» {side} — without it {essence} removes one of your {side}es', { side, essence: ess }))}</span></div>
+    <div><b>2</b> ${curChips([crystal, ess])} <span>— ${esc(t('removes a random {side} and adds its own', { side }))}</span></div></div>`;
+}
+
 const STEP_LABEL = {
   augment: (s) => t('Add a {side} while it is magic', { side: t(s.side) }),
   rune: (s) => t('Socket the rune: «{mod}» (permanent)', { mod: s.mod }) + (s.free ? '' : ` — ${t("needs a free augment socket (Artificer's Orb)")}`),
@@ -222,7 +232,7 @@ function planHtml(plan) {
       : t('only unwanted modifiers can be hit'));
     if (c.hopeless) key.push(t('One attempt: a miss stays on the item — removing it at random would more likely hit a needed modifier'));
     else if (s.act !== 'remove' && c.k !== 'desecrate' && c.k !== 'essence' && (s.onSide || s.onItem)) notes.push(t('the average includes misses: an Annulment may hit a needed modifier, which then has to be added again'));
-    if (c.k === 'essence') key.push(t('Exalt a cheap «sacrificial» modifier onto this side, then {crystal} + {essence}: it removes a modifier from this side and adds its own for sure — uses the only crafted-modifier slot', { crystal: s.crystal, essence: c.currencies[0] }));
+    if (c.k === 'essence') notes.push(t('Uses the only crafted-modifier slot (one per item; Alloys too)'));
     if (c.k === 'desecrate') {
       notes.push(t('Desecrate: reveal it at the Well of Souls and pick 1 of 3 offered modifiers — only one desecrated modifier per item'));
       if (/^Ancient /.test(c.bone)) notes.push(t('Ancient bone — low tiers cut off (level 40+)'));
@@ -259,7 +269,8 @@ function planHtml(plan) {
       ...(alts.length ? [`<div class="ps-note">${esc(t('Instead: {list}', { list: alts.join('; ') }))}</div>`] : []),
       ...(desNote ? [`<div class="ps-note">${esc(desNote)}</div>`] : [])];
     return `<li><div class="ps-what">${esc(STEP_LABEL[s.act](s))}</div>
-      <div class="ps-how">${curChips(c.currencies)} · ${esc(odds)}${c.cost != null ? ` · <b>≈ ${money(c.cost)}</b>` : ''}</div>
+      ${c.k === 'essence' ? essenceSeq(s, c) : ''}
+      <div class="ps-how">${c.k === 'essence' ? '' : `${curChips(c.currencies)} · `}${esc(odds)}${c.cost != null ? ` · <b>≈ ${money(c.cost)}</b>` : ''}</div>
       ${key.length ? `<div class="ps-key">${esc(key.join(' · '))}</div>` : ''}
       ${c.risky && c.chance < 1 && !s.mods ? `<div class="ps-risk">${esc(t('A miss removes a good modifier instead'))}</div>` : ''}
       ${c.k === 'essence' && c.chance < 1 && (s.atRisk || []).length ? `<div class="ps-risk">⚠ ${esc(t('{odds}: it removes {mods} instead of the sacrificial modifier', { odds: 1 - c.chance >= 0.5 ? `~${Math.round((1 - c.chance) * 100)}%` : oneIn(1 - c.chance), mods: s.atRisk.map((m) => `«${m}»`).join(t(' or ')) }))}</div>` : ''}
