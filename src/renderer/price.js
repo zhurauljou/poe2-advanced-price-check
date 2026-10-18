@@ -224,8 +224,15 @@ function ageSummary(priced, usedFresh) {
   return bits.length ? ` <span class="ages-i${stale ? ' warn' : ''}" title="${esc(bits.join('\n'))}">ⓘ</span>` : '';
 }
 
+// Потраченная скрижаль, найденная среди полных: доля оставшихся использований (6 из 10 — 0.6), иначе 1.
+function usesScale() {
+  const p = ((state.filters && state.filters.props) || []).find((x) => x.key === 'uses');
+  return p && p.enabled && p.full && p.value < p.full && Number(p.min) >= p.full ? p.value / p.full : 1;
+}
+
 function renderTradeHero(r) {
-  const divs = r.listings.map((l) => l.divine).filter((v) => v != null).sort((a, b) => a - b);
+  const k = usesScale();
+  const divs = r.listings.map((l) => l.divine).filter((v) => v != null).map((v) => v * k).sort((a, b) => a - b);
   if (!divs.length && r.listingsError) {
     $('hero').innerHTML = voidState('⏳', t('Found {n} listings, but could not load them', { n: r.total }), esc(r.listingsError),
       [['retry', t('Try again')], ['trade', t('Open trade site')]]);
@@ -240,7 +247,7 @@ function renderTradeHero(r) {
   // Возраст лотов: залежавшийся дешёвый лот (неделю+ не купили) завышает картину — за эту цену не берут.
   // Если свежих (≤ 3 дней) лотов хватает, оценку строим по ним; иначе — по всем, но надёжность ниже.
   // edge — насколько лот сильнее вашей вещи (▲ минус ▼ по модам): заметно сильнее (≥ 2) не должен тянуть оценку вверх.
-  const priced = r.listings.filter((l) => l.divine != null).map((l) => { const c = cmpCounts(l); return { div: l.divine, age: ageDays(l.indexed), edge: c.better - c.worse }; })
+  const priced = r.listings.filter((l) => l.divine != null).map((l) => { const c = cmpCounts(l); return { div: l.divine * k, age: ageDays(l.indexed), edge: c.better - c.worse }; })
     .sort((a, b) => a.div - b.div);
   const stronger = (l) => l.edge >= STRONGER;
   // Большинство дешёвых лотов сильнее вашей вещи — оцениваем по тем, что не сильнее; таких нет — по самому дешёвому.
@@ -269,6 +276,7 @@ function renderTradeHero(r) {
     <div class="k">${fl ? t('Like yours') : t('Estimated price')}</div>
     <div class="big">${money(est)}</div>
     <div class="alt">${alt(est)}</div>
+    ${k < 1 ? `<div class="alt" title="${esc(t('Partly used tablets are rarely listed — priced as a full one, scaled by the uses left (an assumption)'))}">${esc(t('{n} of {full} uses: a full one ≈ {price}', { n: state.item.props.uses, full: Math.round(state.item.props.uses / k), price: money(est / k) }))}</div>` : ''}
     ${confidence(r.total, head, priced.slice(0, 5), ageInfo)}
     ${missingKeyHtml()}
     ${floorHtml}

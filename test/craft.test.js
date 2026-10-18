@@ -287,7 +287,8 @@ test('скрижали: все моды находятся на трейде (з
     const bad = f.mods.filter((m) => !m.statId).map((m) => m.text);
     assert.deepEqual(bad, [], `${file}: без стата`);
     const u = f.props.find((p) => p.key === 'uses');
-    assert.ok(u && u.enabled && u.min === uses, `${file}: uses ≥ ${uses}`);
+    // Потраченную ищем среди полных (10), окно пересчитает цену по остатку.
+    assert.ok(u && u.enabled && u.value === uses && u.min === Math.max(uses, 10), `${file}: uses ${uses}, поиск ≥ ${u && u.min}`);
   }
   const chests = (await filters('tablet-irradiated.txt')).mods.find((m) => /Rare Chests/.test(m.text));
   assert.equal(chests.value, 2);

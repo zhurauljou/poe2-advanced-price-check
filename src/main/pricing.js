@@ -110,6 +110,7 @@ const PROPS = [
 ];
 
 const PROP_MIN = 0.97;
+const TABLET_USES = 10; // использований у новой скрижали
 const PROP_LOOSE = 0.85;
 
 // Порог от значения: дробные (крит 8.00%, 1.01 атаки в секунду) — с точностью до сотых, а не до целых.
@@ -121,9 +122,10 @@ function propFilters(item) {
   const unique = item.rarity === 'Unique';
   // Магическая вещь — заготовка: её покупают ради модов и их тиров, а не ради DPS/защиты — свойства по желанию.
   const magic = item.rarity === 'Magic';
-  // Скрижаль: потраченная дешевле полной — ищем не меньше использований, чем осталось.
+  // Скрижаль: новая — на TABLET_USES использований, на трейде почти все такие. Потраченную ищем среди полных (по ним цена
+  // надёжнее — неполных мало), окно пересчитывает оценку пропорционально остатку (6 из 10 — 60%).
   if (item.itemClass === 'Tablet') {
-    return PROPS.filter((p) => p.key === 'uses' && item.props.uses > 0).map((p) => ({ ...p, value: item.props.uses, min: item.props.uses, enabled: true }));
+    return PROPS.filter((p) => p.key === 'uses' && item.props.uses > 0).map((p) => ({ ...p, value: item.props.uses, min: Math.max(item.props.uses, TABLET_USES), full: TABLET_USES, enabled: true }));
   }
   if (item.itemClass === 'Waystones') {
     return PROPS.filter((p) => p.group === 'map' && item.props[p.key] > 0).map((p) => ({
