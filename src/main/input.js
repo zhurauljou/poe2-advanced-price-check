@@ -29,12 +29,16 @@ async function tap(key, mod) {
 // Буфер обмена в Electron 44 асинхронный (как navigator.clipboard): readText / writeText / read / write — промисы.
 // Снимок буфера пользователя — все типы сразу (текст, HTML, картинка…): ClipboardItem из read() читает данные
 // лениво, после нашей записи там было бы уже другое. Скопированные в Проводнике файлы в read() не попадают.
+// Берём только настоящее содержимое (текст, HTML, RTF, картинки). Служебные форматы Windows («electron
+// application/osclipboard;format="DataObject"», «Ole Private Data») read() отдаёт и у пустого буфера — «вернуть» их
+// значило бы стереть шёпот или текст предмета и оставить буфер без текста.
+const KEEP = (type) => /^(text\/(plain|html|rtf)|image\/)/.test(type);
 async function saveClipboard() {
   try {
     const items = await clipboard.read();
     const snap = await Promise.all(items.map(async (it) => {
       const data = {};
-      for (const type of it.types) data[type] = await it.getType(type);
+      for (const type of it.types) if (KEEP(type)) data[type] = await it.getType(type);
       return data;
     }));
     return snap.filter((d) => Object.keys(d).length);
@@ -84,4 +88,4 @@ async function copyItem() {
   return text;
 }
 
-module.exports = { sleep, copyItem, whisperInGame };
+module.exports = { sleep, copyItem, whisperInGame, saveClipboard, restoreClipboard };
