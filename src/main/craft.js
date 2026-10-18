@@ -283,8 +283,11 @@ async function advise(item, demandMods, cached) {
       if (normal.some((c) => c.side === x.side && lines.every((l) => c.text.split(' / ').includes(l)))) continue; // такое и Exalted даёт
       if (lines.every((l) => own.has(l))) continue; // такой мод на вещи уже есть (гибрид с одной общей строкой — можно)
       const ps = lines.map((l) => want.get(l) || 0).sort((a, b) => b - a);
-      const pct = (ps[0] || 0) + (ps[1] || 0) / 2; // гибрид: лучшая строка + половина второй
-      if (pct >= WANT_PCT && (!best || pct > best.pct)) best = { side: x.side, pct, text: lines.join(' / '), tier: null, tiers: 1, range: null, level: 0,
+      // Ценность гибрида: лучшая строка + половина второй (для выбора и плана). Это не доля билдов — может быть больше 100;
+      // окно показывает долю лучшей строки (shownPct) и по строкам (pctParts).
+      const pct = (ps[0] || 0) + (ps[1] || 0) / 2;
+      if (pct >= WANT_PCT && (!best || pct > best.pct)) best = { side: x.side, pct, shownPct: ps[0] || 0, pctParts: lines.map((l) => [l, want.get(l) || 0]),
+        text: lines.join(' / '), tier: null, tiers: 1, range: null, level: 0,
         stats: tradeStats({ text: raw }, 'item', item.itemClass), type: 'crafted:' + x.name, crafted: [x.name], craftedOnly: x.name };
     }
     if (best) normal.push(best);
@@ -906,7 +909,7 @@ function planGoal(mine, candidates, max, want, magic, magicFree = [], itemClass 
     plan.splice(-2, 2, { act: 'add2', cross: true, side: null, steps: last.map(bare), sideOmen: null, otherOpen: false, alt: last,
       retry: [...new Set(last.flatMap((s) => s.retry))], currencies: [...new Set([...last.flatMap((s) => s.currencies), 'Omen of Greater Exaltation'])] });
   }
-  return { keep, remove, add: add.map(({ side, text, pct, tier, tiers, range, stats, essence, chance, chanceUnknown, needs, desecrateOnly, craftedOnly }) => ({ side, text, pct, tier, tiers, range, stats, essence, chance, chanceUnknown, needs, desecrateOnly, craftedOnly })), plan };
+  return { keep, remove, add: add.map(({ side, text, pct, shownPct, pctParts, tier, tiers, range, stats, essence, chance, chanceUnknown, needs, desecrateOnly, craftedOnly }) => ({ side, text, pct, shownPct, pctParts, tier, tiers, range, stats, essence, chance, chanceUnknown, needs, desecrateOnly, craftedOnly })), plan };
 }
 
 // Может ли мод (шаблон poe.ninja: «# to Level of all Spell Skills») встать на эту базу. null — пул модов ещё не загружен.

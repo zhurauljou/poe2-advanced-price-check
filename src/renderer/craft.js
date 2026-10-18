@@ -22,14 +22,19 @@ async function loadCraft() {
 
 // Кандидаты крафта по ключу кнопки «price?»: сколько будет стоить вещь, если этот мод встанет (нижний ролл тира).
 const craftCands = new Map();
+// Доля билдов для показа: у гибрида из Alloy / эссенции pct — ценность (лучшая строка + половина второй, бывает больше
+// 100%), показываем долю лучшей строки, а по строкам — в подсказке.
+const demPct = (c) => (c.shownPct != null ? c.shownPct : c.pct);
+const demTitle = (c) => (c.pctParts && c.pctParts.length > 1 ? c.pctParts.map(([l, p]) => `${l} — ${fmt(p)}%`).join('\n') : '');
+
 function craftRows(list) {
   const rows = list.map((c) => {
     const key = String(craftCands.size);
     craftCands.set(key, c);
     const btn = c.stats ? `<button class="link cprice" data-ck="${key}" title="${t('Search for your item with this modifier added (lowest roll of the tier)')}">${t('price?')}</button>` : '';
     return `
-    <div class="brow ${heat(c.pct)}" data-row="${key}"><span class="bname">${esc(c.text)}<span class="craft-tier">T${c.tier}/${c.tiers}${c.range ? ` · ${esc(c.range)}` : ''}</span>${chanceTag(c.chance, c.chanceUnknown)}${c.essence ? `<span class="ess" title="${esc(t('{essence} makes a magic item rare with this modifier: {tiers}', { essence: c.essence.name, tiers: c.essence.tiers.join(' · ') }))}">◈ ${esc(c.essence.short)}</span>` : ''}${btn}</span>
-      <span class="bpct">${hot(c.pct)}${fmt(c.pct)}%</span><span class="bbar"><i data-w="${Math.min(100, c.pct)}%"></i></span></div>`;
+    <div class="brow ${heat(demPct(c))}" data-row="${key}"><span class="bname">${esc(c.text)}<span class="craft-tier">T${c.tier}/${c.tiers}${c.range ? ` · ${esc(c.range)}` : ''}</span>${chanceTag(c.chance, c.chanceUnknown)}${c.essence ? `<span class="ess" title="${esc(t('{essence} makes a magic item rare with this modifier: {tiers}', { essence: c.essence.name, tiers: c.essence.tiers.join(' · ') }))}">◈ ${esc(c.essence.short)}</span>` : ''}${btn}</span>
+      <span class="bpct" title="${esc(demTitle(c))}">${hot(demPct(c))}${fmt(demPct(c))}%</span><span class="bbar"><i data-w="${Math.min(100, demPct(c))}%"></i></span></div>`;
   }).join('');
   // «Оценить все»: по короткому поиску на строку, потом список — по приросту цены, лучший помечен.
   const priceable = list.filter((c) => c.stats).length;
@@ -104,7 +109,7 @@ function goalHtml(g) {
   return `<div class="craft-sec goal"><div class="k" title="${esc(t('The best item this base can become — most wanted modifiers for its slots'))}">${esc(t('Goal'))}</div>
     ${g.keep.map((x) => row('keep', '✓', x, x.up ? ` <span class="tierup" title="${esc(t('Key modifier with a weak tier — a higher tier is worth more'))}">↑ ${esc(t('tier'))}</span>` : '')).join('')}
     ${g.remove.map((x) => row('remove', '✗', x)).join('')}
-    ${g.add.map((x) => row('add', '+', x, ` <span class="dem${x.pct >= 60 ? ' hot' : ''}">${x.pct >= 60 ? '🔥 ' : ''}${esc(t('{pct}% builds', { pct: fmt(x.pct) }))}</span>${chanceTag(x.chance, x.chanceUnknown)}${x.essence ? ` <span class="ess">◈ ${esc(x.essence.short)}</span>` : ''}`)).join('')}
+    ${g.add.map((x) => row('add', '+', x, ` <span class="dem${demPct(x) >= 60 ? ' hot' : ''}" title="${esc(demTitle(x))}">${demPct(x) >= 60 ? '🔥 ' : ''}${esc(t('{pct}% builds', { pct: fmt(demPct(x)) }))}</span>${chanceTag(x.chance, x.chanceUnknown)}${x.essence ? ` <span class="ess">◈ ${esc(x.essence.short)}</span>` : ''}`)).join('')}
 </div>`;
 }
 
