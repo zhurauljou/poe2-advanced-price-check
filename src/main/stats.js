@@ -257,6 +257,14 @@ function optionCount(statId) {
 }
 
 // Шаблон мода как ключ сравнения (моды вещи, спрос poe.ninja): без «(Local)» / «(Jewel)», «+#» → «#», нижний регистр.
+// Тот же стат во всех видах модов, что есть в справочнике трейда (обычный, crafted, fractured, desecrated): «вещи без
+// этого мода» — ни в каком виде. Неизвестный трейду id он отвергает целым запросом, поэтому — только существующие.
+function variantsOf(statId) {
+  const m = String(statId).match(/^(explicit|crafted|fractured|desecrated)\.(.+)$/);
+  if (!m) return [statId];
+  return ['explicit', 'crafted', 'fractured', 'desecrated'].map((g) => `${g}.${m[2]}`).filter((id) => enById.has(id));
+}
+
 const templateKey = (s) => String(s || '').replace(VARIANT, '').replace(/\+#/g, '#').toLowerCase();
 
-module.exports = { build, buildLocal, matchMods, find, statFor, ordinal, optionCount, localToEnglish, templateKey };
+module.exports = { build, buildLocal, matchMods, find, statFor, ordinal, optionCount, localToEnglish, templateKey, variantsOf };

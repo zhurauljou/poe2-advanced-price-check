@@ -367,12 +367,21 @@ async function runImpact() {
   fit();
   for (const i of idx) {
     const f = JSON.parse(JSON.stringify(state.filters));
-    f.mods[i].enabled = false;
+    const m = f.mods[i];
+    // Мод с точным значением (уровни умений: ровно +4) — «без него» это уже другой товар: сравниваем с уровнем ниже
+    // (+3), это и есть цена уровня.
+    const step = m.max != null && m.max !== '' && Number(m.max) === Number(m.min) && Number(m.min) > 1;
+    if (step) { m.min = Number(m.min) - 1; m.max = m.min; } else {
+      m.enabled = false;
+      // Сравниваем с вещами, где этого мода НЕТ: если просто снять фильтр, среди дешёвых лотов почти все с ним же
+      // (ключевой мод носят все) — и вклад выходил «≈ 0».
+      f.exclude = [...(f.exclude || []), { statId: m.statId, enabled: true, anyKind: true }];
+    }
     try {
       const q = await quickPrice(state.item, f);
       if (seq !== impactSeq) return;
       const without = estimate(q.lots);
-      state.impact[i] = { without, total: q.total, share: without == null ? null : Math.max(0, 1 - without / state.est) };
+      state.impact[i] = { without, total: q.total, step: step ? m.min : null, share: without == null ? null : Math.max(0, 1 - without / state.est) };
     } catch (e) {
       if (seq !== impactSeq) return;
       state.impact[i] = { error: errText(e) };
@@ -395,7 +404,12 @@ function driveChip(i) {
   if (!d) return '';
   if (d.wait) return ' <span class="drive wait">…</span>';
   if (d.error) return ` <span class="drive" title="${esc(d.error)}">?</span>`;
-  if (d.share == null) return ` <span class="drive" title="${t('Nothing listed without it')}">—</span>`;
+  // Без мода ничего не выставлено — без него такие вещи не продают (мод обязательный).
+  if (d.share == null) {
+    return ` <span class="drive big" title="${esc(d.step != null ? t('Nothing listed with {n} instead', { n: d.step }) : t('Nothing listed without it'))}">${esc(t(d.step != null ? 'nothing lower listed' : 'essential'))}</span>`;
+  }
   const pct = Math.round(d.share * 100);
-  return ` <span class="drive${pct >= 50 ? ' big' : pct < 10 ? ' low' : ''}" title="${t('Without it: {price}', { price: money(d.without) })} · ${t('{n} listed', { n: d.total })}">${pct < 5 ? t('adds ~0') : t('≈{n}% of price', { n: pct })}</span>`;
+  const without = d.step != null ? t('With {n}: {price}', { n: d.step, price: money(d.without) }) : t('Without it: {price}', { price: money(d.without) });
+  const label = pct < 5 ? t('adds ~0') : d.step != null ? t('+1 ≈ {n}% of price', { n: pct }) : t('≈{n}% of price', { n: pct });
+  return ` <span class="drive${pct >= 50 ? ' big' : pct < 10 ? ' low' : ''}" title="${esc(without)} · ${t('{n} listed', { n: d.total })}">${label}</span>`;
 }

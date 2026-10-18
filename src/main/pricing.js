@@ -432,8 +432,9 @@ function buildQuery(item, f) {
   if (f.gemLevel && f.gemLevel.enabled) misc.gem_level = { min: Number(f.gemLevel.min) };
   for (const fl of f.flags || []) if (fl.enabled) misc[fl.key] = { option: fl.value ? 'true' : 'false' };
   if (Object.keys(misc).length) query.filters.misc_filters = { filters: misc };
-  const not = (f.exclude || []).filter((x) => x.enabled);
-  if (not.length) query.stats.push({ type: 'not', filters: not.map((x) => ({ id: x.statId })) });
+  // anyKind — исключить стат во всех видах мода (вклад мода в цену: сравнение с вещами, где его нет вовсе).
+  const not = (f.exclude || []).filter((x) => x.enabled).flatMap((x) => (x.anyKind ? stats.variantsOf(x.statId) : [x.statId]));
+  if (not.length) query.stats.push({ type: 'not', filters: [...new Set(not)].map((id) => ({ id })) });
   return { query, sort: { price: 'asc' } };
 }
 
