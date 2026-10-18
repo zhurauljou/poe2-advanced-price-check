@@ -245,3 +245,16 @@ test('посох огня (Ashen Staff, +Fire Spell Skills): моды други
   const p = await plan('staff-fire');
   assert.ok(p.goal, 'план есть');
 });
+
+test('скипетр на миньонов: crafted «maximum stacks of Puppet Master» включён, хотя по всему классу его носят немногие', { skip }, async () => {
+  await init();
+  const it = parseItem(['Item Class: Sceptres', 'Rarity: Rare', 'Doom Call', 'Rattling Sceptre', '--------', 'Item Level: 80', '--------',
+    '{ Prefix Modifier "Taskmaster\'s" (Tier: 1) — Minion, Gem }', '+3(3-3) to Level of all Minion Skills',
+    '{ Prefix Modifier "Prince\'s" (Tier: 2) — }', '58(56-60)% increased Spirit',
+    '{ Crafted Suffix Modifier "of the Puppeteer" — Minion }', '+4(4-5) maximum stacks of Puppet Master'].join('\n'));
+  // Спрос по всему классу скипетров (без темы): Puppet Master — 20%, ниже порога «включать по спросу».
+  const demand = { mods: json('sceptre-minion.demand.json').mods.map((m) => (/Puppet Master/.test(m.name) && /maximum stacks/.test(m.name) ? { ...m, pct: 20 } : m)) };
+  const f = pricing.prepare(it, demand, () => true).filters;
+  const m = mod(f, /maximum stacks of Puppet Master/);
+  assert.ok(m && m.enabled, 'Puppet Master включён');
+});
