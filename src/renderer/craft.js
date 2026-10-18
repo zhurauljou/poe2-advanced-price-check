@@ -22,6 +22,7 @@ async function loadCraft() {
 
 // Кандидаты крафта по ключу кнопки «price?»: сколько будет стоить вещь, если этот мод встанет (нижний ролл тира).
 const craftCands = new Map();
+let chanceNote = ''; // строка «откуда шансы» — ставится под первую таблицу с шансами
 // Доля билдов для показа: у гибрида из Alloy / эссенции pct — ценность (лучшая строка + половина второй, бывает больше
 // 100%), показываем долю лучшей строки, а по строкам — в подсказке.
 const demPct = (c) => (c.shownPct != null ? c.shownPct : c.pct);
@@ -31,12 +32,13 @@ const demTitle = (c) => (c.pctParts && c.pctParts.length > 1 ? c.pctParts.map(([
 // билдов его носят | шанс за попытку Exalted | цена вещи с ним. Раньше в одной строке без подписей были и спрос (крупно
 // справа, с полосой на фоне), и шанс, и эссенция — спрос легко было принять за шанс.
 function craftRows(list) {
-  const head = `<div class="crow chead"><span>${esc(t('Modifier'))}</span><span>${esc(t('builds'))}</span><span>${esc(t('chance per try'))}</span><span>${esc(t('price with it'))}</span></div>`;
+  const head = `<div class="crow chead"><span>${esc(t('Modifier'))}</span><span>${esc(t('builds'))}</span><span title="${esc(t('Chance per try: Exalted Orb + omen of its side'))}">${esc(t('chance'))}</span><span>${esc(t('price with it'))}</span></div>`;
   const rows = head + list.map((c) => {
     const key = String(craftCands.size);
     craftCands.set(key, c);
     const btn = c.stats ? `<button class="link cprice" data-ck="${key}" title="${t('Search for your item with this modifier added (lowest roll of the tier)')}">${t('estimate')}</button>` : '';
-    const via = c.essence ? `<span class="cvia" title="${esc(t('{essence} makes a magic item rare with this modifier: {tiers}', { essence: c.essence.name, tiers: c.essence.tiers.join(' · ') }))}">${esc(t('guaranteed: {how}', { how: c.essence.name }))}</span>` : '';
+    // Обычная эссенция делает редкой магическую вещь — на редкой этот путь не работает.
+    const via = c.essence && state.item.rarity === 'Magic' ? `<span class="cvia" title="${esc(t('{essence} makes a magic item rare with this modifier: {tiers}', { essence: c.essence.name, tiers: c.essence.tiers.join(' · ') }))}">${esc(t('guaranteed: {how}', { how: c.essence.name }))}</span>` : '';
     return `
     <div class="brow crow" data-row="${key}">
       <span class="bname">${esc(c.text)} <span class="craft-tier" title="${esc(t('Tier {n} of {m} — the best one this item level allows', { n: c.tier, m: c.tiers }))}">T${c.tier}${c.range ? ` · ${esc(c.range)}` : ''}</span>${via}</span>
@@ -46,7 +48,10 @@ function craftRows(list) {
   }).join('');
   // «Оценить все»: по короткому поиску на строку, потом список — по приросту цены, лучший помечен.
   const priceable = list.filter((c) => c.stats).length;
-  return `<div class="clist">${priceable > 1 ? `<button class="link cprice-all" data-priceall title="${esc(t('One trade search per row, then the list is sorted by how much each modifier adds to the price'))}">⇅ ${esc(t('Price all and sort'))}</button>` : ''}${rows}</div>`;
+  // Откуда шансы — одной строкой под первой таблицей с ними (подробно — в подсказке).
+  let note = '';
+  if (chanceNote && list.some((c) => c.chance != null)) { note = chanceNote; chanceNote = ''; }
+  return `<div class="clist">${priceable > 1 ? `<button class="link cprice-all" data-priceall title="${esc(t('One trade search per row, then the list is sorted by how much each modifier adds to the price'))}">⇅ ${esc(t('Price all and sort'))}</button>` : ''}${rows}${note}</div>`;
 }
 
 async function priceAll(btn) {
@@ -142,11 +147,12 @@ function withMods(f, adds) {
 // Примерный шанс мода при Exalted с оменом его стороны: метка «частый / средний / редкий» и «≈ 1 из N».
 // Шанс за попытку — «1 из 6», цветом по редкости (частый / средний / редкий); неизвестен — «—» с пояснением.
 function chanceTag(p, unknown) {
-  if (unknown) return ` <span class="chance unknown" title="${esc(t('Valuable modifiers cannot be estimated from trade listings — items with them are priced and listed differently'))}">— ⓘ</span>`;
+  if (unknown) return ` <span class="chance unknown" title="${esc(t('Valuable modifiers cannot be estimated from trade listings — items with them are priced and listed differently'))}">${esc(t('unknown'))}</span>`;
   if (p == null) return '';
   const cls = p >= 0.12 ? 'common' : p >= 0.04 ? 'uncommon' : 'rare';
   const n = Math.max(1, Math.round(1 / p));
-  return ` <span class="chance ${cls}" title="${esc(t('Rough estimate: Exalted Orb + omen of its side gives this modifier about 1 in {n} times', { n }))}">${esc(t('1 in {n}', { n: String(n) }))}</span>`;
+  const text = p >= 0.5 ? `~${Math.round(p * 100)}%` : t('1 in {n}', { n: String(n) }); // «1 из 1.7» читается плохо
+  return ` <span class="chance ${cls}" title="${esc(t('Rough estimate: Exalted Orb + omen of its side gives this modifier about 1 in {n} times', { n }))}">${esc(text)}</span>`;
 }
 
 // ---- Крафт для новичка: места на вещи, «продать или крафтить», план с затратами ----
@@ -242,7 +248,7 @@ function planHtml(plan) {
     if (s.whittleWrong) notes.push(t('Chaos Orb + Omen of Whittling would not help: it removes the lowest-level modifier, and that is «{mod}» (level {level})', { mod: s.whittleWrong.mod, level: s.whittleWrong.level }));
     if (c.whittle) alts.push(t('{mod}: Chaos Orb + Omen of Whittling removes it for sure (lowest-level modifier), a random modifier takes its place — {list}', { mod: s.whittle,
       list: c.whittle.map((o) => `${o.orb}${o.level ? ` (${t('new one {n}+', { n: o.level })})` : ''} ≈ ${money(o.cost)}`).join('; ') }));
-    for (const e of c.erasure || []) alts.push(t('{orb} + {omen}: removes a random {side} (1 in {n} hits an unwanted one) and adds a random modifier, ≈ {cost} per try', { orb: e.orb, omen: e.omen, side: t(e.side), n: Math.round(1 / e.chance * 10) / 10, cost: money(e.cost) }));
+    for (const e of c.erasure || []) alts.push(t('{orb} + {omen}: removes a random {side} ({odds} hits an unwanted one) and adds a random modifier, ≈ {cost} per try', { orb: e.orb, omen: e.omen, side: t(e.side), odds: e.chance >= 0.5 ? `~${Math.round(e.chance * 100)}%` : t('1 in {n}', { n: Math.round(1 / e.chance * 10) / 10 }), cost: money(e.cost) }));
     if (c.regal && c.regal.length) notes.push(t('Greater / Perfect Regal Orb: the random modifier is level 35+ / 50+ — instead: {list}', { list: c.regal.map((o) => `${o.orb} ≈ ${money(o.cost)}`).join('; ') }));
     const desNote = (c.desAlt || []).some((o) => o.k === 'desecrate') ? t('Desecrate: pick 1 of 3 offered modifiers at the Well of Souls, but a miss costs Orb of Annulment + Omen of Light ({cost})', { cost: money((craftPrices['Orb of Annulment'] || 0) + (craftPrices['Omen of Light'] || 0)) }) : '';
     return `<li><div class="ps-what">${esc(STEP_LABEL[s.act](s))}</div>
@@ -393,6 +399,12 @@ function sessionHtml(r) {
 function chanceWarn(m) {
   const date = m.league && state && m.league !== state.league ? `${m.collected}, ${m.league}` : m.collected;
   return `<div class="craft-warn">⚠ ${esc(t('Chances are rough estimates from {n} cheap trade listings ({date}) — PoE 2 game files have no modifier weights. Treat them as "common / rare", not exact odds.', { n: m.items, date }))}</div>`;
+}
+
+// То же коротко — строкой под таблицей шансов; полный текст — в подсказке.
+function chanceLine(m) {
+  const date = m.league && state && m.league !== state.league ? `${m.collected}, ${m.league}` : m.collected;
+  return `<div class="craft-chance-note" title="${esc(t('Chances are rough estimates from {n} cheap trade listings ({date}) — PoE 2 game files have no modifier weights. Treat them as "common / rare", not exact odds.', { n: m.items, date }))}">ⓘ ${esc(t('Chances: a rough estimate from {n} trade listings ({date})', { n: fmt(m.items), date }))}</div>`;
 }
 
 // ---- белая база: Transmutation (обычная / Greater 44+ / Perfect 70+) → магическая с одним модом ----
@@ -556,18 +568,20 @@ async function computeUniqueTop(rolls) {
 }
 
 // «Рискованный финал»: порча и освящение — необратимо, шансы — оценки сообщества.
-function gambleHtml(g) {
+// Свёрнут: последний шаг, до него доходят редко. Улучшать нечего (open) — раскрыт.
+function gambleHtml(g, open = false) {
   const p = (n) => (craftPrices[n] != null && (n !== 'Omen of Sanctification' || state.item.rarity === 'Rare') ? ` · ${n} ≈ ${money(craftPrices[n])}` : '');
   const list = (xs) => xs.map((h) => `<div class="craft-how">${esc(h)}</div>`).join('');
-  return `<div class="craft-sec gamble"><div class="k">⚠ ${esc(t('Risky final step: corruption and sanctification'))}</div>${list(g.how)}
+  return `<details class="craft-sec gamble"${open ? ' open' : ''}><summary class="k">⚠ ${esc(t('Risky final step: corruption and sanctification'))}</summary>${list(g.how)}
     <div class="craft-sub">${esc(t('Prices'))}${esc(p('Vaal Orb') + p('Omen of Sanctification') + p('Omen of Putrefaction'))}</div>
-    ${g.enchants.length ? `<details class="why"><summary>${esc(t('Possible corruption enchants ({n})', { n: g.enchants.length }))}</summary>${list(g.enchants)}</details>` : ''}</div>`;
+    ${g.enchants.length ? `<details class="why"><summary>${esc(t('Possible corruption enchants ({n})', { n: g.enchants.length }))}</summary>${list(g.enchants)}</details>` : ''}</details>`;
 }
 
 function renderCraft(r) {
   craftGoal = r.goal || null;
   craftPrices = r.prices || {};
   craftCands.clear();
+  chanceNote = r.chanceMeta ? chanceLine(r.chanceMeta) : '';
   const head = `<div class="sect"><span>${t('Craft')}</span></div>`;
   if (r.blocked) {
     $('craft').innerHTML = head + voidState('⛓', t("{state} — can't be modified", { state: r.blocked }),
@@ -588,7 +602,7 @@ function renderCraft(r) {
       ${planHtml(r.goal.plan)}<details class="why"><summary>${t('Why this plan')}</summary>${goalHtml(r.goal)}</details></div>`);
   } else {
     top.push(`<div class="craft-sec plan-box"><div class="verdict">${esc(t('No clear upgrade for this item — selling as is is the simple choice'))}</div></div>`);
-    if (r.gamble) top.push(gambleHtml(r.gamble)); // улучшать нечего — рискованный финал на виду
+    if (r.gamble) top.push(gambleHtml(r.gamble, true)); // улучшать нечего — рискованный финал на виду
   }
   const parts = [];
   for (const s of r.sections) {
@@ -605,8 +619,10 @@ function renderCraft(r) {
       parts.push(`<div class="craft-sec"><div class="k">${t('Desecration')}</div>${how(s.how)}<div class="craft-sub">${t('Popular desecrated modifiers for this base:')}</div>${craftRows(s.candidates)}</div>`);
     } else if (s.kind === 'upgrade') {
       parts.push(`<div class="craft-sec"><div class="k">${t('Make it rare first')}</div>${how(s.how)}</div>`);
+    } else if (s.kind === 'perfect' && s.blocked) {
+      parts.push(`<div class="craft-sec alt"><div class="craft-sub">${esc(t('Perfect Essences and Alloys — no: the item already has a crafted modifier (one per item)'))}</div></div>`);
     } else if (s.kind === 'perfect') {
-      parts.push(`<div class="craft-sec"><div class="k">${t('Guaranteed modifier: Perfect / corrupted Essences, Alloys')}</div><div class="craft-sub">${t('Removes a random modifier and adds its own guaranteed one:')}</div>${how(s.how)}</div>`);
+      parts.push(`<div class="craft-sec alt"><div class="k">${t('Guaranteed modifier: Perfect / corrupted Essences, Alloys')}</div><div class="craft-sub">${t('Removes a random modifier and adds its own guaranteed one:')}</div>${how(s.how)}</div>`);
     } else if (s.kind === 'tierup') {
       parts.push(`<div class="craft-sec"><div class="k">${t('Key modifier, weak tier — keep it')}</div>${s.mods.map((m) => `
         <div class="craft-weak">${esc(m.text)} <span class="craft-tier">T${m.tier} → T${m.best}${m.range ? ` (${esc(m.range)})` : ''} · ${esc(t('{pct}% builds', { pct: fmt(m.pct) }))}</span></div>${how(m.how)}`).join('')}</div>`);
@@ -616,7 +632,7 @@ function renderCraft(r) {
       parts.push(`<div class="craft-sec"><div class="k">${t('While it is magic')}</div>${how(s.how)}${s.candidates.length ? `<div class="craft-sub">${t('Popular modifiers for the free slot:')}</div>${craftRows(s.candidates)}` : ''}</div>`);
     } else if (s.kind === 'risky') {
       const pr = (s.prices || []).filter((n) => craftPrices[n] != null).map((n) => `${n} ≈ ${money(craftPrices[n])}`).join(' · ');
-      parts.push(`<div class="craft-sec"><div class="k">${t('Risky')}</div>${how(s.how)}${pr ? `<div class="craft-sub">${esc(t('Prices'))} · ${esc(pr)}</div>` : ''}</div>`);
+      parts.push(`<div class="craft-sec alt"><div class="k">${t('Risky')}</div>${how(s.how)}${pr ? `<div class="craft-sub">${esc(t('Prices'))} · ${esc(pr)}</div>` : ''}</div>`);
     } else if (s.kind === 'keep') {
       parts.push(`<div class="craft-sec"><div class="k">${t('Full — all modifiers are top tier')}</div><div class="craft-sub">${t('Nothing worth replacing.')}</div></div>`);
     } else if (s.kind === 'cheap') {
@@ -631,9 +647,9 @@ function renderCraft(r) {
   if (r.theme && r.theme.length) {
     top.splice(1, 0, `<div class="craft-theme" title="${t('Demand % below is among {n} builds that wear this item class with these modifiers', { n: r.themeBuilds })}">${t('Demand among builds using')} <b>${r.theme.map(esc).join('</b> + <b>')}</b></div>`);
   }
-  if (r.chanceMeta) parts.push(chanceWarn(r.chanceMeta));
+  if (chanceNote) parts.push(chanceNote); // таблиц с шансами не было, а шансы в плане — строка в конце
   if (r.gamble && r.goal && r.goal.plan && r.goal.plan.length) parts.push(gambleHtml(r.gamble)); // в конце, после всех безопасных способов
-  parts.push(`<div class="craft-foot">${t(r.chanceMeta ? 'Mod pool: game files (RePoE).' : "Mod pool: game files (RePoE). Roll chances aren't shown — PoE 2 files have no modifier weights.")}<br>${t('% = share of those builds using the modifier (poe.ninja). «price?» — what your item would cost with it.')}</div>`);
+  parts.push(`<div class="craft-foot">${t(r.chanceMeta ? 'Mod pool: game files (RePoE).' : "Mod pool: game files (RePoE). Roll chances aren't shown — PoE 2 files have no modifier weights.")}</div>`);
   $('craft').innerHTML = head + top.join('')
     + `<details class="more-ways"><summary>${t('All methods and modifier options')}</summary>${parts.join('')}</details>`;
   if (r.goal && r.goal.plan && r.goal.plan.length) computeGoal(r.goal);

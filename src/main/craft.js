@@ -7,6 +7,8 @@ const fsW = require('fs');
 const pathW = require('path');
 const craftData = require('./craft-data');
 const { load, templates, tradeStats, weights, guaranteedFor, corruptedFor, canRoll } = craftData;
+// Шанс словами: «1 из 3»; лучше, чем 1 из 2, — процентом («~60%»): «1 из 1.7» читается плохо.
+const oddsOf = (p) => (p >= 0.5 ? `~${Math.round(Math.min(1, p) * 100)}%` : t('1 in {n}', { n: Math.round(10 / p) / 10 }));
 
 const { essenceFor, perfectFor } = require('./essences');
 const { isKey, isWeak, tierFactor } = require('./weights');
@@ -572,7 +574,7 @@ async function advise(item, demandMods, cached) {
       : [...emotions, t('Removes a random modifier; uses the only crafted-modifier slot'), t("Hinekora's Lock first — see the result before you commit")] });
   }
   if (perfect.length && hasCrafted) {
-    sections.push({ kind: 'perfect', how: [t('This item already has a crafted modifier — Perfect Essences and Alloys cannot be used (one crafted modifier per item)')] });
+    sections.push({ kind: 'perfect', blocked: true, how: [] });
   } else if (perfect.length) {
     sections.push({ kind: 'perfect', how: [...perfect.map((p) => `${p.name} — ${p.mod}`),
       t('Omen of Sinistral / Dextral Crystallisation — the Perfect Essence removes only a prefix / only a suffix'),
@@ -622,12 +624,12 @@ async function advise(item, demandMods, cached) {
     const hasDes = mine.some((a) => a.tag === 'desecrated');
     const how = [];
     if (keys.length && total >= 4) {
-      how.push(t('Fracturing Orb — locks a random modifier forever: 1 in {n} to lock a key one ({mods})',
-        { n: Math.round(fixable.length / keys.length * 10) / 10, mods: keys.map((a) => a.mod.lines.join(' / ')).join(', ') }));
-      if (!hasDes && fixable.length === 4 && bones.length) how.push(t('Better odds: remove one unwanted modifier, then desecrate and do not reveal — 3 regular + 1 unrevealed gives 1 in {n}', { n: Math.round(3 / keys.length * 10) / 10 }));
+      how.push(t('Fracturing Orb — locks a random modifier forever: {odds} to lock a key one ({mods})',
+        { odds: oddsOf(keys.length / fixable.length), mods: keys.map((a) => a.mod.lines.join(' / ')).join(', ') }));
+      if (!hasDes && fixable.length === 4 && bones.length) how.push(t('Better odds: remove one unwanted modifier, then desecrate and do not reveal — 3 regular + 1 unrevealed gives {odds}', { odds: oddsOf(keys.length / 3) }));
     } else if (keys.length && total === 3 && !hasDes && bones.length) {
-      how.push(t('Fracturing Orb needs 4 modifiers: desecrate first and do not reveal — an unrevealed desecrated modifier counts but cannot be locked: 1 in {n} to lock {mods}',
-        { n: Math.round(3 / keys.length * 10) / 10, mods: keys.map((a) => a.mod.lines.join(' / ')).join(', ') }));
+      how.push(t('Fracturing Orb needs 4 modifiers: desecrate first and do not reveal — an unrevealed desecrated modifier counts but cannot be locked: {odds} to lock {mods}',
+        { odds: oddsOf(keys.length / 3), mods: keys.map((a) => a.mod.lines.join(' / ')).join(', ') }));
     }
     if (how.length) {
       how.push(t('After it: remove the rest (Annulment) and rebuild around the locked modifier; a miss locks a useless one — the base is spent'));

@@ -659,3 +659,11 @@ footer > span:first-child { min-width: 0; overflow: hidden; text-overflow: ellip
 .crow.chead { padding: 0 6px 2px; border-bottom: 1px solid var(--line2); font: 700 11px/1.2 var(--body); letter-spacing: .3px;
               text-transform: uppercase; color: var(--muted); }
 .crow.chead span:not(:first-child) { text-align: right; }
+/* Кнопки «оценить» — серые, пока не нажаты: золотом выделяется уже найденная цена, а не четыре одинаковые ссылки */
+.crow .cpx .cprice { color: var(--muted); font-weight: 400; }
+.crow .cpx .cprice:hover { color: var(--gold); }
+.craft-chance-note { margin-top: 4px; padding: 0 6px; font-size: 13px; color: var(--muted); cursor: help; }
+/* Альтернативы основному плану — заголовки тише */
+.craft-sec.alt > .k { color: var(--muted); font-size: 14px; }
+details.gamble > summary { cursor: pointer; list-style: none; }
+details.gamble > summary::before { content: '▸ '; } details.gamble[open] > summary::before { content: '▾ '; }
