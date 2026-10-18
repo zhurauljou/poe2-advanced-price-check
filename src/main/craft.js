@@ -899,6 +899,7 @@ function planGoal(mine, candidates, max, want, magic, magicFree = [], itemClass 
       // Perfect/порченая эссенция с этим модом: жертвенный Exalted на сторону → Crystallisation стороны + эссенция.
       crafted: craftedFree && c.crafted && c.crafted.length ? c.crafted : null, craftedOnly: c.craftedOnly || null, desecrateOnly: c.desecrateOnly || null, craftedSlots,
       crystal: `Omen of ${S} Crystallisation`,
+      cap: max[side] - fixed[side], // сколько модов эссенция может снять на стороне (без fractured)
       // Ключевые моды этой стороны (носят ≥ KEY_PCT% или тир 1–2): эссенция / Alloy с оменом Crystallisation снимает
       // случайный мод стороны — промах снимет один из них, а не жертвенный. Окно пишет это красным.
       atRisk: mine.filter((a) => a.side === side && a.tag !== 'fractured' && a.mod && !remove.some((r) => r.text === a.mod.lines.join(' / '))

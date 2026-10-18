@@ -310,6 +310,7 @@
     chance: 'шанс',
     'details and alternatives': 'подробнее и другие способы',
     details: 'подробнее',
+    '· with all {n} {side}es filled — {odds}': '· если заполнить все {n} — {odds} (лишние жертвы потом снимать)',
     'first a cheap «sacrificial» {side} — without it {essence} removes one of your {side}es': 'сначала дешёвый «жертвенный» {side} — без него {essence} снимет один из ваших',
     'removes a random {side} and adds its own': 'снимает случайный {side} и ставит свой',
     '{odds}: it removes {mods} instead of the sacrificial modifier': '{odds}: снимет {mods}, а не жертвенный мод',

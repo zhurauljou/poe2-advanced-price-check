@@ -196,8 +196,10 @@ const curChips = (list) => list.map((n) => `<span class="cur ${curKind(n)}">${es
 function keyRisk(s) {
   const n = (s.onSide || 0) + 1;
   const r = Math.min(s.atRisk.length, n - 1) / n;
-  const odds = r >= 0.5 ? `~${Math.round(r * 100)}%` : oneIn(r);
-  return `<div class="ps-risk">⚠ ${esc(t('{odds}: it removes {mods} instead of the sacrificial modifier', { odds, mods: s.atRisk.map((m) => `«${m}»`).join(t(' or ')) }))}</div>`;
+  const fmtOdds = (x) => (x >= 0.5 ? `~${Math.round(x * 100)}%` : oneIn(x));
+  // Сторона к этому шагу не полная: больше модов на ней (нужных или жертвенных) — ниже шанс задеть ключевой.
+  const full = s.cap && n < s.cap ? ` ${t('· with all {n} {side}es filled — {odds}', { n: s.cap, side: t(s.side), odds: fmtOdds(Math.min(s.atRisk.length, s.cap - 1) / s.cap) })}` : '';
+  return `<div class="ps-risk">⚠ ${esc(t('{odds}: it removes {mods} instead of the sacrificial modifier', { odds: fmtOdds(r), mods: s.atRisk.map((m) => `«${m}»`).join(t(' or ')) }) + full)}</div>`;
 }
 
 function essenceSeq(s, c) {
