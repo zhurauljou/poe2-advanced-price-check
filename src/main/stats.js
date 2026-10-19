@@ -1,6 +1,6 @@
-// Сопоставление строк модов с фильтрами трейда (api/trade2/data/stats).
-// Статы с выбором варианта (Legacy of Quicksilver у Mageblood) приходят как «explicit.stat_264262054|8» —
-// id стата и номер варианта; трейд ищет их по этому id целиком: { id: 'explicit.stat_264262054|8' }.
+// Matching mod lines to trade filters (api/trade2/data/stats).
+// Stats with a variant choice (Legacy of Quicksilver on Mageblood) come as "explicit.stat_264262054|8" —
+// the stat id and the variant number; trade searches them by this whole id: { id: 'explicit.stat_264262054|8' }.
 
 const LOCAL_CLASSES = new Set(require('../shared/item-classes').LOCAL_CLASSES);
 
@@ -11,10 +11,10 @@ function norm(s) {
 }
 
 let index = null; // norm(text) -> [{ id, group, text, local }]
-let localIndex = null; // то же по текстам клиента не на английском; text — английский (по id), для шаблонов и спроса
+let localIndex = null; // same, by non-English client texts; text — English (by id), for templates and demand
 let enById = new Map();
 
-// Вариант стата: «(Local)» — у брони/оружия на самой вещи, «(Jewel)» — у самоцветов свой стат (мана за убийство и т.п.).
+// Stat variant: "(Local)" — on armour/weapons, on the item itself; "(Jewel)" — jewels have their own stat (mana on kill, etc.).
 const VARIANT = / \((Local|Jewel)\)$/;
 const variantOf = (itemClass) => (itemClass === 'Jewels' ? 'Jewel' : LOCAL_CLASSES.has(itemClass) ? 'Local' : null);
 
@@ -29,14 +29,14 @@ function build(statsJson) {
       enById.set(e.id, e.text);
     }
   }
-  // Пояснение в скобках у трейда, которого нет в игре: «#% increased Gold found in Map (Gold Piles)» на скрижали —
-  // в игре «25% increased Gold found in Map». Ищем и без него, если без скобок такой строки нет.
+  // A trade-only note in parentheses that the game lacks: "#% increased Gold found in Map (Gold Piles)" on a tablet —
+  // in game "25% increased Gold found in Map". Also search without it if there's no such line without the parentheses.
   const extra = new Map();
   for (const list of index.values()) {
     for (const s of list) {
       const m = s.text.match(/^(.*\S) \(([^()]+)\)$/);
-      // «Map contains an additional Rare Chest» на трейде — в игре «Map contains 2 additional Rare Chests» (окончание
-      // «s» lookup отбрасывает сам).
+      // "Map contains an additional Rare Chest" on trade — in game "Map contains 2 additional Rare Chests" (the ending
+      // "s" lookup drops by itself).
       const keys = [m && !VARIANT.test(s.text) ? m[1] : null, / an additional /.test(s.text) ? s.text.replace(/ an additional /, ' # additional ') : null];
       for (const k of keys.filter(Boolean).map(norm)) {
         if (index.has(k)) continue;
@@ -48,8 +48,8 @@ function build(statsJson) {
   for (const [k, v] of extra) index.set(k, v);
 }
 
-// Справочник трейда на языке клиента (ru.pathofexile.com/api/trade2/data/stats): строки модов из буфера — на нём.
-// null — английский клиент.
+// Trade reference data in the client language (ru.pathofexile.com/api/trade2/data/stats): clipboard mod lines are in it.
+// null — English client.
 const LOCAL_TAG = / \((Local|На предмете)\)$/;
 function buildLocal(statsJson) {
   if (!statsJson) { localIndex = null; return; }
@@ -63,14 +63,14 @@ function buildLocal(statsJson) {
   }
 }
 
-// idx — по какому справочнику: строки из буфера — на языке клиента, тексты RePoE (крафт) — всегда английский.
+// idx — which reference to use: clipboard lines — in the client language, RePoE texts (craft) — always English.
 function lookup(text, idx = localIndex || index) {
   const values = (text.match(NUM) || []).map(Number);
-  // «Has 2 Charm Slots» в игре против «Has # Charm Slot» на трейде.
+  // "Has 2 Charm Slots" in game vs "Has # Charm Slot" on trade.
   let cands = idx.get(norm(text)) || idx.get(norm(text).replace(/s$/, ''));
   let sign = 1;
   if (!cands) {
-    // «10% reduced X» на трейде ищется как «#% increased X» с отрицательным значением.
+    // "10% reduced X" is searched on trade as "#% increased X" with a negative value.
     for (const [a, b] of [[' reduced ', ' increased '], [' less ', ' more '], [' уменьшение ', ' увеличение '], [' снижение ', ' повышение '], [' меньше', ' больше']]) {
       if (text.includes(a)) {
         cands = idx.get(norm(text.replace(a, b)));
@@ -79,18 +79,18 @@ function lookup(text, idx = localIndex || index) {
     }
   }
   if (!cands) return null;
-  // «Adds 3 to 5 X» на трейде фильтруется по среднему.
+  // "Adds 3 to 5 X" is filtered on trade by the average.
   const value = values.length ? (sign * values.reduce((s, v) => s + v, 0)) / values.length : null;
   return { cands, value, flipped: sign < 0 };
 }
 
-// Строка из буфера: справочник языка клиента, не нашли — английский (строки, которые clientLang уже перевёл).
+// Clipboard line: the client-language reference, if not found — English (lines clientLang has already translated).
 const lookupAny = (text) => (localIndex && lookup(text, localIndex)) || lookup(text, index);
 
-// Строка мода клиента не на английском → как её написал бы английский клиент: текст — английский текст того же стата
-// трейда (id у всех языков общие), числа и диапазоны тира — с исходной строки. Тогда крафт, спрос poe.ninja и правила
-// по тексту («+1 Prefix Modifier allowed», «Can roll Destruction modifiers») работают как с английским клиентом.
-// text — одна строка или две через перевод строки (мод в две строки). Не нашли в справочнике — null.
+// A non-English client mod line → as an English client would write it: the text is the English text of the same trade
+// stat (ids are shared across languages), numbers and tier ranges — from the original line. Then craft, poe.ninja demand and text
+// rules ("+1 Prefix Modifier allowed", "Can roll Destruction modifiers") work as with the English client.
+// text — one line or two separated by a newline (a two-line mod). Not found in the reference — null.
 const RANGE = /([^\s(])\([^()\s]+-[^()\s]+\)/g;
 const NUM_WITH_RANGE = /[+-]?\d+(?:\.\d+)?(?:\([^()\s]+-[^()\s]+\))?/g;
 function localToEnglish(text) {
@@ -100,9 +100,9 @@ function localToEnglish(text) {
   const c = m.cands.find((x) => x.group === 'explicit' && enById.has(x.id)) || m.cands.find((x) => enById.has(x.id));
   if (!c) return null;
   let en = enById.get(c.id).replace(VARIANT, '');
-  // «35% уменьшение требований» нашлось как «увеличение» с минусом — по-английски «reduced».
+  // "35% уменьшение требований" matched as "увеличение" (increased) with a minus — in English it's "reduced".
   if (m.flipped) en = en.replace(/\bincreased\b/, 'reduced').replace(/\bmore\b/, 'less');
-  // Числа строки, которые в шаблоне — «#» (числа самого текста, «за каждые 50 …», пропускаем), по порядку.
+  // The line's numbers that are "#" in the template (numbers of the text itself, "per 50 …", are skipped), in order.
   const tpl = (c.local.replace(LOCAL_TAG, '').match(/#|[+-]?\d+(?:\.\d+)?/g) || []);
   const nums = text.match(NUM_WITH_RANGE) || [];
   const vals = nums.filter((_, i) => tpl[i] == null || tpl[i] === '#');
@@ -120,7 +120,7 @@ const TAG_GROUP = { explicit: 'explicit', implicit: 'implicit', enchant: 'enchan
 function pick(cands, tag, variant) {
   const group = TAG_GROUP[tag] || 'explicit';
   let pool = cands.filter((c) => c.group === group);
-  // Моды от Vaal Orb («зачарования») трейд держит в группе enchant; если там нет — как имплицит.
+  // Mods from Vaal Orb ("enchantments") are kept by trade in the enchant group; if not there — as an implicit.
   if (tag === 'corrupted') {
     const ench = cands.filter((c) => c.group === 'enchant');
     if (ench.length) pool = ench;
@@ -131,8 +131,8 @@ function pick(cands, tag, variant) {
   return (pref.length ? pref : pool)[0];
 }
 
-// Превращает item.modLines в item.mods: [{ text, tag, statId, value }]. У несопоставленных строк statId = null;
-// многострочные моды склеиваются.
+// Turns item.modLines into item.mods: [{ text, tag, statId, value }]. Unmatched lines have statId = null;
+// multi-line mods are joined.
 function matchMods(item) {
   if (!index) return [];
   const localItem = variantOf(item.itemClass);
@@ -140,7 +140,7 @@ function matchMods(item) {
   const ls = item.modLines;
   for (let i = 0; i < ls.length; i++) {
     const l = ls[i];
-    // Моды в три строки (Undying Hate: «Glorifying … / Passives in radius are Conquered … / Desecration makes …»).
+    // Three-line mods (Undying Hate: "Glorifying … / Passives in radius are Conquered … / Desecration makes …").
     if (i + 2 < ls.length && ls[i + 1].tag === l.tag && ls[i + 2].tag === l.tag) {
       const text3 = [l.text, ls[i + 1].text, ls[i + 2].text].join('\n');
       const joined3 = lookupAny(text3);
@@ -170,15 +170,15 @@ function matchMods(item) {
     }
     const m = lookupAny(l.text);
     const c = m && pick(m.cands, l.tag, localItem);
-    // Несопоставленное показываем серым, без галочки: видно, что мод есть, но искать по нему нельзя.
+    // Unmatched ones are shown grey, without a checkbox: the mod is visible, but you can't search by it.
     out.push(c ? { text: l.text, tag: l.tag, tier: l.tier, statId: c.id, template: c.text, value: m.value, range: l.range, textRange: l.textRange }
       : { text: l.text, tag: l.tag, tier: l.tier, statId: null });
   }
   return mergeSame(out);
 }
 
-// «Forged by the Breath of Aldur» — в гнезде руна Альдура: её не вынуть, а Fire/Lightning моды навсегда стали Cold.
-// Трейд ищет такую вещь по стату руны: «…transforms all Fire and Lightning modifiers to equivalent Cold modifiers» (Breath),
+// "Forged by the Breath of Aldur" — an Aldur rune is in the socket: it can't be removed, and Fire/Lightning mods became Cold for good.
+// Trade finds such an item by the rune's stat: "…transforms all Fire and Lightning modifiers to equivalent Cold modifiers" (Breath),
 // «…into equivalent Fire / Lightning / Chaos modifiers» (Passion / Ire / Betrayal).
 const ALDUR = { Breath: 'Cold', Passion: 'Fire', Ire: 'Lightning', Betrayal: 'Chaos' };
 function forged(text) {
@@ -191,8 +191,8 @@ function forged(text) {
   return null;
 }
 
-// Трейд хранит одинаковые статы одной суммой: «+30 to maximum ES» и «+77 to maximum ES» с разных
-// модов ищутся как 107. Склеиваем их в один фильтр.
+// Trade stores identical stats as one sum: "+30 to maximum ES" and "+77 to maximum ES" from different
+// mods are searched as 107. We merge them into one filter.
 function mergeSame(mods) {
   const out = [];
   const byId = new Map();
@@ -210,16 +210,16 @@ function mergeSame(mods) {
     prev.parts.push(m.text);
     prev.tiers.push(m.tier);
     if (m.value != null) prev.value = (prev.value || 0) + m.value;
-    // Диапазон суммы — сумма диапазонов (если он известен у всех частей).
+    // Sum range — the sum of the ranges (if known for all parts).
     prev.range = prev.range && m.range ? { lo: prev.range.lo + m.range.lo, hi: prev.range.hi + m.range.hi } : null;
     if (m.tier != null && (prev.tier == null || m.tier < prev.tier)) prev.tier = m.tier;
-    // Показываем каждый мод своей строкой; фильтр общий — трейд ищет по сумме.
+    // Each mod is shown on its own line; the filter is shared — trade searches by the sum.
     prev.text = prev.parts.join('\n');
   }
   return out;
 }
 
-// Один стат конкретной группы по тексту — для свойств вроде «Grants Skill: Level 16 Wolf Pack».
+// One stat of a specific group by text — for properties like "Grants Skill: Level 16 Wolf Pack".
 function find(text, group) {
   if (!index) return null;
   const m = lookup(text) || (localIndex ? lookup(text, index) : null);
@@ -227,7 +227,7 @@ function find(text, group) {
   return c ? { statId: c.id, value: m.value } : null;
 }
 
-// Стат трейда для строки мода, которой на вещи ещё нет (кандидат крафта): с учётом локальности класса вещи.
+// Trade stat for a mod line the item doesn't have yet (a craft candidate): accounting for the item class's locality.
 function statFor(text, tag, itemClass) {
   if (!index) return null;
   const m = lookup(text, index);
@@ -235,15 +235,15 @@ function statFor(text, tag, itemClass) {
   return c ? { statId: c.id, value: m.value } : null;
 }
 
-// Порядковое место варианта по текстовому диапазону: «Massive Ring» из «Very Small-Massive Ring» среди вариантов
-// стата (|1 Very Small … |8 Massive — номера идут по размеру). → { idx, lo, hi, loText, hiText } или null.
+// Ordinal position of a variant by text range: "Massive Ring" from "Very Small-Massive Ring" among the stat's
+// variants (|1 Very Small … |8 Massive — numbered by size). → { idx, lo, hi, loText, hiText } or null.
 function ordinal(statId, text, textRange) {
   if (!index || !statId || !statId.includes('|') || !textRange) return null;
   const base = statId.split('|')[0];
   const opts = [];
   for (const list of index.values()) for (const c of list) if (c.id.startsWith(base + '|')) opts.push({ n: Number(c.id.split('|')[1]), text: c.text });
   if (opts.length < 3) return null;
-  // Общие начало и конец текстов вариантов — остаётся меняющаяся часть («Very Small», «Medium-Small», «Massive»).
+  // Common start and end of the variant texts — the changing part remains ("Very Small", "Medium-Small", "Massive").
   const texts = opts.map((o) => o.text);
   let pre = texts[0], suf = texts[0];
   for (const x of texts) {
@@ -251,12 +251,12 @@ function ordinal(statId, text, textRange) {
     while (!x.endsWith(suf)) suf = suf.slice(1);
   }
   const part = (x) => x.slice(pre.length, x.length - suf.length);
-  // Шкала — только размеры (Very Small … Massive). «Amethyst-Topaz» у Legacy Mageblood — алфавитный список, не порядок.
+  // Scale — sizes only (Very Small … Massive). "Amethyst-Topaz" on Legacy Mageblood is an alphabetical list, not an order.
   const SIZE = /^(Very Small|Small|Medium-Small|Medium|Medium-Large|Large|Very Large|Massive)$/;
   if (!opts.every((o) => SIZE.test(part(o.text)))) return null;
   const byPart = new Map(opts.map((o) => [part(o.text), o.n]));
   const cur = opts.find((o) => o.text === text);
-  // «Very Small-Massive Ring»: дефис есть и внутри вариантов (Medium-Small) — перебираем, где резать.
+  // "Very Small-Massive Ring": hyphens occur inside variants too (Medium-Small) — try each place to cut.
   const tr = textRange.endsWith(suf) ? textRange.slice(0, textRange.length - suf.length) : textRange;
   for (let i = tr.indexOf('-'); i > 0; i = tr.indexOf('-', i + 1)) {
     const lo = byPart.get(tr.slice(0, i)), hi = byPart.get(tr.slice(i + 1));
@@ -273,9 +273,9 @@ function optionCount(statId) {
   return ids.size;
 }
 
-// Шаблон мода как ключ сравнения (моды вещи, спрос poe.ninja): без «(Local)» / «(Jewel)», «+#» → «#», нижний регистр.
-// Тот же стат во всех видах модов, что есть в справочнике трейда (обычный, crafted, fractured, desecrated): «вещи без
-// этого мода» — ни в каком виде. Неизвестный трейду id он отвергает целым запросом, поэтому — только существующие.
+// Mod template as a comparison key (item mods, poe.ninja demand): without "(Local)" / "(Jewel)", "+#" → "#", lowercase.
+// The same stat in every mod kind the trade reference has (regular, crafted, fractured, desecrated): "items without
+// this mod" — in no form. Trade rejects an unknown id with the whole request, so — only existing ones.
 function variantsOf(statId) {
   const m = String(statId).match(/^(explicit|crafted|fractured|desecrated)\.(.+)$/);
   if (!m) return [statId];
