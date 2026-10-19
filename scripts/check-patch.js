@@ -1,9 +1,9 @@
-// Проверка после патча / новой лиги: что изменилось в данных игры относительно снимка, на котором проверена программа
-// (test/fixtures/data — тот же снимок, что у тестов), и не устарели ли собранные вручную data/*.json.
+// Post-patch / new-league check: what changed in the game data compared with the snapshot the app was verified on
+// (test/fixtures/data — the same snapshot the tests use), and whether the hand-collected data/*.json are out of date.
 //   node scripts/check-patch.js [--md report.md]
-// Код выхода: 0 — существенных изменений нет, 1 — есть (отчёт — что посмотреть), 2 — не удалось проверить.
-// Запускается и в GitHub Actions по расписанию (.github/workflows/patch-check.yml): при изменениях открывает issue.
-// Что делать после отчёта — docs/README.md, «Новый патч — чек-лист».
+// Exit code: 0 — no significant changes, 1 — there are some (the report says what to look at), 2 — couldn't check.
+// Also runs on a schedule in GitHub Actions (.github/workflows/patch-check.yml): opens an issue on changes.
+// What to do after the report — docs/README.md, "New patch — checklist".
 const fs = require('fs');
 const path = require('path');
 const zlib = require('zlib');
@@ -12,7 +12,7 @@ const ROOT = path.join(__dirname, '..');
 const REPOE = 'https://repoe-fork.github.io/poe2';
 const TRADE = 'https://www.pathofexile.com/api/trade2/data';
 const UA = 'poe2-price-checker patch check (github.com/zhurauljou/poe2-advanced-price-check)';
-const BASELINE = path.join(ROOT, 'data', 'patch-baseline.json'); // лиги на момент снимка
+const BASELINE = path.join(ROOT, 'data', 'patch-baseline.json'); // leagues at the time of the snapshot
 
 const arg = (k) => { const i = process.argv.indexOf(`--${k}`); return i > 0 ? process.argv[i + 1] : null; };
 const snap = (n) => JSON.parse(zlib.gunzipSync(fs.readFileSync(path.join(ROOT, 'test', 'fixtures', 'data', `${n}.gz`))));
@@ -21,7 +21,7 @@ async function get(url) {
   if (!res.ok) throw new Error(`${url} → ${res.status}`);
   return res.json();
 }
-// Трейд не ответил (лимит — например, идёт сборщик весов) — справочник из кэша программы, если он есть (локальный запуск).
+// Trade didn't respond (rate limit — e.g. the weight collector is running) — use the reference from the app cache, if any (local run).
 const CACHE = path.join(process.env.APPDATA || '', 'PoE 2 Price Checker', 'data-cache');
 const fromCache = [];
 async function trade(name) {
@@ -33,7 +33,7 @@ async function trade(name) {
   }
 }
 
-const out = []; // строки отчёта
+const out = []; // report lines
 let significant = false;
 const list = (xs, n = 25) => xs.slice(0, n).map((x) => `  - ${x}`).join('\n') + (xs.length > n ? `\n  - … и ещё ${xs.length - n}` : '');
 const section = (title, lines, important = true) => {
@@ -42,7 +42,7 @@ const section = (title, lines, important = true) => {
   out.push(`### ${title}`, ...lines, '');
 };
 
-// Моды пула крафта: новые / пропавшие семейства и тиры, изменённые веса и уровни.
+// Craft pool mods: new / removed families and tiers, changed weights and levels.
 function compareMods(live, old) {
   const pool = (m) => ['item', 'misc', 'desecrated'].includes(m.domain) && ['prefix', 'suffix'].includes(m.generation_type);
   const ids = (o) => new Set(Object.entries(o).filter(([, m]) => pool(m)).map(([id]) => id));
@@ -71,7 +71,7 @@ function compareBases(live, old) {
   section('Базы (RePoE): пропали', [...a].filter((n) => !b.has(n)).length ? [list([...a].filter((n) => !b.has(n)))] : []);
 }
 
-// Справочник трейда: новые / пропавшие статы (по ним программа ищет моды).
+// Trade reference: new / removed stats (the app searches mods by them).
 function compareStats(live, old) {
   const ids = (o) => new Set(o.result.filter((g) => g.id !== 'pseudo').flatMap((g) => g.entries.map((e) => `${e.id}\t${e.text}`)));
   const a = ids(old), b = ids(live);
@@ -81,7 +81,7 @@ function compareStats(live, old) {
   section('Справочник трейда: пропали статы', removed.length ? [`${removed.length}:`, list(removed)] : []);
 }
 
-// Названия валюты в собранных вручную data/*.json — есть ли они ещё в игре (справочник трейда: валюта и предметы).
+// Currency names in the hand-collected data/*.json — are they still in the game (trade reference: currency and items).
 function checkNames(staticData, items) {
   const known = new Set();
   for (const g of staticData.result) for (const e of g.entries) if (e.text) known.add(e.text);
@@ -112,7 +112,7 @@ function compareLeagues(leagues) {
   let leagues = null;
   await tryStep('RePoE mods', async () => compareMods(await get(`${REPOE}/mods.min.json`), snap('repoe-mods.json')));
   await tryStep('RePoE bases', async () => compareBases(await get(`${REPOE}/base_items.min.json`), snap('repoe-base-items.json')));
-  // Трейд с серверов GitHub может не ответить (защита от ботов) — тогда только RePoE.
+  // Trade from GitHub servers may not respond (bot protection) — then RePoE only.
   await tryStep('trade stats', async () => compareStats(await trade('stats'), snap('stats.json')));
   await tryStep('trade names', async () => checkNames(await trade('static'), await trade('items')));
   await tryStep('trade leagues', async () => { leagues = compareLeagues(await trade('leagues')); });
