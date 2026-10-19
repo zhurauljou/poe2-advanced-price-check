@@ -1,8 +1,8 @@
-// Окно настроек: всё меняется сразу (главный процесс проверяет значения и сохраняет), кнопки «Сохранить» нет.
+// Settings window: everything applies immediately (the main process validates and saves), there is no "Save" button.
 const $ = (id) => document.getElementById(id);
 const { t } = window.i18n;
 window.i18n.setLang(window.cfg.uiLang());
-let cur = null; // последний снимок настроек от главного процесса
+let cur = null; // last settings snapshot from the main process
 let capturing = false;
 
 function applyLang() {
@@ -11,7 +11,7 @@ function applyLang() {
   document.querySelectorAll('[data-i18n-title]').forEach((el) => { el.title = t(el.dataset.i18nTitle); });
 }
 
-// Первый запуск: карточка приветствия сверху (окно открыто с ?welcome).
+// First run: welcome card at the top (window opened with ?welcome).
 const welcome = new URLSearchParams(location.search).has('welcome');
 $('welcome').hidden = !welcome;
 $('welcomeOk').addEventListener('click', () => window.cfg.action('close'));
@@ -22,7 +22,7 @@ function render(s) {
   if (!capturing) $('hotkey').textContent = s.hotkeyLabel;
   $('hotkeyGameOnly').checked = s.hotkeyGameOnly;
   $('startWithWindows').checked = s.startWithWindows;
-  $('startWithWindows').disabled = !s.packaged; // из исходников автозапуск не нужен
+  $('startWithWindows').disabled = !s.packaged; // autostart isn't needed when running from source
   $('league').innerHTML = '';
   for (const l of s.leagues) {
     const o = document.createElement('option');
@@ -62,7 +62,7 @@ function message(text, error) {
   fit();
 }
 
-// ---- запись новой комбинации: клик по кнопке, затем нажать сочетание (Esc — отмена) ----
+// ---- recording a new hotkey: click the button, then press the combination (Esc — cancel) ----
 const KEY = (code) => {
   let m = code.match(/^Key([A-Z])$/);
   if (m) return m[1];
@@ -93,7 +93,7 @@ document.addEventListener('keydown', async (e) => {
   e.preventDefault();
   if (e.key === 'Escape') { await stopCapture(); return; }
   const key = KEY(e.code);
-  if (!key) return; // пока зажаты только модификаторы — ждём основную клавишу
+  if (!key) return; // only modifiers held so far — wait for the main key
   if (!e.ctrlKey && !e.altKey) { message(t('Use Ctrl or Alt with a letter, digit or F1–F12'), true); return; }
   const hk = [e.ctrlKey && 'CommandOrControl', e.altKey && 'Alt', e.shiftKey && 'Shift', key].filter(Boolean).join('+');
   await stopCapture();
@@ -119,7 +119,7 @@ $('scale').addEventListener('click', (e) => {
 $('resetPos').addEventListener('click', async () => render(await window.cfg.action('reset-position')));
 $('refresh').addEventListener('click', async (e) => {
   e.target.disabled = true;
-  await window.cfg.action('refresh-data'); // итог — уведомлением в трее
+  await window.cfg.action('refresh-data'); // the result comes as a tray notification
   setTimeout(() => { e.target.disabled = false; }, 3000);
 });
 $('logs').addEventListener('click', () => window.cfg.action('open-logs'));
