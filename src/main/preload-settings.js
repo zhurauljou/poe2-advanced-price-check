@@ -1,4 +1,4 @@
-// Мост окна настроек.
+// Settings window bridge.
 const { contextBridge, ipcRenderer } = require('electron');
 
 contextBridge.exposeInMainWorld('cfg', {
