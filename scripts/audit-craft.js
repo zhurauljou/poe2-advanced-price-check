@@ -1,8 +1,8 @@
-// Аудит советов по крафту на случайных вещах всех классов: генерирует редкие вещи из настоящего пула модов игры
-// (RePoE), прогоняет через craft.advise + план со спросом poe.ninja и проверяет правила, нарушение которых — ошибка
-// советника (не тот мод, снятие нужного, слот без метода, бессмысленная цена…).
-//   node scripts/audit-craft.js [вещей на класс=30] [seed=1]
-// Нужен кэш программы (%APPDATA%/PoE 2 Price Checker/data-cache) и интернет для спроса poe.ninja (по запросу на класс).
+// Audit of craft advice on random items of all classes: generates rare items from the game's real mod pool
+// (RePoE), runs them through craft.advise + the plan with poe.ninja demand and checks rules whose violation is an
+// advisor bug (wrong mod, removing a needed one, a slot with no method, a nonsensical price…).
+//   node scripts/audit-craft.js [items per class=30] [seed=1]
+// Needs the app cache (%APPDATA%/PoE 2 Price Checker/data-cache) and internet for poe.ninja demand (one request per class).
 const fs = require('fs');
 const path = require('path');
 const Module = require('module');
@@ -30,15 +30,15 @@ const pick = (arr) => arr[Math.floor(rnd() * arr.length)];
 
 const CLASSES = ['Body Armours', 'Helmets', 'Gloves', 'Boots', 'Shields', 'Bucklers', 'Foci', 'Quivers', 'Rings', 'Amulets', 'Belts',
   'Wands', 'Staves', 'Sceptres', 'Quarterstaves', 'Bows', 'Crossbows', 'Spears', 'One Hand Maces', 'Two Hand Maces', 'Talismans'];
-// item_class в RePoE — единственное число и свои названия
+// item_class in RePoE — singular and its own names
 const CLASS_OF = { 'Body Armours': 'Body Armour', Helmets: 'Helmet', Gloves: 'Gloves', Boots: 'Boots', Shields: 'Shield', Bucklers: 'Buckler', Foci: 'Focus',
   Quivers: 'Quiver', Rings: 'Ring', Amulets: 'Amulet', Belts: 'Belt', Wands: 'Wand', Staves: 'Staff', Sceptres: 'Sceptre', Quarterstaves: 'Warstaff',
   Bows: 'Bow', Crossbows: 'Crossbow', Spears: 'Spear', 'One Hand Maces': 'One Hand Mace', 'Two Hand Maces': 'Two Hand Mace', Talismans: 'Talisman' };
 const tpl = (t) => clean(t).replace(/\((-?[\d.]+)-(-?[\d.]+)\)/g, '#').replace(/-?\d+(?:\.\d+)?/g, '#').replace(/\+#/g, '#').toLowerCase().split('\n').join(' / ');
-const NO_SPELL = /^no_\w+_spell_mods$/; // в игре не применяются (см. craft.js loadData)
+const NO_SPELL = /^no_\w+_spell_mods$/; // not applied in the game (see craft.js loadData)
 const canRoll = (m, tags0) => { const tags = tags0.filter((t) => !NO_SPELL.test(t)); for (const sw of m.spawn_weights || []) if (tags.includes(sw.tag)) return sw.weight > 0; return false; };
 const clean = (t) => String(t).replace(/\[(?:[^|\]]*\|)?([^\]]*)\]/g, '$1');
-// текст мода как в игре (расширенный формат): «+48(47-50) to Spirit»
+// mod text as in the game (advanced format): "+48(47-50) to Spirit"
 const rollText = (t) => clean(t).replace(/\((-?[\d.]+)-(-?[\d.]+)\)/g, (s, a, b) => {
   const lo = Number(a), hi = Number(b); const v = Number.isInteger(lo) && Number.isInteger(hi) ? Math.round(lo + rnd() * (hi - lo)) : Math.round((lo + rnd() * (hi - lo)) * 100) / 100;
   return `${v}(${a}-${b})`;
@@ -50,7 +50,7 @@ const rollText = (t) => clean(t).replace(/\((-?[\d.]+)-(-?[\d.]+)\)/g, (s, a, b)
   await craft.load(cached);
   const prices = JSON.parse(fs.readFileSync(path.join(__dirname, '..', 'test', 'fixtures', 'craft', 'prices.json'), 'utf8')).prices;
   const all = Object.values(mods).filter((m) => (m.domain === 'item' || m.domain === 'desecrated') && ['prefix', 'suffix'].includes(m.generation_type) && !m.is_essence_only);
-  const issues = new Map(); // правило → [примеры]
+  const issues = new Map(); // rule → [examples]
   const flag = (rule, ex) => { if (!issues.has(rule)) issues.set(rule, []); issues.get(rule).push(ex); };
   let items = 0, plans = 0;
 
@@ -64,7 +64,7 @@ const rollText = (t) => clean(t).replace(/\((-?[\d.]+)-(-?[\d.]+)\)/g, (s, a, b)
       const base = pick(bases);
       const tags = base.tags || [];
       const ilvl = 75 + Math.floor(rnd() * 8);
-      const live = [...tags]; // + adds_tags выбранных модов (запреты других стихий и т.п.)
+      const live = [...tags]; // + adds_tags of the chosen mods (bans on other elements etc.)
       const pool0 = all.filter((m) => m.required_level <= ilvl);
       const used = new Set();
       const chosen = [];
@@ -90,7 +90,7 @@ const rollText = (t) => clean(t).replace(/\((-?[\d.]+)-(-?[\d.]+)\)/g, (s, a, b)
       let r;
       try { r = await craft.advise(item, demand.mods, cached); } catch (e) { flag('исключение в craft.advise', `${cls} ${base.name}: ${e.message}`); continue; }
       if (r.note) continue;
-      // 1. каждый мод вещи узнан и узнан ВЕРНО (одинаковые названия аффиксов)
+      // 1. every item mod is recognised, and recognised CORRECTLY (identical affix names)
       for (const [i, a] of (item.affixes || []).entries()) {
         const want0 = chosen[i] && chosen[i].m;
         const mine = r.goal ? [...r.goal.keep, ...r.goal.remove] : [];
@@ -100,11 +100,11 @@ const rollText = (t) => clean(t).replace(/\((-?[\d.]+)-(-?[\d.]+)\)/g, (s, a, b)
       if (!r.goal) continue;
       plans++;
       const pctOf = (t) => Math.max(0, ...t.split(' / ').map((l) => want.get(l) || 0));
-      // 2. снимается востребованный мод хорошего тира
+      // 2. a sought-after mod of a good tier gets removed
       for (const x of r.goal.remove) if (pctOf(x.text) >= 30 && x.tier && x.tier <= 2) flag('снимается ключевой мод T1–T2', `${cls}: ${x.text} T${x.tier} ${pctOf(x.text)}%`);
-      // 3. остаётся ненужный мод, а на его сторону добавляется более нужный из того же плана — норм; проверим: держим 0%-мод при свободных кандидатах ≥ 30%
+      // 3. an unneeded mod stays while a more needed one from the same plan is added to its side — fine; check: we keep a 0% mod with free candidates ≥ 30%
       for (const x of r.goal.keep) if (pctOf(x.text) === 0 && x.tag !== 'fractured' && x.tag !== 'crafted' && x.tier > 2 && r.goal.add.some((a) => a.side === x.side && a.pct >= 30)) flag('держится ненужный мод (0%), хотя нужный ставится на ту же сторону', `${cls}: ${x.text} T${x.tier}`);
-      // 4. шаги плана: у каждого есть способ и разумная цена
+      // 4. plan steps: each has a method and a sensible price
       const pl = PlanCost.create(() => ({ prices, goalValue: 50, est: 10 }));
       let steps;
       try { steps = pl.expandPlan(r.goal.plan); } catch (e) { flag('исключение в плане', `${cls}: ${e.message}`); continue; }
@@ -119,17 +119,17 @@ const rollText = (t) => clean(t).replace(/\((-?[\d.]+)-(-?[\d.]+)\)/g, (s, a, b)
         if (s.act === 'add2' && s.steps.some((x) => x.desecrateOnly || x.craftedOnly)) flag('мод одного слота в паре Greater Exaltation', `${cls}: ${s.steps.map((x) => x.mod).join(' + ')}`);
         if (c.k === 'desecrate' && (item.affixes || []).some((a) => a.tag === 'desecrated') && !r.goal.remove.some((x) => x.tag === 'desecrated')) flag('Desecrate при занятом desecrated-слоте', `${cls}: ${s.mod}`);
       }
-      // 5. одна desecration и один crafted-слот на план
+      // 5. one desecration and one crafted slot per plan
       const des2 = steps.filter((s) => s.act === 'add' && s.useDes).length;
       if (des2 > 1) flag('две desecration в плане', cls);
-      // 7. предлагается мод, который на этой вещи не может выпасть (adds_tags модов вещи его запрещают)
+      // 7. a mod is suggested that can't roll on this item (the item's mods' adds_tags forbid it)
       const keptTags = [...tags, ...chosen.filter(({ m }) => !r.goal.remove.some((x) => x.text === tpl(m.text))).flatMap(({ m }) => m.adds_tags || [])];
       for (const a of r.goal.add) {
         if (a.craftedOnly || a.needs || a.desecrateOnly) continue;
         const fams = all.filter((m) => tpl(m.text) === a.text);
         if (fams.length && !fams.some((m) => canRoll(m, keptTags) || canRoll(m, [...keptTags, 'breach_desecration']))) flag('предлагается запрещённый на вещи мод', `${cls}: ${a.text}`);
       }
-      // 6. добавляется то, что уже есть на вещи
+      // 6. adding something the item already has
       for (const a of r.goal.add) if (r.goal.keep.some((x) => x.text === a.text)) { flag('добавляется мод, который уже есть', `${cls}: ${a.text}`); if (process.env.DUMP) fs.writeFileSync(process.env.DUMP, text); }
     }
     process.stdout.write(`${cls}: ok\n`);
