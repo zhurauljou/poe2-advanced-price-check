@@ -1,4 +1,4 @@
-// Простой лог в %APPDATA%\PoE 2 Price Checker\app.log — чтобы разбирать «не сработало» без отладчика.
+// Simple log in %APPDATA%\PoE 2 Price Checker\app.log — to investigate "it didn't work" without a debugger.
 const { app } = require('electron');
 const fs = require('fs');
 const path = require('path');
