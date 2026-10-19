@@ -1,7 +1,7 @@
 // Оценка весов модов PoE 2 по трейду (в файлах игры весов нет — только «может / не может выпасть»). Отдельная утилита:
 // запускается вручную (Collect weights.bat или npm run collect-weights), в саму программу не встроена.
 //
-// Метод: по каждому классу вещей берём редкие непорченые вещи (ilvl 75+) ценой до 2 ex, самые свежие (не «самые
+// Метод: по каждому классу вещей берём редкие непорченые вещи (ilvl 75+) ценой до 2 ex (и за трансмутки и т.п. — см. EXTRA_CURRENCIES), самые свежие (не «самые
 // дешёвые»: внутри дешёвого диапазона это почти случайный срез) — моды на них в основном такие, как выпали. У каждого
 // мода в ответе трейда есть имя аффикса, тир и уровень — по ним находим семейство мода в RePoE.
 // Сохраняем моды каждой вещи (raw): программа сама выкидывает «причину продажи» — самый востребованный мод вещи
@@ -43,6 +43,10 @@ const CLASSES = {
 // Выборки по классу: разные окна ilvl — разные лоты (до 100 в каждом).
 const WINDOWS = [{ min: 75, max: 78 }, { min: 79, max: 81 }, { min: 82, max: 84 }, { min: 85 }];
 const PRICE_MAX = 2; // ex (Exalted Orb Equivalent — по умолчанию у трейда)
+// Валюты, которых трейд не пересчитывает в ex: лоты за 1 трансмутку в фильтр «до 2 ex» не попадают (проверено
+// 18.10.2026: самые дешёвые там — за 1 aug), хотя это самый случайный мусор. Для них — отдельный поиск, потолок
+// в штуках — PRICE_MAX / курс poe.ninja; валюта дороже PRICE_MAX за штуку (Orb of Chance) пропускается.
+const EXTRA_CURRENCIES = { transmute: 'Orb of Transmutation', wisdom: 'Scroll of Wisdom', artificers: "Artificer's Orb" };
 const VERSION = 2; // формат weights.json: classes[cls] = { items, types: [семейства], raw: [[[индекс семейства, тир], …], …] }
 
 const arg = (k, d) => { const i = process.argv.indexOf(`--${k}`); return i > 0 ? process.argv[i + 1] : d; };
@@ -301,7 +305,7 @@ function buildOut(store) {
   const classes = {};
   for (const [cls, c] of Object.entries(store.classes)) if (c.items) classes[cls] = { items: c.items, unmatched: c.unmatched, types: c.types, raw: c.raw, bases: c.bases || [], rowBase: c.rowBase || [], done: true };
   writeJson(OUT, { meta: { version: VERSION, league: store.league, collected: new Date().toISOString().slice(0, 10), started: store.started.slice(0, 10),
-    method: `rare uncorrupted listings up to ${PRICE_MAX} ex, newest first, ilvl 75+, accumulated`,
+    method: `rare uncorrupted listings up to ${PRICE_MAX} ex (incl. priced in currencies trade does not convert to ex), newest first, ilvl 75+, accumulated`,
     note: 'Estimated from trade listings — not game data. Rare modifiers are underestimated.' }, classes });
 }
 
@@ -320,6 +324,24 @@ async function main() {
     fetch('https://repoe-fork.github.io/poe2/mods.min.json').then((r) => r.json()),
     fetch('https://repoe-fork.github.io/poe2/base_items.min.json').then((r) => r.json()),
   ]);
+  // Потолок цены в штуках для валют без пересчёта в ex (курс poe.ninja); нет связи — без этих поисков.
+  const extraPrices = [];
+  try {
+    const nj = await fetch(`https://poe.ninja/poe2/api/economy/exchange/current/overview?league=${encodeURIComponent(league)}&type=Currency`).then((r) => r.json());
+    const exPerPrimary = nj.core.rates.exalted;
+    const names = new Map((nj.items || []).map((i) => [i.name, i.id]));
+    const value = new Map((nj.lines || []).map((l) => [l.id, l.primaryValue * exPerPrimary]));
+    for (const [option, name] of Object.entries(EXTRA_CURRENCIES)) {
+      const ex = value.get(names.get(name));
+      const max = ex ? Math.floor(PRICE_MAX / ex) : 0;
+      if (max >= 1) extraPrices.push({ option, max });
+    }
+    say(`Also searching listings priced in ${extraPrices.map((p) => `${p.option} ≤ ${p.max}`).join(', ') || '—'} (trade does not convert them to ex)`);
+  } catch (e) { say(`poe.ninja rates unavailable (${e.message}) — only ex-equivalent searches`); }
+  const slices = [
+    ...WINDOWS.map((w) => ({ label: `${w.min}${w.max ? `–${w.max}` : '+'}`, ilvl: w, price: { max: PRICE_MAX } })),
+    ...extraPrices.map((p) => ({ label: `75+, ${p.option} ≤ ${p.max}`, ilvl: { min: 75 }, price: p })),
+  ];
   const pools = new Map();
   const poolOf = (cls) => {
     if (!pools.has(cls)) pools.set(cls, classPool(cls, mods, bases));
@@ -367,18 +389,18 @@ async function main() {
       const typeIdx = new Map(c.types.map((tp, i) => [tp, i]));
       const pool = poolOf(cls);
       const before = c.items;
-      for (const w of WINDOWS) {
+      for (const sl of slices) {
         if (max && c.items - before >= max) break;
         const query = { query: { status: { option: 'available' }, filters: {
-          type_filters: { filters: { category: { option: category }, rarity: { option: 'rare' }, ilvl: w } },
+          type_filters: { filters: { category: { option: category }, rarity: { option: 'rare' }, ilvl: sl.ilvl } },
           misc_filters: { filters: { corrupted: { option: 'false' } } },
-          trade_filters: { filters: { price: { max: PRICE_MAX } } },
+          trade_filters: { filters: { price: sl.price } },
         } }, sort: { indexed: 'desc' } };
         const s = await call('search', `${TRADE}/api/trade2/search/poe2/${L}`, query);
         const ids = (s.result || []).filter((id) => !seen.has(id));
         // Ход работы — после каждого поиска и раз в 5 выборок: иначе на первом круге класс молчит по 10 минут.
-        const label = `${cls}, ilvl ${w.min}${w.max ? `–${w.max}` : '+'}`;
-        Object.assign(ui, { cls, window: `${w.min}${w.max ? `–${w.max}` : '+'}`, read: 0, toRead: ids.length });
+        const label = `${cls}, ilvl ${sl.label}`;
+        Object.assign(ui, { cls, window: sl.label, read: 0, toRead: ids.length });
         say(`${label}: ${ids.length} new listings${ids.length ? ` — reading (~${Math.ceil(ids.length / 10 * MIN_GAP.fetch / 60000)} min)` : ''}`);
         for (let i = 0; i < ids.length && !(max && c.items - before >= max); i += 10) {
           const batch = ids.slice(i, i + 10);
