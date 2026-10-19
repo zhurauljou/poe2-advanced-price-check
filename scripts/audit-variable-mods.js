@@ -1,7 +1,7 @@
-// Аудит «скрытых» переменных у уникальных модов: значение меняется (Divine перекатывает), но в тексте оно не
-// числовой диапазон «(a-b)» — размер кольца, случайный Keystone, Legacy у Mageblood и т.п. Такие моды окно должно
-// понимать особо (stats.ordinal — шкала размеров, categorical — случайный вариант), иначе советы по Divine врут.
-// Запуск после патча: node scripts/audit-variable-mods.js  (нужен кэш программы: repoe-mods.json, stats.json)
+// Audit of "hidden" variables in unique mods: the value changes (Divine rerolls it), but in the text it isn't
+// a numeric range "(a-b)" — ring radius, random Keystone, Legacy on Mageblood etc. The window must handle such mods
+// specially (stats.ordinal — a size scale, categorical — a random variant), otherwise Divine advice is wrong.
+// Run after a patch: node scripts/audit-variable-mods.js  (needs the app cache: repoe-mods.json, stats.json)
 const fs = require('fs');
 const path = require('path');
 
@@ -10,14 +10,14 @@ const mods = JSON.parse(fs.readFileSync(path.join(dir, 'repoe-mods.json'), 'utf8
 const stats = JSON.parse(fs.readFileSync(path.join(dir, 'stats.json'), 'utf8'));
 
 const NUMERIC = /\(-?[\d.]+-+-?[\d.]+\)/;
-const IGNORE = /^dummy_stat_display_nothing$|^map_/; // служебные статы без отображения и моды карт
+const IGNORE = /^dummy_stat_display_nothing$|^map_/; // service stats with no display, and map mods
 const unique = Object.entries(mods).filter(([, m]) => m.generation_type === 'unique' && ['item', 'misc', 'flask'].includes(m.domain));
 const varying = unique.filter(([, m]) => (m.stats || []).some((s) => s.min !== s.max));
 const hidden = varying.filter(([, m]) => !NUMERIC.test(m.text || ''))
   .map(([id, m]) => ({ id, text: (m.text || '').replace(/\n/g, ' / '), vars: m.stats.filter((s) => s.min !== s.max && !IGNORE.test(s.id)) }))
   .filter((x) => x.vars.length);
 
-// Варианты трейда («explicit.stat_X|1…|N»): какие семейства — шкала размеров (как у Controlled Metamorphosis).
+// Trade variants ("explicit.stat_X|1…|N"): which families are a size scale (like Controlled Metamorphosis).
 const SIZE = /^(Very Small|Small|Medium-Small|Medium|Medium-Large|Large|Very Large|Massive)$/;
 const families = new Map();
 for (const g of stats.result) for (const e of g.entries) {
