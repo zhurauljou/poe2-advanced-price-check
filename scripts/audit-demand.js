@@ -1,4 +1,4 @@
-// Аудит: для каждого класса — какие базы и моды из poe.ninja «Rare <класс>» не могут быть на вещах этого класса.
+// Audit: for each class — which bases and mods from poe.ninja "Rare <class>" can't be on items of that class.
 const Module = require('module'); const orig = Module._load;
 Module._load = function (r, ...a) { if (r === 'electron') return { net: { fetch }, app: { getPath: () => process.env.TEMP } }; return orig.call(this, r, ...a); };
 process.chdir(require('path').join(__dirname, '..'));
@@ -18,7 +18,7 @@ const CLASSES = ['Body Armours', 'Helmets', 'Gloves', 'Boots', 'Shields', 'Buckl
     let d;
     try { d = await nb.categoryDemand({ itemClass: cls, rarity: 'Rare', limit: 200, minLevel: 90 }, fb); } catch (e) { out.push(`${cls}: ERR ${e.message}`); continue; }
     if (!d.category) { out.push(`${cls}: нет категории на poe.ninja`); continue; }
-    // Представитель класса — самая носимая база, у которой класс совпадает с остальными большинством.
+    // Class representative — the most worn base whose class matches the majority of the others.
     const byClass = new Map();
     const bases = await cached('repoe-base-items.json');
     const clsOf = new Map(Object.values(bases).map((b) => [b.name, b.item_class]));
@@ -29,7 +29,7 @@ const CLASSES = ['Body Armours', 'Helmets', 'Gloves', 'Boots', 'Shields', 'Buckl
     const rep = d.bases.find((b) => clsOf.get(b.name) === mine);
     const foreign = d.bases.filter((b) => clsOf.get(b.name) && clsOf.get(b.name) !== mine);
     const foreignShare = foreign.reduce((s, b) => s + b.count, 0) / d.bases.reduce((s, b) => s + b.count, 0);
-    // Мод «невозможен на классе» — ни на одной базе этого класса (а не только на представителе: у брони разные теги).
+    // A mod is "impossible on the class" if it's on no base of that class (not just the representative: armour has different tags).
     const classBases = Object.values(bases).filter((b) => b.item_class === mine && b.release_state === 'released' && b.domain !== 'unknown').map((b) => b.name);
     const impossible = d.mods.filter((r) => classBases.every((n) => craft.canAppear(n, r.name) === false));
     out.push(`== ${cls} → ninja «${d.category}» · класс RePoE ${mine} · представитель ${rep && rep.name}`);
