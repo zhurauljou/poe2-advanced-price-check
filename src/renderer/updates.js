@@ -1,13 +1,13 @@
-// Окно «Updates»: живой статус обновления — проверка, «доступна vX» с кнопкой Download, прогресс скачивания,
-// «Restart & install». Состояние присылает главный процесс (updater.status).
+// "Updates" window: live update status — checking, "vX available" with a Download button, download progress,
+// "Restart & install". The state is sent by the main process (updater.status).
 const $ = (id) => document.getElementById(id);
 const { t } = window.i18n;
 window.i18n.setLang(window.upd.uiLang());
 const mb = (b) => `${(b / 1048576).toFixed(1)} MB`;
-// Версия приходит с GitHub (latest.yml) и вставляется в разметку — экранируем.
+// The version comes from GitHub (latest.yml) and is inserted into markup — escape it.
 const esc = (x) => String(x).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 let page = null;
-let last = null; // последний статус — перерисовать при смене языка
+let last = null; // last status — to re-render on language change
 
 function render(s) {
   last = s;
@@ -64,7 +64,7 @@ function render(s) {
 }
 
 window.upd.onStatus(render);
-// Язык интерфейса: статичные подписи (data-i18n) и текущий статус.
+// UI language: static labels (data-i18n) and the current status.
 function applyLang() {
   document.documentElement.lang = window.i18n.getLang();
   document.querySelectorAll('[data-i18n]').forEach((el) => { el.textContent = t(el.dataset.i18n); });
