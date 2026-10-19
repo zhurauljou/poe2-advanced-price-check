@@ -1,16 +1,16 @@
-// Обработчики: новая вещь от главного процесса, клики и ввод, язык интерфейса. Подключается последним —
-// к этому моменту все функции частей окна уже объявлены.
-// Части окна — обычные скрипты с общей областью видимости (index.html подключает их по порядку).
+// Handlers: new item from the main process, clicks and input, UI language. Loaded last:
+// by then all functions of the window parts are already declared.
+// Window parts are plain scripts sharing one scope (index.html loads them in order).
 
 window.pc.onItem((data) => {
-  impactSeq++; // недосчитанный «вклад модов» прежней вещи не должен писать в новую
+  impactSeq++; // the previous item's unfinished "mod contributions" mustn't write into the new one
   quickMemo = new Map();
   elementAlts = null;
   if ($('elements')) $('elements').hidden = true;
   state = data;
   rates = data.rates || {};
   allowWide = data.allowWide !== false;
-  setWide(false); // новая вещь — сначала в одну колонку, fit решит, нужна ли вторая
+  setWide(false); // new item: single column first, fit decides whether a second is needed
   openSums.clear();
   openDemand.clear();
   showAllLots = false;
@@ -46,10 +46,10 @@ window.pc.onItem((data) => {
   if (!state.exchange && !state.searchable) setStatus(t('No price data for this item'));
   else if (state.offline) setStatus(t('No connection to {host} — using saved data', { host: state.offline }), true);
   fit();
-  // Вкладки — только для предметов с поиском на трейде; валюте хватает одной.
+  // Tabs only for items with a trade search; currency needs just one.
   $('tabs').hidden = !state.searchable;
-  // Окно закреплено, только пока показана вещь пошагового крафта: проверили другую — оно снова прячется как обычно
-  // (сессия остаётся: вернулись к той вещи — снова закреплено).
+  // The window is pinned only while a step-by-step crafting item is shown: check another and it hides as usual again
+  // (the session stays: return to that item and it's pinned again).
   const inSession = !!(craftSession && sessionMatches());
   window.pc.pin(inSession || userPinned);
   setTab(inSession ? 'craft' : 'price');
@@ -91,8 +91,8 @@ $('tab-demand').addEventListener('click', async (e) => {
   const lv = e.target.closest('[data-lvl]');
   if (lv) {
     demandLevel = +lv.dataset.lvl;
-    await window.pc.setDemandLevel(demandLevel).catch(() => {}); // не сохранилось — уровень всё равно действует сейчас
-    craftFor = null; // тема крафта — тоже по новому уровню
+    await window.pc.setDemandLevel(demandLevel).catch(() => {}); // not saved: the level still applies right now
+    craftFor = null; // the craft topic also follows the new level
     loadBuilds();
     loadDemand();
     return;
@@ -119,7 +119,7 @@ window.pc.onStatus((s) => {
   fit();
 });
 
-// ---- изменения фильтров ----
+// ---- filter changes ----
 $('mods').addEventListener('click', (e) => {
   const t = e.target.closest('.sum-toggle');
   if (!t) return;
@@ -143,7 +143,7 @@ $('mods').addEventListener('input', (e) => {
   if (e.target.dataset.k === 'enabled') {
     m.enabled = e.target.checked;
     row.classList.toggle('off', !m.enabled);
-    if (m.option) renderFilters(); // пересчитать «Match ≥ N of M»
+    if (m.option) renderFilters(); // recompute "Match ≥ N of M"
   } else if (e.target.dataset.k === 'min') {
     m.min = e.target.value === '' ? null : Number(e.target.value);
   } else if (e.target.dataset.k === 'max') {
@@ -152,7 +152,7 @@ $('mods').addEventListener('input', (e) => {
   }
 });
 
-// ref из подсказки → объект фильтра: 'p:2' — state.filters.props[2], 'm:ilvl' — state.filters.ilvl.
+// ref from a tooltip → filter object: 'p:2' = state.filters.props[2], 'm:ilvl' = state.filters.ilvl.
 function filterByRef(ref) {
   const [kind, key] = ref.split(':');
   if (kind === 'f') return state.filters.flags[+key];
@@ -160,13 +160,13 @@ function filterByRef(ref) {
 }
 
 $('tooltip').addEventListener('click', (e) => {
-  if (e.target.closest('.tp-in')) return; // клик в поле границы — не переключаем
+  if (e.target.closest('.tp-in')) return; // click in a bound input: don't toggle
   const el = e.target.closest('.tp');
   if (!el) return;
   markDirty();
   const flt = filterByRef(el.dataset.ref);
   if (el.dataset.ref.startsWith('f:')) {
-    // Состояние: выкл → как у вещи → противоположное → выкл.
+    // State: off → as on the item → opposite → off.
     if (!flt.enabled) { flt.enabled = true; flt.value = flt.own; } else if (flt.value === flt.own) flt.value = !flt.own; else flt.enabled = false;
   } else flt.enabled = !flt.enabled;
   renderTooltip();
@@ -183,8 +183,8 @@ $('tooltip').addEventListener('input', (e) => {
   markDirty();
   const flt = filterByRef(t.dataset.ref);
   flt[t.dataset.f] = t.value === '' ? null : Number(t.value);
-  if (flt.exact) flt.max = flt.min; // тир путевого камня — ровно такой
-  // Нижняя граница выше верхней (скрижаль «= 10», ввели 12) — верхнюю снимаем, иначе поиск пустой.
+  if (flt.exact) flt.max = flt.min; // waystone tier: exactly this
+  // Lower bound above the upper (tablet "= 10", typed 12): drop the upper, otherwise the search is empty.
   else if (t.dataset.f === 'min' && flt.max != null && flt.min != null && flt.min > Number(flt.max)) flt.max = null;
 });
 
@@ -202,7 +202,7 @@ $('misc').addEventListener('input', (e) => {
   markDirty();
   if (t.dataset.o) {
     state.filters[t.dataset.o] = t.checked;
-    window.pc.setSearchDefaults({ online: state.filters.online, flex: state.filters.flex }); // у следующей вещи — так же
+    window.pc.setSearchDefaults({ online: state.filters.online, flex: state.filters.flex }); // same for the next item
   }
   if ('optmin' in t.dataset) state.filters.optionMin = Number(t.value) || null;
   if (t.type === 'checkbox') t.closest('.opt').classList.toggle('off', !t.checked);
@@ -222,25 +222,25 @@ $('banner').addEventListener('click', (e) => {
 function searchNow() { setNote(''); runSearch(); loadBuilds(); }
 $('search').addEventListener('click', searchNow);
 document.addEventListener('keydown', (e) => {
-  // Enter — поиск на вкладке цены: не автоповтором (удержание жгло лимит), не во время поиска и не на кнопке
-  // (она нажмётся сама — иначе и действие кнопки, и поиск).
+  // Enter searches on the price tab: not on auto-repeat (holding it burned the limit), not during a search and not on a button
+  // (it presses itself, otherwise both the button action and the search would fire).
   if (e.key === 'Enter' && state && state.searchable && !e.repeat && !$('search').disabled && !$('tab-price').hidden
     && !e.target.closest('button, summary, a, [data-act]')) searchNow();
   if (e.key === 'Escape') {
-    // Сначала закрываем открытый список лиг, а не всё окно.
+    // First close an open league list, not the whole window.
     if (!$('leagueMenu').hidden) toggleLeagueMenu(false);
     else if (!$('histMenu').hidden) toggleHistory(false);
     else window.pc.hide();
   }
 });
 $('open').addEventListener('click', () => state.tradeUrl && window.pc.openUrl(state.tradeUrl));
-// Ссылка на поиск — поделиться или открыть позже.
+// Search link: to share or open later.
 $('copyLink').addEventListener('click', () => {
   if (!state.tradeUrl) return;
   window.pc.copy(state.tradeUrl);
   setStatus(t('Link copied'));
 });
-// Страница вещи на poe2db: уник — по имени, остальное — по базе.
+// Item page on poe2db: uniques by name, everything else by base.
 $('poe2db').addEventListener('click', () => {
   const it = state && state.item;
   if (!it) return;
@@ -248,7 +248,7 @@ $('poe2db').addEventListener('click', () => {
   window.pc.openUrl(`https://poe2db.tw/us/${encodeURIComponent(page.replace(/ /g, '_'))}`);
 });
 
-// Значок на вкладке Craft: свободные места под аффиксы (редкая — 3 + 3, магическая — 1 + 1; самоцветы — 2 + 2).
+// Badge on the Craft tab: free affix slots (rare 3 + 3, magic 1 + 1; jewels 2 + 2).
 function openSlotsBadge(it) {
   if (!it.advanced || !['Rare', 'Magic'].includes(it.rarity) || it.itemClass === 'Tablet' || it.corrupted || it.mirrored || it.sanctified) return '';
   const per = it.rarity === 'Magic' ? 1 : it.itemClass === 'Jewels' ? 2 : 3;
@@ -273,9 +273,9 @@ $('leagueMenu').addEventListener('click', async (e) => {
     return;
   }
   setStatus('');
-  // Биржевой предмет: его цену (poe.ninja новой лиги) считает главный процесс — проверяем вещь заново.
+  // Exchange item: its price (poe.ninja, new league) is computed by the main process, so re-check the item.
   if (!state.searchable) { window.pc.recheck(); return; }
-  // Остальное — тоже по новой лиге: поиск, спрос, цена уника на poe.ninja; советы по крафту пересчитаются после поиска.
+  // Everything else also follows the new league: search, demand, unique price on poe.ninja; craft advice is recomputed after the search.
   state.uniqueNinja = null;
   craftFor = null;
   quickMemo = new Map();
@@ -284,13 +284,13 @@ $('leagueMenu').addEventListener('click', async (e) => {
   loadDemand();
   loadUniqueNinja();
 });
-// Клик мимо — закрыть список.
+// Click outside: close the list.
 document.addEventListener('click', (e) => {
   if (!e.target.closest('#ldrop')) toggleLeagueMenu(false);
   if (!e.target.closest('#hdrop')) toggleHistory(false);
 });
 
-// ---- язык интерфейса: статичные подписи из index.html (data-i18n) и перерисовка показанного ----
+// ---- UI language: static labels from index.html (data-i18n) and redraw of what's shown ----
 function applyLang() {
   document.documentElement.lang = window.i18n.getLang();
   document.querySelectorAll('[data-i18n]').forEach((el) => { el.textContent = t(el.dataset.i18n); });
@@ -299,14 +299,14 @@ function applyLang() {
 }
 applyLang();
 
-// Сменили масштаб или «широкое окно» в настройках — окно подгоняется под содержимое.
+// Scale or "wide window" changed in settings: the window fits itself to the content.
 window.pc.onRefit((d) => {
   if (d && typeof d.allowWide === 'boolean') { allowWide = d.allowWide; if (!allowWide) setWide(false); }
   if (state) setWide(false);
   fit();
 });
 
-// Закрепить окно: не прячется при клике в игру, Esc остаётся игре (как при пошаговом крафте). Держится и для следующих вещей.
+// Pin the window: it doesn't hide on clicking into the game, Esc stays with the game (as in step-by-step crafting). Persists for next items.
 let userPinned = false;
 $('pinBtn').addEventListener('click', () => {
   userPinned = !userPinned;
@@ -329,13 +329,13 @@ window.pc.onUiLang((lang) => {
   if (!state.exchange && !state.searchable) setStatus(t('No price data for this item'));
   if (lastBuilds && !$('builds').hidden) renderBuilds(lastBuilds);
   if (lastDemand && !$('demand').hidden) renderDemand(lastDemand);
-  // Советы по крафту собирает главный процесс — запрашиваем заново (сразу, если вкладка открыта).
+  // Craft advice is built by the main process: request it again (right away if the tab is open).
   craftFor = null;
   if (!$('tab-craft').hidden) loadCraft();
   fit();
 });
 
-// CSP окна запрещает инлайн-стили (style="…"), поэтому ширину полос и заглушек задаём через data-w после вставки.
+// The window's CSP forbids inline styles (style="…"), so bar and placeholder widths are set via data-w after insertion.
 new MutationObserver(() => {
   document.querySelectorAll('[data-w]').forEach((el) => { el.style.width = el.dataset.w; el.removeAttribute('data-w'); });
 }).observe(document.body, { childList: true, subtree: true });
