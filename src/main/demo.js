@@ -1,22 +1,22 @@
-// Демо-режим — проверка окна без игры и без лишних запросов к трейду:
-//   npx electron . --demo=<файл с текстом предмета> --shot=<png> [флаги]
-//   --mock-trade         подставные лоты вместо поиска на трейде (у него жёсткие лимиты)
-//   --tab=demand|craft   открыть вкладку перед снимком
-//   --hover=N            навести на N-й лот (карточка сравнения сохранится как <shot>-cmp.png)
-//   --eval=<js>          выполнить в окне перед снимком (открыть меню и т.п.)
-//   --upd='{"state":…}'  снимок окна «Updates» в заданном состоянии
-//   --settings           снимок окна настроек
-//   --tape=<папка> [--record]  ответы сети из записи (без сети — снимки повторяются) или записать их (scripts/visual.js)
+// Demo mode — check the window without the game and without extra trade requests:
+//   npx electron . --demo=<item text file> --shot=<png> [flags]
+//   --mock-trade         fake listings instead of a trade search (it has strict rate limits)
+//   --tab=demand|craft   open a tab before the screenshot
+//   --hover=N            hover the N-th listing (the comparison card is saved as <shot>-cmp.png)
+//   --eval=<js>          run in the window before the screenshot (open a menu, etc.)
+//   --upd='{"state":…}'  screenshot of the "Updates" window in the given state
+//   --settings           screenshot of the settings window
+//   --tape=<folder> [--record]  network responses from a recording (offline — screenshots repeat) or record them (scripts/visual.js)
 const { app } = require('electron');
 const fs = require('fs');
 
 const arg = (k) => (process.argv.find((a) => a.startsWith(`--${k}=`)) || '').slice(k.length + 3);
-// Только при запуске из исходников: --eval выполняет произвольный код в окне, установленной программе он ни к чему.
+// Only when running from source: --eval runs arbitrary code in the window; the installed program has no use for it.
 const enabled = !app.isPackaged && !!arg('demo');
-//   --tape=<папка> [--record]  ответы сети — из записи (без сети, снимки повторяются) или записать их туда
+//   --tape=<folder> [--record]  network responses — from a recording (offline, screenshots repeat) or record them there
 if (enabled && arg('tape')) require('./api').setTape(arg('tape'), process.argv.includes('--record'));
 
-// Подставные лоты для --mock-trade.
+// Fake listings for --mock-trade.
 function mockSearch(rates) {
   const lot = (amount, currency, divine, seller, h) => ({
     amount, currency, currencyName: currency, currencyImage: null, divine, seller, online: true,
@@ -28,7 +28,7 @@ function mockSearch(rates) {
   return { total: 37, url: 'https://www.pathofexile.com/trade2', listings, rates, filters: null, dropped: [] };
 }
 
-// Подставная короткая цена: разные исходы (дешевле / дороже) по кругу — не случайные, чтобы снимки повторялись.
+// Fake short price: different outcomes (cheaper / more expensive) in rotation — not random, so screenshots repeat.
 let quickN = 0;
 function mockQuick() {
   const base = [0.2, 0.5, 1, 2, 4][quickN++ % 5];
@@ -38,12 +38,12 @@ function mockQuick() {
 
 const mockTrade = () => enabled && process.argv.includes('--mock-trade');
 
-// Подставной статус обновления для --upd (null — без подмены).
+// Fake update status for --upd (null — no substitution).
 const fakeUpdateStatus = () => (enabled && arg('upd') ? JSON.parse(arg('upd')) : null);
 
 const wait = (ms) => new Promise((r) => setTimeout(r, ms));
 
-// Сценарий: показать предмет (или окно «Updates»), выполнить флаги, снять скриншот и выйти.
+// Scenario: show an item (or the "Updates" window), apply the flags, take a screenshot and exit.
 function run({ ready, priceCheck, openUpdates, openSettings, windows }) {
   if (!enabled) return;
   if (process.argv.includes('--settings')) {
@@ -63,13 +63,13 @@ function run({ ready, priceCheck, openUpdates, openSettings, windows }) {
     }, 3000);
     return;
   }
-  // Окно должно успеть загрузиться: без сети (--tape) справочники готовы раньше него, и предмет ушёл бы в пустоту.
+  // The window must have time to load: offline (--tape) the reference data is ready before it, and the item would be lost.
   const loaded = () => new Promise((r) => { const wc = windows().main && windows().main.webContents; if (!wc || !wc.isLoading()) r(); else wc.once('did-finish-load', r); });
   ready.then(loaded).then(() => priceCheck(fs.readFileSync(arg('demo'), 'utf8'))).then(() => {
     if (!arg('shot')) return;
     setTimeout(async () => {
       const { main, cmp } = windows();
-      // Ошибка в --eval (элемента ещё нет и т.п.) не должна оставлять прогон без снимка — пишем в лог и снимаем как есть.
+      // An error in --eval (element not there yet, etc.) must not leave the run without a screenshot — log it and capture as is.
       if (arg('eval')) { try { await main.webContents.executeJavaScript(arg('eval')); } catch (e) { console.error('demo eval:', e.message); } await wait(400); }
       if (arg('hover')) {
         await main.webContents.executeJavaScript(`document.querySelectorAll('.lot')[${+arg('hover')}]
