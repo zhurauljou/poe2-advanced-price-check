@@ -91,11 +91,20 @@ const env = { ...process.env };
 delete env.ELECTRON_RUN_AS_NODE;
 // Снимок экрана: чистый профиль демо (справочники — из записи, история и настройки — с нуля).
 function shoot(file, evalJs, shot, rec) {
-  for (const f of ['data-cache', 'history.json', 'settings.json']) fs.rmSync(path.join(demoData, f), { recursive: true, force: true });
-  fs.rmSync(shot, { force: true });
-  const args = ['.', `--demo=${file}`, '--mock-trade', `--tape=${TAPE}`, ...(rec ? ['--record'] : []), `--shot=${shot}`, ...(evalJs ? [`--eval=${evalJs}`] : [])];
-  spawnSync(require('electron'), args, { cwd: ROOT, env, timeout: 150e3, stdio: 'ignore' });
-  return fs.existsSync(shot);
+  // Снимок — во временный файл: не получился — прежний (эталон) не теряется. Не получился — ещё одна попытка
+  // (Electron иногда не успевает стартовать, пока прошлый прогон закрывается), причина — хвост вывода.
+  const tmp = `${shot}.tmp.png`;
+  let err = '';
+  for (let attempt = 0; attempt < 2; attempt++) {
+    for (const f of ['data-cache', 'history.json', 'settings.json']) fs.rmSync(path.join(demoData, f), { recursive: true, force: true });
+    fs.rmSync(tmp, { force: true });
+    const args = ['.', `--demo=${file}`, '--mock-trade', `--tape=${TAPE}`, ...(rec ? ['--record'] : []), `--shot=${tmp}`, ...(evalJs ? [`--eval=${evalJs}`] : [])];
+    const r = spawnSync(require('electron'), args, { cwd: ROOT, env, timeout: 150e3, encoding: 'utf8' });
+    if (fs.existsSync(tmp)) { fs.renameSync(tmp, shot); return true; }
+    err = `${r.error ? r.error.message : ''} ${(r.stderr || '').trim().split(/\r?\n/).slice(-3).join(' | ')}`.trim();
+  }
+  if (err) console.log(`    ${err.slice(0, 300)}`);
+  return false;
 }
 // Запись: сначала ответы сети (снимок при живой сети не годится в эталон — спрос может не успеть), эталоны — потом,
 // уже из записи, как при проверке.

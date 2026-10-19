@@ -69,7 +69,8 @@ function run({ ready, priceCheck, openUpdates, openSettings, windows }) {
     if (!arg('shot')) return;
     setTimeout(async () => {
       const { main, cmp } = windows();
-      if (arg('eval')) { await main.webContents.executeJavaScript(arg('eval')); await wait(400); }
+      // Ошибка в --eval (элемента ещё нет и т.п.) не должна оставлять прогон без снимка — пишем в лог и снимаем как есть.
+      if (arg('eval')) { try { await main.webContents.executeJavaScript(arg('eval')); } catch (e) { console.error('demo eval:', e.message); } await wait(400); }
       if (arg('hover')) {
         await main.webContents.executeJavaScript(`document.querySelectorAll('.lot')[${+arg('hover')}]
           .dispatchEvent(new MouseEvent('mouseenter'))`);
