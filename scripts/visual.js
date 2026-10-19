@@ -1,9 +1,9 @@
-// Снимки окна: набор экранов демо (цена, спрос, крафт, уник, скрижаль…) сравнивается с эталонами попиксельно — так
-// ловятся поломки вёрстки (руны в колонки, съехавшая таблица). Сеть не нужна: ответы записаны (--tape, см. demo.js).
-//   npm run visual -- --record   записать ответы сети и эталоны (первый раз и после намеренных изменений вида)
-//   npm run visual               снять экраны и сравнить; отличия — в test/visual/out/*-diff.png
-//   npm run visual -- --update   принять текущие снимки как эталоны (после проверки глазами)
-// Записи и эталоны — локальные (test/visual/tape, test/visual/base — не в git): записи RePoE / poe.ninja весят мегабайты.
+// Window snapshots: a set of demo screens (price, demand, craft, unique, tablet…) is compared with references pixel by pixel — this
+// catches layout breakage (runes into columns, a shifted table). No network needed: responses are recorded (--tape, see demo.js).
+//   npm run visual -- --record   record network responses and references (first time and after intentional visual changes)
+//   npm run visual               take screens and compare; differences — in test/visual/out/*-diff.png
+//   npm run visual -- --update   accept the current snapshots as references (after checking by eye)
+// Recordings and references are local (test/visual/tape, test/visual/base — not in git): RePoE / poe.ninja recordings weigh megabytes.
 const fs = require('fs');
 const path = require('path');
 const zlib = require('zlib');
@@ -35,7 +35,7 @@ const SCENES = [
   ['ru-armour', fx('ru-rare-armour-advanced.txt')],
 ].filter(([n]) => !only || n.includes(only));
 
-// PNG → { width, height, data: RGBA } (снимки Electron: 8 бит, RGBA, без чересстрочности).
+// PNG → { width, height, data: RGBA } (Electron snapshots: 8-bit, RGBA, non-interlaced).
 function readPng(file) {
   const buf = fs.readFileSync(file);
   let pos = 8, width = 0, height = 0, idat = [];
@@ -59,7 +59,7 @@ function readPng(file) {
   }
   return { width, height, data };
 }
-// RGBA → PNG (для карты отличий).
+// RGBA → PNG (for the diff map).
 function writePng(file, { width, height, data }) {
   const crcTable = Array.from({ length: 256 }, (_, n) => { let c = n; for (let k = 0; k < 8; k++) c = c & 1 ? 0xedb88320 ^ (c >>> 1) : c >>> 1; return c >>> 0; });
   const crc = (b) => { let c = 0xffffffff; for (const x of b) c = crcTable[(c ^ x) & 255] ^ (c >>> 8); return (c ^ 0xffffffff) >>> 0; };
@@ -70,7 +70,7 @@ function writePng(file, { width, height, data }) {
   fs.writeFileSync(file, Buffer.concat([Buffer.from([137, 80, 78, 71, 13, 10, 26, 10]), chunk('IHDR', ihdr), chunk('IDAT', zlib.deflateSync(raw)), chunk('IEND', Buffer.alloc(0))]));
 }
 
-// Доля отличающихся пикселей (порог на канал — сглаживание шрифтов) и карта отличий: отличия красным поверх серого.
+// Share of differing pixels (per-channel threshold — font antialiasing) and a diff map: differences in red over grey.
 function compare(a, b, diffFile) {
   if (a.width !== b.width || a.height !== b.height) return { size: `${b.width}×${b.height} → ${a.width}×${a.height}` };
   let bad = 0;
@@ -89,10 +89,10 @@ const demoData = path.join(process.env.APPDATA || '', 'PoE 2 Price Checker-demo'
 for (const d of [TAPE, BASE, OUT]) fs.mkdirSync(d, { recursive: true });
 const env = { ...process.env };
 delete env.ELECTRON_RUN_AS_NODE;
-// Снимок экрана: чистый профиль демо (справочники — из записи, история и настройки — с нуля).
+// Screen snapshot: a clean demo profile (references — from the recording, history and settings — from scratch).
 function shoot(file, evalJs, shot, rec) {
-  // Снимок — во временный файл: не получился — прежний (эталон) не теряется. Не получился — ещё одна попытка
-  // (Electron иногда не успевает стартовать, пока прошлый прогон закрывается), причина — хвост вывода.
+  // Snapshot goes to a temp file: if it fails, the previous one (the reference) isn't lost. If it fails — one more attempt
+  // (Electron sometimes doesn't manage to start while the previous run is closing), the reason — the tail of the output.
   const tmp = `${shot}.tmp.png`;
   let err = '';
   for (let attempt = 0; attempt < 2; attempt++) {
@@ -106,8 +106,8 @@ function shoot(file, evalJs, shot, rec) {
   if (err) console.log(`    ${err.slice(0, 300)}`);
   return false;
 }
-// Запись: сначала ответы сети (снимок при живой сети не годится в эталон — спрос может не успеть), эталоны — потом,
-// уже из записи, как при проверке.
+// Recording: network responses first (a snapshot on the live network isn't fit as a reference — demand may not load in time),
+// references after, already from the recording, as during a check.
 if (record) {
   fs.rmSync(TAPE, { recursive: true, force: true });
   fs.mkdirSync(TAPE, { recursive: true });
