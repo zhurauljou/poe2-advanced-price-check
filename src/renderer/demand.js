@@ -1,9 +1,9 @@
-// Вкладка спроса (poe.ninja): популярные билды, базы и моды класса; вкладки окна.
-// Части окна — обычные скрипты с общей областью видимости (index.html подключает их по порядку).
+// Demand tab (poe.ninja): popular builds, bases and mods of the item class; window tabs.
+// The window parts are plain scripts sharing one global scope (index.html loads them in order).
 
-// ---- популярные билды (poe.ninja) ----
-// Уник — по имени; редкая/магическая — категория, база (если выбрана в шапке) и 2–3 самых важных
-// включённых мода: с полным списком модов у ninja почти не остаётся билдов.
+// ---- popular builds (poe.ninja) ----
+// Unique — by name; rare/magic — category, base (if selected in the header) and the 2–3 most important
+// enabled mods: with the full mod list, ninja has almost no builds left.
 function buildsQuery() {
   const { item, filters: f } = state;
   if (!f) return null;
@@ -11,12 +11,12 @@ function buildsQuery() {
   if (!['Rare', 'Magic', 'Normal'].includes(item.rarity) || !f.category) return null;
   const mods = f.mods.filter((m) => m.enabled && m.statId && m.tag !== 'pseudo' && m.tag !== 'implicit' && m.tag !== 'rune')
     .sort((a, b) => (b.importance || 0) - (a.importance || 0)).slice(0, 3).map((m) => m.text.split('\n')[0]);
-  // Белые и магические вещи — заготовки: носят их уже редкими, поэтому спрос — по редким (магических почти никто не носит).
+  // White and magic items are crafting bases: they're worn as rares, so demand is by rares (almost nobody wears magic).
   return { itemClass: item.itemClass, rarity: 'Rare', baseType: f.useType ? item.baseType : undefined, mods };
 }
 
 let buildsSeq = 0;
-// Последние данные вкладки Demand — перерисовать при смене языка.
+// Latest Demand tab data — to re-render on language change.
 let lastBuilds = null;
 let lastDemand = null;
 async function loadBuilds() {
@@ -40,9 +40,9 @@ async function loadBuilds() {
   fit();
 }
 
-// ---- спрос по категории (poe.ninja): какие базы и моды носят на таких вещах ----
+// ---- demand by category (poe.ninja): which bases and mods are worn on such items ----
 let demandSeq = 0;
-let demandAll = false; // true — спрос по всем билдам класса, без темы вещи
+let demandAll = false; // true — demand across all builds of the class, without the item's theme
 async function loadDemand() {
   const { item, filters: f } = state;
   const box = $('demand');
@@ -52,7 +52,7 @@ async function loadDemand() {
   lastDemand = null;
   box.innerHTML = `<div class="sect"><span>${t('Demand')}</span></div><div class="muted center">${t('Loading from poe.ninja…')}</div>`;
   try {
-    // По умолчанию — среди билдов, которые носят такую вещь с ключевыми модами вашей (та же тема, что в «Популярных билдах»).
+    // By default — among builds wearing such an item with your item's key mods (the same theme as in "Popular builds").
     const q = buildsQuery();
     const withMods = demandAll || !q ? [] : (q.mods || []).slice(0, 2);
     const d = await window.pc.demand({ itemClass: item.itemClass, rarity: 'Rare', withMods });
@@ -66,8 +66,8 @@ async function loadDemand() {
   fit();
 }
 
-// Шаблон мода, как у ninja: «# to maximum Life», «#% to Fire Resistance» — наш шаблон трейда без «(Local)».
-// У poe.ninja шаблоны без «+» («# maximum stacks of Puppet Master»), а у трейда крафтовые — с ним («+# maximum stacks…»).
+// Mod template as ninja has it: "# to maximum Life", "#% to Fire Resistance" — our trade template without "(Local)".
+// poe.ninja templates have no "+" ("# maximum stacks of Puppet Master"), while trade's crafted ones do ("+# maximum stacks…").
 const ninjaTemplate = (t) => (t || '').replace(/ \(Local\)$/, '').replace(/\+#/g, '#').toLowerCase();
 
 function renderDemand(d) {
@@ -77,10 +77,10 @@ function renderDemand(d) {
     return;
   }
   const mine = new Set(f.mods.filter((m) => m.template).map((m) => ninjaTemplate(m.template)));
-  // Топ-10 + все моды вашей вещи, даже вне топа (с местом в рейтинге): ключевой мод узкой темы (+уровни миньонов)
-  // в общий топ класса может не попасть, но для покупателей с этой темой он главный.
+  // Top 10 + all mods of your item, even outside the top (with rank): a key mod of a narrow theme (+minion levels)
+  // may not make the class's overall top, but for buyers with that theme it's the main one.
   const TOP = 10;
-  // Моды темы у таких билдов по определению на 100% — в списке они ничего не говорят.
+  // Theme mods are by definition at 100% for such builds — they say nothing in the list.
   const themeSet = new Set((d.themed || []).map((x) => x.toLowerCase()));
   const all = d.mods.filter((r) => !themeSet.has(r.name.toLowerCase())).map((r, i) => ({ ...r, rank: i + 1, mine: mine.has(ninjaTemplate(r.name)) }));
   const modRows = all.filter((r) => r.rank <= TOP || r.mine);
@@ -100,7 +100,7 @@ function renderDemand(d) {
     <button class="link bopen" data-url="${esc(d.page)}">poe.ninja ↗</button>`;
 }
 
-// Список спроса: сразу 5 строк + всё, что есть на вашей вещи; остальное — по «Show all».
+// Demand list: 5 rows right away + everything on your item; the rest — via "Show all".
 const DEMAND_SHOWN = 5;
 const openDemand = new Set();
 function demandList(key, title, rows) {
@@ -121,7 +121,7 @@ function setTab(name) {
   fit();
 }
 
-// Насколько востребовано: < 10% — приглушаем (почти никому не нужно), ≥ 60% — подсвечиваем (нужно почти всем).
+// How sought-after: < 10% — dimmed (almost nobody needs it), ≥ 60% — highlighted (almost everyone needs it).
 const heat = (pct) => (pct >= 60 ? 'hot' : pct < 10 ? 'cold' : '');
 const hot = (pct) => (pct >= 60 ? `<span class="flame" title="${t('Most builds use this')}">🔥</span>` : '');
 
@@ -131,17 +131,17 @@ function buildRows(rows) {
       <span class="bbar"><i data-w="${Math.min(100, r.pct)}%"></i></span></div>`).join('');
 }
 
-// Чей спрос считаем: персонажи 80+ (все, кого видит poe.ninja), 90+ или 95+ — чем выше, тем «премиальнее» моды.
+// Whose demand we count: characters 80+ (everyone poe.ninja sees), 90+ or 95+ — the higher, the more "premium" the mods.
 let demandLevel = 90;
 window.pc.demandLevel().then((l) => { demandLevel = l; }).catch(() => {});
 const levelSeg = () => `<div class="lvl-row"><span class="muted small">${t('Characters')}</span><div class="seg lvl" title="${t('Whose gear counts: higher level = players who pay for exact modifiers')}">${[80, 90, 95].map((l) =>
   `<button data-lvl="${l}"${l === demandLevel ? ' class="on"' : ''}>${l}+</button>`).join('')}</div></div>`;
 
 function renderBuilds(b) {
-  // Бейдж на вкладке Demand — чтобы фичу замечали, не открывая вкладку.
+  // Badge on the Demand tab — so the feature gets noticed without opening the tab.
   const pct = b.allTotal ? b.total / b.allTotal * 100 : null;
   const anyHot = [...b.classes, ...b.skills].some((r) => r.pct >= 60);
-  // Уровень спроса по числу персонажей (не по %: у нишевых вещей процент всегда мал, а спрос реальный).
+  // Demand level by character count (not by %: for niche items the percentage is always small, yet demand is real).
   const lvl = !b.total ? null : b.total >= 2500 ? 'high' : b.total >= 300 ? 'med' : 'low';
   const badge = $('demandBadge');
   badge.className = `badge ${lvl || ''}`;
@@ -164,8 +164,8 @@ function renderBuilds(b) {
     <button class="link bopen" data-url="${esc(b.page)}">poe.ninja ↗</button>`;
 }
 
-// Уник со случайными модами (Heart of the Well, Megalomaniac…): какие из его модов носят билды.
-// Постоянные моды есть на каждой копии (~100%) — их не показываем; свои — всегда, с местом в рейтинге.
+// Unique with random mods (Heart of the Well, Megalomaniac…): which of its mods builds wear.
+// Fixed mods are on every copy (~100%) — not shown; yours — always, with rank.
 const modKey = (s) => String(s || '').replace(/ \(Local\)$/, '').replace(/[+-]?\d+(\.\d+)?/g, '#').replace(/\+#/g, '#').toLowerCase();
 function uniqueModsHtml(b) {
   if (!b.mods || !b.mods.length || !state.filters) return '';
