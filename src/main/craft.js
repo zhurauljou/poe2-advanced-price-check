@@ -558,7 +558,17 @@ async function advise(item, demandMods, cached) {
 
   // 3. Desecration — свой пул desecrated-модов, одна на вещь.
   if (!item.desecratedItem && !mine.some((a) => a.tag === 'desecrated')) {
-    const des = candidates('desecrated').filter((c) => open[c.side] || (!open.prefix && !open.suffix)).slice(0, 4);
+    const fits = (c) => open[c.side] || (!open.prefix && !open.suffix);
+    // Самоцветы: свой desecrated-пул — гибридные префиксы и три суффикса на атрибуты, а при раскрытии предлагают и обычные
+    // моды пула — ради них самоцветы и оскверняют (вторая крит-строка, Movement Speed: docs/jewels-crafting.md §2.3, M).
+    // Гибриды desecrated с одной и той же нужной строкой («ES / Spell», «ES / Attack», …) — один, с самой нужной второй.
+    const lineOf = (c) => c.text.split(' / ').reduce((a, l) => ((want.get(l) || 0) > (want.get(a) || 0) ? l : a));
+    const second = (c) => c.text.split(' / ').filter((l) => l !== lineOf(c)).reduce((s, l) => Math.max(s, want.get(l) || 0), 0);
+    const oneHybrid = (list) => list.filter((c) => !list.some((x) => x !== c && lineOf(x) === lineOf(c) && (second(x) > second(c) || (second(x) === second(c) && list.indexOf(x) < list.indexOf(c)))));
+    const des = jewel
+      ? oneHybrid([...candidates('desecrated'), ...normal.filter((c) => !c.craftedOnly && !c.desecrateOnly && !c.needs).map((c) => ({ ...c, fromNormal: true, chance: null, chanceUnknown: false, essence: null }))])
+        .filter(fits).sort((a, b) => b.pct - a.pct).slice(0, 6)
+      : candidates('desecrated').filter(fits).slice(0, 4);
     if (des.length) {
       // Desecrated — отдельный слот (не crafted), но на полной вещи снимает случайный мод: осквернять ДО Exalt-ов.
       // Лич-омены — «Weapon or Jewellery» (и пояса — подтверждено, docs/crafting-methods-research.md), моды личей — 65 уровня.

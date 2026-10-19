@@ -312,6 +312,8 @@
     chance: 'шанс',
     'details and alternatives': 'подробнее и другие способы',
     details: 'подробнее',
+    'normal modifier — can be offered on reveal': 'обычный мод — бывает среди вариантов раскрытия',
+    'Guides: when the desecrated modifier is revealed, normal modifiers of the pool are offered too — not verified in game': 'По гайдам при раскрытии предлагают и обычные моды пула — в игре не проверено',
     'prefix or suffix — the side of the removed modifier': 'префикс или суффикс — по стороне снятого мода',
     'Removes a random one of the {n} modifiers: {k} of them are key ({mods}) — {odds} to lose one': 'Снимает случайный из {n} модов, ключевых среди них {k} ({mods}) — {odds} потерять ключевой',
     'No key modifiers on the item — a removed one is no loss': 'Ключевых модов на вещи нет — снятый не жалко',

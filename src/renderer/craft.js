@@ -38,7 +38,8 @@ function craftRows(list) {
     craftCands.set(key, c);
     const btn = c.stats ? `<button class="link cprice" data-ck="${key}" title="${t('Search for your item with this modifier added (lowest roll of the tier)')}">${t('estimate')}</button>` : '';
     // Обычная эссенция делает редкой магическую вещь — на редкой этот путь не работает.
-    const via = c.essence && state.item.rarity === 'Magic' ? `<span class="cvia" title="${esc(t('{essence} makes a magic item rare with this modifier: {tiers}', { essence: c.essence.name, tiers: c.essence.tiers.join(' · ') }))}">${esc(t('guaranteed: {how}', { how: c.essence.name }))}</span>` : '';
+    const via = c.fromNormal ? `<span class="cvia" title="${esc(t('Guides: when the desecrated modifier is revealed, normal modifiers of the pool are offered too — not verified in game'))}">${esc(t('normal modifier — can be offered on reveal'))}</span>`
+      : c.essence && state.item.rarity === 'Magic' ? `<span class="cvia" title="${esc(t('{essence} makes a magic item rare with this modifier: {tiers}', { essence: c.essence.name, tiers: c.essence.tiers.join(' · ') }))}">${esc(t('guaranteed: {how}', { how: c.essence.name }))}</span>` : '';
     return `
     <div class="brow crow" data-row="${key}">
       <span class="bname">${esc(c.text)} ${c.tiers > 1 ? `<span class="craft-tier" title="${esc(t('Tier {n} of {m} — the best one this item level allows', { n: c.tier, m: c.tiers }))}">T${c.tier}${c.range ? ` · ${esc(c.range)}` : ''}</span>` : c.range ? `<span class="craft-tier" title="${esc(t('One tier — only Divine Orb improves the roll'))}">${esc(c.range)}</span>` : ''}${via}</span>
