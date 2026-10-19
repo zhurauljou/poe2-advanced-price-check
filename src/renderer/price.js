@@ -173,9 +173,16 @@ function renderElements() {
 // While searching: placeholders shaped like the result, so the window doesn't jump when prices arrive.
 function renderSearchingHero() {
   $('hero').hidden = false;
-  $('hero').innerHTML = `<div class="k">${t('Estimated price')}</div><span class="sk big"></span>
-    <div class="alt">${t('Searching the trade site…')}</div><span class="sk line"></span>
-    <div class="grid">${'<div><span class="sk" data-w="60%"></span><br><span class="sk" data-w="80%"></span></div>'.repeat(3)}</div>`;
+  // Same layout as renderTradeHero: price on the left, reliability on the right, quick / patient line, bottom row.
+  $('hero').innerHTML = `<div class="th">
+    <div class="th-top">
+      <div class="th-price"><div class="k">${t('Estimated price')}</div><span class="sk big"></span>
+        <div class="alt">${t('Searching the trade site…')}</div></div>
+      <span class="sk" data-w="96px"></span>
+    </div>
+    <div class="sell-inline"><span class="sk" data-w="110px"></span><span class="sep"></span><span class="sk" data-w="100px"></span></div>
+    <div class="th-foot"><span class="sk" data-w="130px"></span><span class="sk" data-w="110px"></span></div>
+  </div>`;
   $('results').hidden = false;
   $('results').innerHTML = `<div class="sect"><span>${t('Cheapest listings')}</span></div><div class="lots">${[70, 55, 62, 48, 66].map((w) => `
     <div class="lot sk-row"><span class="sk" data-w="58px"></span><span></span>
@@ -260,7 +267,8 @@ function renderTradeHero(r) {
   const est = mid(head);
   const median = mid(divs);
   const ageInfo = ageSummary(priced, fresh.length >= 3 && fresh.length < priced.length);
-  const ageHtml = (mostlyStronger ? `<div class="ages"><span class="warn-t">${esc(t('Most listings are stronger than your item (more ▲ than ▼) — estimated from the weaker ones; your item is likely worth less than the list suggests'))}</span></div>` : '');
+  // A callout, not a text line; the "more ▲ than ▼" reasoning goes to the tooltip.
+  const ageHtml = (mostlyStronger ? `<div class="callout warn" title="${esc(t('Most listings are stronger than your item (more ▲ than ▼) — estimated from the weaker ones; your item is likely worth less than the list suggests'))}">${esc(t('Most listings are stronger than your item — estimated from the weaker ones; your item is likely worth less than the list suggests'))}</div>` : '');
   // Second price: the same mods with any roll of their tier, i.e. how much the market pays extra for your rolls.
   let floorHtml = '';
   const fl = r.floor;
@@ -274,18 +282,27 @@ function renderTradeHero(r) {
   floorHtml += rollsHint();
   state.est = est;
   const drivable =state.filters.mods.some((m) => m.enabled && m.statId && !m.option && !m.inSum);
-  $('hero').innerHTML = `
-    <div class="k">${fl ? t('Like yours') : t('Estimated price')}</div>
-    <div class="big">${money(est)}</div>
-    <div class="alt">${alt(est)}</div>
-    ${k < 1 ? `<div class="alt" title="${esc(t('Partly used tablets are rarely listed — priced as a full one, scaled by the uses left (an assumption)'))}">${esc(t('a full one ({full} uses) ≈ {price}', { full: Math.round(state.item.props.uses / k), price: money(est / k) }))}</div>` : ''}
-    ${confidence(r.total, head, priced.slice(0, 5), ageInfo)}
+  // Layout: the price on the left (a click copies it as the listing note) with reliability on the right; the quick and
+  // patient prices in one line under it; callouts (missing key mod, stronger listings, rolls) in one style; at the
+  // bottom "What drives the price?" and the last check (header.js prevCheckHtml lands in .th-foot).
+  const market = listPrice(est);
+  $('hero').innerHTML = `<div class="th">
+    <div class="th-top">
+      <div class="th-price">
+        <div class="k">${fl ? t('Like yours') : t('Estimated price')}</div>
+        <div class="big copy" data-note="~price ${market.amount} ${market.cur}" title="${esc(t('Market price — click to copy the price note'))}">${money(est)}</div>
+        <div class="alt">${alt(est)}</div>
+        ${k < 1 ? `<div class="alt" title="${esc(t('Partly used tablets are rarely listed — priced as a full one, scaled by the uses left (an assumption)'))}">${esc(t('a full one ({full} uses) ≈ {price}', { full: Math.round(state.item.props.uses / k), price: money(est / k) }))}</div>` : ''}
+      </div>
+      ${confidence(r.total, head, priced.slice(0, 5), ageInfo)}
+    </div>
+    ${sellHtml(priced, est, divs[0], median, divs.length)}
     ${missingKeyHtml()}
+    ${ageHtml}
     ${floorHtml}
     <div class="ninja-u">${ninjaLine()}</div>
-    ${ageHtml}
-    ${sellHtml(priced, est, divs[0], median, divs.length)}
-    ${drivable ? `<button class="link drive-btn" data-act="impact" title="${t('Searches again without each key modifier (a few trade requests)')}">${t('What drives the price?')}</button>` : ''}`;
+    <div class="th-foot">${drivable ? `<button class="link drive-btn" data-act="impact" title="${t('Searches again without each key modifier (a few trade requests)')}">${t('What drives the price?')}</button>` : '<span></span>'}</div>
+  </div>`;
 }
 
 // Rare: how far rolls are from max and what raising them would cost. Divine rerolls the values of all mods
@@ -307,7 +324,7 @@ function rollsHint() {
     t('Below the top quarter: {list}', { list: low.map((m) => `${m.text.split('\n')[0]} — ${Math.round(m.roll * 100)}%`).join('; ') }),
     t('Each Divine can also make the rolls worse — this is the average over many tries'),
   ].join('\n');
-  return `<div class="floor" title="${esc(tip)}">${esc(t('Rolls ≈ {avg}% of max — better-rolled listings sell first', { avg }))}<br>
+  return `<div class="callout" title="${esc(tip)}">${esc(t('Rolls ≈ {avg}% of max — better-rolled listings sell first', { avg }))}<br>
     ${esc(t('Divine: all key rolls in the top quarter {odds} ≈ {cost}', { odds: oddsText(tries), cost: money(tries) }))}</div>`;
 }
 
@@ -376,14 +393,16 @@ function sellHtml(priced, est, cheapest, median, n) {
   const patient = Math.min(est * 2, Math.max(est * 1.2, next));
   // Instead of "Cheapest / Median / Listings": prices to list at, the same numbers but as an action.
   // Cheapest listing and median go in tooltips, the listing count in the list header.
+  // The market price is the big estimate itself (clickable), so only the quick and patient ones are listed here,
+  // in one line; one that rounds to the market price is dropped.
+  const mkt = listPrice(est).label;
   const opts = [['Quick sale', quick, t('Just under the cheapest active listing — sells fastest. Cheapest listed: {price}', { price: money(cheapest) })],
-    ['Market', est, t('The estimate above')], ['Patient', patient, t('Above the market — wait for a buyer. Median of {n}: {price}', { n, price: money(median) })]]
+    ['Patient', patient, t('Above the market — wait for a buyer. Median of {n}: {price}', { n, price: money(median) })]]
     .map(([k, div, title]) => ({ k, title, ...listPrice(div) }))
-    // Prices coincide: Market stays, not whichever came first.
-    .filter((o, i, a) => o.k === 'Market' || (o.label !== a[1].label && !a.slice(0, i).some((p) => p.label === o.label)));
-  return `<div class="grid sell">${opts.map((o) => `
-    <div><span class="k">${t(o.k)}</span><span class="v copy" data-note="~price ${o.amount} ${o.cur}" title="${o.title}
-${t('Click to copy the price note')}">${o.label}</span></div>`).join('')}</div>`;
+    .filter((o, i, a) => o.label !== mkt && !a.slice(0, i).some((p) => p.label === o.label));
+  if (!opts.length) return '';
+  return `<div class="sell-inline">${opts.map((o) => `<span class="so"><span class="k">${t(o.k)}</span><span class="v copy" data-note="~price ${o.amount} ${o.cur}" title="${o.title}
+${t('Click to copy the price note')}">${o.label}</span></span>`).join('<span class="sep"></span>')}</div>`;
 }
 
 // Mod contributions to price: search in turn without each of the main mods (up to 4), how much the price drops.

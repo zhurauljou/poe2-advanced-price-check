@@ -448,6 +448,9 @@
     Remove: 'Убрать',
     Add: 'Добавить',
     'per attempt': 'за попытку',
+    'Market price — click to copy the price note': 'Рыночная цена — клик копирует её для выставления',
+    'Most listings are stronger than your item — estimated from the weaker ones; your item is likely worth less than the list suggests':
+      'Большинство лотов сильнее вашей вещи — оценка по более слабым; ваша вещь, скорее всего, стоит меньше, чем в списке',
     'Show all {n} steps': ['Показать все {n} шаг', 'Показать все {n} шага', 'Показать все {n} шагов'],
     Collapse: 'Свернуть',
     'Remove {mod}': 'Убрать {mod}',

@@ -286,7 +286,7 @@ async function runSearch(relax = false) {
     state.tradeUrl = r.url;
     $('open').hidden = false;
     $('copyLink').hidden = false;
-    heroRender = () => { renderTradeHero(r); $('hero').insertAdjacentHTML('beforeend', prevCheckHtml()); renderResults(r); renderElements(); };
+    heroRender = () => { renderTradeHero(r); ($('hero').querySelector('.th-foot') || $('hero')).insertAdjacentHTML('beforeend', prevCheckHtml()); renderResults(r); renderElements(); };
     heroRender();
     recordPrice(state.est);
     loadElements(seq, false);
