@@ -1,25 +1,25 @@
-// Вкладка цены: блок оценки (биржа, живые предложения, трейд), другие стихии (руны Альдура), вклад модов в цену.
-// Части окна — обычные скрипты с общей областью видимости (index.html подключает их по порядку).
+// Price tab: estimate block (exchange, live offers, trade), other elements (Aldur runes), mod contributions to price.
+// Window parts are plain scripts sharing one scope (index.html loads them in order).
 
-// ---- блок цены ----
-// Та же цена в других валютах под крупной цифрой. Дорогое (от полу-зеркала) — ещё и в зеркалах.
+// ---- price block ----
+// The same price in other currencies under the large figure. Expensive items (from half a mirror) also in mirrors.
 function alt(div, selfId) {
   if (div == null) return '';
   const out = [];
   if (div >= 1) {
     if (rates.mirror && div >= rates.mirror / 2) out.push(`${fmt(div / rates.mirror)} mirror`);
   } else {
-    // Крупно — в своей валюте (money): здесь — в остальных.
+    // Large figure is in its own currency (money); here, in the others.
     const u = moneyUnit(div);
     out.push(`${fmt(div)} div`);
     if (u === 'chaos' && rates.exalted && selfId !== 'exalted') out.push(`${fmt(div * rates.exalted)} ex`);
-    // Дешевле chaos — понятнее «сколько штук за 1 chaos», чем «0.0148 chaos».
+    // Cheaper than chaos: "how many per 1 chaos" is clearer than "0.0148 chaos".
     if (u === 'ex' && rates.chaos && selfId !== 'chaos') out.push(t('{x} per {cur}', { x: fmt(1 / (div * rates.chaos)), cur: 'chaos' }));
   }
   return out.join(' · ');
 }
 
-// Валюту оцениваем в популярной валюте на выбор: Div / Chaos / Ex. Выбор помним между запусками.
+// Currency is priced in a popular currency of choice: Div / Chaos / Ex. The choice is remembered between launches.
 const UNITS = [['divine', 'Div', 'div'], ['chaos', 'Chaos', 'chaos'], ['exalted', 'Ex', 'ex']];
 let unit = null;
 try { unit = localStorage.getItem('exchangeUnit'); } catch {}
@@ -28,7 +28,7 @@ function perDiv(id) {
   return id === 'divine' ? 1 : rates[id];
 }
 
-// Цена в выбранной валюте; «auto» (ничего не выбрано или выбрана сама эта валюта) — по обычному правилу div/chaos.
+// Price in the chosen currency; "auto" (nothing chosen, or this very currency chosen) uses the usual div/chaos rule.
 function inUnit(div, u) {
   const def = UNITS.find((d) => d[0] === u);
   if (!def || !perDiv(u)) return money(div);
@@ -41,7 +41,7 @@ function renderExchangeHero() {
   const dir = x.change == null ? '' : x.change >= 0 ? 'up' : 'down';
   const u = unit && unit !== x.id ? unit : null;
   const shown = u || (x.divine >= 1 ? 'divine' : 'chaos');
-  // Обратный курс: «67.6 per chaos» понятнее, чем «0.0148 chaos».
+  // Inverse rate: "67.6 per chaos" is clearer than "0.0148 chaos".
   const units = x.divine * (perDiv(shown) || 0);
   const inverse = units > 0 && units < 0.5 ? t('{x} per {cur}', { x: fmt(1 / units), cur: UNITS.find((d) => d[0] === shown)[2] }) : '';
   const others = UNITS.filter((d) => d[0] !== shown && d[0] !== x.id && perDiv(d[0]))
@@ -61,8 +61,8 @@ function renderExchangeHero() {
     </div>${x.onExchange ? liveHtml(shown !== x.id ? shown : x.id === 'exalted' ? 'chaos' : 'exalted') : ''}`;
 }
 
-// ---- живая биржа трейда: лучшие предложения прямо сейчас (у poe.ninja — средняя за час). Лимит у биржи строгий
-// (5 запросов за 15 с) — только по кнопке. ----
+// ---- live trade exchange: best offers right now (poe.ninja shows an hourly average). The exchange limit is strict
+// (5 requests per 15 s), so only on button press. ----
 function liveHtml(have) {
   const lv = state.live;
   const cur = UNITS.find((d) => d[0] === have)[2];
@@ -102,13 +102,13 @@ $('hero').addEventListener('click', (e) => {
   if (o && o.whisper) { window.pc.copy(o.whisper); setStatus(t('Whisper copied — switch to the game and paste it into chat (Enter, Ctrl+V)')); }
 });
 
-// Пустое состояние: значок, что случилось, пояснение (HTML) и кнопки действий [[data-act, подпись]].
+// Empty state: icon, what happened, explanation (HTML) and action buttons [[data-act, label]].
 function voidState(icon, title, html, actions = []) {
   return `<div class="void"><div class="vi">${icon}</div><div class="vt">${esc(title)}</div>${html ? `<div class="vd">${html}</div>` : ''}
     ${actions.length ? `<div class="va">${actions.map(([act, label]) => `<button data-act="${act}">${esc(label)}</button>`).join('')}</div>` : ''}</div>`;
 }
 
-// Кнопки пустых состояний — общие для всех вкладок.
+// Empty-state buttons are shared by all tabs.
 document.addEventListener('click', (e) => {
   const b = e.target.closest('[data-act]');
   if (!b || !state) return;
@@ -125,15 +125,15 @@ document.addEventListener('click', (e) => {
   if (act === 'session-stop') { craftSession = null; window.pc.pin(userPinned); craftFor = null; loadCraft(); }
 });
 
-// ---- руны Альдура: та же вещь в другой стихии (Passion / Ire / Breath / Betrayal) ----
+// ---- Aldur runes: the same item in another element (Passion / Ire / Breath / Betrayal) ----
 let elementAlts = null; // { list: [{ element, rune, cost, needSocket, est, wait }], all }
 async function loadElements(seq, all) {
   const vars = await window.pc.elementVariants(state.item, state.filters).catch(() => []);
-  // Вариантов нет — убираем и блок прошлого поиска (иначе он оставался на экране).
+  // No options: also remove the previous search's block (otherwise it stayed on screen).
   if (seq !== searchSeq || !vars.length) { if (seq === searchSeq) { elementAlts = null; renderElements(); } return; }
   if (!elementAlts || !all) elementAlts = { list: vars.map((v) => ({ ...v, wait: false, est: undefined })), all };
   elementAlts.all = all;
-  const todo = all ? elementAlts.list.filter((v) => v.est === undefined) : elementAlts.list.slice(0, 1); // сразу — одна, лучшая по спросу
+  const todo = all ? elementAlts.list.filter((v) => v.est === undefined) : elementAlts.list.slice(0, 1); // right away just one, the best by demand
   for (const v of todo) {
     v.wait = true; renderElements();
     try {
@@ -169,7 +169,7 @@ function renderElements() {
   fit();
 }
 
-// Пока ищем — заглушки той же формы, что и результат: окно не прыгает, когда приходят цены.
+// While searching: placeholders shaped like the result, so the window doesn't jump when prices arrive.
 function renderSearchingHero() {
   $('hero').hidden = false;
   $('hero').innerHTML = `<div class="k">${t('Estimated price')}</div><span class="sk big"></span>
@@ -181,9 +181,9 @@ function renderSearchingHero() {
       <span class="sk" data-w="${w}%"></span><span class="sk" data-w="24px"></span></div>`).join('')}</div>`;
 }
 
-// Оценка — медиана самых дешёвых (до 5) лотов: один демпингующий продавец её не уронит.
-// Насколько верить оценке: сколько похожих лотов и насколько разбросаны цены самых дешёвых.
-// Разброс — во сколько раз самая дорогая из (до 5) самых дешёвых дороже самой дешёвой.
+// Estimate = median of the cheapest (up to 5) listings: a single undercutting seller won't drag it down.
+// How far to trust the estimate: how many similar listings and how spread the cheapest prices are.
+// Spread = how many times the priciest of the (up to 5) cheapest exceeds the cheapest.
 function confidence(total, head, cheapest = [], extra = '') {
   const spread = head.length > 1 && head[0] > 0 ? head[head.length - 1] / head[0] : 1;
   const allStale = cheapest.length >= 3 && cheapest.every((l) => l.age >= 7);
@@ -198,14 +198,14 @@ function confidence(total, head, cheapest = [], extra = '') {
   return `<div class="conf c${level}"><span title="${esc(why)}">${'●'.repeat(level)}${'○'.repeat(3 - level)} ${label}</span>${extra}</div>`;
 }
 
-// Сколько дней назад лот выставлен или переоценён (трейд: listing.indexed).
-// Медиана отсортированного списка (из чётного числа — нижняя из двух средних).
+// How many days ago the listing was posted or repriced (trade: listing.indexed).
+// Median of a sorted list (for an even count, the lower of the two middle values).
 const mid = (a) => a[Math.floor((a.length - 1) / 2)];
 const ageDays = (iso) => (iso ? (Date.now() - new Date(iso).getTime()) / 86400e3 : 99);
 
-// Строка про возраст лотов: свежие за сутки, залежавшийся самый дешёвый, тренд «свежие дешевле/дороже».
-// Свёрнуто в значок ⓘ у надёжности оценки (подробности — в подсказке): строка целиком перегружала блок цены.
-// Залежавшийся самый дешёвый лот — значок предупреждающего цвета.
+// Listing age line: fresh within a day, stale cheapest, trend "fresh ones cheaper/pricier".
+// Collapsed into an ⓘ icon by the estimate reliability (details in the tooltip): the full line overloaded the price block.
+// Stale cheapest listing: an icon in the warning color.
 function ageSummary(priced, usedFresh) {
   if (priced.length < 2) return '';
   const bits = [];
@@ -224,7 +224,7 @@ function ageSummary(priced, usedFresh) {
   return bits.length ? ` <span class="ages-i${stale ? ' warn' : ''}" title="${esc(bits.join('\n'))}">ⓘ</span>` : '';
 }
 
-// Потраченная скрижаль, найденная среди полных: доля оставшихся использований (6 из 10 — 0.6), иначе 1.
+// A used tablet found among full ones: share of remaining uses (6 of 10 = 0.6), otherwise 1.
 function usesScale() {
   const p = ((state.filters && state.filters.props) || []).find((x) => x.key === 'uses');
   return p && p.enabled && p.full && p.value < p.full && Number(p.min) >= p.full ? p.value / p.full : 1;
@@ -244,13 +244,13 @@ function renderTradeHero(r) {
       [['relax', t('Relax filters')], ['trade', t('Open trade site')]]);
     return;
   }
-  // Возраст лотов: залежавшийся дешёвый лот (неделю+ не купили) завышает картину — за эту цену не берут.
-  // Если свежих (≤ 3 дней) лотов хватает, оценку строим по ним; иначе — по всем, но надёжность ниже.
-  // edge — насколько лот сильнее вашей вещи (▲ минус ▼ по модам): заметно сильнее (≥ 2) не должен тянуть оценку вверх.
+  // Listing age: a stale cheap listing (unsold for a week+) inflates the picture, nobody buys at that price.
+  // If there are enough fresh (≤ 3 days) listings, the estimate uses them; otherwise all, but with lower reliability.
+  // edge = how much stronger a listing is than your item (▲ minus ▼ by mods): notably stronger (≥ 2) mustn't pull the estimate up.
   const priced = r.listings.filter((l) => l.divine != null).map((l) => { const c = cmpCounts(l); return { div: l.divine * k, age: ageDays(l.indexed), edge: c.better - c.worse }; })
     .sort((a, b) => a.div - b.div);
   const stronger = (l) => l.edge >= STRONGER;
-  // Большинство дешёвых лотов сильнее вашей вещи — оцениваем по тем, что не сильнее; таких нет — по самому дешёвому.
+  // Most cheap listings are stronger than your item: estimate from those that aren't; if none, from the cheapest.
   const mostlyStronger = priced.length >= 3 && priced.slice(0, 5).filter(stronger).length * 2 > Math.min(5, priced.length);
   const pool = mostlyStronger ? priced.filter((l) => !stronger(l)) : priced;
   const fresh = pool.filter((l) => l.age <= 3);
@@ -260,11 +260,11 @@ function renderTradeHero(r) {
   const median = mid(divs);
   const ageInfo = ageSummary(priced, fresh.length >= 3 && fresh.length < priced.length);
   const ageHtml = (mostlyStronger ? `<div class="ages"><span class="warn-t">${esc(t('Most listings are stronger than your item (more ▲ than ▼) — estimated from the weaker ones; your item is likely worth less than the list suggests'))}</span></div>` : '');
-  // Вторая цена: те же моды с любым роллом своего тира — сколько рынок доплачивает за ваши роллы.
+  // Second price: the same mods with any roll of their tier, i.e. how much the market pays extra for your rolls.
   let floorHtml = '';
   const fl = r.floor;
   if (fl && fl.divs.length) {
-    const fest = fl.lots ? estimate(fl.lots) : mid(fl.divs.slice(0, 5)); // то же правило, что у основной цены
+    const fest = fl.lots ? estimate(fl.lots) : mid(fl.divs.slice(0, 5)); // same rule as the main price
     const premium = fest > 0 ? Math.round((est / fest - 1) * 100) : 0;
     floorHtml = `<div class="floor" title="${t('Same modifiers with any roll of the same tier')}">
       ${t('Any roll in tier:')} <b>${money(fest)}</b> · ${t('{n} listed', { n: fl.total })}
@@ -287,10 +287,10 @@ function renderTradeHero(r) {
     ${drivable ? `<button class="link drive-btn" data-act="impact" title="${t('Searches again without each key modifier (a few trade requests)')}">${t('What drives the price?')}</button>` : ''}`;
 }
 
-// Rare: насколько роллы далеки от максимума и во что обойдётся их поднять. Divine перекатывает значения всех модов
-// разом (моды остаются), поэтому «удача» — все ключевые роллы в верхней четверти сразу (TOP_Q, betterOdds — craft.js).
-// Ключевые — включённые в поиск явные / desecrated моды с диапазоном: fractured Divine не меняет, crafted не считаем.
-// Одиваненные лоты покупают первыми — неидеальная вещь продаётся медленнее (ролик Ame, research/youtube/ame).
+// Rare: how far rolls are from max and what raising them would cost. Divine rerolls the values of all mods
+// at once (the mods stay), so "luck" means all key rolls in the top quarter at once (TOP_Q, betterOdds in craft.js).
+// Key = explicit / desecrated mods with a range that are enabled in the search: Divine doesn't change fractured, crafted not counted.
+// Divined listings sell first; an imperfect item sells slower (Ame's video, research/youtube/ame).
 function rollsHint() {
   const it = state.item;
   if (!it || it.rarity !== 'Rare' || it.corrupted || it.sanctified || it.mirrored) return '';
@@ -310,7 +310,7 @@ function rollsHint() {
     ${esc(t('Divine: all key rolls in the top quarter {odds} ≈ {cost}', { odds: oddsText(tries), cost: money(tries) }))}</div>`;
 }
 
-// Цена уника на poe.ninja — одна на название + базу, без роллов: опора «за самую простую копию».
+// A unique's poe.ninja price is one per name + base, ignoring rolls: a baseline "for the plainest copy".
 function ninjaLine() {
   const u = state.uniqueNinja;
   if (!u) return '';
@@ -332,7 +332,7 @@ async function loadUniqueNinja() {
   } catch {}
 }
 
-// Нет ключевого мода (его носят почти все билды): вещь стоит намного меньше «полных» — объясняем прямо в оценке.
+// Missing a key mod (used by almost all builds): the item is worth far less than "complete" ones, explained right in the estimate.
 function missingKeyHtml() {
   const miss = (state.filters.exclude || []);
   if (!miss.length) return '';
@@ -340,8 +340,8 @@ function missingKeyHtml() {
     <small>${esc(t(miss.some((x) => x.enabled) ? 'Compared with listings that lack it too; with it the item would be worth much more — see Craft' : 'Listings with it are included — the estimate is likely too high'))}</small></div>`;
 }
 
-// Оценка по лотам [{ div, indexed }] — то же правило, что у основной цены: хватает свежих (≤ 3 дней) — по ним;
-// медиана до 5 самых дешёвых.
+// Estimate from listings [{ div, indexed }], same rule as the main price: enough fresh (≤ 3 days) ones, use them;
+// median of up to 5 cheapest.
 function estimate(lots) {
   const sorted = (lots || []).filter((l) => l.div != null).sort((a, b) => a.div - b.div);
   const fresh = sorted.filter((l) => ageDays(l.indexed) <= 3);
@@ -349,7 +349,7 @@ function estimate(lots) {
   return head.length ? mid(head) : null;
 }
 
-// Цена для выставления — круглая, в валюте, которой так торгуют: от 1 div — div, дешевле — chaos, совсем дёшево — ex.
+// Listing price: round, in the currency it's traded in: from 1 div, div; cheaper, chaos; very cheap, ex.
 function listPrice(div) {
   const round = (v, step) => Math.max(step, Math.round(v / step) * step);
   if (div >= 1) {
@@ -364,28 +364,28 @@ function listPrice(div) {
   return { amount, cur: 'exalted', label: `${amount} ex` };
 }
 
-// Три цены для продажи: быстро (чуть ниже самого дешёвого живого лота), по рынку (оценка), подождать (выше рынка,
-// не дороже следующих по цене лотов). Клик копирует «~price N currency» для заметки в стеше.
+// Three sell prices: fast (just under the cheapest live listing), market (the estimate), wait (above market,
+// no higher than the next listings by price). A click copies "~price N currency" for a stash note.
 function sellHtml(priced, est, cheapest, median, n) {
   if (!est || !priced.length) return '';
   const active = priced.filter((l) => l.age < 7);
-  // Один демпингующий лот не должен утянуть «быструю» цену вниз: не дешевле 60% рынка.
+  // One undercutting listing mustn't drag the "fast" price down: no lower than 60% of market.
   const quick = Math.min(est * 0.95, Math.max(est * 0.6, (active[0] || priced[0]).div * 0.95));
   const next = priced[Math.min(4, priced.length - 1)].div;
   const patient = Math.min(est * 2, Math.max(est * 1.2, next));
-  // Вместо «Cheapest / Median / Listings» — цены для выставления: те же цифры, но сразу как действие.
-  // Самый дешёвый лот и медиана — в подсказках, число лотов — в заголовке списка.
+  // Instead of "Cheapest / Median / Listings": prices to list at, the same numbers but as an action.
+  // Cheapest listing and median go in tooltips, the listing count in the list header.
   const opts = [['Quick sale', quick, t('Just under the cheapest active listing — sells fastest. Cheapest listed: {price}', { price: money(cheapest) })],
     ['Market', est, t('The estimate above')], ['Patient', patient, t('Above the market — wait for a buyer. Median of {n}: {price}', { n, price: money(median) })]]
     .map(([k, div, title]) => ({ k, title, ...listPrice(div) }))
-    // Совпали цены — остаётся Market, а не первая попавшаяся.
+    // Prices coincide: Market stays, not whichever came first.
     .filter((o, i, a) => o.k === 'Market' || (o.label !== a[1].label && !a.slice(0, i).some((p) => p.label === o.label)));
   return `<div class="grid sell">${opts.map((o) => `
     <div><span class="k">${t(o.k)}</span><span class="v copy" data-note="~price ${o.amount} ${o.cur}" title="${o.title}
 ${t('Click to copy the price note')}">${o.label}</span></div>`).join('')}</div>`;
 }
 
-// Вклад модов в цену: по очереди ищем без каждого из главных модов (до 4) — насколько падает цена.
+// Mod contributions to price: search in turn without each of the main mods (up to 4), how much the price drops.
 const IMPACT_MODS = 4;
 let impactSeq = 0;
 async function runImpact() {
@@ -400,13 +400,13 @@ async function runImpact() {
   for (const i of idx) {
     const f = JSON.parse(JSON.stringify(state.filters));
     const m = f.mods[i];
-    // Мод с точным значением (уровни умений: ровно +4) — «без него» это уже другой товар: сравниваем с уровнем ниже
-    // (+3), это и есть цена уровня.
+    // A mod with an exact value (skill levels: exactly +4): "without it" is a different product, so compare with one level lower
+    // (+3); that is the price of the level.
     const step = m.max != null && m.max !== '' && Number(m.max) === Number(m.min) && Number(m.min) > 1;
     if (step) { m.min = Number(m.min) - 1; m.max = m.min; } else {
       m.enabled = false;
-      // Сравниваем с вещами, где этого мода НЕТ: если просто снять фильтр, среди дешёвых лотов почти все с ним же
-      // (ключевой мод носят все) — и вклад выходил «≈ 0».
+      // Compare with items that LACK this mod: simply dropping the filter leaves nearly all cheap listings with it anyway
+      // (everyone has the key mod), and the contribution came out "≈ 0".
       f.exclude = [...(f.exclude || []), { statId: m.statId, enabled: true, anyKind: true }];
     }
     try {
@@ -418,7 +418,7 @@ async function runImpact() {
       if (seq !== impactSeq) return;
       state.impact[i] = { error: errText(e) };
       if (isLimit(e)) {
-        // Остальные тоже упрутся в лимит — не ждём, помечаем сразу.
+        // The rest will hit the limit too: don't wait, mark them right away.
         for (const j of idx) if (state.impact[j] && state.impact[j].wait) state.impact[j] = { error: errText(e) };
         setStatus(errText(e), true);
         renderFilters();
@@ -436,12 +436,12 @@ function driveChip(i) {
   if (!d) return '';
   if (d.wait) return ' <span class="drive wait">…</span>';
   if (d.error) return ` <span class="drive" title="${esc(d.error)}">?</span>`;
-  // Без мода ничего не выставлено — без него такие вещи не продают (мод обязательный).
+  // Nothing listed without the mod: such items don't sell without it (the mod is mandatory).
   if (d.share == null) {
     return ` <span class="drive big" title="${esc(d.step != null ? t('Nothing listed with {n} instead', { n: d.step }) : t('Nothing listed without it'))}">${esc(t(d.step != null ? 'nothing lower listed' : 'essential'))}</span>`;
   }
   const pct = Math.round(d.share * 100);
-  // 1–2 лота без мода — не оценка: серым с «?».
+  // 1–2 listings without the mod is not an estimate: greyed out with "?".
   if (d.thin) return ` <span class="drive low" title="${esc(t('Too few listings to price it — one or two prices can be anything'))} · ${t('{n} listed', { n: d.total })}">${esc(t('≈{n}% of price', { n: pct }))}?</span>`;
   const without = d.step != null ? t('With {n}: {price}', { n: d.step, price: money(d.without) }) : t('Without it: {price}', { price: money(d.without) });
   const label = pct < 5 ? t('adds ~0') : d.step != null ? t('+1 ≈ {n}% of price', { n: pct }) : t('≈{n}% of price', { n: pct });
