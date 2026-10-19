@@ -1,6 +1,6 @@
-// Эссенции PoE 2 (данные poe2db.tw/us/Essence): какой мод дают и на каких классах вещей.
-// Lesser / обычная / Greater — магическая вещь → редкая + гарантированный мод (тир эссенции — диапазон).
-// Perfect — на редкой: убирает случайный мод и добавляет СВОЙ мод (другой, у каждого слота свой).
+// PoE 2 essences (data from poe2db.tw/us/Essence): which mod they give and on which item classes.
+// Lesser / regular / Greater — magic item → rare + a guaranteed mod (the essence tier is a range).
+// Perfect — on a rare: removes a random mod and adds ITS OWN mod (a different one, each slot has its own).
 
 const BODY = 'Body Armours', HELM = 'Helmets', GLOVES = 'Gloves', BOOTS = 'Boots', BELT = 'Belts', RING = 'Rings', AMULET = 'Amulets';
 const SHIELD = ['Shields', 'Bucklers'];
@@ -14,8 +14,8 @@ const MARTIAL = [...DMG_1H, ...DMG_2H];
 const CASTER = ['Foci', 'Wands'];
 const STAFF = ['Staves'];
 
-// tiers: [[классы, Lesser, обычная, Greater]] — диапазон null, если этот тир на классе не встаёт.
-// perfect: [[классы, мод]].
+// tiers: [[classes, Lesser, regular, Greater]] — range is null if that tier doesn't roll on the class.
+// perfect: [[classes, mod]].
 const ESSENCES = [
   { name: 'the Body', re: /^# to maximum life$/, tiers: [
     [[BODY, HELM, ...SHIELD, BELT], '30–39', '85–99', '100–119'], [[GLOVES, BOOTS], '30–39', '70–84', '85–99'],
@@ -62,9 +62,9 @@ const ESSENCES = [
 
 const TIER_NAMES = ['Lesser', 'Essence', 'Greater'];
 
-// Эссенция для мода-кандидата на этом классе вещей: { name: 'Essence of the Body', tiers: ['Lesser 30–39', …] } или null.
+// Essence for a candidate mod on this item class: { name: 'Essence of the Body', tiers: ['Lesser 30–39', …] } or null.
 function essenceFor(template, itemClass) {
-  if (template.includes(' / ')) return null; // гибриды эссенции не дают
+  if (template.includes(' / ')) return null; // essences don't give hybrids
   for (const e of ESSENCES) {
     if (!e.re.test(template)) continue;
     const row = e.tiers.find(([classes]) => classes.includes(itemClass));
@@ -75,7 +75,7 @@ function essenceFor(template, itemClass) {
   return null;
 }
 
-// Perfect-эссенции, которые встают на этот класс вещей: [{ name, mod }].
+// Perfect essences that can be applied to this item class: [{ name, mod }].
 function perfectFor(itemClass) {
   const out = [];
   for (const e of ESSENCES) {
