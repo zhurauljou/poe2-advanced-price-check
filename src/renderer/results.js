@@ -1,17 +1,17 @@
-// Лоты, карточка конкурента, пометки над фильтрами и сам поиск на трейде.
-// Части окна — обычные скрипты с общей областью видимости (index.html подключает их по порядку).
+// Listings, competitor card, notes above the filters and the trade search itself.
+// Window parts are plain scripts sharing one scope (index.html loads them in order).
 
-// ---- лоты ----
-// Лот и так в той валюте, в которой мы показываем, — «≈» не нужен.
+// ---- listings ----
+// The listing is already in the currency we display, so no "≈" is needed.
 function sameUnit(l) {
   const unit = moneyUnit(l.divine);
   return (unit === 'chaos' && l.currency === 'chaos') || (unit === 'div' && l.currency === 'divine') || (unit === 'ex' && l.currency === 'exalted');
 }
 
-// Сразу видно 5 самых дешёвых лотов — остальные по «Show all»: окно короче.
+// The 5 cheapest listings are visible right away, the rest via "Show all": a shorter window.
 const LOTS_SHOWN = 5;
 let showAllLots = false;
-// Свежий лот (≤ 1 дня) — подсвечен; залежавшийся (≥ 7 дней) — приглушён: такая цена, скорее всего, не продаёт.
+// A fresh listing (≤ 1 day) is highlighted; a stale one (≥ 7 days) is dimmed: that price most likely doesn't sell.
 const ageClass = (iso) => { const d = ageDays(iso); return d <= 1 ? ' fresh' : d >= 7 ? ' stale' : ''; };
 
 function renderResults(r) {
@@ -38,19 +38,19 @@ function renderResults(r) {
       const l = r.listings[+row.dataset.i];
       if (act.dataset.a === 'site') await openListing(r, l);
       else if (act.dataset.a === 'pin') {
-        // Карточка остаётся открытой, пока не открепят: можно навести на другие лоты и вернуться к ней.
+        // The card stays open until unpinned: you can hover other listings and come back to it.
         pinnedLot = pinnedLot && pinnedLot.l === l ? null : { l, row };
         box.querySelectorAll('.lot.pinned').forEach((x) => x.classList.remove('pinned'));
         if (pinnedLot) { row.classList.add('pinned'); showCompare(l, row); } else hideCompare();
       } else {
-        // Ошибка не должна теряться молча: «ничего не происходит» — худший исход.
+        // Errors mustn't be lost silently: "nothing happens" is the worst outcome.
         const sent = await window.pc.whisperGame(l.whisper).catch((err) => { setStatus(errText(err), true); return null; });
         if (sent === false) setStatus(t('Whisper copied — switch to the game and paste it into chat (Enter, Ctrl+V)'));
       }
       fit();
       return;
     }
-    // Мгновенный выкуп — шёпота нет: покупка через «Travel to Hideout» на трейде.
+    // Instant buyout has no whisper: purchase via "Travel to Hideout" on trade.
     if (!r.listings[+row.dataset.i].whisper) {
       await openListing(r, r.listings[+row.dataset.i]);
       fit();
@@ -68,8 +68,8 @@ function renderResults(r) {
   });
 }
 
-// Лот на сайте трейда: поиск с теми же фильтрами + аккаунт продавца — на странице почти только он.
-// Не вышло (лимит, ошибка) — общий поиск.
+// Listing on the trade site: search with the same filters + the seller's account, so the page shows almost only them.
+// Failed (limit, error): general search.
 async function openListing(r, l) {
   let url = r.url;
   if (l.account) {
@@ -79,18 +79,18 @@ async function openListing(r, l) {
   setStatus(l.whisper ? t('Opened on the trade site') : t('Opened on the trade site — use Travel to Hideout there'));
 }
 
-// ---- карточка конкурента при наведении на лот: что у него лучше / хуже, чем у нашей вещи ----
-// Значение мода — среднее чисел в строке по модулю («reduced» тоже: чем больше, тем сильнее мод).
+// ---- competitor card on listing hover: what's better / worse than on our item ----
+// Mod value = mean of the numbers in the line, by absolute value ("reduced" too: bigger means a stronger mod).
 function modValue(text) {
   const nums = (String(text).match(/\d+(?:\.\d+)?/g) || []).map(Number);
   return nums.length ? nums.reduce((s, v) => s + v, 0) / nums.length : null;
 }
 const propNum = (v) => { const m = String(v).replace(/,/g, '').match(/\d+(?:\.\d+)?/); return m ? +m[0] : null; };
 
-// Сравнение модов конкурента с нашей вещью — общее для карточки сбоку и «▲▼» в строке лота.
-// По самому стату, складывая все категории: «41% increased ES» (обычный) + «93%» (desecrated) против их «138%» —
-// игроку важна сумма, а не откуда мод. Ключ — id без категории («stat_4015621042»). Варианты (Legacy of Gold)
-// приходят у лота с id без номера варианта — их сверяем по тексту.
+// Comparing competitor mods with our item, shared by the side card and the "▲▼" in the listing row.
+// By the stat itself, summing all categories: "41% increased ES" (regular) + "93%" (desecrated) vs their "138%":
+// the player cares about the sum, not where the mod came from. Key = id without category ("stat_4015621042"). Variants (Legacy of Gold)
+// come on listings with an id lacking the variant number, so they're matched by text.
 function compareModel(t) {
   const mods = state.filters.mods;
   const key = (id) => id.replace(/^\w+\./, '');
@@ -100,11 +100,11 @@ function compareModel(t) {
   for (const m of mods) if (m.statId && m.tag !== 'pseudo' && !m.option) add(ours, key(m.statId), Math.abs(m.value || 0));
   for (const m of t.mods) if (m.statId) add(theirs, key(m.statId), Math.abs(modValue(m.text) || 0));
   const ourOptions = new Set(mods.filter((m) => m.option).map((m) => m.text.toLowerCase()));
-  // Минус в самом тексте («-11% to all Elemental Resistances») — обычно недостаток, но нишевым билдам (Doryani и т.п.)
-  // бо́льший минус как раз нужен: такое отличие не «лучше» и не «хуже» — «±, зависит от билда», в ▲▼ не считается.
+  // Minus in the text itself ("-11% to all Elemental Resistances") is usually a drawback, but niche builds (Doryani etc.)
+  // actually want a bigger minus: such a difference is neither "better" nor "worse" but "±, build-dependent", not counted in ▲▼.
   const penalty = new Set(mods.filter((m) => m.statId && /^-\d/.test(String(m.text).trim())).map((m) => key(m.statId)));
   const theirTexts = new Set(t.mods.map((m) => m.text.toLowerCase()));
-  // better / worse / same — мод есть у обоих; extra — у нас такого нет; '' — не сравнить (нет id стата).
+  // better / worse / same: both have the mod; extra: we don't have it; '': can't compare (no stat id).
   const classify = (m) => {
     if (ourOptions.has(m.text.toLowerCase())) return 'same';
     if (!m.statId) return '';
@@ -115,14 +115,14 @@ function compareModel(t) {
   };
   const missing = mods.filter((m) => m.statId && m.tag !== 'pseudo'
     && (m.option ? !theirTexts.has(m.text.toLowerCase()) : !theirs.has(key(m.statId))));
-  // Порядок наших модов — чтобы карточка конкурента шла в том же порядке, что и фильтры.
+  // Order of our mods, so the competitor card follows the same order as the filters.
   const order = new Map();
   mods.forEach((m) => { if (m.statId && !order.has(key(m.statId))) order.set(key(m.statId), order.size); });
   return { classify, missing, key, ours, order };
 }
 
-// «▲2 ▼1» в строке лота: сколько модов у конкурента лучше и хуже ваших — без наведения.
-// Сколько модов лота лучше / хуже, чем у вашей вещи (одинаковые моды на трейде — одна сумма, считаем один раз).
+// "▲2 ▼1" in the listing row: how many of the competitor's mods are better and worse than yours, without hovering.
+// How many listing mods are better / worse than on your item (identical mods on trade are one sum, counted once).
 const STRONGER = 2;
 function cmpCounts(l) {
   if (!l.tip || !state || !state.filters) return { better: 0, worse: 0 };
@@ -134,7 +134,7 @@ function cmpCounts(l) {
     if (!m.statId || seen.has(key(m.statId))) continue;
     seen.add(key(m.statId));
     const c = classify(m);
-    // Ключевой мод (уровни умений, главный мод слота) весит вдвое: +5 против ваших +4 — уже другая вещь.
+    // A key mod (skill levels, the slot's main mod) weighs double: +5 vs your +4 is already a different item.
     const ours = state.filters.mods.find((x) => x.statId && key(x.statId) === key(m.statId));
     const w = ours && ours.key ? 2 : 1;
     if (c === 'better') better += w;
@@ -143,9 +143,9 @@ function cmpCounts(l) {
   return { better, worse };
 }
 
-// Состояния вашей вещи и лота (Corrupted, Sanctified, Mirrored…): в строке лота — те, что отличаются от вашей вещи.
-// В строке лота — буква в своей колонке (ширина строки не позволяет слово, а колонки не должны скакать) и полоса слева;
-// полное название — в подсказке и наверху карточки.
+// States of your item and the listing (Corrupted, Sanctified, Mirrored…): the listing row shows those that differ from yours.
+// In the listing row: a letter in its own column (row width doesn't fit a word, and columns mustn't jump) and a left bar;
+// the full name is in the tooltip and at the top of the card.
 const STATE_SHORT = { Corrupted: 'C', Sanctified: 'S', Mirrored: 'M', Unidentified: 'U' };
 const diffStates = (l) => ((l.tip && l.tip.states) || []).filter((s) => !myStates().has(s));
 const stateRowClass = (l) => { const d = diffStates(l); return d.length ? ` st-${d[0].toLowerCase()}` : ''; };
@@ -157,8 +157,8 @@ function stateBadge(l) {
   return diffStates(l).map((s) => `<span class="lstate s-${s.toLowerCase()}" title="${esc(t('{state} — yours is not', { state: s }))}">${esc(STATE_SHORT[s] || s)}</span>`).join('');
 }
 
-// Состояния лота — наверху карточки, заметно: от них цена меняется сильнее, чем от роллов (освящённую или осквернённую
-// вещь уже не изменить). Отличие от вашей вещи — с пометкой.
+// Listing states at the top of the card, prominently: they change the price more than rolls (a sanctified or desecrated
+// item can't be changed anymore). Differences from your item are marked.
 function statesHtml(tip) {
   const list = tip.states || (tip.corrupted ? ['Corrupted'] : []);
   if (!list.length) return '';
@@ -166,7 +166,7 @@ function statesHtml(tip) {
   return `<div class="cmp-states">${list.map((s) => `<span class="cstate s-${s.toLowerCase()}${mine.has(s) ? ' same' : ''}">${esc(s)}${mine.has(s) ? '' : ` · ${esc(t('yours is not'))}`}</span>`).join('')}</div>`;
 }
 
-// ▲ и ▼ — каждая в своей колонке (пустая, если нуля), чтобы между строками ничего не сдвигалось.
+// ▲ and ▼ each in its own column (empty if zero), so nothing shifts between rows.
 function cmpBadge(l) {
   const { better, worse } = cmpCounts(l);
   const title = t('Modifiers better / worse than yours');
@@ -186,7 +186,7 @@ function showCompare(l, row) {
   const { item } = state;
   const { classify, missing: miss, key, ours, order } = compareModel(tip);
   const mark = { better: '▲', worse: '▼', extra: '+', same: '', diff: '±' };
-  // Совпадающие моды — в порядке нашей вещи, остальные (которых у нас нет) — в конце; у ▲▼ — наше значение.
+  // Matching mods in our item's order, the rest (ones we lack) at the end; for ▲▼, our value.
   const rank = (m) => (m.statId && order.has(key(m.statId)) ? order.get(key(m.statId)) : 1e3);
   const modLines = tip.mods.map((m, i) => ({ m, i })).sort((a, b) => rank(a.m) - rank(b.m) || a.i - b.i).map(({ m }) => {
     const cls = classify(m);
@@ -201,7 +201,7 @@ function showCompare(l, row) {
     const yours = cls === 'better' || cls === 'worse' ? `<span class="yours">${t('yours {x}', { x: fmt(ourProps.get(p.k)) })}</span>` : '';
     return `<div class="cm ${cls}">${mark[cls] ? `<i>${mark[cls]}</i>` : ''}${esc(p.k)}: <b>${esc(p.v)}</b>${yours}</div>`;
   });
-  // Гнёзда: число (◆ на каждое) и что в них вставлено; сравнение — с гнёздами вашей вещи.
+  // Sockets: count (◆ for each) and what's socketed; compared with your item's sockets.
   if (tip.sockets || item.sockets) {
     const n = tip.sockets || 0;
     const cls = compareClass(n, item.sockets || 0);
@@ -224,24 +224,24 @@ function showCompare(l, row) {
       ${missing ? `<div class="cmp-miss">${t("Yours has, theirs doesn't:")}</div>${missing}` : ''}
       <div class="cmp-legend"><span class="better">▲ ${t('better')}</span> · <span class="worse">▼ ${t('worse')}</span> · <span class="extra">+ ${t("you don't have")}</span> — ${t('than your item')}${tip.mods.some((m) => classify(m) === 'diff') ? ` · <span class="diff">± ${t('depends on the build')}</span>` : ''}</div>
     </div>`;
-  // Карточка — в отдельном окне сбоку (не закрывает оверлей), напротив строки лота.
+  // The card is in a separate side window (doesn't cover the overlay), opposite the listing row.
   window.pc.compareShow(html, row.getBoundingClientRect().top);
 }
 
-let pinnedLot = null; // { l, row } — закреплённая карточка конкурента
+let pinnedLot = null; // { l, row }: the pinned competitor card
 function hideCompare() {
   window.pc.compareHide();
 }
 
-// Фильтры поменяли после поиска — кнопка Search подсвечивается: результат на экране уже не про них.
+// Filters changed after the search: the Search button is highlighted, the result on screen no longer matches them.
 function markDirty() {
-  // Фильтры поменялись — прежний «вклад модов» больше не про них.
+  // Filters changed: the previous "mod contributions" no longer apply.
   if (state.impact) { impactSeq++; state.impact = null; document.querySelectorAll('#mods .drive').forEach((x) => x.remove()); }
   const b = $('search');
   if (!b.classList.contains('dirty')) { b.classList.add('dirty'); b.textContent = t('Search · filters changed'); }
 }
 
-// Пометка над фильтрами после автоослабления: dropped — строки (текст мода) или { t, v } для перевода.
+// Note above the filters after auto-relaxing: dropped = lines (mod text) or { t, v } for translation.
 let lastNotes = null;
 function renderNotes() {
   if (!lastNotes) return;
@@ -255,7 +255,7 @@ function renderNotes() {
   setNote(notes.join('\n'));
 }
 
-// Чем сейчас заполнен блок цены — чтобы перерисовать его при смене языка.
+// What the price block is currently filled with, to redraw it on language change.
 let heroRender = null;
 
 async function runSearch(relax = false) {
@@ -277,12 +277,12 @@ async function runSearch(relax = false) {
       state.filters = r.filters;
       renderFilters();
       renderTooltip();
-      renderBanner(); // ослабление могло снять точную базу
+      renderBanner(); // relaxing may have dropped the exact base
     }
     lastNotes = { dropped: r.dropped, relaxStopped: r.relaxStopped, unpriced: r.unpriced };
     renderNotes();
     rates = r.rates || rates;
-    setStatus(''); // убрать «ждём лимит», если было
+    setStatus(''); // clear "waiting for limit" if it was shown
     state.tradeUrl = r.url;
     $('open').hidden = false;
     $('copyLink').hidden = false;
@@ -290,15 +290,15 @@ async function runSearch(relax = false) {
     heroRender();
     recordPrice(state.est);
     loadElements(seq, false);
-    // Советы по крафту считали «продать как есть» без оценки (вкладку открыли до конца поиска — в пошаговом крафте
-    // всегда) или по прежним фильтрам: пересчитываем — сразу, если вкладка открыта, иначе при открытии.
+    // Craft advice was computed as "sell as is" without an estimate (tab opened before the search finished; in step-by-step crafting
+    // always) or with the old filters: recompute, right away if the tab is open, otherwise when it opens.
     if (craftFor === state || (craftFor === null && !$('tab-craft').hidden)) { craftFor = null; if (!$('tab-craft').hidden) loadCraft(); }
   } catch (e) {
     if (seq !== searchSeq) return;
     $('results').hidden = true;
     elementAlts = null;
     if ($('elements')) $('elements').hidden = true;
-    // Лимит трейда: ждём, пока освободится, и ищем снова сами (та же вещь, окно открыто) — с отсчётом.
+    // Trade rate limit: wait until it frees up and search again automatically (same item, window open), with a countdown.
     if (isLimit(e)) {
       const ms = await window.pc.limitWait().catch(() => 0);
       if (seq !== searchSeq) return;
