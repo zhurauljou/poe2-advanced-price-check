@@ -1,9 +1,9 @@
-// Язык интерфейса (English / Русский) — общий для главного процесса (require) и окон (<script> до частей окна).
-// Ключ — исходная английская строка, {name} — подстановки. Нет перевода — показываем ключ как есть.
-// Игровые названия (предметы, базы, моды, валюта, омены, эссенции, лиги) не переводим: игроки знают их по-английски.
-// Значение-массив — формы по числу {n}: в EN [одна, много], в RU [1, 2–4, 5+] (лот / лота / лотов).
+// UI language (English / Русский) — shared by the main process (require) and windows (<script> before the window parts).
+// Key — the original English string, {name} — substitutions. No translation — the key is shown as is.
+// Game names (items, bases, mods, currency, omens, essences, leagues) are not translated: players know them in English.
+// An array value — plural forms by {n}: in EN [one, many], in RU [1, 2–4, 5+] (лот / лота / лотов).
 (function (root) {
-  // Английские формы единственного числа для ключей с {n}.
+  // English singular forms for keys with {n}.
   const EN = {
     'only {n} similar listings': ['only {n} similar listing', 'only {n} similar listings'],
     '{n} free prefixes': ['{n} free prefix', '{n} free prefixes'],
@@ -13,7 +13,7 @@
     '+{n} mods': ['+{n} mod', '+{n} mods'],
     '{n} listings': ['{n} listing', '{n} listings'],
     'Only {n} listings like the goal — too few to judge the craft by': ['Only {n} listing like the goal — too few to judge the craft by', 'Only {n} listings like the goal — too few to judge the craft by'],
-    'max roll': 'max', // значок «почти максимальный ролл» — коротко
+    'max roll': 'max', // "almost max roll" badge — short
     '{n} level {lvl}+ characters on poe.ninja use this': ['{n} level {lvl}+ character on poe.ninja uses this', '{n} level {lvl}+ characters on poe.ninja use this'],
     'Check other elements ({n} searches)': ['Check other elements ({n} search)', 'Check other elements ({n} searches)'],
     '{n} listings in other currencies are not counted: no poe.ninja exchange rates for this league yet': ['{n} listing in another currency is not counted: no poe.ninja exchange rates for this league yet', '{n} listings in other currencies are not counted: no poe.ninja exchange rates for this league yet'],
@@ -21,7 +21,7 @@
   };
 
   const RU = {
-    // ---- окно: вкладки, шапка, подвал ----
+    // ---- window: tabs, header, footer ----
     League: 'Лига',
     'Close (Esc)': 'Закрыть (Esc)',
     Close: 'Закрыть',
@@ -43,7 +43,7 @@
     '{n}h': '{n}ч',
     '{n}d': '{n}д',
 
-    // ---- подсказка предмета ----
+    // ---- item tooltip ----
     'Searching by this — click to ignore': 'Ищем по этому — клик: не учитывать',
     'Click to search by this': 'Клик: искать по этому',
     'level ≥': 'уровень ≥',
@@ -55,7 +55,7 @@
     'Ignored — any': 'Не учитываем — любые',
     'click:': 'клик:',
 
-    // ---- цена ----
+    // ---- price ----
     '{x} per {cur}': '{x} за 1 {cur}',
     'Price per unit': 'Цена за штуку',
     'Stack ×{n}': 'Стак ×{n}',
@@ -120,7 +120,7 @@
     'now any {k} of {n} {what}': 'теперь любые {k} из {n} ({what})',
     'now any {k} of {n} options': 'теперь любые {k} из {n} вариантов',
 
-    // ---- фильтры ----
+    // ---- filters ----
     'Price impact:': 'Влияние на цену:',
     minor: 'минимальное',
     low: 'низкое',
@@ -150,7 +150,7 @@
     'Match ≥': 'Совпадает ≥',
     'of {n} checked': 'из {n} отмеченных',
 
-    // ---- лоты ----
+    // ---- listings ----
     'Copy whisper to seller': 'Скопировать шёпот продавцу',
     'Instant buyout — opens the trade site (Travel to Hideout)': 'Мгновенный выкуп — открывает трейд (Travel to Hideout)',
     'Instant buyout': 'Мгновенный выкуп',
@@ -164,7 +164,7 @@
     'Opened on the trade site — use Travel to Hideout there': 'Открыто на трейде — там жмите Travel to Hideout',
     'Modifiers better / worse than yours': 'Моды лучше / хуже ваших',
 
-    // ---- карточка конкурента ----
+    // ---- competitor card ----
     'yours {x}': 'у вас {x}',
     "Yours has, theirs doesn't:": 'У вашей есть, у этой нет:',
     better: 'лучше',
@@ -172,7 +172,7 @@
     "you don't have": 'у вас нет',
     'than your item': 'чем у вашей вещи',
 
-    // ---- спрос (poe.ninja) ----
+    // ---- demand (poe.ninja) ----
     'Popular builds': 'Популярные билды',
     'Loading from poe.ninja…': 'Загружаем с poe.ninja…',
     'No poe.ninja data': 'Нет данных poe.ninja',
@@ -203,7 +203,7 @@
     'No characters on poe.ninja wear this combination.': 'На poe.ninja нет персонажей с такой комбинацией.',
     'Not on poe.ninja:': 'Нет на poe.ninja:',
 
-    // ---- крафт ----
+    // ---- craft ----
     'Loading mod pool…': 'Загружаем пул модов…',
     'Mod pool not loaded': 'Пул модов не загрузился',
     'Search for your item with this modifier added (lowest roll of the tier)': 'Поиск вашей вещи с этим модом (нижний ролл тира)',
@@ -240,7 +240,7 @@
       'Пул модов: файлы игры (RePoE). Шансов выпадения нет — в файлах PoE 2 нет весов модов.',
     '% = share of those builds using the modifier (poe.ninja). «price?» — what your item would cost with it.':
       '% — доля этих билдов с модом (poe.ninja). «цена?» — сколько стоила бы вещь с ним.',
-    // советы (craft.js)
+    // advice (craft.js)
     'Craft tips are for rare and magic items.': 'Советы по крафту — только для редких и магических вещей.',
     'Turn on "Advanced Mod Descriptions" in the game options (or copy with Ctrl+Alt+C) to get craft tips.':
       'Включите «Advanced Mod Descriptions» в настройках игры (или копируйте через Ctrl+Alt+C), чтобы получить советы по крафту.',
@@ -276,7 +276,7 @@
       'Omen of Sinistral / Dextral Crystallisation — Perfect-эссенция уберёт только префикс / только суффикс',
     'Quality to 20% (currently {n}%) — {currency}': 'Качество до 20% (сейчас {n}%) — {currency}',
 
-    // ---- главный процесс: статусы, ошибки трейда, трей, уведомления ----
+    // ---- main process: statuses, trade errors, tray, notifications ----
     'Failed to load data: {msg}': 'Не удалось загрузить данные: {msg}',
     'League list is not loaded yet — check your internet connection': 'Список лиг ещё не загружен — проверьте подключение к интернету',
     'No answer from {host} in {n} s': '{host} не ответил за {n} с',
@@ -639,7 +639,7 @@
     'Update v{v} is available — click to open.': 'Доступно обновление v{v} — нажмите, чтобы открыть.',
     'Update v{v} is downloaded — click to install.': 'Обновление v{v} скачано — нажмите, чтобы установить.',
 
-    // ---- окно «Updates» ----
+    // ---- "Updates" window ----
     Updates: 'Обновления',
     'Installed:': 'Установлена:',
     "What's new ↗": 'Что нового ↗',
@@ -662,7 +662,7 @@
 
   let lang = 'en';
 
-  // Форма по числу: RU — 1 / 2–4 / 5+ (11–14 — как 5+), EN — 1 / остальные.
+  // Plural form: RU — 1 / 2–4 / 5+ (11–14 — like 5+), EN — 1 / the rest.
   function plural(n, one, few, many) {
     const a = Math.abs(n) % 100;
     const b = a % 10;
