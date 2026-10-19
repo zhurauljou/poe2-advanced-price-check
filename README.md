@@ -1,92 +1,92 @@
 # PoE 2 Price Checker
 
-Оверлей для Windows: наведите курсор на предмет в Path of Exile 2, нажмите **Ctrl+E**, и поверх игры
-появится окно с ценой.
+A Windows overlay: hover over an item in Path of Exile 2, press **Ctrl+E**, and a window with the price
+appears on top of the game.
 
-- **Валюта и биржевые предметы** (сферы, руны, эссенции, катализаторы и т.п.) оцениваются по poe.ninja:
-  цена за штуку и за стак, изменение за 7 дней, объём торгов.
-- **Вкладка Demand** — спрос по данным poe.ninja: какие билды носят такой предмет, самые популярные базы и моды
-  этого класса вещей; база и моды вашего предмета подсвечены.
-- **Экипировка, уники, камни** ищутся на официальном трейде (`pathofexile.com/trade2`). Моды предмета
-  становятся фильтрами, их можно включать и выключать и менять минимумы. Enter запускает поиск заново.
-  Клик по лоту копирует шёпот продавцу.
+- **Currency and exchange items** (orbs, runes, essences, catalysts, etc.) are priced via poe.ninja:
+  price per unit and per stack, 7-day change, trade volume.
+- **Demand tab** — demand based on poe.ninja data: which builds use such an item, the most popular bases and mods
+  for this item class; your item's base and mods are highlighted.
+- **Gear, uniques, gems** are searched on the official trade site (`pathofexile.com/trade2`). The item's mods
+  become filters; you can toggle them on and off and change minimums. Enter reruns the search.
+  Clicking a listing copies a whisper to the seller.
 
-## Скачать
+## Download
 
-**[⬇ Последняя версия — Releases](https://github.com/zhurauljou/poe2-advanced-price-check/releases/latest)** —
-файл `PoE-2-Price-Checker-Setup-<версия>.exe`. Это обычный установщик для Windows, Node.js не нужен.
-Установщик не подписан, поэтому Windows SmartScreen может предупредить о неизвестном издателе:
-«Подробнее» → «Выполнить в любом случае».
+**[⬇ Latest version — Releases](https://github.com/zhurauljou/poe2-advanced-price-check/releases/latest)** —
+the file `PoE-2-Price-Checker-Setup-<version>.exe`. It is a regular Windows installer; Node.js is not required.
+The installer is not signed, so Windows SmartScreen may warn about an unknown publisher:
+"More info" → "Run anyway".
 
-**Обновления приходят сами:** программа проверяет GitHub при запуске и раз в 6 часов, скачивает новую версию
-в фоне и ставит её при выходе или по пункту «Restart to update» в трее.
+**Updates arrive on their own:** the program checks GitHub at startup and every 6 hours, downloads the new version
+in the background and installs it on exit or via the "Restart to update" item in the tray.
 
-Программа живёт в трее. В меню иконки — лига, **Settings…** (окно настроек, открывается и двойным кликом по иконке
-или повторным запуском программы), **Refresh game data** (после патча игры: свежие моды и базы сразу) и обновление.
+The program lives in the tray. The icon menu has the league, **Settings…** (the settings window; it also opens on a double-click on the icon
+or when the program is launched again), **Refresh game data** (after a game patch: fresh mods and bases right away) and update.
 
-В окне настроек:
-- **Hotkey** — любая комбинация с Ctrl или Alt (нажмите кнопку и затем сочетание). Игра видит вторую клавишу
-  комбинации, поэтому она не должна ничего делать в игре: например, D — шаг вправо, и сундук закрывается;
-- **Hotkey only in Path of Exile** — горячая клавиша работает только в игре (по умолчанию), в остальных программах остаётся их;
-- **Start with Windows** — запускаться вместе с Windows;
-- лига, язык интерфейса и язык клиента игры;
-- **Interface size** — масштаб окна (80–150%), для мониторов 4K;
-- **Reset window position** — снова открывать окно у курсора, а не там, куда его перетащили.
+In the settings window:
+- **Hotkey** — any combination with Ctrl or Alt (press the button and then the combination). The game sees the second key
+  of the combination, so it must not do anything in the game: for example, D is a step to the right, and the chest closes;
+- **Hotkey only in Path of Exile** — the hotkey works only in the game (default); other programs keep their own;
+- **Start with Windows** — launch together with Windows;
+- league, interface language and game client language;
+- **Interface size** — window scale (80–150%), for 4K monitors;
+- **Reset window position** — open the window at the cursor again, instead of where it was dragged.
 
-Переключатели поиска «Buyable now» и «Allow 1 minor mod missing» запоминаются для следующих вещей.
+The search toggles "Buyable now" and "Allow 1 minor mod missing" are remembered for the next items.
 
-## Запуск из исходников
+## Running from source
 
-Нужен Node.js 22+. Запустите `Start.bat` (при первом запуске он сам выполнит `npm install`) или `npm install && npm start`.
-Собрать установщик: `npm run dist` (результат — в `dist/`). Тесты: `npm test` — идут и в GitHub Actions на каждый пуш.
-Тесты крафта работают на снимке данных игры (`test/fixtures/data`); после патча: запустить программу (обновит кэш),
-проверить сценарии на свежих данных `CRAFT_LIVE=1 npm test` и обновить снимок `node scripts/snapshot-test-data.js`.
-Что изменилось в игре после патча — `npm run check-patch` (раз в неделю его запускает и GitHub, при изменениях — issue).
+Requires Node.js 22+. Run `Start.bat` (on first launch it runs `npm install` itself) or `npm install && npm start`.
+Build the installer: `npm run dist` (output goes to `dist/`). Tests: `npm test` — they also run in GitHub Actions on every push.
+Craft tests run on a snapshot of game data (`test/fixtures/data`); after a patch: launch the program (it will refresh the cache),
+check the scenarios on fresh data with `CRAFT_LIVE=1 npm test` and update the snapshot with `node scripts/snapshot-test-data.js`.
+What changed in the game after a patch — `npm run check-patch` (GitHub also runs it once a week and opens an issue on changes).
 
-Снимки окна (локально): `npm run visual` снимает 11 экранов демо без сети и сравнивает с эталонами попиксельно —
-отличия в `test/visual/out/*-diff.png`. Первый раз и после патча — `npm run visual -- --record` (записать ответы сети и
-эталоны), после намеренной правки вида — `npm run visual -- --update`. Записи и эталоны в git не хранятся.
+Window screenshots (local): `npm run visual` captures 11 demo screens without network access and compares them with references pixel by pixel —
+the differences go to `test/visual/out/*-diff.png`. The first time and after a patch — `npm run visual -- --record` (record network responses and
+references); after an intentional change of the look — `npm run visual -- --update`. Recordings and references are not stored in git.
 
-## Выпуск новой версии
+## Releasing a new version
 
-1. Поднять `version` в `package.json` и закоммитить (незакоммиченных изменений быть не должно).
-2. `npm run release -- "что нового"` — прогонит тесты, соберёт установщик, запушит ветку и тег `v<версия>`
-   на этот коммит и выложит релиз на GitHub (нужен
-   [GitHub CLI](https://cli.github.com/), вошедший в аккаунт: `gh auth login`).
+1. Bump `version` in `package.json` and commit (there must be no uncommitted changes).
+2. `npm run release -- "what's new"` — runs the tests, builds the installer, pushes the branch and the tag `v<version>`
+   to this commit and publishes the release on GitHub (requires
+   [GitHub CLI](https://cli.github.com/), logged in to an account: `gh auth login`).
 
-Установленные программы увидят релиз по `latest.yml` и обновятся сами.
+Installed copies will see the release via `latest.yml` and update themselves.
 
-**Важно:** в настройках игры выберите режим экрана *Windowed Fullscreen* (оконный полноэкранный).
-В эксклюзивном полноэкранном режиме Windows не показывает окна поверх игры.
+**Important:** in the game settings choose the *Windowed Fullscreen* display mode.
+In exclusive fullscreen mode Windows does not show windows on top of the game.
 
-## Управление
+## Controls
 
-| Клавиша | Действие |
+| Key | Action |
 |---|---|
-| Ctrl+E | Оценить предмет под курсором (меняется в настройках) |
-| Esc | Закрыть оверлей |
-| Enter | Повторить поиск с текущими фильтрами |
+| Ctrl+E | Price the item under the cursor (configurable in settings) |
+| Esc | Close the overlay |
+| Enter | Repeat the search with the current filters |
 
-## Проверка без игры
+## Testing without the game
 
 ```
-npx electron . --demo=путь\к\item.txt --shot=out.png
+npx electron . --demo=path\to\item.txt --shot=out.png
 ```
 
-Здесь `item.txt` — текст предмета, скопированный из игры по Ctrl+C. С флагом `--shot` программа сохраняет
-скриншот оверлея и завершается.
+Here `item.txt` is the item text copied from the game with Ctrl+C. With the `--shot` flag the program saves
+a screenshot of the overlay and exits.
 
-## Ограничения
+## Limitations
 
-- Клиент игры: английский и русский (определяется автоматически по тексту предмета, можно выбрать в настройках).
-  Язык интерфейса программы выбирается отдельно: English / Русский.
-- Русский клиент: строки модов переводятся в английские по справочнику трейда, поэтому крафт и спрос работают так же,
-  как с английским. Строку, которой нет в справочнике (флейвор, редкие служебные строки), программа оставляет как есть.
-- Запросы к трейду ограничены сервером GGG (примерно 4 поиска за 10 секунд). Программа сама выдерживает паузы.
+- Game client: English and Russian (detected automatically from the item text; can be chosen in settings).
+  The program's interface language is chosen separately: English / "Русский".
+- Russian client: mod lines are translated into English using the trade site's reference data, so crafting and demand work the same
+  as with the English client. A line that is not in the reference data (flavour text, rare service lines) is left as is.
+- Requests to the trade site are rate-limited by the GGG server (roughly 4 searches per 10 seconds). The program waits out the pauses itself.
 
-## Данные
+## Data
 
-Оценка весов модов (шансы в советах крафта) — `data/weights.json`, собрана по лотам трейда (не данные игры).
+Mod weight estimates (chances in the craft advice) — `data/weights.json`, collected from trade listings (not game data).
 
-- Цены и спрос — [poe.ninja](https://poe.ninja), моды и базы — [RePoE](https://repoe-fork.github.io/poe2), поиск — официальный трейд GGG.
-- Названия предметов на других языках клиента и служебные строки — из [Exiled Exchange 2](https://github.com/Kvan7/Exiled-Exchange-2) (MIT).
+- Prices and demand — [poe.ninja](https://poe.ninja), mods and bases — [RePoE](https://repoe-fork.github.io/poe2), search — the official GGG trade site.
+- Item names in other client languages and service lines — from [Exiled Exchange 2](https://github.com/Kvan7/Exiled-Exchange-2) (MIT).
