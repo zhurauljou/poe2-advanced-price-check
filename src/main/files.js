@@ -1,10 +1,10 @@
-// Файлы программы в %APPDATA%\PoE 2 Price Checker: атомарная запись и папка кэша данных.
+// Program files in %APPDATA%\PoE 2 Price Checker: atomic writes and the data cache folder.
 const { app } = require('electron');
 const fs = require('fs');
 const path = require('path');
 
-// Запись через временный файл и переименование: сбой или установка обновления посреди записи не оставят обрезанный
-// JSON (раньше битый settings.json молча сбрасывался в настройки по умолчанию, битый кэш ломал работу без сети).
+// Write via a temp file and rename: a crash or an update install mid-write won't leave a truncated
+// JSON (a broken settings.json used to be silently reset to defaults, a broken cache broke offline use).
 function writeFileAtomic(file, data) {
   fs.mkdirSync(path.dirname(file), { recursive: true });
   const tmp = `${file}.${process.pid}.tmp`;
@@ -12,8 +12,8 @@ function writeFileAtomic(file, data) {
   fs.renameSync(tmp, file);
 }
 
-// Кэш справочников (RePoE, трейд, названия на языке клиента). Не «cache»: на Windows (без учёта регистра) это та же
-// папка, что HTTP-кэш Chromium («Cache»), — его очистка стирала бы и наши справочники. Старые файлы переносим один раз.
+// Reference data cache (RePoE, trade, names in the client language). Not "cache": on Windows (case-insensitive) it's
+// the same folder as Chromium's HTTP cache ("Cache") — clearing that would wipe our data too. Old files are moved once.
 const OLD_FILES = /^(repoe-.*|stats(-\w+)?|items|static|leagues)\.json$|^ee2-.*\.ndjson$/;
 let dir = null;
 function cacheDir() {
