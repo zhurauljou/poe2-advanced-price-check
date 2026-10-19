@@ -581,8 +581,11 @@ footer::before { bottom: 0; top: -12px; -webkit-backdrop-filter: blur(16px); bac
 .ps-main { min-width: 0; }
 /* "Ticket" tear line: a dotted separator (dots, not a dashed border) with small notches cut into the card at its ends —
    the right column reads as the stub with the price. The notches are a mask, so whatever is behind shows through. */
-.ps-side { padding-left: 8px; text-align: right; /* dots in the background colour behind the card — punched holes, like the notches */
-  background: radial-gradient(circle, var(--bg) 1.2px, transparent 1.6px) left top / 3px 6px repeat-y; }
+.ps-side { padding-left: 8px; text-align: right; }
+/* Perforation: dots in the background colour behind the card (punched holes, like the notches), on the same x as the
+   notches (--cut) and centred on it; inset from the notches so the line starts and ends just inside them. */
+.plan > li.has-side::after { content: ""; position: absolute; top: 6px; bottom: 6px; right: calc(var(--cut) - 1.5px); width: 3px; pointer-events: none;
+  background: radial-gradient(circle, var(--bg) 1.2px, transparent 1.6px) center top / 3px 6px repeat-y; }
 .plan > li.has-side { --cut: calc(9px + 88px);
   -webkit-mask: radial-gradient(circle 5px at calc(100% - var(--cut)) 0, transparent 98%, #000 100%),
                 radial-gradient(circle 5px at calc(100% - var(--cut)) 100%, transparent 98%, #000 100%);

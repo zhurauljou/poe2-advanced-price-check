@@ -953,6 +953,12 @@ function planGoal(mine, candidates, max, want, magic, magicFree = [], itemClass 
     for (const x of junk) filled[x.side]--;
   }
   if (essenceMod) filled[essenceMod.side]++; // the essence has already taken a slot on its side
+  // Every addition is a one-attempt lottery (odds unknown, a miss stays) and together they fill every free slot on both
+  // sides: the final item is random mods from each side's pool either way, so a side omen changes nothing — a roll that
+  // lands on the other side is progress there, not a loss. Side omens are dropped (rolls are not halved in the cost).
+  const toAdd = add.filter((c) => c !== essenceMod);
+  const lotteryFill = toAdd.length > 0 && toAdd.every((c) => c.chanceUnknown && !c.craftedOnly && !c.desecrateOnly)
+    && ['prefix', 'suffix'].every((s) => toAdd.filter((c) => c.side === s).length === max[s] - filled[s]);
   // 2. Add the wanted ones: first the side with the most in-demand mod.
   for (const side of ['prefix', 'suffix'].sort((x, y) => top(y) - top(x))) {
     const into = add.filter((c) => c.side === side && c !== essenceMod);
@@ -960,7 +966,7 @@ function planGoal(mine, candidates, max, want, magic, magicFree = [], itemClass 
     const S = side === 'prefix' ? 'Sinistral' : 'Dextral';
     // Is there room on the other side: if not, Exalted lands here even without an omen — the side omen is not needed.
     const other = side === 'prefix' ? 'suffix' : 'prefix';
-    const otherOpen = max[other] - filled[other] > 0;
+    const otherOpen = max[other] - filled[other] > 0 && !lotteryFill;
     const sideOmen = otherOpen ? `Omen of ${S} Exaltation` : null;
     // Which Exalted to use (regular / Greater / Perfect) and with which omens — the window picks by currency prices.
     // onSide / onItem — how many mods are already there (all wanted: junk removed earlier) — determines how to remove a miss.
