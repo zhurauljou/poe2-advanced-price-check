@@ -1,4 +1,4 @@
-// Ввод за пользователя: нажатия клавиш в игре (uiohook) и буфер обмена (копирование предмета, шёпот продавцу).
+// Input on the user's behalf: key presses in the game (uiohook) and the clipboard (copying an item, whispering a seller).
 const { clipboard, ClipboardItem } = require('electron');
 const { uIOhook, UiohookKey } = require('uiohook-napi');
 const winapi = require('./winapi');
@@ -6,8 +6,8 @@ const { log } = require('./log');
 
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 
-// Ctrl+C «по-человечески»: игра опрашивает клавиатуру раз в кадр и мгновенное нажатие (keyTap) может
-// пропустить — держим C нажатой ~30 мс.
+// Ctrl+C "like a human": the game polls the keyboard once per frame and can miss an instant press (keyTap) —
+// hold C down for ~30 ms.
 async function pressCopy() {
   uIOhook.keyToggle(UiohookKey.Ctrl, 'down');
   await sleep(15);
@@ -26,12 +26,12 @@ async function tap(key, mod) {
   if (mod) { await sleep(10); uIOhook.keyToggle(mod, 'up'); }
 }
 
-// Буфер обмена в Electron 44 асинхронный (как navigator.clipboard): readText / writeText / read / write — промисы.
-// Снимок буфера пользователя — все типы сразу (текст, HTML, картинка…): ClipboardItem из read() читает данные
-// лениво, после нашей записи там было бы уже другое. Скопированные в Проводнике файлы в read() не попадают.
-// Берём только настоящее содержимое (текст, HTML, RTF, картинки). Служебные форматы Windows («electron
-// application/osclipboard;format="DataObject"», «Ole Private Data») read() отдаёт и у пустого буфера — «вернуть» их
-// значило бы стереть шёпот или текст предмета и оставить буфер без текста.
+// The clipboard in Electron 44 is async (like navigator.clipboard): readText / writeText / read / write return promises.
+// Snapshot of the user's clipboard — all types at once (text, HTML, image…): a ClipboardItem from read() reads its data
+// lazily, so after our write it would hold something else. Files copied in Explorer don't show up in read().
+// Only real content is kept (text, HTML, RTF, images). Windows service formats ('electron
+// application/osclipboard;format="DataObject"', 'Ole Private Data') come from read() even for an empty clipboard — "restoring" them
+// would wipe the whisper or the item text and leave the clipboard with no text.
 const KEEP = (type) => /^(text\/(plain|html|rtf)|image\/)/.test(type);
 async function saveClipboard() {
   try {
@@ -52,16 +52,16 @@ async function restoreClipboard(snap) {
   try { await clipboard.write(snap.map((d) => new ClipboardItem(d))); } catch (e) { log('clipboard restore', e.message); }
 }
 
-// Шёпот продавцу в игре: переключаемся в игру, открываем чат (Enter) и вставляем текст (Ctrl+V).
-// Отправляет сам игрок — своим Enter: одно действие на сервере = одно нажатие игрока.
-// Вставили — возвращаем прежний буфер; не вышло (игры нет) — шёпот остаётся в буфере, его можно вставить руками.
+// Whisper to a seller in the game: switch to the game, open chat (Enter) and paste the text (Ctrl+V).
+// The player sends it with their own Enter: one server action = one player key press.
+// Pasted — restore the previous clipboard; failed (no game) — the whisper stays in the clipboard to paste by hand.
 async function whisperInGame(text, gameHwnd) {
   const prev = await saveClipboard();
   await clipboard.writeText(text);
   if (!gameHwnd) { log('whisper: no game window (press the hotkey in the game first)'); return false; }
-  // Windows не всегда отдаёт фокус с первого раза — пробуем до секунды. Со второй попытки — с нажатым Alt: Windows
-  // запрещает переключать окна процессу, который не считает активным, а нажатие клавиши этот запрет снимает
-  // (Alt в игре лишь на миг подсвечивает предметы на земле).
+  // Windows doesn't always hand over focus on the first try — retry for up to a second. From the second try, with Alt held: Windows
+  // forbids window switching to a process it doesn't consider active, and a key press lifts that restriction
+  // (in the game Alt only briefly highlights items on the ground).
   let focused = false;
   for (let i = 0; i < 10 && !focused; i++) {
     if (i > 0) uIOhook.keyToggle(UiohookKey.Alt, 'down');
@@ -71,18 +71,18 @@ async function whisperInGame(text, gameHwnd) {
     focused = winapi.foreground() === gameHwnd;
   }
   if (!focused) { log('whisper: could not focus the game window'); return false; }
-  await sleep(200); // игра, вернувшись из фона, принимает ввод не сразу
+  await sleep(200); // the game, back from the background, doesn't accept input right away
   await tap(UiohookKey.Enter);
   await sleep(150);
   await tap(UiohookKey.V, UiohookKey.Ctrl);
   log(`whisper: pasted (${text.length} chars)`);
-  // Прежний буфер — с запасом: игра, вернувшаяся из фона, могла бы вставить уже его, а не шёпот.
+  // Previous clipboard — with a margin: the game, back from the background, might paste it instead of the whisper.
   setTimeout(() => restoreClipboard(prev), 1500);
   return true;
 }
 
-// Нажимаем Ctrl+C за пользователя и ждём, пока игра положит текст предмета в буфер.
-// Не ответила за 400 мс — пробуем ещё раз.
+// Press Ctrl+C on the user's behalf and wait for the game to put the item text in the clipboard.
+// No response within 400 ms — try again.
 async function copyItem() {
   const prev = await saveClipboard();
   await clipboard.writeText('');
@@ -95,7 +95,7 @@ async function copyItem() {
     }
     if (!text) log(`copy: clipboard empty after attempt ${attempt + 1}`);
   }
-  // Возвращаем пользователю прежний буфер — со всеми форматами, а не только текст (картинку раньше стирали).
+  // Give the user back their previous clipboard — with all formats, not just text (images used to be wiped).
   setTimeout(() => restoreClipboard(prev), 50);
   return text;
 }
