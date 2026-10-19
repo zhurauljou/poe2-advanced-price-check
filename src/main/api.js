@@ -1,4 +1,4 @@
-// Сеть: официальный трейд PoE 2 (с соблюдением лимитов) и poe.ninja.
+// Network: the official PoE 2 trade (respecting rate limits) and poe.ninja.
 const { net, app } = require('electron');
 const { AsyncLocalStorage } = require('async_hooks');
 const fs = require('fs');
@@ -11,26 +11,26 @@ const UA = `poe2-price-checker/${VERSION} (personal desktop tool)`;
 const TRADE = 'https://www.pathofexile.com';
 const NINJA = 'https://poe.ninja/poe2/api';
 
-// ---------- лимиты трейда ----------
-// Сервер присылает правила вида «5:10:60» (5 запросов за 10 с, иначе бан на 60 с) отдельно для
-// поиска и для выдачи лотов. Помним свои запросы и ждём, пока не будет места во всех окнах.
-// Сервер дополнительно присылает текущий счёт в каждом окне (X-Rate-Limit-Ip-State) — он учитывает и запросы
-// других копий программы / сайта трейда с этого IP. Если до предела остался один запрос — выжидаем окно целиком.
+// ---------- trade rate limits ----------
+// The server sends rules like "5:10:60" (5 requests per 10 s, otherwise a 60 s ban) separately for
+// search and for fetching listings. We remember our requests and wait until there is room in every window.
+// The server also sends the current count in each window (X-Rate-Limit-Ip-State) — it includes requests from
+// other copies of the app / the trade site from this IP. If only one request is left before the limit — wait out the whole window.
 const limits = {
   search: { rules: [[5, 10]], hits: [], blockedUntil: 0 },
   fetch: { rules: [[12, 4]], hits: [], blockedUntil: 0 },
-  exchange: { rules: [[4, 15]], hits: [], blockedUntil: 0 }, // биржа: 5 за 15 с (политика trade-exchange-request-limit)
+  exchange: { rules: [[4, 15]], hits: [], blockedUntil: 0 }, // exchange: 5 per 15 s (trade-exchange-request-limit policy)
 };
-// Дольше этого ждать молча не будем — сразу скажем пользователю.
+// We won't wait longer than this silently — tell the user right away.
 const MAX_SILENT_WAIT = 15000;
 
-// Ошибки лимита помечены ⏳ в начале текста: окно по нему понимает, что дальше искать бессмысленно (свойства
-// ошибки через IPC не доходят, текст — доходит). Отменённый запрос — ⊘: окно его не показывает.
+// Rate-limit errors are marked with ⏳ at the start of the text: the window uses it to know further searching is pointless (error
+// properties don't survive IPC, the text does). A cancelled request — ⊘: the window doesn't show it.
 const limitError = (msg) => new Error(`⏳ ${msg}`);
 
-// Поколение запросов: каждая проверка вещи (и закрытие окна) начинает новое. Запрос трейда помнит своё поколение
-// (через AsyncLocalStorage — сквозь все await) и, если оно устарело, не тратит лимит: ещё не отправленные
-// запросы прежней вещи (поиск с ослаблением, «цена после крафта» по всем строкам…) отменяются.
+// Request generation: each item check (and closing the window) starts a new one. A trade request remembers its generation
+// (via AsyncLocalStorage — across all awaits) and, if it's stale, doesn't spend the limit: not-yet-sent
+// requests for the previous item (search with relaxation, "price after craft" for all rows…) are cancelled.
 const owner = new AsyncLocalStorage();
 let generation = 0;
 const newGeneration = () => { generation++; };
@@ -42,10 +42,10 @@ function checkAlive() {
 
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 
-// Зависшее соединение не должно вешать проверку навсегда (горячая клавиша ждёт конца прошлой проверки).
+// A hung connection must not hang the check forever (the hotkey waits for the previous check to finish).
 const TIMEOUT = 20000;
-// Запись / проигрывание ответов сети (только демо: --tape=<папка> [--record]) — снимки окна без сети повторяются
-// один в один (scripts/visual.js). Ключ — URL и тело запроса.
+// Recording / replaying network responses (demo only: --tape=<folder> [--record]) — window snapshots without network repeat
+// exactly (scripts/visual.js). Key — URL and request body.
 let tape = null;
 function setTape(dir, record) { tape = { dir, record }; fs.mkdirSync(dir, { recursive: true }); }
 function tapeKey(url, opts) { return require('crypto').createHash('sha1').update(`${opts.method || 'GET'} ${url}\n${opts.body || ''}`).digest('hex').slice(0, 20); }
@@ -55,7 +55,7 @@ async function tapeFetch(url, opts) {
   if (!tape.record) {
     if (!fs.existsSync(f)) throw new Error(`no recording for ${url}`);
     const { status, headers, body } = JSON.parse(zlib.gunzipSync(fs.readFileSync(f)));
-    // Тело записано уже распакованным — заголовки сжатия и длины ему не подходят.
+    // The body is stored already decompressed — compression and length headers don't fit it.
     for (const h of ['content-encoding', 'content-length', 'transfer-encoding']) delete headers[h];
     return new Response(status === 204 ? null : Buffer.from(body, 'base64'), { status, headers });
   }
@@ -73,8 +73,8 @@ function netFetch(url, opts = {}) {
   });
 }
 
-// Бан переживает перезапуск: иначе новая копия сразу стучится снова и продлевает его.
-// Бан — на IP, поэтому файл общий и для демо-профиля (userData-demo).
+// The ban survives a restart: otherwise a new copy knocks again immediately and extends it.
+// The ban is per IP, so the file is shared with the demo profile too (userData-demo).
 const banFile = () => path.join(app.getPath('userData').replace(/-demo$/, ''), 'trade-ban.json');
 let bannedUntil = null;
 function getBan() {
@@ -106,14 +106,14 @@ async function waitSlot(kind) {
     }
     if (!wait) break;
     if (wait > MAX_SILENT_WAIT) throw limitError(t('Trade request limit almost used up — wait {time}', { time: waitText(wait) }));
-    if (module.exports.onWait) module.exports.onWait(wait); // окно покажет «ждём лимит», а не молча висит
+    if (module.exports.onWait) module.exports.onWait(wait); // the window will show "waiting for limit" instead of hanging silently
     await sleep(wait);
   }
   L.hits.push(Date.now());
   if (L.hits.length > 100) L.hits.splice(0, L.hits.length - 100);
 }
 
-// Через сколько мс можно будет искать снова (бан и окна лимита) — окно покажет отсчёт и повторит поиск само.
+// In how many ms searching is possible again (ban and limit windows) — the window shows a countdown and retries the search itself.
 function limitWait(kind = 'search') {
   const L = limits[kind];
   const now = Date.now();
@@ -135,8 +135,8 @@ function learnRules(kind, res) {
   for (const [count, period, ban] of state) {
     if (ban > 0) setBan(ban);
     const rule = rules.find((r) => r[1] === period);
-    // Короткие окна (10 с) считаем сами по своим запросам — иначе каждая серия поисков ждала бы целое окно.
-    // По счётчику сервера тормозим только в длинных окнах (минута и дольше), где бан — на полчаса.
+    // Short windows (10 s) we count ourselves from our own requests — otherwise every search series would wait a whole window.
+    // We throttle by the server's counter only in long windows (a minute and longer), where the ban is half an hour.
     if (rule && period >= 60 && count >= rule[0] - 1) L.blockedUntil = Math.max(L.blockedUntil, Date.now() + period * 1000);
   }
 }
@@ -171,12 +171,12 @@ async function getJson(url) {
   return res.json();
 }
 
-// ---------- справочники трейда с кэшем на сутки ----------
+// ---------- trade reference data, cached for a day ----------
 function cacheFile(name) {
   return path.join(cacheDir(), name);
 }
 
-// Справочник взят из старого кэша, потому что сеть не ответила: { host, at } — окно скажет, что данные не свежие.
+// Reference data taken from the old cache because the network didn't respond: { host, at } — the window says the data isn't fresh.
 const offline = { host: null, at: 0 };
 
 async function cached(name, url, maxAgeH = 24) {
@@ -190,7 +190,7 @@ async function cached(name, url, maxAgeH = 24) {
     if (offline.host === new URL(url).host) offline.host = null;
     return data;
   } catch (e) {
-    // Нет сети — берём старый кэш (битый — как будто его нет: ошибка сети понятнее, чем «Unexpected end of JSON»).
+    // No network — use the old cache (a broken one counts as missing: a network error is clearer than "Unexpected end of JSON").
     let old = null;
     try { old = JSON.parse(fs.readFileSync(f, 'utf8')); } catch {}
     if (old) { Object.assign(offline, { host: new URL(url).host, at: Date.now() }); return old; }
@@ -198,8 +198,8 @@ async function cached(name, url, maxAgeH = 24) {
   }
 }
 
-// «Обновить данные игры» (после патча): стираем справочники — следующая загрузка скачает свежие.
-// only — стереть только подходящие файлы (свежий справочник трейда без RePoE и цен).
+// "Update game data" (after a patch): wipe the reference data — the next load downloads fresh copies.
+// only — wipe only the matching files (fresh trade reference data without RePoE and prices).
 function clearCache(only = null) {
   for (const f of fs.readdirSync(cacheDir())) {
     if (only && !only.test(f)) continue;
@@ -210,7 +210,7 @@ function clearCache(only = null) {
   uniques.at = 0;
 }
 
-// Возраст файла кэша в часах (нет файла — бесконечность).
+// Cache file age in hours (no file — infinity).
 function cacheAgeH(name) {
   try { return (Date.now() - fs.statSync(cacheFile(name)).mtimeMs) / 3600e3; } catch { return Infinity; }
 }
@@ -220,17 +220,17 @@ const tradeItems = () => cached('items.json', `${TRADE}/api/trade2/data/items`);
 const tradeStatic = () => cached('static.json', `${TRADE}/api/trade2/data/static`);
 const tradeLeagues = () => cached('leagues.json', `${TRADE}/api/trade2/data/leagues`, 6);
 
-// ---------- poe.ninja: цены биржи ----------
+// ---------- poe.ninja: exchange prices ----------
 const NINJA_TYPES = [
   'Currency', 'Fragments', 'Runes', 'Essences', 'Ritual', 'Expedition', 'Delirium', 'Breach', 'Abyss',
   'SoulCores', 'UncutGems', 'LineageSupportGems', 'Idols', 'Verisium',
 ];
 
-// rates: сколько chaos / exalted в 1 div и сколько div в 1 mirror — для показа цен в окне.
+// rates: how many chaos / exalted per 1 div and how many div per 1 mirror — for showing prices in the window.
 const ninja = { league: null, at: 0, byName: new Map(), byId: new Map(), rates: {} };
 
-let ninjaLoading = null; // { league, promise } — не качаем одно и то же параллельно
-let ninjaWanted = null; // лига последнего запроса: опоздавший ответ прежней лиги не затирает её цены
+let ninjaLoading = null; // { league, promise } — don't download the same thing in parallel
+let ninjaWanted = null; // league of the latest request: a late response for the previous league doesn't overwrite its prices
 
 function loadNinja(league, force = false) {
   ninjaWanted = league;
@@ -268,7 +268,7 @@ async function fetchNinja(league) {
     }
   });
   if (!byName.size) throw new Error('poe.ninja returned no prices for league ' + league);
-  if (league !== ninjaWanted) return ninja; // пока качали, переключили лигу — курсы этой лиги уже не нужны
+  if (league !== ninjaWanted) return ninja; // the league was switched while downloading — this league's rates are no longer needed
   Object.assign(ninja, {
     league, at: Date.now(), byName, byId,
     rates: ratesFrom(byId, rates),
@@ -276,7 +276,7 @@ async function fetchNinja(league) {
   return ninja;
 }
 
-// Курсы из самих строк биржи (core.rates — запасной вариант).
+// Rates from the exchange rows themselves (core.rates — fallback).
 function ratesFrom(byId, core) {
   const per = (id) => (byId.get(id) && byId.get(id).divine ? 1 / byId.get(id).divine : null);
   return {
@@ -286,7 +286,7 @@ function ratesFrom(byId, core) {
   };
 }
 
-// ---------- poe.ninja: цены уников (одна «нижняя» цена на название + базу, без учёта роллов) ----------
+// ---------- poe.ninja: unique prices (one "lowest" price per name + base, ignoring rolls) ----------
 const UNIQUE_TYPES = ['UniqueWeapons', 'UniqueArmours', 'UniqueAccessories', 'UniqueJewels', 'UniqueFlasks',
   'UniqueCharms', 'UniqueTablets', 'UniqueSanctumRelics'];
 const uniques = { league: null, at: 0, map: new Map(), loading: null };
@@ -295,8 +295,8 @@ async function fetchUniques(league) {
   const q = encodeURIComponent(league);
   const results = await Promise.all(UNIQUE_TYPES.map((t) =>
     getJson(`${NINJA}/economy/stash/current/item/overview?league=${q}&type=${t}`).catch(() => null)));
-  // Не ответил ни один раздел (нет сети, poe.ninja лежит) — это ошибка, а не «у уников нет цен»: иначе пустой список
-  // запомнился бы на 15 минут.
+  // No section responded (no network, poe.ninja down) — that's an error, not "uniques have no prices": otherwise an empty list
+  // would be remembered for 15 minutes.
   if (results.every((d) => !d)) throw new Error('poe.ninja: no unique prices');
   const map = new Map();
   for (const d of results) {
@@ -308,10 +308,10 @@ async function fetchUniques(league) {
   Object.assign(uniques, { league, at: Date.now(), map });
 }
 
-// Цена уника на poe.ninja: { divine, listings, change } или null.
+// Unique price on poe.ninja: { divine, listings, change } or null.
 async function uniquePrice(league, name, baseType) {
   if (uniques.league !== league || Date.now() - uniques.at > 15 * 60e3) {
-    // Загрузка — своя для каждой лиги: запрос другой лиги не должен получить цены первой.
+    // Loading is per league: a request for another league must not get the first one's prices.
     if (!uniques.loading || uniques.loading.league !== league) {
       const promise = fetchUniques(league).finally(() => { if (uniques.loading && uniques.loading.promise === promise) uniques.loading = null; });
       uniques.loading = { league, promise };
