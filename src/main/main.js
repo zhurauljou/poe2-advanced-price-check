@@ -13,8 +13,8 @@ const updater = require('./updater');
 const { popularBuilds, categoryDemand } = require('./ninjaBuilds');
 const craft = require('./craft');
 const history = require('./history');
-let lastItem = null; // последний разобранный предмет — для советов по крафту
-let lastThemeMods = []; // его ключевые моды — спрос для крафта считаем среди билдов с ними
+let lastItem = null; // last parsed item — for crafting advice
+let lastThemeMods = []; // its key mods — crafting demand is computed among builds that have them
 const { parseItem } = require('./parser');
 const stats = require('./stats');
 const clientLang = require('./clientLang');
@@ -22,31 +22,31 @@ const i18n = require('../shared/i18n');
 const { t } = i18n;
 
 const WIDTH = 480;
-// Масштаб интерфейса (окно настроек): на 4K-мониторе — крупнее. Ширина окон и высота содержимого — с его учётом.
+// Interface scale (settings window): larger on a 4K monitor. Window widths and content height take it into account.
 const SCALES = [0.8, 0.9, 1, 1.1, 1.25, 1.5];
 const uiScale = () => (SCALES.includes(settings.get().uiScale) ? settings.get().uiScale : 1);
 const W = () => Math.round(WIDTH * uiScale());
-// Широкое окно (две колонки) — когда в одну колонку содержимое не помещается по высоте экрана (окно решает само).
+// Wide window (two columns) — when the content doesn't fit the screen height in one column (the window decides itself).
 const WIDE = 900;
 const WW = () => Math.round(WIDE * uiScale());
 const ICON = path.join(__dirname, '../../assets/icon.png');
 
 let win = null;
 let tray = null;
-let pinned = false; // пошаговый крафт: окно не прячется при клике в игру
-let interacted = false; // окно получало фокус (кликнули в него) — тогда клик обратно в игру его прячет
+let pinned = false; // step-by-step craft: the window doesn't hide on a click into the game
+let interacted = false; // the window got focus (was clicked) — then a click back into the game hides it
 let leagues = [];
-let ready = null; // промис загрузки справочников (сбросится, если загрузка не удалась, — см. ensureReady)
+let ready = null; // promise for loading the dictionaries (reset if loading failed — see ensureReady)
 let refreshTray = () => {};
 
 const demo = require('./demo');
-// Спрос (poe.ninja builds) — среди персонажей от этого уровня (80 / 90 / 95, переключатель на вкладке Demand).
-// 80 — без фильтра: poe.ninja и так учитывает только 80+.
+// Demand (poe.ninja builds) — among characters from this level (80 / 90 / 95, toggle on the Demand tab).
+// 80 — no filter: poe.ninja only counts 80+ anyway.
 const demandLevel = () => { const l = settings.get().demandLevel || 90; return l > 80 ? l : null; };
-// Демо-прогон живёт в своей папке данных, чтобы работать рядом с запущенной копией из трея.
+// The demo run lives in its own data folder, so it can work next to a running tray copy.
 if (demo.enabled) app.setPath('userData', app.getPath('userData') + '-demo');
-// Одна копия. После обновления установщик запускает новую версию, пока старая ещё закрывается, — поэтому, не получив
-// блокировку сразу, ждём до 10 с, пока старая не выйдет; только потом считаем себя лишней копией и выходим.
+// Single instance. After an update the installer starts the new version while the old one is still closing — so if we don't
+// get the lock right away, wait up to 10 s for the old one to exit; only then consider ourselves a duplicate and quit.
 async function singleInstance() {
   for (let i = 0; i < 20; i++) {
     if (app.requestSingleInstanceLock()) return true;
@@ -55,13 +55,13 @@ async function singleInstance() {
   return false;
 }
 
-// Ошибка в фоне не должна всплывать системным окном поверх игры — пишем в лог и работаем дальше.
+// A background error must not pop up as a system dialog over the game — log it and keep going.
 process.on('uncaughtException', (e) => log('uncaught', e));
 process.on('unhandledRejection', (e) => log('unhandled', e));
 
-// Окна показывают только свои файлы: без Node, в песочнице, с изоляцией контекста (явно — не полагаясь на умолчания
-// версии Electron). Переходы по ссылкам и новые окна запрещены (app.on('web-contents-created') ниже): внешние ссылки
-// открываются только через open-url, по списку сайтов.
+// Windows show only their own files: no Node, sandboxed, with context isolation (explicitly — not relying on the
+// Electron version's defaults). Navigation and new windows are blocked (app.on('web-contents-created') below): external links
+// open only via open-url, from a site allowlist.
 const SECURE = { contextIsolation: true, sandbox: true, nodeIntegration: false, webSecurity: true };
 app.on('web-contents-created', (_e, wc) => {
   wc.on('will-navigate', (ev) => ev.preventDefault());
@@ -69,14 +69,14 @@ app.on('web-contents-created', (_e, wc) => {
   wc.setWindowOpenHandler(() => ({ action: 'deny' }));
 });
 
-// Карточка конкурента — отдельное окно сбоку от оверлея, чтобы не закрывать его содержимое.
+// Competitor card — a separate window beside the overlay, so it doesn't cover the overlay's content.
 const CMP_WIDTH = 440;
 const CW = () => Math.round(CMP_WIDTH * uiScale());
 function applyScale() {
   for (const w of [win, cmpWin]) if (w && !w.isDestroyed()) w.webContents.setZoomFactor(uiScale());
 }
 let cmpWin = null;
-let cmpY = 0; // экранная Y строки лота, напротив которой показываем карточку
+let cmpY = 0; // screen Y of the listing row the card is shown next to
 
 function createCompare() {
   cmpWin = new BrowserWindow({
@@ -89,7 +89,7 @@ function createCompare() {
   cmpWin.webContents.on('did-finish-load', applyScale);
 }
 
-// Справа от оверлея, не влезает — слева; по высоте — напротив строки лота, в пределах экрана.
+// To the right of the overlay, if it doesn't fit — to the left; vertically — next to the listing row, within the screen.
 function placeCompare(height) {
   const b = win.getBounds();
   const area = screen.getDisplayMatching(b).workArea;
@@ -114,14 +114,14 @@ function createOverlay() {
     backgroundColor: '#14110e',
     webPreferences: { ...SECURE, preload: path.join(__dirname, 'preload.js') },
   });
-  // Уровень screen-saver держит окно над полноэкранным-в-окне клиентом игры.
+  // The screen-saver level keeps the window above the game client in windowed fullscreen.
   win.setAlwaysOnTop(true, 'screen-saver');
   win.setVisibleOnAllWorkspaces(true);
   win.loadFile(path.join(__dirname, '../renderer/index.html'));
   win.webContents.on('did-finish-load', applyScale);
   win.on('focus', () => { interacted = true; syncEsc(); });
   win.on('blur', () => { if (interacted && !pinned) hide(); else syncEsc(); });
-  // Пользователь перетащил окно — запоминаем место, дальше открываемся там же.
+  // The user dragged the window — remember the spot and open there from now on.
   win.on('moved', () => {
     if (positioning || !win.isVisible()) return;
     const [x, y] = win.getPosition();
@@ -131,9 +131,9 @@ function createOverlay() {
   });
 }
 
-// Свои перемещения (show, подгонка высоты) не должны записываться как «пользователь перетащил».
+// Our own moves (show, height fitting) must not be recorded as "the user dragged".
 let positioning = false;
-let anchorY = 0; // верх окна, который хотим держать; сдвигаем вверх, только если окно не влезает по высоте
+let anchorY = 0; // window top we want to keep; move up only if the window doesn't fit vertically
 
 function place(bounds) {
   positioning = true;
@@ -141,7 +141,7 @@ function place(bounds) {
   setTimeout(() => { positioning = false; }, 150);
 }
 
-// Запомненное место — если оно ещё на каком-то мониторе (монитор могли отключить).
+// Remembered spot — if it's still on some monitor (the monitor may have been disconnected).
 function savedPos() {
   const p = settings.get().windowPos;
   if (!p) return null;
@@ -157,7 +157,7 @@ function show() {
   if (saved) {
     ({ x, y } = saved);
   } else {
-    // Не двигали ни разу — рядом с курсором: справа, а если не влезает — слева.
+    // Never moved — next to the cursor: to the right, or to the left if it doesn't fit.
     const cur = screen.getCursorScreenPoint();
     const area = screen.getDisplayNearestPoint(cur).workArea;
     x = cur.x + 24;
@@ -168,13 +168,13 @@ function show() {
   const area = screen.getDisplayNearestPoint({ x, y }).workArea;
   place({ x: Math.round(x), y: Math.min(anchorY, area.y + area.height - h), width: W(), height: h });
   interacted = false;
-  win.showInactive(); // не забираем фокус у игры
+  win.showInactive(); // don't steal focus from the game
   syncEsc();
 }
 
-// Esc из игры закрывает оверлей — глобальной клавишей, которую игра тогда не получает. Поэтому занимаем её, только
-// пока она нужна: окно показано, но фокус у игры. В фокусе окно — Esc ловит страница (сначала закрывает список лиг);
-// закреплено (пошаговый крафт, играем дальше) — Esc остаётся игре, закрывает «■ Стоп» или крестик.
+// Esc from the game closes the overlay — via a global shortcut, which the game then doesn't receive. So we grab it only
+// while needed: the window is shown but the game has focus. When the window is focused, the page catches Esc (first closes the league list);
+// when pinned (step-by-step craft, still playing) — Esc stays with the game, «■ Stop» or the close button closes it.
 let escOn = false;
 function syncEsc() {
   const want = !!(win && win.isVisible() && !win.isFocused() && !pinned);
@@ -182,27 +182,27 @@ function syncEsc() {
   else if (!want && escOn) { globalShortcut.unregister('Escape'); escOn = false; }
 }
 
-// Окно игры — активное окно в момент Ctrl+D. Ему возвращаем фокус, когда закрываем оверлей,
-// в который кликали (крестик, Esc после клика): сам Windows фокус игре не отдаёт.
+// The game window is the active window at the moment of Ctrl+D. Focus goes back to it when we close an overlay
+// that was clicked into (close button, Esc after a click): Windows doesn't give focus back to the game by itself.
 let gameHwnd = 0;
 
 function hide() {
   if (cmpWin) cmpWin.hide();
   if (win && win.isVisible()) {
-    api.newGeneration(); // окно закрыли — оставшиеся поиски этой вещи лимит трейда не тратят
+    api.newGeneration(); // window closed — remaining searches for this item don't spend the trade rate limit
     if (win.isFocused() && gameHwnd) winapi.focus(gameHwnd);
     win.hide();
   }
   syncEsc();
 }
 
-// У оружия poe.ninja считает моды и базы всего оружия персонажа (основное, второе, на смене): в «Rare Sceptre»
-// попадают палочки, посохи, копья — до 44% надеваний (аудит по всем классам). Броня и бижутерия — чистые.
-// Оставляем базы того же класса; мод убираем, только если на этой базе его быть не может, а на чужой базе из списка — может
-// (анойнты, энчанты, руны не трогаем — их нет в пуле ни у кого). Всё, что есть на самой вещи, — всегда.
-// Самоцветы: спрос — среди билдов с той же базой. Общий «Rare Jewel» смешивает цвета и Time-Lost: моды Time-Lost в нём
-// 10–14% билдов (ниже порога спроса), а среди носящих Time-Lost Sapphire «Notable … Crit Damage Bonus» — 58%.
-// Апгрейд радиуса — не тема (его носят все Time-Lost), спрос по нему не сужаем.
+// For weapons poe.ninja counts mods and bases of all the character's weapons (main, offhand, swap): «Rare Sceptre»
+// picks up wands, staves, spears — up to 44% of equips (audit across all classes). Armour and jewellery are clean.
+// Keep bases of the same class; drop a mod only if it can't be on this base but can be on another base from the list
+// (anoints, enchants, runes are left alone — they're in no one's pool). Everything on the item itself — always.
+// Jewels: demand among builds with the same base. The general «Rare Jewel» mixes colours and Time-Lost: Time-Lost mods there are
+// 10–14% of builds (below the demand threshold), but among Time-Lost Sapphire wearers «Notable … Crit Damage Bonus» is 58%.
+// The radius upgrade isn't a theme (all Time-Lost wear it), demand isn't narrowed by it.
 function demandScope(item, withMods = []) {
   const jewel = item && item.itemClass === 'Jewels';
   return { withBase: jewel ? item.baseType : null, withMods: (withMods || []).filter((m) => !/^Upgrades Radius/i.test(m)) };
@@ -222,13 +222,13 @@ function forBase(d, item) {
 let copying = false;
 
 async function onHotkey() {
-  // Удержание Ctrl+D шлёт хоткей повторно — параллельные копирования портят друг другу буфер.
+  // Holding Ctrl+D re-sends the hotkey — parallel copies corrupt each other's clipboard.
   if (copying) return;
   copying = true;
   try {
     const fg = winapi.foreground();
     if (fg && fg !== winapi.hwndOf(win)) gameHwnd = fg;
-    // Фокус у нашего окна (кликнули в него) — Ctrl+C ушёл бы ему, а не игре. Прячем и отдаём фокус игре.
+    // Our window has focus (was clicked) — Ctrl+C would go to it, not the game. Hide it and give focus back to the game.
     if (win.isVisible() && win.isFocused()) {
       hide();
       await sleep(80);
@@ -243,8 +243,8 @@ async function onHotkey() {
   }
 }
 
-// Язык клиента игры: auto — по первой строке текста («Класс предмета:» — русский). Для не-английского —
-// названия предметов и справочник модов этого языка (грузим один раз), текст переводим в английский эквивалент.
+// Game client language: auto — by the first line of the text (the Russian «Item Class:» header means Russian). For non-English —
+// item names and the mod dictionary for that language (loaded once); the text is translated to its English equivalent.
 let clientLangActive = 'en';
 function detectClientLang(text) {
   const want = settings.get().clientLang || 'auto';
@@ -261,8 +261,8 @@ async function useClientLang(lang) {
   clientLangActive = lang;
 }
 
-// refresh — та же вещь заново (сменили лигу, открыли из истории): окно уже открыто, на место у курсора его не переносим.
-// historyId — запись истории этой вещи (иначе — новая запись).
+// refresh — the same item again (league changed, opened from history): the window is already open, don't move it to the cursor.
+// historyId — this item's history entry (otherwise a new entry).
 let lastText = null;
 let lastHistoryId = null;
 async function priceCheck(text, refresh = false, historyId = null) {
@@ -277,51 +277,51 @@ async function priceCheck(text, refresh = false, historyId = null) {
   if (lang !== 'en') text = clientLang.toEnglish(text, lang);
   const item = parseItem(text);
   if (!item) {
-    // Сам текст не пишем: с выключенным «только в игре» это мог быть чужой буфер (пароль, письмо).
+    // Don't log the text itself: with "in game only" off it could be someone else's clipboard (password, email).
     log(`not an item (${text.length} chars, client ${lang})`);
-    return; // курсор не над предметом
+    return; // cursor isn't over an item
   }
-  api.newGeneration(); // новая вещь — ещё не отправленные запросы прежней отменяются
-  // Текст последнего предмета — для разбора ошибок парсера.
+  api.newGeneration(); // new item — not-yet-sent requests for the previous one are cancelled
+  // Text of the last item — for debugging parser errors.
   try { require('fs').writeFileSync(path.join(app.getPath('userData'), 'last-item.txt'), text); } catch {}
   try {
     await ensureReady();
   } catch (e) {
     send('status', { error: t('Failed to load data: {msg}', { msg: e.message }) });
   }
-  refreshLeagues().catch((e) => log('leagues', e.message)); // из кэша (6 ч) — мгновенно; устарел — обновится в фоне
+  refreshLeagues().catch((e) => log('leagues', e.message)); // from cache (6 h) — instant; stale — refreshed in the background
   const league = settings.get().league;
-  // Цены этой лиги уже есть — показываем сразу, свежие докачаются в фоне. Нет — ждём (иначе нечего показать).
-  // Ошибку глотаем: нет цен poe.ninja для лиги — трейд всё равно работает.
+  // Prices for this league are already there — show right away, fresh ones load in the background. None — wait (else nothing to show).
+  // Swallow the error: no poe.ninja prices for the league — trade still works.
   const ninja = league ? api.loadNinja(league).catch((e) => log('ninja', e.message)) : null;
   if (ninja && api.ninja.league !== league) await ninja;
-  // Спрос по классу вещей (poe.ninja) — влияет на то, какие моды включены и насколько строго. Кэшируется,
-  // поэтому ждём только в первый раз и не дольше 1.5 с; не успели — работаем без него.
+  // Demand for the item class (poe.ninja) — affects which mods are enabled and how strictly. It's cached,
+  // so we wait only the first time and no longer than 1.5 s; if it's late — work without it.
   let demand = null;
   if (!league) {
-    // список лиг не загрузился — спрос не по чему считать
+    // league list didn't load — nothing to compute demand by
   } else if (['Rare', 'Magic', 'Normal'].includes(item.rarity)) {
     const q = categoryDemand({ league, itemClass: item.itemClass, rarity: 'Rare', limit: 80, minLevel: demandLevel(), ...demandScope(item) },
       api.fetchBuffer).catch((e) => { log('demand', e.message); return null; });
     demand = await Promise.race([q, new Promise((r) => setTimeout(() => r(null), 1500))]);
   } else if (item.rarity === 'Unique' && item.name) {
-    // Уник: какие из ЕГО модов носят билды — для случайных модов (Heart of the Well) это и есть ключевые.
+    // Unique: which of ITS mods builds wear — for random mods (Heart of the Well) those are the key ones.
     const q = popularBuilds({ league, uniqueName: item.name, limit: 1, minLevel: demandLevel() }, api.fetchBuffer)
       .then((b) => ({ mods: b.mods })).catch((e) => { log('demand', e.message); return null; });
-    // Ждём дольше, чем у редких: без спроса ключевые моды уника не отличить от второстепенных.
+    // Wait longer than for rares: without demand a unique's key mods can't be told from minor ones.
     demand = await Promise.race([q, new Promise((r) => setTimeout(() => r(null), 4000))]);
   }
   lastItem = item;
   const prepared = pricing.prepare(item, demand, (tpl) => craft.rollsOn(item.baseType, tpl));
-  // Переключатели поиска — как пользователь выбрал в прошлый раз.
+  // Search toggles — as the user chose last time.
   const sd = settings.get();
   if (typeof sd.searchOnline === 'boolean') prepared.filters.online = sd.searchOnline;
   if (typeof sd.searchFlex === 'boolean') prepared.filters.flex = sd.searchFlex;
-  // База под крафт: ищем «такие же по тирам» — от ступени, где открылся последний тир, до следующей (ilvl 84 = 82).
+  // Craft base: search "same by tiers" — from the step where the last tier unlocked up to the next one (ilvl 84 = 82).
   const il = prepared.filters.ilvl;
   const band = il && il.enabled && (item.rarity === 'Normal' || item.rarity === 'Magic') ? craft.ilvlBand(item.baseType, item.ilvl) : null;
   if (band) Object.assign(il, { min: band.min, max: band.max, next: band.next });
-  // Тема вещи для советов по крафту: два самых важных включённых мода (без сумм).
+  // Item theme for crafting advice: the two most important enabled mods (excluding sums).
   lastThemeMods = prepared.filters.mods.filter((m) => m.enabled && m.statId && m.tag !== 'pseudo' && m.tag !== 'implicit' && m.tag !== 'rune' && !m.option)
     .sort((a, b) => (b.importance || 0) - (a.importance || 0)).slice(0, 2).map((m) => m.text.split('\n')[0]);
   const entry = { name: item.name, baseType: item.baseType, rarity: item.rarity, league };
@@ -332,17 +332,17 @@ async function priceCheck(text, refresh = false, historyId = null) {
   if (unknownToTrade(item)) refreshTradeData(rawText).catch((e) => log('trade data refresh', e.message));
 }
 
-// Мод или база, которых нет в справочнике трейда, — скорее всего, патч вышел, а справочник в кэше ещё вчерашний.
-// У уников несопоставленные строки — флейвор-текст, их не считаем; implicit'ы тоже (у скрижалей «Adds Breaches to a Map»
-// на трейде нет — это и так видно по базе).
+// A mod or base missing from the trade dictionary — most likely a patch came out and the cached dictionary is from yesterday.
+// On uniques unmatched lines are flavour text, not counted; implicits neither (tablets' «Adds Breaches to a Map»
+// isn't on trade — that's visible from the base anyway).
 function unknownToTrade(item) {
   if (!['Rare', 'Magic', 'Normal', 'Unique'].includes(item.rarity)) return false;
   if (!pricing.knownBase(item.baseType)) return true;
   return item.rarity !== 'Unique' && item.mods.some((m) => !m.statId && ['explicit', 'fractured', 'desecrated'].includes(m.tag));
 }
 
-// Свежий справочник трейда и та же вещь заново. Не чаще раза в час и только если справочнику больше 2 ч — иначе мод
-// просто не ищется на трейде, и скачивание ничего не даст.
+// Fresh trade dictionary and the same item again. At most once an hour and only if the dictionary is older than 2 h — otherwise
+// the mod just isn't searchable on trade, and downloading won't help.
 let tradeDataAt = 0;
 async function refreshTradeData(rawText) {
   if (Date.now() - tradeDataAt < 3600e3 || api.cacheAgeH('stats.json') < 2) return;
@@ -362,8 +362,8 @@ function send(ch, data) {
   if (win) win.webContents.send(ch, data);
 }
 
-// Справочники грузим при запуске; не вышло (нет сети при первом запуске и т.п.) — пробуем снова при следующей
-// проверке и сами раз в минуту, а не ждём перезапуска.
+// Dictionaries are loaded at startup; if that failed (no network on first launch, etc.) — retry on the next
+// check and on our own once a minute, rather than waiting for a restart.
 let retryTimer = null;
 function ensureReady() {
   if (!ready) {
@@ -378,21 +378,21 @@ function ensureReady() {
   return ready;
 }
 
-// Лига для запросов. Списка лиг ещё нет (не загрузился) — не шлём на трейд «null», а говорим, в чём дело.
+// League for requests. No league list yet (didn't load) — don't send «null» to trade, say what's wrong instead.
 function curLeague() {
   const l = settings.get().league;
   if (!l) throw new Error(t('League list is not loaded yet — check your internet connection'));
   return l;
 }
 
-// Список лиг: кэш на 6 ч, проверяем при каждой проверке вещи и по таймеру — новая лига появляется в трее без
-// перезапуска; выбранная закончилась — переходим на основную текущую.
+// League list: 6 h cache, checked on every item check and on a timer — a new league appears in the tray without a
+// restart; if the selected one ended — switch to the main current one.
 async function refreshLeagues() {
   const ids = (await api.tradeLeagues()).result.map((l) => l.id);
   const changed = ids.join('|') !== leagues.join('|');
   leagues = ids;
-  // Новая лига — значит, вышел патч: справочники трейда и RePoE в кэше устарели (новые моды, базы, веса).
-  // Обновляем сами — игрок не знает, что после патча что-то надо нажимать. Первый запуск — только запоминаем.
+  // A new league means a patch came out: cached trade and RePoE dictionaries are stale (new mods, bases, weights).
+  // Refresh on our own — the player doesn't know something needs clicking after a patch. First launch — only remember.
   const known = settings.get().knownLeagues;
   if (!Array.isArray(known) || ids.some((id) => !known.includes(id))) {
     settings.set({ knownLeagues: ids });
@@ -409,8 +409,8 @@ async function refreshLeagues() {
   if (changed) refreshTray();
 }
 
-// «Обновить данные игры» (день патча): свежие справочники трейда, RePoE и названия на языке клиента — без перезапуска.
-// quiet — запустили сами (новая лига): сообщаем только об ошибке.
+// «Refresh game data» (patch day): fresh trade dictionaries, RePoE and client-language names — without a restart.
+// quiet — started by us (new league): report only errors.
 async function refreshData(quiet = false) {
   api.clearCache();
   craft.reset();
@@ -432,20 +432,20 @@ async function initData() {
   await refreshLeagues();
   await pricing.init();
   api.loadNinja(settings.get().league).catch(() => {});
-  craft.load(api.cached).catch((e) => log('craft data', e.message)); // пул модов — и для «нет ключевого мода»
+  craft.load(api.cached).catch((e) => log('craft data', e.message)); // mod pool — also for "missing key mod"
 }
 
-// Горячую клавишу занимаем, только пока активна игра (или наше окно): в остальных программах она остаётся их.
-// Без koffi (не смогли спросить активное окно) — держим всегда, как раньше.
+// The hotkey is grabbed only while the game (or our window) is active: in other programs it stays theirs.
+// Without koffi (couldn't query the active window) — keep it always, as before.
 const GAME_TITLE = /^Path of Exile( 2)?$/;
 let hotkeyOn = false;
-let hotkeyBound = null; // какая комбинация сейчас занята — чтобы снять её при смене
+let hotkeyBound = null; // which combination is currently grabbed — to release it on change
 
 const { DEFAULT: DEFAULT_HOTKEY, validHotkey, hotkeyText } = require('./hotkeys');
 const curHotkey = () => (validHotkey(settings.get().hotkey) ? settings.get().hotkey : DEFAULT_HOTKEY);
 const hotkeyLabel = () => hotkeyText(curHotkey());
 
-// Смена комбинации. Занята другой программой — оставляем прежнюю и возвращаем false.
+// Changing the combination. Taken by another program — keep the previous one and return false.
 function setHotkey(hk) {
   if (!validHotkey(hk)) return false;
   if (hotkeyOn && hotkeyBound) globalShortcut.unregister(hotkeyBound);
@@ -457,10 +457,10 @@ function setHotkey(hk) {
   syncHotkey();
   return free;
 }
-// Пока окно настроек ждёт новую комбинацию, горячая клавиша отпущена — иначе её же нажатие не дойдёт до окна.
+// While the settings window waits for a new combination, the hotkey is released — otherwise its press won't reach the window.
 let capturing = false;
 
-// Комбинацию заняла другая программа — пишем в лог и говорим в трее один раз, а не каждые 250 мс.
+// The combination is taken by another program — log it and tell via the tray once, not every 250 ms.
 let hotkeyFailed = null;
 function syncHotkey() {
   const hk = curHotkey();
@@ -486,7 +486,7 @@ function syncHotkey() {
   }
 }
 
-// Окно «Updates» — живой статус обновления (меню трея закрывается после клика, в нём прогресс не показать).
+// «Updates» window — live update status (the tray menu closes after a click, progress can't be shown there).
 let updWin = null;
 
 function openUpdates() {
@@ -503,7 +503,7 @@ function openUpdates() {
     updWin.loadFile(path.join(__dirname, '../renderer/updates.html'));
     updWin.once('ready-to-show', () => updWin.show());
   }
-  // Открыли — сразу проверяем, если ещё не знаем о новой версии.
+  // Opened — check right away if we don't know about a new version yet.
   if (['idle', 'latest', 'error'].includes(updater.status.state)) updater.check();
 }
 
@@ -513,7 +513,7 @@ function updStatus() {
   return updater.available() ? updater.status : { ...updater.status, state: 'unavailable' };
 }
 
-// Пункт трея про обновление — открывает окно «Updates»; подпись — по состоянию.
+// Tray item about updates — opens the «Updates» window; label depends on the state.
 function updateItem() {
   const s = updater.status;
   const v = `v${app.getVersion()}`;
@@ -525,7 +525,7 @@ function updateItem() {
   return { label, click: openUpdates };
 }
 
-// Смена языка интерфейса: запоминаем, перестраиваем трей и сообщаем окнам — они перерисуются сразу.
+// Changing the interface language: remember it, rebuild the tray and notify windows — they re-render immediately.
 function setUiLang(lang) {
   settings.set({ uiLang: lang });
   i18n.setLang(lang);
@@ -561,7 +561,7 @@ function buildTray() {
   return refresh;
 }
 
-// ---- настройки: одно место, где меняются (окно настроек, трей, оверлей), с проверкой значений ----
+// ---- settings: one place where they change (settings window, tray, overlay), with value validation ----
 const LANGS = ['en', 'ru'];
 const CLIENT_LANGS = ['auto', 'en', 'ru'];
 function settingsSnapshot() {
@@ -570,7 +570,7 @@ function settingsSnapshot() {
     packaged: app.isPackaged, uiLang: i18n.getLang(), clientLang: s.clientLang || 'auto', league: s.league, leagues,
     uiScale: uiScale(), scales: SCALES, windowPos: !!s.windowPos, wideWindow: s.wideWindow === 'never' ? 'never' : 'auto' };
 }
-// → { ok, error? }: неизвестное или неверное значение не сохраняется.
+// → { ok, error? }: an unknown or invalid value isn't saved.
 function applySettings(patch) {
   const p = patch || {};
   let error = null;
@@ -605,7 +605,7 @@ function applySettings(patch) {
 }
 
 let setWin = null;
-// welcome — первый запуск: сверху карточка «что нужно знать» (режим экрана, горячая клавиша, трей).
+// welcome — first launch: a "what you need to know" card on top (screen mode, hotkey, tray).
 function openSettings(welcome = false) {
   if (setWin && !setWin.isDestroyed()) { setWin.show(); setWin.focus(); return; }
   setWin = new BrowserWindow({
@@ -619,8 +619,8 @@ function openSettings(welcome = false) {
   setWin.on('closed', () => { if (capturing) { capturing = false; syncHotkey(); } setWin = null; });
 }
 
-// IPC: каждый канал принимает вызовы только от своего окна (карточка конкурента показывает данные трейда — ей
-// незачем искать или писать в чат игры).
+// IPC: each channel accepts calls only from its own window (the competitor card shows trade data — it has
+// no reason to search or write to the game chat).
 const isFrom = (w) => (e) => !!(w && !w.isDestroyed() && e.sender === w.webContents);
 const FROM = {
   overlay: (e) => isFrom(win)(e),
@@ -640,9 +640,9 @@ const DEMAND_LEVELS = [80, 90, 95];
 
 app.whenReady().then(singleInstance).then((ok) => {
   if (!ok) { app.quit(); return; }
-  // Запустили ещё раз (ярлык на рабочем столе) — программа уже в трее: показываем настройки, а не молчим.
+  // Launched again (desktop shortcut) — the app is already in the tray: show settings rather than stay silent.
   app.on('second-instance', () => openSettings());
-  // Первый запуск (лига ещё не выбрана — не обновление): программа не уходит молча в трей, а объясняет, как ей пользоваться.
+  // First launch (no league chosen yet — not an update): the app doesn't silently go to the tray, it explains how to use it.
   if (!settings.get().welcomed) {
     if (!settings.get().league && !demo.enabled) setTimeout(() => openSettings(true), 1500);
     settings.set({ welcomed: true });
@@ -656,7 +656,7 @@ app.whenReady().then(singleInstance).then((ok) => {
   updater.init((s) => {
     refreshTray();
     if (updWin && !updWin.isDestroyed()) updWin.webContents.send('upd-status', updStatus());
-    // Фоновая проверка нашла новую версию / скачали — уведомление (клик открывает окно «Updates»).
+    // Background check found a new version / downloaded it — notification (click opens the «Updates» window).
     const say = (content) => tray.displayBalloon({ title: 'PoE 2 Price Checker', content });
     const key = `${s.state}:${s.version}`;
     if (key === lastNotified || (updWin && updWin.isVisible())) return;
@@ -665,7 +665,7 @@ app.whenReady().then(singleInstance).then((ok) => {
     if (s.state === 'available' || s.state === 'ready') lastNotified = key;
   });
   tray.on('balloon-click', openUpdates);
-  api.onWait = (ms) => send('status', { waitUntil: Date.now() + ms }); // окно ведёт обратный отсчёт
+  api.onWait = (ms) => send('status', { waitUntil: Date.now() + ms }); // the window runs a countdown
   ensureReady().catch(() => {});
 
   if (!demo.enabled) {
@@ -674,7 +674,7 @@ app.whenReady().then(singleInstance).then((ok) => {
     setInterval(() => refreshLeagues().catch((e) => log('leagues', e.message)), 6 * 3600e3);
   }
 
-  // Демо-режим (проверка без игры) — см. demo.js.
+  // Demo mode (checking without the game) — see demo.js.
   demo.run({ ready: ensureReady(), priceCheck, openUpdates, openSettings, windows: () => ({ main: win, cmp: cmpWin, upd: updWin, set: setWin }) });
 
   handle('search', FROM.overlay, (_e, item, filters, relax) => (demo.mockTrade()
@@ -693,15 +693,15 @@ app.whenReady().then(singleInstance).then((ok) => {
   handle('craft', FROM.overlay, async () => {
     if (!lastItem) return { note: t('No item') };
     const league = curLeague();
-    const rarity = 'Rare'; // белые и магические — заготовки под крафт: смотрим спрос на редкие такого класса
+    const rarity = 'Rare'; // normal and magic items are craft bases: look at demand for rares of that class
     const d = await categoryDemand({ league, itemClass: lastItem.itemClass, rarity, limit: 80, minLevel: demandLevel(), ...demandScope(lastItem, lastThemeMods) },
       api.fetchBuffer).catch(() => null);
     const r = await craft.advise(lastItem, d && d.mods, api.cached);
-    // Цены валюты для расчёта затрат на крафт (div за штуку; нет на poe.ninja — null).
+    // Currency prices for crafting cost estimates (div each; not on poe.ninja — null).
     const prices = {};
     for (const name of ['Vaal Orb', 'Omen of Sanctification', 'Divine Orb', 'Orb of Transmutation', 'Greater Orb of Transmutation', 'Perfect Orb of Transmutation', 'Orb of Annulment', 'Fracturing Orb', "Hinekora's Lock", 'Omen of Putrefaction', 'Chaos Orb', 'Greater Chaos Orb', 'Perfect Chaos Orb', 'Omen of Whittling', 'Omen of Sinistral Erasure', 'Omen of Dextral Erasure', 'Regal Orb', 'Greater Regal Orb', 'Perfect Regal Orb']) { const row = api.ninja.byName.get(name); prices[name] = row ? row.divine : null; }
     for (const a of r.augments || []) { const row = api.ninja.byName.get(a.name); prices[a.name] = row ? row.divine : null; }
-    // Эмоции на самоцветах (раздел вариантов) — их цены сильно разные: Potent Ferocity ≈ 6 div, цветные — несколько ex.
+    // Emotions on jewels (variants section) — their prices vary a lot: Potent Ferocity ≈ 6 div, coloured ones — a few ex.
     for (const s of r.sections || []) for (const o of s.options || []) { const row = api.ninja.byName.get(o.name); prices[o.name] = row ? row.divine : null; }
     for (const s of (r.goal && r.goal.plan) || []) {
       for (const name of [...s.currencies, ...(s.retry || [])]) {
@@ -711,13 +711,13 @@ app.whenReady().then(singleInstance).then((ok) => {
     }
     return { ...r, prices, theme: d ? d.themed : [], themeBuilds: d ? d.total : null };
   });
-  handle('demand', FROM.overlay, async (_e, opts) => forBase(await categoryDemand({ ...opts, league: curLeague(), limit: 80, minLevel: demandLevel(), ...demandScope(lastItem, opts && opts.withMods) }, api.fetchBuffer), lastItem)); // 80 — чтобы найти и моды вещи вне топ-10
+  handle('demand', FROM.overlay, async (_e, opts) => forBase(await categoryDemand({ ...opts, league: curLeague(), limit: 80, minLevel: demandLevel(), ...demandScope(lastItem, opts && opts.withMods) }, api.fetchBuffer), lastItem)); // 80 — to also find the item's mods outside the top 10
   handle('set-price-currency', FROM.overlay, (_e, c) => { if (PRICE_CURRENCIES.includes(c)) settings.set({ priceCurrency: c }); });
   handle('copy', FROM.overlay, (_e, t) => clipboard.writeText(String(t).slice(0, 4000)));
   handle('demand-level', FROM.overlay, () => settings.get().demandLevel || 90);
   handle('set-demand-level', FROM.overlay, (_e, l) => { if (DEMAND_LEVELS.includes(l)) settings.set({ demandLevel: l }); });
-  // В чат игры — только шёпот («@Ник текст»): окно не должно уметь напечатать в игре что угодно.
-  // Не похоже на шёпот — в игру не печатаем, но в буфер кладём (вставить руками) и пишем в лог, почему.
+  // Only whispers go to the game chat («@Name text»): the window must not be able to type arbitrary text in the game.
+  // Doesn't look like a whisper — don't type it in the game, but put it on the clipboard (to paste manually) and log why.
   handle('whisper-game', FROM.overlay, async (_e, t) => {
     const ok = typeof t === 'string' && /^@\S+ /.test(t) && t.length <= 512 && !/[\r\n]/.test(t);
     if (ok) return whisperInGame(t, gameHwnd);
@@ -746,7 +746,7 @@ app.whenReady().then(singleInstance).then((ok) => {
     return pricing.elementVariants(item, filters).map((v) => ({ ...v, cost: (price(v.rune) ?? 0) + (socket || 0), needSocket: !!socket }));
   });
   handle('hide', FROM.overlay, () => hide());
-  // Окно настроек
+  // Settings window
   handle('settings-get', FROM.settings, () => settingsSnapshot());
   handle('settings-set', FROM.settings, (_e, patch) => ({ ...applySettings(patch), settings: settingsSnapshot() }));
   handle('settings-capture', FROM.settings, (_e, on) => { capturing = !!on; syncHotkey(); });
@@ -758,7 +758,7 @@ app.whenReady().then(singleInstance).then((ok) => {
     return settingsSnapshot();
   });
   handle('settings-fit', FROM.settings, (_e, h) => { if (Number.isFinite(h) && setWin) setWin.setContentSize(420, Math.min(Math.ceil(h) + 2, 900)); });
-  // Оверлей запоминает переключатели поиска («Buyable now», «Allow 1 minor mod missing») — у следующей вещи такие же.
+  // The overlay remembers search toggles («Buyable now», «Allow 1 minor mod missing») — the next item gets the same.
   handle('set-search-defaults', FROM.overlay, (_e, p) => { applySettings({ searchOnline: p && p.online, searchFlex: p && p.flex }); });
   handle('exchange-offers', FROM.overlay, (_e, want, have) => {
     if (!pricing.isExchangeable(want) || !pricing.isExchangeable(have) || want === have) throw new Error('not on the exchange');
@@ -766,7 +766,7 @@ app.whenReady().then(singleInstance).then((ok) => {
   });
   handle('limit-wait', FROM.overlay, () => api.limitWait());
   handle('recheck', FROM.overlay, () => (lastText ? priceCheck(lastText, true, lastHistoryId) : null));
-  // История проверок
+  // Check history
   handle('history', FROM.overlay, () => history.brief());
   handle('history-open', FROM.overlay, (_e, id) => { const h = history.get(id); return h ? priceCheck(h.text, true, h.id) : null; });
   handle('history-price', FROM.overlay, (_e, id, est) => history.setPrice(id, est));
@@ -778,7 +778,7 @@ app.whenReady().then(singleInstance).then((ok) => {
   });
   handle('compare-fit', FROM.compare, (_e, h) => { if (Number.isFinite(h) && win.isVisible()) placeCompare(h * uiScale()); });
   handle('compare-hide', FROM.overlay, () => cmpWin.hide());
-  // → { capped }: окно упёрлось в высоту экрана (содержимое прокручивается) — повод окну перейти в две колонки.
+  // → { capped }: the window hit the screen height (content scrolls) — a cue for the window to switch to two columns.
   handle('fit', FROM.overlay, (_e, h, wide) => {
     if (!Number.isFinite(h)) return null;
     const area = screen.getDisplayMatching(win.getBounds()).workArea;
@@ -786,9 +786,9 @@ app.whenReady().then(singleInstance).then((ok) => {
     const height = Math.min(want, area.height - 20);
     const b = win.getBounds();
     const width = wide && WW() <= area.width - 20 ? WW() : W();
-    // Держим верх на месте; вверх сдвигаем, только пока окно не влезает, и возвращаем, когда снова влезает.
+    // Keep the top in place; move up only while the window doesn't fit, and move back when it fits again.
     const y = Math.max(area.y, Math.min(anchorY, area.y + area.height - height));
-    // Шире стало — не вылезаем за правый край экрана (сдвигаем влево).
+    // Got wider — don't go past the screen's right edge (shift left).
     const x = Math.max(area.x, Math.min(b.x, area.x + area.width - width));
     place({ x, y, width, height });
     return { capped: want > height, wide: width > W() };
