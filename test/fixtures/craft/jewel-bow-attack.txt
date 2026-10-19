@@ -1,0 +1,15 @@
+Item Class: Jewels
+Rarity: Rare
+Pandemonium Splinter
+Emerald
+--------
+Item Level: 81
+--------
+{ Prefix Modifier "Brutal" (Tier: 1) — Damage, Attack }
+11(5-15)% increased Attack Damage
+{ Prefix Modifier "Precise" (Tier: 1) — Attack }
+9(5-15)% increased Accuracy Rating
+{ Suffix Modifier "of the Archer" (Tier: 1) — Attack, Speed }
+4(2-4)% increased Attack Speed with Bows
+--------
+Place into an allocated Jewel Socket on the Passive Skill Tree. Right click to remove from the Socket.

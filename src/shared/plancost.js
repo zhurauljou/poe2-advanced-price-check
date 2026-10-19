@@ -12,6 +12,7 @@
     if (s.act === 'remove' && s.targeted) return { cost: sum(s.currencies), chance: 1, currencies: s.currencies };
     if (s.act === 'remove') return removeCost(s);
     if (s.act === 'add') return addCost(s, 1);
+    if (s.act === 'replace') return chaosLoop(s.rem, s.add) || addCost(s.add, 1);
     if (s.act === 'add2') {
       // Omen of Greater Exaltation: one Exalted — two mods; each roll costs half (Exalted + omens).
       const g = addCost(s.steps[0], 2, s.steps[1]);
@@ -182,8 +183,11 @@
         // Miss: the essence removed a wanted mod (the essence mod still landed) — restore it and remove the sacrifice. A key mod
         // of the item (atRisk: it was there before crafting) is expensive to restore — restoreValue; one added by the plan — re-adding it.
         // So the essence is better used when the side already has cheap wanted mods: a miss will hit them more often.
-        const cost = per + essenceLoss(s) + (1 - P) * (p('Orb of Annulment') ?? 0);
-        opts.push({ k: 'essence', essence: name, currencies: cur, chances: [P], pool: 0, cost, per, slam: per / P, p: P, ps: [P] });
+        // A fixed essence value below the best tier the item can roll (Hysteria 30% Movement Speed vs 35% T1 on ilvl 82+ boots):
+        // the finished item is worth less — a rough loss of a tenth of the mod's price share per tier.
+        const low = s.essTier && s.essTier[name] && s.bestTier ? Math.max(0, s.essTier[name].tier - s.bestTier) : 0;
+        const cost = per + essenceLoss(s) + (1 - P) * (p('Orb of Annulment') ?? 0) + Math.min(low * 0.1, 0.5) * valueShare();
+        opts.push({ k: 'essence', essence: name, low, currencies: cur, chances: [P], pool: 0, cost, per, slam: per / P, p: P, ps: [P] });
       }
     }
     if (rolls === 1 && (s.useDes || s.desecrateOnly) && s.desecrate) {
@@ -224,15 +228,80 @@
     // An essence adds the mod for sure — its price is known even if the Exalted chance for this mod is unknown.
     const lot = lottery && best.k !== 'essence';
     return { hopeless, perTry: best.per, ps: best.ps, rem: best.rem, cost: lot || hopeless ? null : best.cost, score: best.cost, chance: best.chances[0], chances: best.chances, currencies: best.currencies,
-      lottery: lot, pool: best.pool, k: best.k, echo: best.echo, bone: best.bone, lich: best.lich, alts: lottery ? [] : alts, desAlt };
+      lottery: lot, pool: best.pool, k: best.k, echo: best.echo, bone: best.bone, lich: best.lich, low: best.low || 0, alts: lottery ? [] : alts, desAlt };
   }
 
   // add2: if two separate Exalteds come out cheaper — expand it back into two steps.
+  // Chaos Orb removes a random modifier and adds a random one (docs/crafting-notes.md §2): on a side with one unwanted mod
+  // it is «Annulment + Exalted» in one orb. Repeated until it removes the unwanted mod and the new mod is the wanted one;
+  // on a full item the new mod goes to the freed side, otherwise to either (≈ half the time to this one).
+  // Options: plain Chaos (any mod of the item can go), + side Erasure omen (only this side), + Whittling (the unwanted mod is
+  // the lowest-level one — it goes for sure). A hit wanted mod is restored like after an Annulment.
+  // → the cheapest option, or null if Chaos does not fit (several unwanted mods, another side to clean, no prices).
+  function chaosLoop(rem, add) {
+    const p = (n) => C().prices[n];
+    if (!rem || !rem.sides || !add || !add.exalt) return null;
+    const side = add.side;
+    const x = rem.sides[side];
+    const others = Object.entries(rem.sides).filter(([sd]) => sd !== side);
+    if (!x || x.J !== 1 || others.some(([, o]) => o.J)) return null;
+    const N = Object.values(rem.sides).reduce((a, o) => a + o.J + o.K, 0);
+    const full = Object.values(rem.sides).every((o) => o.full);
+    const land = full || others.every(([, o]) => o.full) ? 1 : 0.5;
+    const restore = restoreValue();
+    const lottery = Object.values(add.exalt).every((o) => o.chance == null);
+    const opts = [];
+    // Greater / Perfect Chaos: the new mod is level 35+ / 50+ (the same thresholds as Exalted) — a better shot at a good tier,
+    // worth it on an expensive base. Whittling's removal ignores the threshold (docs/crafting-methods-research.md).
+    M.tiers('chaos').forEach(([orb], i) => {
+      const e = add.exalt[['base', 'greater', 'perfect'][i]];
+      const q = e ? (lottery ? (e.rough ?? e.guess) : e.chance) : null;
+      if (!q || p(orb) == null) return;
+      const opt = (extra, pJunk, hit) => {
+        const currencies = [orb, ...extra];
+        if (currencies.some((n) => p(n) == null)) return;
+        const per = currencies.reduce((a, n) => a + p(n), 0);
+        const pc = pJunk * land * q;
+        opts.push({ currencies, per, p: pc, hit, cost: (per + hit * restore) / pc });
+      };
+      opt([], 1 / N, (N - 1 - others.reduce((a, [, o]) => a + o.J, 0)) / N);
+      opt([`Omen of ${side === 'prefix' ? 'Sinistral' : 'Dextral'} Erasure`], 1 / (1 + x.K), x.K / (1 + x.K));
+      if (rem.whittle) opt(['Omen of Whittling'], 1, 0);
+    });
+    if (!opts.length) return null;
+    opts.sort((a, b) => a.cost - b.cost);
+    const best = opts[0];
+    return { k: 'chaos', cost: lottery ? null : best.cost, score: best.cost, perTry: best.per, chance: lottery ? null : best.p, chances: lottery ? null : [best.p],
+      ps: [best.p], rem: { a: 0, q: best.hit }, hits: best.hit / best.p, currencies: best.currencies, lottery, land, junk: rem.mods };
+  }
+
+  // A removal followed by an addition on the same side → one Chaos step, if that is cheaper than both (lottery odds: the rough ones).
+  function withChaos(plan) {
+    const out = [];
+    for (let i = 0; i < plan.length; i++) {
+      const s = plan[i];
+      const j = s.act === 'remove' && s.sides ? plan.findIndex((x, k) => k > i && x.act === 'add' && !x.useDes && !x.useCrafted && !x.craftedOnly && !x.desecrateOnly && s.sides[x.side] && s.sides[x.side].J) : -1;
+      const c = j > 0 ? chaosLoop(s, plan[j]) : null;
+      // Chaos wins only if it is cheaper, hits wanted mods no more often than Annulment would (plain Chaos on an item with many
+      // good mods keeps hitting them — a «slot machine», not a plan), and costs less than the finished item.
+      const r = c ? removeCost(s) : null;
+      const two = c ? r.cost + addCost(plan[j], 1).score : null;
+      const ok = c && Number.isFinite(c.score) && c.hits <= (r.hits || 0) + 0.5 && !(C().goalValue && c.score > C().goalValue) && !(two <= c.score);
+      if (ok) {
+        out.push({ act: 'replace', side: plan[j].side, mod: plan[j].mod, junk: s.mods, rem: s, add: plan[j], orMods: plan[j].orMods || null });
+        plan = plan.filter((_, k) => k !== j);
+        continue;
+      }
+      out.push(s);
+    }
+    return out;
+  }
+
   function expandPlan(plan) {
     // Price of "restoring a wanted mod that got hit" — median of the plan's average addition prices (for removing extras).
     const adds = plan.flatMap((s) => (s.act === 'add2' ? s.steps : s.act === 'add' ? [s] : [])).map((x) => addCost(x, 1).score).filter(Number.isFinite).sort((a, b) => a - b);
     restoreCost = adds.length ? adds[Math.floor(adds.length / 2)] : null;
-    plan = desFirst(pairUp(withDesecrate(plan)));
+    plan = withChaos(desFirst(pairUp(withDesecrate(plan))));
     return plan.flatMap((s) => {
       if (s.act !== 'add2') return [s];
       const two = stepCost(s);
@@ -287,9 +356,12 @@
     // First the crafted slot (an essence adds the mod for sure), then desecration — to the best of the remaining steps.
     // There can be two crafted slots (Astrid's Creativity rune) — hand out as many as are free.
     const slots = Math.max(1, ...plan.flatMap((s) => (s.act === 'add2' ? s.steps : [s])).map((s) => s.craftedSlots || 0));
-    let withCrafted = plan;
-    for (let i = 0; i < slots; i++) withCrafted = withSlot(withCrafted, 'crafted', 'useCrafted', 'essence');
-    const out = withSlot(withCrafted, 'desecrate', 'useDes', 'desecrate');
+    const crafted = (x) => { for (let i = 0; i < slots; i++) x = withSlot(x, 'crafted', 'useCrafted', 'essence'); return x; };
+    // Both one-time methods may want the same step (the key mod): try the other order too — Desecrate first, the essence
+    // to the best remaining step — and keep it if the plan comes out clearly cheaper (a low-tier essence pays its loss).
+    let out = withSlot(crafted(plan), 'desecrate', 'useDes', 'desecrate');
+    const swapped = crafted(withSlot(plan, 'desecrate', 'useDes', 'desecrate'));
+    if (planScore(swapped) < planScore(out) * 0.95) out = swapped;
     // Order of additions: essence first (while the side has fewer mods — higher chance it removes the sacrifice),
     // then desecrate (on a full item it replaces a random mod), then Exalted.
     for (const flag of ['useDes', 'useCrafted']) {
@@ -301,6 +373,8 @@
         const s = out[d];
         const n = out.slice(first, d).flatMap((x) => (x.act === 'add2' ? x.steps : x.act === 'add' ? [x] : [])).filter((x) => x.side === s.side).length;
         const moved = { ...s, onSide: Math.max(0, (s.onSide || 0) - n), onItem: Math.max(0, (s.onItem || 0) - n) };
+        // Ahead of the other side's additions that side may still have room: Desecrate needs its side omen there.
+        if (flag === 'useDes' && !moved.necro && moved.necroEarly) moved.necro = moved.necroEarly;
         // Essence first — higher chance to remove the sacrifice, but a miss more often removes a key mod (fewer others on the side).
         // Place it where it's cheaper on average.
         if (flag === 'useCrafted' && addCost(moved, 1).score > addCost(s, 1).score) continue;
@@ -316,6 +390,11 @@
       }
     }
     return out;
+  }
+
+  // Average cost of the plan's additions (for comparing slot allocations); a step with no converging method counts as Infinity.
+  function planScore(plan) {
+    return plan.flatMap((s) => (s.act === 'add2' ? s.steps : s.act === 'add' ? [s] : [])).reduce((a, x) => a + (addCost(x, 1).score ?? Infinity), 0);
   }
 
   // Give a "one-time" method (desecration, crafted slot) to the step where it beats Exalted by the most.
@@ -382,7 +461,7 @@
       if (goal == null || est == null) return null;
       const steps = expandPlan(plan);
       const costs = steps.map(stepCost);
-      const targets = steps.flatMap((s) => (s.act === 'add2' ? s.steps : s.act === 'add' ? [s] : []));
+      const targets = steps.flatMap((s) => (s.act === 'add2' ? s.steps : s.act === 'add' ? [s] : s.act === 'replace' ? [s.add] : []));
       const totalWorth = targets.reduce((a, s) => a + (s.worth || s.pct || 1), 0) || 1;
       const lossPer = Math.max(goal, est) / Math.max(1, (info.keep || 0) + targets.length);
       const ann = prices['Orb of Annulment'] || 0;
@@ -393,8 +472,8 @@
         steps.forEach((s, i) => {
           const c = costs[i];
           if (s.act === 'remove' && s.mods) { spent += c.spent || 0; restoreLoss += Math.max(0, (c.cost || 0) - (c.spent || 0)) * (poisson(c.hits || 0) / Math.max(c.hits || 1, 1e-9)); return; }
-          if (s.act !== 'add' && s.act !== 'add2') { spent += c.cost || 0; return; }
-          const parts = s.act === 'add2' ? s.steps : [s];
+          if (s.act !== 'add' && s.act !== 'add2' && s.act !== 'replace') { spent += c.cost || 0; return; }
+          const parts = s.act === 'add2' ? s.steps : s.act === 'replace' ? [s.add] : [s];
           const ps = c.ps || [];
           const per = c.perTry || 0;
           if (c.k === 'essence') { // the mod lands for sure; the sacrifice is removed with chance P, otherwise a wanted mod
@@ -426,14 +505,112 @@
       const vals = out.map((o) => o.value).sort((a, b) => a - b);
       const spends = out.map((o) => o.spent).sort((a, b) => a - b);
       return {
-        runs, value: { p10: q(vals, 0.1), p50: q(vals, 0.5), p90: q(vals, 0.9) },
+        runs, value: { p10: q(vals, 0.1), p50: q(vals, 0.5), p90: q(vals, 0.9), mean: vals.reduce((a, b) => a + b, 0) / runs },
         spent: { mean: spends.reduce((a, b) => a + b, 0) / runs, p50: q(spends, 0.5), p90: q(spends, 0.9) },
         profit: out.filter((o) => o.net > est).length / runs, // crafting beats selling as is
         full: out.filter((o) => o.full).length / runs, // all wanted mods obtained, none lost
       };
     }
 
-    return { stepCost, addCost, removeCost, expandPlan, withDesecrate, simulate, EXALT_NAME };
+  // Currency of the plan: average costs, plus one attempt of each step with unknown odds (a lower bound, shown as «from»).
+  const planSpend = (costs) => costs.reduce((a, c) => a + (c.cost != null ? c.cost : Number.isFinite(c.perTry) ? c.perTry : 0), 0);
+
+  // The plan without the additions of mods not in keep. An Exaltation pair loses its omen; a removal stays only for the
+  // sides a kept mod goes to (a two-sided Annulment step is cut to those sides); the desecrated mod is removed only if its
+  // side is needed or a kept mod comes only from Desecrate — otherwise its slot stays taken and Desecrate is off.
+  // Steps that make the item rare (essence, Regal, rune) stay — every variant needs them.
+  function subPlan(plan, keep) {
+    const kept = plan.flatMap((s) => (s.act === 'add2' ? s.steps : s.act === 'add' ? [s] : [])).filter((x) => keep.has(x.mod));
+    const sides = new Set(kept.map((x) => x.side));
+    // How many mods the variant puts on a side (the magic → rare essence takes a slot too) — a removal is needed only beyond the free slots.
+    const putOn = (side) => kept.filter((x) => x.side === side).length + plan.filter((s) => s.act === 'essence' && s.side === side).length;
+    const desOnly = kept.some((x) => x.desecrateOnly);
+    let noDes = false;
+    // Fewer mods no longer fill every free slot: a lottery fill's dropped side omens come back.
+    const fix = (x) => ({ ...x, ...(x.fillOmen ? { sideOmen: x.fillOmen, otherOpen: true } : {}), ...(noDes && !x.desecrateOnly ? { desecrate: null } : {}) });
+    const out = [];
+    for (const s of plan) {
+      if (s.act === 'remove' && s.targeted && s.side) {
+        if (sides.has(s.side) || desOnly) out.push(s); else if (s.currencies.includes('Omen of Light')) noDes = true;
+        continue;
+      }
+      if (s.act === 'remove' && s.sides) {
+        // Per side: remove only as many as the variant's mods do not fit into the free slots (no data on free — all of them).
+        const J = Object.fromEntries(Object.entries(s.sides).map(([sd, x]) => [sd, x.free == null ? (sides.has(sd) ? x.J : 0) : Math.min(x.J, Math.max(0, putOn(sd) - x.free))]));
+        if (!Object.values(J).some(Boolean)) continue;
+        if (Object.entries(s.sides).every(([sd, x]) => J[sd] === x.J) || !s.modSides) { out.push(s); continue; }
+        const left = { ...J };
+        const mods = s.mods.filter((_, k) => left[s.modSides[k]]-- > 0);
+        out.push({ ...s, mods, sides: Object.fromEntries(Object.entries(s.sides).filter(([sd]) => J[sd]).map(([sd, x]) => [sd, { ...x, J: J[sd] }])) });
+        continue;
+      }
+      out.push(s);
+    }
+    return out.flatMap((s) => {
+      if (s.act === 'add') return keep.has(s.mod) ? [fix(s)] : [];
+      if (s.act !== 'add2') return [s];
+      const xs = s.steps.filter((x) => keep.has(x.mod)).map(fix);
+      return xs.length === 2 ? [{ ...s, steps: xs }] : xs;
+    });
+  }
+
+
+  // Budget variants of one plan. Cheap — only sure steps (essence, ≥ 50%), or else the single mod whose plan (with the removals
+  // it needs) is cheapest per value; Balanced — without lottery steps (unknown odds), or else without the mod that saves the
+  // most currency per value lost (a lottery step counts one attempt); Ideal — the full goal.
+  // Mods the item gets on the way (the magic → rare essence) count in every variant. null — nothing to choose from.
+  function variants(g) {
+    const steps = expandPlan(g.plan);
+    const adds = [];
+    steps.forEach((s) => {
+      const xs = s.act === 'add2' ? s.steps : s.act === 'add' ? [s] : s.act === 'replace' ? [s.add] : [];
+      const c = stepCost(s);
+      const lottery = c.lottery || c.hopeless || c.cost == null;
+      for (const x of xs) adds.push({ mod: x.mod, worth: x.worth || x.pct || 1, lottery, sure: !lottery && (c.k === 'essence' || (c.chance ?? 0) >= 0.5) });
+    });
+    // One entry per mod (a mod can show up in two steps — a pair and an «or» step): dropped or kept together.
+    const byMod = new Map();
+    for (const a of adds) {
+      const m = byMod.get(a.mod);
+      if (!m) byMod.set(a.mod, { ...a });
+      else Object.assign(m, { lottery: m.lottery || a.lottery, sure: m.sure && a.sure });
+    }
+    adds.splice(0, adds.length, ...byMod.values());
+    if (adds.length < 2) return null;
+    const all = adds.map((a) => a.mod);
+    // A variant's price is its whole plan — with the removals its mods need (a full side: the desecrated mod via Omen of Light).
+    const spendOf = (mods) => planSpend(expandPlan(subPlan(g.plan, new Set(mods))).map(stepCost));
+    const per = (list) => spendOf(list.map((a) => a.mod)) / list.reduce((x, a) => x + a.worth, 0);
+    const same = (a, b) => a.length === b.length && a.every((m) => b.includes(m));
+    const sure = adds.filter((a) => a.sure);
+    const cheap = sure.length ? sure : [[...adds].sort((a, b) => per([a]) - per([b]))[0]]; // else the single mod with the best value per price
+    let balanced = adds.filter((a) => !a.lottery);
+    if ((!balanced.length || balanced.length === adds.length || same(balanced, cheap)) && adds.length >= 3) {
+      // Drop the mod that saves the most currency per value lost.
+      const full = spendOf(all);
+      const save = (a) => (full - spendOf(all.filter((m) => m !== a.mod))) / a.worth;
+      const drop = [...adds].sort((a, b) => save(b) - save(a))[0];
+      balanced = adds.filter((a) => a !== drop);
+    }
+    const out = [{ key: 'ideal', mods: all }];
+    const add = (key, list) => { const mods = list.map((a) => a.mod); if (mods.length && !out.some((v) => same(v.mods, mods))) out.push({ key, mods }); };
+    add('cheap', cheap);
+    add('balanced', balanced);
+    out.push(out.shift()); // Cheap, Balanced, Ideal
+    // A smaller variant is worth showing only if it saves currency: not at least 10% cheaper than a fuller one — dropped
+    // (when a risky removal costs most of the plan, every variant needs it and there is nothing to choose).
+    for (const v of out) v.spend = spendOf(v.mods);
+    for (let i = out.length - 2; i >= 0; i--) if (out.slice(i + 1).some((w) => w.spend <= out[i].spend * 1.1)) out.splice(i, 1);
+    if (out.length < 2) return null;
+    for (const v of out) {
+      const keep = new Set(v.mods);
+      v.plan = v.key === 'ideal' ? g.plan : subPlan(g.plan, keep);
+      v.adds = g.add.filter((a, i) => (keep.has(a.text) || !all.includes(a.text)) && g.add.findIndex((x) => x.text === a.text) === i);
+    }
+    return out;
+  }
+
+    return { stepCost, addCost, removeCost, expandPlan, withDesecrate, simulate, variants, subPlan, planSpend, chaosLoop, EXALT_NAME };
   }
 
   const api = { create };

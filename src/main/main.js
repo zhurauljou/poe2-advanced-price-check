@@ -12,6 +12,7 @@ const winapi = require('./winapi');
 const updater = require('./updater');
 const { popularBuilds, categoryDemand } = require('./ninjaBuilds');
 const craft = require('./craft');
+const { themeMods } = require('./weights');
 const history = require('./history');
 let lastItem = null; // last parsed item — for crafting advice
 let lastThemeMods = []; // its key mods — crafting demand is computed among builds that have them
@@ -321,9 +322,9 @@ async function priceCheck(text, refresh = false, historyId = null) {
   const il = prepared.filters.ilvl;
   const band = il && il.enabled && (item.rarity === 'Normal' || item.rarity === 'Magic') ? craft.ilvlBand(item.baseType, item.ilvl) : null;
   if (band) Object.assign(il, { min: band.min, max: band.max, next: band.next });
-  // Item theme for crafting advice: the two most important enabled mods (excluding sums).
-  lastThemeMods = prepared.filters.mods.filter((m) => m.enabled && m.statId && m.tag !== 'pseudo' && m.tag !== 'implicit' && m.tag !== 'rune' && !m.option)
-    .sort((a, b) => (b.importance || 0) - (a.importance || 0)).slice(0, 2).map((m) => m.text.split('\n')[0]);
+  // Item theme for crafting advice: the mods that define its archetype (src/main/weights.js themeMods) — not just the ones
+  // the price search enabled (local ES on gloves is folded into the property, which left «Rarity + Dexterity» as the theme).
+  lastThemeMods = themeMods(prepared.filters.mods, item.itemClass);
   const entry = { name: item.name, baseType: item.baseType, rarity: item.rarity, league };
   lastHistoryId = historyId || history.add({ ...entry, text: rawText });
   const prev = history.previous(entry, lastHistoryId);

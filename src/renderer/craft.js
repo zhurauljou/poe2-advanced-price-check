@@ -185,6 +185,14 @@ let goalValue; // goal price: undefined = computing, null = not found
 let goalBasis = 'exact'; // what the goal price is based on: exact = identical items, similar = similar ones, partial = lower bound
 // Goal price from too few listings (fewer than MIN_LOTS, core.js): shown, but no verdict is based on it.
 let goalThin = null; // { value, n }: price from too few listings
+// Budget variants of the plan (Cheap / Balanced / Ideal): [{ key, mods, adds, plan, value, basis, thin }] or null.
+let variants = null;
+let planVariant = 'ideal'; // the chosen variant (picked automatically until the user clicks one)
+let variantPicked = false; // the user chose a variant for this item — no more automatic picks
+let variantsItem = null;
+const curVariant = () => (variants && variants.find((v) => v.key === planVariant)) || null;
+// Price of what the chosen variant makes: the full goal, or that variant's own trade search.
+const curGoal = () => { const v = curVariant(); return v && v.key !== 'ideal' ? { value: v.value, basis: v.basis, thin: v.thin } : { value: goalValue, basis: goalBasis, thin: goalThin }; };
 
 // Slots on the item as circles: occupied (colored by tier), free; fractured has a ring.
 function slotsHtml(r) {
@@ -202,7 +210,7 @@ function slotsHtml(r) {
 }
 
 // The plan cost model lives in src/shared/plancost.js (also used by tests and the simulation).
-const planner = PlanCost.create(() => ({ prices: craftPrices, goalValue, est: state.est }));
+const planner = PlanCost.create(() => ({ prices: craftPrices, goalValue: curGoal().value, est: state.est }));
 const { stepCost, expandPlan, EXALT_NAME } = planner;
 
 // Currency in steps as colored tags (orbs, omens, bones, essences): the recipe reads at a glance.
@@ -260,6 +268,7 @@ const STEP_LABEL = {
   remove: (s) => t('Remove {mod}', { mod: s.mod || s.mods.join(', ') }),
   add: (s) => t('Add {mod}', { mod: s.mod }) + (s.orMods && s.orMods.length ? ` (${t('or {mods}', { mods: s.orMods.slice(0, 3).join(', ') })})` : ''),
   add2: (s) => t('Add {a} and {b}', { a: s.steps[0].mod, b: s.steps[1].mod }),
+  replace: (s) => t('Replace {junk} with {mod}', { junk: s.junk.join(', '), mod: s.mod }),
 };
 
 // The same steps split for the plan card: a muted verb, then each mod on its own line in the mod colour.
@@ -267,6 +276,7 @@ const STEP_PARTS = {
   remove: (s) => ({ verb: t('Remove'), mods: s.mod ? [s.mod] : s.mods, or: [] }),
   add: (s) => ({ verb: t('Add'), mods: [s.mod], or: (s.orMods || []).slice(0, 3) }),
   add2: (s) => ({ verb: t('Add'), mods: [s.steps[0].mod, s.steps[1].mod], or: [] }),
+  replace: (s) => ({ verb: t('Replace'), mods: [...s.junk, `→ ${s.mod}`], or: (s.orMods || []).slice(0, 3) }),
 };
 
 const oneIn = (c) => oddsText(1 / c);
@@ -290,11 +300,43 @@ function toggleSteps(box) {
 }
 const stepsLabel = (n) => (stepsOpen ? `${t('Collapse')} ▴` : `${t('Show all {n} steps', { n })} ▾`);
 
+// Essence of the Abyss removal as two numbered steps; the Mark is removed with Omen of Light — or, if a later step
+// desecrates on the side where the Mark landed, desecrated right away (Desecrate replaces the Mark with an unrevealed mod
+// of a higher tier — poe2db; which side it lands on is not verified, hence a conditional hint, not part of the cost).
+function abyssSeq(c, desSide) {
+  const [ess, ...rest] = c.currencies;
+  const crystals = rest.filter((n) => /Crystallisation$/.test(n));
+  const side = t(/Sinistral/.test(crystals[0] || '') ? 'prefix' : 'suffix');
+  return `<div class="ps-seq"><div><b>1</b> ${curChips([ess, ...crystals])} <span>— ${esc(t('removes a random {side} and leaves a desecrated Mark', { side }))}</span></div>
+    <div><b>2</b> ${curChips(['Omen of Light', 'Orb of Annulment'])} <span>— ${esc(t('removes the Mark'))}</span></div>
+    ${desSide ? `<div class="ps-alt">${esc(t('If the Mark landed on the {side}es — skip step 2 and desecrate right away (step with Desecrate below): it replaces the Mark with an unrevealed modifier of a higher tier', { side: t(desSide) }))}</div>` : ''}</div>`;
+}
+
+// A removal that can hit wanted mods: the same warning as for an essence — the odds per attempt, which mods, and how many
+// of them it hits on average before the junk is gone. A side omen (Annulment or the Abyss chain's Crystallisation) limits it
+// to the junk's side; a plain Annulment picks among all mods.
+function removeRisk(s, c) {
+  if (!(c.hits > 0.05)) return '';
+  const sided = c.currencies.some((n) => /(Annulment|Crystallisation)$/.test(n) && /^Omen of (Sinistral|Dextral)/.test(n));
+  const parts = Object.values(s.sides).filter((x) => (sided ? x.J : x.J || x.K));
+  const J = parts.reduce((a, x) => a + x.J, 0), K = parts.reduce((a, x) => a + x.K, 0);
+  const names = parts.flatMap((x) => x.names || []);
+  if (!K || !names.length) return '';
+  const odds = K / (J + K);
+  const fmtOdds = odds >= 0.5 ? `~${Math.round(odds * 100)}%` : oneIn(odds);
+  return `<div class="ps-risk">⚠ ${esc(t('{odds} per attempt: it removes {mods} instead of the junk · on average ≈{hits} of them are lost before it is done', { odds: fmtOdds, mods: names.map((m) => `«${m}»`).join(t(' or ')), hits: fmt(Math.round(c.hits * 10) / 10) }))}</div>`;
+}
+
 function planHtml(plan) {
   const steps = expandPlan(plan);
+  const costs = steps.map(stepCost);
   const long = steps.length > STEPS_SHOWN;
-  return `<div class="plan-steps${long ? ' collapsible' : ''}${stepsOpen ? ' open' : ''}" data-n="${steps.length}"><ol class="plan">${steps.map((s) => {
-    const c = stepCost(s);
+  // A later Desecrate step and its side (for the Mark hint) and later additions per side (what a removal frees a slot for).
+  const desAt = (i) => { for (let j = i + 1; j < steps.length; j++) if (costs[j].k === 'desecrate') return steps[j].side; return null; };
+  const addsAfter = (i, side) => steps.slice(i + 1).flatMap((x) => (x.act === 'add2' ? x.steps : x.act === 'add' || x.act === 'replace' ? [x] : []))
+    .filter((x) => x.side === side).map((x) => x.mod);
+  return `<div class="plan-steps${long ? ' collapsible' : ''}${stepsOpen ? ' open' : ''}" data-n="${steps.length}"><ol class="plan">${steps.map((s, si) => {
+    const c = costs[si];
     // Right column of the card: the expected cost of the whole step, or — for a one-attempt step — the price of one attempt
     // (marked "per attempt": the two are not the same thing). The body keeps only the chance.
     let odds, side = null;
@@ -305,7 +347,7 @@ function planHtml(plan) {
     else if (c.chances) odds = t('{odds} at T1–T2', { odds: c.chances.map(oneIn).join(' / ') });
     else if (s.mods) odds = '';
     else odds = c.chance >= 1 ? t('guaranteed') : oneIn(c.chance);
-    if (!side && c.cost != null) side = { cost: c.cost, sub: s.mods ? t('≈ {n} attempts', { n: fmt(Math.round(c.tries * 10) / 10) }) : '' };
+    if (!side && c.cost != null) side = { cost: c.cost, sub: s.mods ? (Math.round(c.tries * 10) === 10 ? t('1 attempt') : t('≈ {n} attempts', { n: fmt(Math.round(c.tries * 10) / 10) })) : '' };
     const notes = [];
     const key = []; // the step can't be done without these, shown up front; the rest goes under "details"
     // Regal's random mod: room on one side only — it stays unless it lands on the tight side (craft.js planGoal).
@@ -317,6 +359,17 @@ function planHtml(plan) {
     if (c.hopeless) key.push(t('One attempt: a miss stays on the item — removing it at random would more likely hit a needed modifier'));
     else if (s.act !== 'remove' && c.k !== 'desecrate' && c.k !== 'essence' && (s.onSide || s.onItem)) notes.push(t('the average includes misses: an Annulment may hit a needed modifier, which then has to be added again'));
     if (c.k === 'essence') notes.push(t('Uses the only crafted-modifier slot (one per item; Alloys too)'));
+    if (c.k === 'chaos') {
+      key.push(c.currencies.includes('Omen of Whittling')
+        ? t('Omen of Whittling makes the {orb} remove the lowest-level modifier — {junk}; a random modifier takes its place: repeat until it is {mod}', { orb: c.currencies[0], junk: c.junk.join(', '), mod: s.mod })
+        : t('{orb} removes a random modifier and adds a random one: repeat until it removes {junk} and adds {mod}', { orb: c.currencies[0], junk: c.junk.join(', '), mod: s.mod }));
+      if (c.currencies[0] !== 'Chaos Orb') key.push(t('{orb}: the new modifier is level {level}+ — a better shot at a good tier', { orb: c.currencies[0], level: /^Perfect/.test(c.currencies[0]) ? 50 : 35 }));
+      if (c.land < 1) notes.push(t('The item has a free slot: the new modifier lands on this side about half the time'));
+    }
+    // A fixed essence value on the tier ladder: lower than Exalted / Desecrate can roll here, or T1 needs a higher item level.
+    const et = c.k === 'essence' && s.essTier && s.essTier[c.currencies[0]];
+    if (et && s.bestTier && et.tier > s.bestTier) key.push(t('{essence} gives {value} — tier {tier}, while Exalted / Desecrate can roll tier {best} on this item', { essence: c.currencies[0], value: et.value, tier: et.tier, best: s.bestTier }));
+    else if (et && s.topLevel) key.push(t('Tier 1 ({range}) needs item level {level} — this base cannot roll it, the essence is as good as it gets', { range: s.topRange, level: s.topLevel }));
     if (c.k === 'desecrate') {
       notes.push(t('Desecrate: reveal it at the Well of Souls and pick 1 of 3 offered modifiers — only one desecrated modifier per item'));
       if (/^Ancient /.test(c.bone)) notes.push(t('Ancient bone — low tiers cut off (level 40+)'));
@@ -346,7 +399,12 @@ function planHtml(plan) {
     if (c.whittle) alts.push(t('{mod}: Chaos Orb + Omen of Whittling removes it for sure (lowest-level modifier), a random modifier takes its place — {list}', { mod: s.whittle,
       list: c.whittle.map((o) => `${o.orb}${o.level ? ` (${t('new one {n}+', { n: o.level })})` : ''} ≈ ${money(o.cost)}`).join('; ') }));
     // Essence of the Abyss chain: if chosen, explain the order; if another way is cheaper, show it under "Instead".
-    if (c.viaAbyss) key.push(t('Essence of the Abyss with the Crystallisation omen removes a random modifier of that side and leaves a desecrated Mark — Omen of Light + Orb of Annulment remove it'));
+    // Removal: what it frees a slot for, and its price split into currency and the risk of hitting a wanted mod.
+    const why = [];
+    if (s.mods && s.sides) {
+      why.push(...Object.entries(s.sides).filter(([, x]) => x.J).map(([sd]) => { const m = addsAfter(si, sd); return m.length ? t('frees a {side} for {mods}', { side: t(sd), mods: m.slice(0, 2).join(', ') }) : ''; }).filter(Boolean));
+      if (c.hits > 0.05 && c.spent != null && c.cost != null) why.push(t('currency ≈ {cur} · risk of hitting a needed modifier ≈ {risk}', { cur: money(c.spent), risk: money(Math.max(0, c.cost - c.spent)) }));
+    }
     if (c.abyss) {
       const how = t('{chain}: removes a random modifier of the side like an Annulment omen; the Mark it leaves is desecrated and Omen of Light removes it', { chain: c.abyss.currencies.join(' → ') });
       alts.push(t('{how}: ≈{n} attempts, ≈{hits} needed modifiers hit, {cost} in currency', { how, n: fmt(Math.round(c.abyss.tries * 10) / 10), hits: fmt(Math.round(c.abyss.hits * 10) / 10), cost: money(c.abyss.spent) }));
@@ -362,13 +420,16 @@ function planHtml(plan) {
     const title = parts
       ? `<span class="ps-verb">${esc(parts.verb)}</span>${parts.mods.map((m) => `<span class="ps-mod">${esc(m)}</span>`).join('')}${parts.or.length ? `<span class="ps-or">${esc(t('or {mods}', { mods: parts.or.join(', ') }))}</span>` : ''}`
       : esc(STEP_LABEL[s.act](s));
-    const how = [c.k === 'essence' ? '' : curChips(c.currencies), esc(odds)].filter(Boolean).join(' · ');
+    // Essence and the Abyss chain show their own numbered sequence instead of a single chip line.
+    const how = [c.k === 'essence' || c.viaAbyss ? '' : curChips(c.currencies), esc(odds)].filter(Boolean).join(' · ');
     const sideHtml = side ? `<div class="ps-side${side.per ? ' per' : ''}"><b class="ps-cost">≈ ${money(side.cost)}</b>${side.per ? `<small>${esc(t('per attempt'))}</small>` : side.sub ? `<small>${esc(side.sub)}</small>` : ''}</div>` : '';
     return `<li${side ? ' class="has-side"' : ''}><div class="ps-main"><div class="ps-what">${title}</div>
-      ${c.k === 'essence' ? essenceSeq(s, c) : ''}
+      ${c.k === 'essence' ? essenceSeq(s, c) : ''}${c.viaAbyss ? abyssSeq(c, desAt(si)) : ''}
       ${how ? `<div class="ps-how">${how}</div>` : ''}
+      ${why.map((w) => `<div class="ps-key">${esc(w)}</div>`).join('')}
       ${key.length ? `<div class="ps-key">${esc(key.join(' · '))}</div>` : ''}
       ${c.risky && c.chance < 1 && !s.mods ? `<div class="ps-risk">${esc(t('A miss removes a good modifier instead'))}</div>` : ''}
+      ${s.mods && s.sides ? removeRisk(s, c) : ''}
       ${c.k === 'essence' && c.chance < 1 && (s.atRisk || []).length ? keyRisk(s) : ''}
       ${more.length ? `<details class="ps-more"><summary>${esc(alts.length ? t('details and alternatives') : t('details'))}</summary>${more.join('')}</details>` : ''}</div>${sideHtml}</li>`;
   }).join('')}</ol>${long ? `<button class="link steps-toggle" data-act="steps">${esc(stepsLabel(steps.length))}</button>` : ''}</div>`;
@@ -379,6 +440,8 @@ const hlNums = (s) => esc(s).replace(/≈\s?[\d.,]+(?:\s?(?:div|chaos|ex|exalted
 
 // Verdict: sell as is or craft (goal price − currency cost).
 function verdictHtml(plan) {
+  const { value: goalValue, basis: goalBasis, thin: goalThin } = curGoal();
+  const part = curVariant() && planVariant !== 'ideal';
   const costs = expandPlan(plan).map(stepCost);
   const known = costs.filter((c) => c.cost != null).reduce((a, c) => a + c.cost, 0);
   const lottery = costs.some((c) => c.cost == null);
@@ -386,8 +449,8 @@ function verdictHtml(plan) {
   const now = state.est;
   const rows = [
     `<div><span>${esc(t('Sell as is'))}</span><b>${now != null ? money(now) : '—'}</b></div>`,
-    `<div><span>${esc(t('Goal item'))}${goalValue != null && goalBasis !== 'exact' ? ` <small class="muted" title="${esc(t(goalBasis === 'similar' ? 'No exact matches — priced by similar items: the added modifiers required, the rest at their tier floor' : 'No similar items either — priced by items with only the most valuable added modifier: the real goal is worth more'))}">${esc(t(goalBasis === 'similar' ? '(similar)' : '(at least)'))}</small>` : ''}</span><b>${goalValue === undefined ? '…' : goalValue == null ? (goalThin ? `<span class="muted" title="${esc(t('Too few listings to price the goal — one or two prices can be anything'))}">${money(goalThin.value)}? · ${esc(t('{n} listings', { n: goalThin.n }))}</span>` : t('none listed')) : (goalBasis === 'partial' ? '≥ ' : '≈ ') + money(goalValue)}</b></div>`,
-    `<div><span>${esc(t('Currency, on average'))}</span><b>${lottery ? `${esc(t('from'))} ` : ''}${money(known)}</b></div>`,
+    `<div><span>${esc(t(part ? 'This variant' : 'Goal item'))}${goalValue != null && goalBasis !== 'exact' ? ` <small class="muted" title="${esc(t(goalBasis === 'similar' ? 'No exact matches — priced by similar items: the added modifiers required, the rest at their tier floor' : 'No similar items either — priced by items with only the most valuable added modifier: the real goal is worth more'))}">${esc(t(goalBasis === 'similar' ? '(similar)' : '(at least)'))}</small>` : ''}</span><b>${goalValue === undefined ? '…' : goalValue == null ? (goalThin ? `<span class="muted" title="${esc(t('Too few listings to price the goal — one or two prices can be anything'))}">${money(goalThin.value)}? · ${esc(t('{n} listings', { n: goalThin.n }))}</span>` : t('none listed')) : (goalBasis === 'partial' ? '≥ ' : '≈ ') + money(goalValue)}</b></div>`,
+    `<div><span>${esc(t('Currency, on average'))}</span><b>${tiny(planSpend(costs)) ? '< 1 ex' : `${lottery ? `${esc(t('from'))} ` : ''}${money(planSpend(costs))}`}</b></div>`,
   ];
   let verdict = '';
   // Removing extras with Annulments will on average hit needed mods: on such an item it's almost always unprofitable.
@@ -418,64 +481,167 @@ function verdictHtml(plan) {
   return `<div class="profit">${rows.join('')}</div>${verdict}`;
 }
 
-// Goal price right when the tab opens (one trade search), then redraw the verdict.
-async function computeGoal(g) {
+// Price of the item with these mods added (and the plan's removals done): exact matches, then similar ones, then
+// (lowerBound) the item with only the most valuable added mod. → { value, basis, thin }; null if the item changed meanwhile.
+async function priceGoal(g, adds, lowerBound) {
   const mine = state;
-  goalValue = undefined;
   const f = JSON.parse(JSON.stringify(state.filters));
   const gone = new Set(g.remove.flatMap((r) => r.templates));
   for (const m of f.mods) if (m.template && gone.has(tplKey(m.template))) m.enabled = false;
-  withMods(f, g.add);
-  goalBasis = 'exact';
-  goalThin = null;
+  withMods(f, adds);
+  const out = { value: null, basis: 'exact', thin: null };
   // Price from the search response: too few listings, remember as "thin listings" and search wider.
   const take = (q) => {
     const v = estimate(q.lots);
     if (v != null && q.total >= MIN_LOTS) return v;
-    if (v != null && !goalThin) goalThin = { value: v, n: q.total };
+    if (v != null && !out.thin) out.thin = { value: v, n: q.total };
     return null;
   };
-  try {
-    const it = state.item.rarity === 'Magic' ? { ...state.item, rarity: 'Rare' } : state.item;
-    const q = await quickPrice(it, f);
-    if (mine !== state) return;
-    goalValue = take(q);
-    // No exact matches: similar ones. Added mods required, remaining ones at the tier's lower bound, minor ones off.
-    if (goalValue == null) {
-      const added = new Set(g.add.flatMap((a) => (a.stats || []).map((s) => s.statId)));
-      const loose = JSON.parse(JSON.stringify(f));
-      for (const m of loose.mods) {
-        if (added.has(m.statId) || !m.enabled) continue;
-        if (!m.key && (m.importance || 0) < 2.4) m.enabled = false;
-        else if (m.range) m.min = Math.ceil(m.range.lo);
-      }
-      const q2 = await quickPrice(it, loose);
-      if (mine !== state) return;
-      goalValue = take(q2);
-      if (goalValue != null) goalBasis = 'similar';
-      // Still nothing: lower bound, the item with only the most valuable added mod (the rest as for similar).
-      if (goalValue == null && g.add.length > 1) {
-        const top = [...g.add].sort((a, b) => b.pct - a.pct)[0];
-        const keep = new Set((top.stats || []).map((s) => s.statId));
-        const part = JSON.parse(JSON.stringify(loose));
-        for (const m of part.mods) if (added.has(m.statId) && !keep.has(m.statId)) m.enabled = false;
-        const q3 = await quickPrice(it, part);
-        if (mine !== state) return;
-        goalValue = take(q3);
-        if (goalValue != null) goalBasis = 'partial';
-      }
+  const it = state.item.rarity === 'Magic' ? { ...state.item, rarity: 'Rare' } : state.item;
+  const q = await quickPrice(it, f);
+  if (mine !== state) return null;
+  out.value = take(q);
+  // No exact matches: similar ones. Added mods required, remaining ones at the tier's lower bound, minor ones off.
+  if (out.value == null) {
+    const added = new Set(adds.flatMap((a) => (a.stats || []).map((s) => s.statId)));
+    const loose = JSON.parse(JSON.stringify(f));
+    for (const m of loose.mods) {
+      if (added.has(m.statId) || !m.enabled) continue;
+      if (!m.key && (m.importance || 0) < 2.4) m.enabled = false;
+      else if (m.range) m.min = Math.ceil(m.range.lo);
     }
+    const q2 = await quickPrice(it, loose);
+    if (mine !== state) return null;
+    out.value = take(q2);
+    if (out.value != null) out.basis = 'similar';
+    // Still nothing: lower bound, the item with only the most valuable added mod (the rest as for similar).
+    if (out.value == null && lowerBound && adds.length > 1) {
+      const top = [...adds].sort((a, b) => b.pct - a.pct)[0];
+      const keep = new Set((top.stats || []).map((s) => s.statId));
+      const part = JSON.parse(JSON.stringify(loose));
+      for (const m of part.mods) if (added.has(m.statId) && !keep.has(m.statId)) m.enabled = false;
+      const q3 = await quickPrice(it, part);
+      if (mine !== state) return null;
+      out.value = take(q3);
+      if (out.value != null) out.basis = 'partial';
+    }
+  }
+  return out;
+}
+
+// Goal price right when the tab opens (one trade search), then redraw the verdict; then the budget variants and their prices.
+async function computeGoal(g) {
+  const mine = state;
+  goalValue = undefined;
+  goalBasis = 'exact';
+  goalThin = null;
+  if (variantsItem !== state) { planVariant = 'ideal'; variantPicked = false; variantsItem = state; }
+  variants = null;
+  try {
+    const r = await priceGoal(g, g.add, true);
+    if (!r) return;
+    ({ value: goalValue, basis: goalBasis, thin: goalThin } = r);
   } catch (e) {
     if (mine !== state) return;
     goalValue = null;
     setStatus(errText(e), true);
   }
+  // Variants are split by step costs, which depend on the goal price (the cost of hitting a needed mod).
+  variants = planVariants(g);
+  autoVariant();
+  refreshPlan();
+  for (const v of variants || []) {
+    if (v.key === 'ideal') continue;
+    try {
+      const r = await priceGoal(g, v.adds, false);
+      if (!r || mine !== state) return;
+      Object.assign(v, r);
+    } catch { v.value = null; }
+    autoVariant();
+    refreshPlan();
+  }
+}
+
+// The variant shown by default: the one that earns the most over selling as is on average; while the prices are not known —
+// the cheapest one, not «wipe the item and hope for the ideal».
+function autoVariant() {
+  if (!variants) { planVariant = 'ideal'; return; }
+  if (variantPicked && curVariant()) return;
+  const rows = variants.map((v) => ({ v, ...variantEarn(v) }));
+  const priced = rows.filter((r) => r.gain != null);
+  const pick = priced.length === rows.length
+    ? [...priced].sort((a, b) => b.gain - a.gain)[0] // the simulated average already weighs a lottery by its odds
+    : [...rows].sort((a, b) => a.spend - b.spend)[0];
+  planVariant = pick.v.key;
+}
+
+// Redraw the plan card for the chosen variant: the variants row, the verdict and the steps.
+function refreshPlan() {
+  const g = craftGoal;
+  if (!g) return;
+  const plan = curVariant() ? curVariant().plan : g.plan;
+  const vb = document.querySelector('#craft .variants-box');
+  if (vb) vb.innerHTML = variantsHtml();
   const box = document.querySelector('#craft .verdict-box');
-  if (box) box.innerHTML = verdictHtml(g.plan);
+  if (box) box.innerHTML = verdictHtml(plan);
   // Steps too: the cost of hitting a needed mod depends on the goal price.
   const ol = document.querySelector('#craft .plan-box .plan-steps');
-  if (ol) ol.outerHTML = planHtml(g.plan);
+  if (ol) ol.outerHTML = planHtml(plan);
   fit();
+}
+
+
+const { planSpend } = planner;
+
+// Budget variants (src/shared/plancost.js) with their prices: the full goal's, the rest searched after it.
+function planVariants(g) {
+  const out = planner.variants(g);
+  for (const v of out || []) {
+    if (v.key === 'ideal') Object.assign(v, { value: goalValue, basis: goalBasis, thin: goalThin });
+    else v.value = undefined;
+  }
+  return out;
+}
+
+const VARIANT_NAME = { cheap: 'Cheap', balanced: 'Balanced', ideal: 'Ideal' };
+// The variants row: just what the craft roughly costs and what it roughly earns over selling as is. With a step of unknown
+// odds both are «if it works»: the cost is a lower bound and the gain an upper one.
+// What a variant costs and earns. With both prices known the gain is the simulated average (src/shared/plancost.js simulate):
+// a lottery step counts with its rough odds, so the card agrees with the verdict; without the item price — «if it works».
+function variantEarn(v) {
+  const now = state.est;
+  const value = v.key === 'ideal' ? goalValue : v.value;
+  const costs = expandPlan(v.plan).map(stepCost);
+  const spend = planSpend(costs);
+  const lottery = costs.some((c) => c.cost == null);
+  if (value == null || now == null) return { value, spend, lottery, gain: null };
+  if (!v.sim || v.sim.value !== value || v.sim.now !== now) {
+    const sim = PlanCost.create(() => ({ prices: craftPrices, goalValue: value, est: now })).simulate(v.plan, { keep: craftGoal ? craftGoal.keep.length : 0 }, 800);
+    v.sim = { value, now, gain: sim ? sim.value.mean - now - sim.spent.mean : value - now - spend, expected: !!sim };
+  }
+  return { value, spend, lottery, gain: v.sim.gain, expected: v.sim.expected };
+}
+
+// Under half an exalted (money() picks the unit where the number is ≥ 1, so a number below 0.5 is in ex): shown as nothing.
+const tiny = (div) => parseFloat(money(div).replace(/,/g, '')) < 0.5;
+
+function variantsHtml() {
+  if (!variants) return '';
+  const cards = variants.map((v) => {
+    const { value, spend, lottery, gain, expected } = variantEarn(v);
+    const zero = gain != null && tiny(Math.abs(gain)); // rounds to nothing — no sign, no colour
+    const earn = value === undefined ? '…' : gain == null ? '—' : zero ? '<b>≈ 0</b>'
+      : `<b class="${gain > 0 ? 'good' : 'bad'}">${lottery && !expected && gain > 0 ? `${esc(t('up to'))} ` : '≈ '}${gain > 0 ? '+' : '−'}${money(Math.abs(gain))}</b>`;
+    return `<button class="variant${v.key === planVariant ? ' on' : ''}" data-act="variant" data-v="${v.key}"${lottery ? ` title="${esc(t('A key modifier has unknown odds — this is a gamble'))}"` : ''}>
+      <span class="vn">${esc(t(VARIANT_NAME[v.key]))}</span>
+      <span class="vr"><small>${esc(t('craft'))}</small><b>${tiny(spend) ? '< 1 ex' : `${lottery ? `${esc(t('from'))} ` : '~ '}${money(spend)}`}</b></span>
+      <span class="vr"><small>${esc(t('earn'))}</small>${earn}</span></button>`;
+  }).join('');
+  const v = curVariant();
+  const ideal = variants.find((x) => x.key === 'ideal');
+  const left = v && v.key !== 'ideal' ? ideal.adds.filter((a) => !v.adds.includes(a)) : [];
+  const gets = left.length ? `<div class="v-gets">${esc(t('Gets'))} ${v.adds.map((a) => `<b>${esc(a.text)}</b>`).join(', ')} · ${esc(t('leaves out'))} ${left.map((a) => `<span>${esc(a.text)}</span>`).join(', ')}</div>` : '';
+  return `<div class="variants">${cards}</div>${gets}`;
 }
 
 // ---- step-by-step crafting: item and goal remembered; each new copy of the same item shows what happened and what's next ----
@@ -492,7 +658,7 @@ function startSession() {
   if (!g) return;
   const keys = modKeys();
   craftSession = { base: state.item.baseType, ilvl: state.item.ilvl, name: state.item.name, rarity: state.item.rarity,
-    goal: { add: g.add.map((a) => ({ text: a.text, or: a.orMods || [] })), remove: g.remove.map((r) => ({ text: r.text })) },
+    goal: { add: (curVariant() ? curVariant().adds : g.add).map((a) => ({ text: a.text, or: a.orMods || [] })), remove: g.remove.map((r) => ({ text: r.text })) },
     start: keys, before: keys, current: keys, seen: state };
 }
 function sessionHtml(r) {
@@ -728,8 +894,8 @@ function renderCraft(r) {
   const inSession = craftSession && sessionMatches();
   if (inSession) top.unshift(sessionHtml(r));
   if (r.goal && r.goal.plan && r.goal.plan.length) {
-    top.push(`<div class="craft-sec plan-box"><div class="k">${t('Plan')}${inSession ? '' : ` <button class="link session-btn" data-act="session" title="${esc(t('Do a step, check the item again with the hotkey — the window stays open and shows what you got and the next step'))}">▶ ${esc(t('Craft step by step'))}</button>`}</div><div class="verdict-box">${verdictHtml(r.goal.plan)}</div>
-      ${planHtml(r.goal.plan)}<details class="why"><summary>${t('Why this plan')}</summary>${goalHtml(r.goal)}</details></div>`);
+    top.push(`<div class="craft-sec plan-box"><div class="k">${t('Plan')}${inSession ? '' : ` <button class="link session-btn" data-act="session" title="${esc(t('Do a step, check the item again with the hotkey — the window stays open and shows what you got and the next step'))}">▶ ${esc(t('Craft step by step'))}</button>`}</div><div class="variants-box">${variantsHtml()}</div><div class="verdict-box">${verdictHtml(curVariant() ? curVariant().plan : r.goal.plan)}</div>
+      ${planHtml(curVariant() ? curVariant().plan : r.goal.plan)}<details class="why"><summary>${t('Why this plan')}</summary>${goalHtml(r.goal)}</details></div>`);
   } else {
     top.push(`<div class="craft-sec plan-box"><div class="verdict">${esc(t('No clear upgrade for this item — selling as is is the simple choice'))}</div></div>`);
     if (r.gamble) top.push(gambleHtml(r.gamble, true)); // nothing to improve: risky finish in view

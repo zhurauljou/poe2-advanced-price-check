@@ -316,10 +316,14 @@ async function categoryDemand(opts, fetchBuffer) {
       const t = findCi(names, modTemplate(m));
       if (t && !themed.includes(t)) { params.push([modKey, t]); themed.push(t); }
     }
-    if (themed.length) {
-      const narrow = await search(snap, params, timeMachine, fetchBuffer);
-      if (narrow.total >= minBuilds) res = narrow; else themed = [];
+    // Too few builds with all the theme mods — drop the last one and try again (the first ones define the archetype best),
+    // and only then fall back to the whole class: «ES gloves» beats «all gloves», where attack builds outnumber casters.
+    let found = false;
+    for (let k = themed.length; k >= 1 && !found; k--) {
+      const narrow = await search(snap, params.slice(0, scope.length + k), timeMachine, fetchBuffer);
+      if (narrow.total >= minBuilds) { res = narrow; themed = themed.slice(0, k); found = true; }
     }
+    if (!found) themed = [];
   }
   const page = `https://poe.ninja/poe2/builds/${snap.url}?items=${encodeURIComponent(cat)}${minLevel ? `&min-level=${minLevel}` : ''}`
     + (onBase ? `&${encodeURIComponent(baseKey)}=${encodeURIComponent(onBase)}` : '')

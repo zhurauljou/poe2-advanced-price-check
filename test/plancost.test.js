@@ -95,6 +95,42 @@ test('the single Desecrate goes to the valuable mod Exalted rarely hits, not jus
   assert.equal(des && des.mod, '# to spirit');
 });
 
+test('essence and Desecrate are allocated together: a low-tier essence gives the key mod up to Desecrate', () => {
+  const prices = { ...PRICES, 'Preserved Rib': 0.05, 'Omen of Abyssal Echoes': 0.05, 'Omen of Light': 1,
+    'Essence A': 0.1, 'Essence B': 0.1, 'Omen of Sinistral Crystallisation': 0.1 };
+  const step = (mod, worth, rough, ess, essTier) => ({ act: 'add', side: 'prefix', mod, worth, onItem: 1, onSide: 0, annulOmen: 'Omen of Sinistral Annulment',
+    crystal: 'Omen of Sinistral Crystallisation', crafted: [ess], craftedSlots: 1, essTier: { [ess]: { tier: essTier, value: '30' } }, bestTier: 1,
+    exalt: { base: { chance: null, guess: 0.1, rough, pool: 10 } }, desecrate: { 'Preserved Rib': { chance: null, guess: 0.1, rough, pool: 12, good: 1 } } });
+  const plan = (low) => PlanCost.create(() => ({ prices, goalValue: 40, est: 2 }))
+    .withDesecrate([step('# speed', 60, 0.05, 'Essence A', low), step('# life', 30, 0.05, 'Essence B', 1)]);
+  // Essence A gives T1: greedy — the essence to the most valuable mod, Desecrate to the other.
+  const top = plan(1);
+  assert.equal(top.find((s) => s.useCrafted).mod, '# speed');
+  // Essence A is four tiers down: Desecrate takes the key mod, the other essence goes to life.
+  const low = plan(5);
+  assert.equal(low.find((s) => s.useDes).mod, '# speed');
+  assert.equal(low.find((s) => s.useCrafted).mod, '# life');
+});
+
+test('Chaos replace: with Whittling on the lowest-level unwanted mod it beats Annulment + Exalted; plain Chaos on good mods does not', () => {
+  const prices = { ...PRICES, 'Chaos Orb': 0.02, 'Omen of Whittling': 0.05, 'Omen of Sinistral Exaltation': 0.1 };
+  const p = PlanCost.create(() => ({ prices, goalValue: 20, est: 2 }));
+  const rem = (whittle) => ({ act: 'remove', mods: ['junk'], whittle: whittle ? 'junk' : null, sides: { prefix: { J: 1, K: 2, full: true, omen: 'Omen of Sinistral Annulment' }, suffix: { J: 0, K: 3, full: true, omen: 'Omen of Dextral Annulment' } } });
+  const step = { act: 'add', side: 'prefix', mod: 'wanted', worth: 50, onItem: 5, onSide: 2, annulOmen: 'Omen of Sinistral Annulment', exalt: { base: { chance: 0.3, guess: 0.3, pool: 10 } } };
+  const plan = p.expandPlan([rem(true), step]);
+  assert.deepEqual(plan.map((s) => s.act), ['replace']);
+  const c = p.stepCost(plan[0]);
+  assert.deepEqual(c.currencies, ['Chaos Orb', 'Omen of Whittling']);
+  near(c.chance, 0.3, 'Whittling removes the unwanted mod for sure; the new one is wanted with the Exalted odds');
+  // A higher Chaos tier cuts low tiers off: with far better odds at T1–T2 it pays for itself (an expensive base).
+  const tiered = PlanCost.create(() => ({ prices: { ...prices, 'Greater Chaos Orb': 0.1, 'Perfect Chaos Orb': 0.5 }, goalValue: 20, est: 2 }));
+  const strong = { ...step, exalt: { base: { chance: 0.05, guess: 0.05, pool: 10 }, greater: { chance: 0.3, guess: 0.3, pool: 10 }, perfect: { chance: 0.6, guess: 0.6, pool: 10 } } };
+  const g = tiered.stepCost(tiered.expandPlan([rem(true), strong])[0]);
+  assert.deepEqual(g.currencies, ['Greater Chaos Orb', 'Omen of Whittling']);
+  // Without Whittling Chaos hits one of five good mods most of the time — the plan keeps Annulment, then Exalted.
+  assert.deepEqual(p.expandPlan([rem(false), step]).map((s) => s.act), ['remove', 'add']);
+});
+
 test('Regal: Greater / Perfect by default only if dirt cheap (≤ 0.1 div or ≤ 3× the regular)', () => {
   const c = planner().stepCost({ act: 'regal' });
   assert.deepEqual(c.currencies, ['Greater Regal Orb']); // 0.02 ≤ 0.1, but Perfect (0.5) is not

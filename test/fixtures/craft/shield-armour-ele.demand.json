@@ -1,0 +1,451 @@
+{
+ "league": "Forbidden Rites",
+ "class": "Shields",
+ "themed": [
+  "#% of Armour also applies to Elemental Damage"
+ ],
+ "mods": [
+  {
+   "name": "#% of Armour also applies to Elemental Damage",
+   "count": 621,
+   "pct": 100
+  },
+  {
+   "name": "# to Armour",
+   "count": 600,
+   "pct": 96.6
+  },
+  {
+   "name": "#% increased Armour",
+   "count": 522,
+   "pct": 84.1
+  },
+  {
+   "name": "#% increased Armour, Evasion and Energy Shield",
+   "count": 455,
+   "pct": 73.3
+  },
+  {
+   "name": "# to Stun Threshold",
+   "count": 445,
+   "pct": 71.7
+  },
+  {
+   "name": "#% additional Physical Damage Reduction",
+   "count": 233,
+   "pct": 37.5
+  },
+  {
+   "name": "#% to Fire Resistance",
+   "count": 199,
+   "pct": 32
+  },
+  {
+   "name": "#% to Cold Resistance",
+   "count": 163,
+   "pct": 26.2
+  },
+  {
+   "name": "#% to Lightning Resistance",
+   "count": 159,
+   "pct": 25.6
+  },
+  {
+   "name": "# to maximum Life",
+   "count": 154,
+   "pct": 24.8
+  },
+  {
+   "name": "# to Strength",
+   "count": 120,
+   "pct": 19.3
+  },
+  {
+   "name": "#% to Chaos Resistance",
+   "count": 105,
+   "pct": 16.9
+  },
+  {
+   "name": "#% increased Block chance",
+   "count": 101,
+   "pct": 16.3
+  },
+  {
+   "name": "#% increased Armour and Energy Shield",
+   "count": 64,
+   "pct": 10.3
+  },
+  {
+   "name": "# to maximum Energy Shield",
+   "count": 63,
+   "pct": 10.1
+  },
+  {
+   "name": "#% to Maximum Fire Resistance",
+   "count": 44,
+   "pct": 7.1
+  },
+  {
+   "name": "#% of Armour also applies to Chaos Damage",
+   "count": 38,
+   "pct": 6.1
+  },
+  {
+   "name": "#% reduced Attribute Requirements",
+   "count": 36,
+   "pct": 5.8
+  },
+  {
+   "name": "#% to Maximum Cold Resistance",
+   "count": 27,
+   "pct": 4.3
+  },
+  {
+   "name": "#% to all Maximum Elemental Resistances",
+   "count": 27,
+   "pct": 4.3
+  },
+  {
+   "name": "# to # Physical Thorns damage",
+   "count": 26,
+   "pct": 4.2
+  },
+  {
+   "name": "#% to all Elemental Resistances",
+   "count": 24,
+   "pct": 3.9
+  },
+  {
+   "name": "#% to Maximum Lightning Resistance",
+   "count": 22,
+   "pct": 3.5
+  },
+  {
+   "name": "# to Evasion Rating",
+   "count": 20,
+   "pct": 3.2
+  },
+  {
+   "name": "#% increased Armour and Evasion",
+   "count": 19,
+   "pct": 3.1
+  },
+  {
+   "name": "#% to Maximum Chaos Resistance",
+   "count": 12,
+   "pct": 1.9
+  },
+  {
+   "name": "Hits against you have #% reduced Critical Damage Bonus",
+   "count": 12,
+   "pct": 1.9
+  },
+  {
+   "name": "# Suffix Modifier allowed",
+   "count": 11,
+   "pct": 1.8
+  },
+  {
+   "name": "Regenerate #% of maximum Life per second",
+   "count": 8,
+   "pct": 1.3
+  },
+  {
+   "name": "# to Intelligence",
+   "count": 6,
+   "pct": 1
+  },
+  {
+   "name": "#% increased Thorns damage",
+   "count": 6,
+   "pct": 1
+  },
+  {
+   "name": "#% to Lightning and Chaos Resistances",
+   "count": 6,
+   "pct": 1
+  },
+  {
+   "name": "# to Dexterity",
+   "count": 5,
+   "pct": 0.8
+  },
+  {
+   "name": "Off-hand Hits inflict Runefather's Challenge",
+   "count": 5,
+   "pct": 0.8
+  },
+  {
+   "name": "#% increased Energy Shield Recharge Rate",
+   "count": 4,
+   "pct": 0.6
+  },
+  {
+   "name": "#% increased Life and Mana Recovery from Flasks",
+   "count": 4,
+   "pct": 0.6
+  },
+  {
+   "name": "#% increased Runic Ward",
+   "count": 4,
+   "pct": 0.6
+  },
+  {
+   "name": "#% to Fire and Chaos Resistances",
+   "count": 4,
+   "pct": 0.6
+  },
+  {
+   "name": "# Life gained when you Block",
+   "count": 3,
+   "pct": 0.5
+  },
+  {
+   "name": "# Mana gained when you Block",
+   "count": 3,
+   "pct": 0.5
+  },
+  {
+   "name": "#% increased Attack Speed if you have Blocked Recently",
+   "count": 3,
+   "pct": 0.5
+  },
+  {
+   "name": "#% of Damage taken Recouped as Mana",
+   "count": 3,
+   "pct": 0.5
+  },
+  {
+   "name": "#% to maximum Block chance",
+   "count": 3,
+   "pct": 0.5
+  },
+  {
+   "name": "Chance to Block Damage is Lucky",
+   "count": 3,
+   "pct": 0.5
+  },
+  {
+   "name": "You take #% of damage from Blocked Hits",
+   "count": 3,
+   "pct": 0.5
+  },
+  {
+   "name": "#% increased Energy Shield Recharge Rate if you've Blocked Recently",
+   "count": 2,
+   "pct": 0.3
+  },
+  {
+   "name": "#% to all maximum Resistances",
+   "count": 2,
+   "pct": 0.3
+  },
+  {
+   "name": "# to maximum Mana",
+   "count": 1,
+   "pct": 0.2
+  },
+  {
+   "name": "# to maximum Runic Ward",
+   "count": 1,
+   "pct": 0.2
+  },
+  {
+   "name": "#% increased Block chance while your Companion is in your Presence",
+   "count": 1,
+   "pct": 0.2
+  },
+  {
+   "name": "#% of Physical Damage taken as Lightning while your Shield is raised",
+   "count": 1,
+   "pct": 0.2
+  },
+  {
+   "name": "#% to Cold and Chaos Resistances",
+   "count": 1,
+   "pct": 0.2
+  },
+  {
+   "name": "Bonded: #% increased Damage for each type of Elemental Ailment on Enemy",
+   "count": 1,
+   "pct": 0.2
+  },
+  {
+   "name": "Bonded: #% increased maximum Life",
+   "count": 1,
+   "pct": 0.2
+  },
+  {
+   "name": "Gain Deflection Rating equal to #% of Evasion Rating",
+   "count": 1,
+   "pct": 0.2
+  },
+  {
+   "name": "Hits have #% reduced Critical Hit Chance against you",
+   "count": 1,
+   "pct": 0.2
+  },
+  {
+   "name": "Recover # Life when you Block",
+   "count": 1,
+   "pct": 0.2
+  },
+  {
+   "name": "You take #% of damage from Blocked Hits with a raised Shield",
+   "count": 1,
+   "pct": 0.2
+  }
+ ],
+ "bases": [
+  {
+   "name": "Tawhoan Tower Shield",
+   "count": 430,
+   "pct": 69.2
+  },
+  {
+   "name": "Vaal Tower Shield",
+   "count": 43,
+   "pct": 6.9
+  },
+  {
+   "name": "Blacksteel Crest Shield",
+   "count": 32,
+   "pct": 5.2
+  },
+  {
+   "name": "Fortress Tower Shield",
+   "count": 20,
+   "pct": 3.2
+  },
+  {
+   "name": "Vaal Crest Shield",
+   "count": 13,
+   "pct": 2.1
+  },
+  {
+   "name": "Goldworked Tower Shield",
+   "count": 10,
+   "pct": 1.6
+  },
+  {
+   "name": "Runeforged Tawhoan Tower Shield",
+   "count": 10,
+   "pct": 1.6
+  },
+  {
+   "name": "Golden Targe",
+   "count": 8,
+   "pct": 1.3
+  },
+  {
+   "name": "Royal Tower Shield",
+   "count": 8,
+   "pct": 1.3
+  },
+  {
+   "name": "Intricate Crest Shield",
+   "count": 6,
+   "pct": 1
+  },
+  {
+   "name": "Noble Tower Shield",
+   "count": 6,
+   "pct": 1
+  },
+  {
+   "name": "Sekheman Crest Shield",
+   "count": 6,
+   "pct": 1
+  },
+  {
+   "name": "Glowering Crest Shield",
+   "count": 5,
+   "pct": 0.8
+  },
+  {
+   "name": "Bulwark Tower Shield",
+   "count": 4,
+   "pct": 0.6
+  },
+  {
+   "name": "Avian Targe",
+   "count": 3,
+   "pct": 0.5
+  },
+  {
+   "name": "Baroque Targe",
+   "count": 3,
+   "pct": 0.5
+  },
+  {
+   "name": "Soaring Targe",
+   "count": 3,
+   "pct": 0.5
+  },
+  {
+   "name": "Ancestor Tower Shield",
+   "count": 2,
+   "pct": 0.3
+  },
+  {
+   "name": "Mammoth Targe",
+   "count": 2,
+   "pct": 0.3
+  },
+  {
+   "name": "Polished Targe",
+   "count": 2,
+   "pct": 0.3
+  },
+  {
+   "name": "Quartered Crest Shield",
+   "count": 2,
+   "pct": 0.3
+  },
+  {
+   "name": "Runeforged Sekheman Crest Shield",
+   "count": 2,
+   "pct": 0.3
+  },
+  {
+   "name": "Heraldric Tower Shield",
+   "count": 1,
+   "pct": 0.2
+  },
+  {
+   "name": "Omen Crest Shield",
+   "count": 1,
+   "pct": 0.2
+  },
+  {
+   "name": "Runeforged Ancestor Tower Shield",
+   "count": 1,
+   "pct": 0.2
+  },
+  {
+   "name": "Runeforged Fortress Tower Shield",
+   "count": 1,
+   "pct": 0.2
+  },
+  {
+   "name": "Runeforged Goldworked Tower Shield",
+   "count": 1,
+   "pct": 0.2
+  },
+  {
+   "name": "Runeforged Mammoth Targe",
+   "count": 1,
+   "pct": 0.2
+  },
+  {
+   "name": "Runeforged Royal Tower Shield",
+   "count": 1,
+   "pct": 0.2
+  },
+  {
+   "name": "Runeforged Vaal Tower Shield",
+   "count": 1,
+   "pct": 0.2
+  }
+ ]
+}

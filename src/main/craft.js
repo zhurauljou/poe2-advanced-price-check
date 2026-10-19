@@ -124,6 +124,12 @@ const range = (text) => {
   const m = String(text || '').match(/\((-?[\d.]+)-(-?[\d.]+)\)/);
   return m ? `${m[1]}–${m[2]}` : null;
 };
+// Upper value of a single-stat mod: "(30-34)% increased …" → 34, "30% increased …" → 30; null if there is no number.
+const topValue = (text) => {
+  const s = String(text || '');
+  const m = s.match(/\((-?[\d.]+)-(-?[\d.]+)\)/) || s.match(/(-?\d+(?:\.\d+)?)/);
+  return m ? +(m[2] ?? m[1]) : null;
+};
 
 // item — the parsed item (item.affixes from the advanced format), demandMods — [{ name, pct }] from poe.ninja.
 async function advise(item, demandMods, cached) {
@@ -247,7 +253,9 @@ async function advise(item, demandMods, cached) {
       if (bestIdx < 0) return null;
       const best = tiers[bestIdx];
       return { side: c.side, pct: c.pct, text: best.lines.join(' / '), tier: bestIdx + 1, tiers: tiers.length,
-        range: range(best.text), level: best.required_level, stats: tradeStats(best, domain, item.itemClass), type: best.type };
+        range: range(best.text), level: best.required_level, stats: tradeStats(best, domain, item.itemClass), type: best.type,
+        // The tier ladder (best first, including tiers above the item level) — to place a fixed essence value on it.
+        ladder: tiers.map((m) => ({ level: m.required_level, hi: topValue(m.text), range: range(m.text) || topValue(m.text) })) };
     }).filter(Boolean).sort((a, b) => b.pct - a.pct);
   };
 
@@ -438,6 +446,17 @@ async function advise(item, demandMods, cached) {
     const lines = c.text.split(' / ');
     // A source fits if it gives ALL the mod's lines (Celestial Alloy "Mana / +1 Spell Skills" — for "+Mana", but not for "Spell Damage / Mana").
     if (!c.craftedOnly) c.crafted = craftedSources.filter((x) => { const src = templates(x.text.replace(/–/g, '-').split(' / ').join('\n')); return lines.every((l) => src.includes(l)); }).map((x) => x.name);
+    // A crafted source gives a fixed value (Essence of Hysteria — 30% Movement Speed): which tier of the ladder that is.
+    // On ilvl 82+ boots T1 is 35% — the essence then gives a lower tier than Exalted / Desecrate can.
+    if (c.crafted && c.crafted.length && c.ladder && lines.length === 1 && c.ladder.every((r) => r.hi != null)) {
+      for (const name of c.crafted) {
+        const src = craftedSources.find((x) => x.name === name);
+        const v = src && topValue(src.text);
+        if (v == null) continue;
+        const m = src.text.match(/\((-?[\d.]+)-(-?[\d.]+)\)/);
+        (c.essTier = c.essTier || {})[name] = { tier: c.ladder.filter((r) => r.hi > v).length + 1, value: m ? `${m[1]}–${m[2]}` : String(v) };
+      }
+    }
     // Blocker (docs/crafting-tricks.md T-08, D-5): the side has a common unwanted family — a cheap mod of that group
     // (e.g. picked on a desecrate reveal) closes it off for the following Exalted; it is removed later.
     if (nOf) {
@@ -874,7 +893,7 @@ function planGoal(mine, candidates, max, want, magic, magicFree = [], itemClass 
     const ess = add.find((c) => c.essence);
     essenceMod = ess || null;
     // Jewels: one tier per mod — Greater / Perfect Regal cut nothing, so the plan prices only the plain Regal Orb.
-    plan.push(ess ? { act: 'essence', mod: ess.text, currencies: [ess.essence.name], chance: 1 }
+    plan.push(ess ? { act: 'essence', mod: ess.text, side: ess.side, currencies: [ess.essence.name], chance: 1 }
       : { act: 'regal', currencies: ['Regal Orb'], chance: 1, oneTier: /Jewel/i.test(itemClass) });
   }
   // First the side with the most in-demand (key) mod — it raises the price the most.
@@ -913,7 +932,21 @@ function planGoal(mine, candidates, max, want, magic, magicFree = [], itemClass 
     if (roomy) { filled[roomy]++; if (regal && tight) regal.tightSide = tight; }
     else random('Regal Orb', adds('suffix') > adds('prefix') ? 'suffix' : 'prefix');
   }
-  // 1. First remove all the junk ("Annul down to the base"), then add. Desecrated — targeted: Annulment + Omen of Light.
+  // An unwanted mod is removed only when its slot is needed for a goal mod; otherwise it stays — removing it costs currency
+  // and risks hitting a wanted mod for nothing. Desecrated and crafted junk keep their own handling (they hold the
+  // desecrated / crafted slot). need — how many slots the side is short of with every goal mod added.
+  for (const side of ['prefix', 'suffix']) {
+    const plain = remove.filter((r) => r.side === side && r.tag !== 'desecrated' && r.tag !== 'crafted');
+    const need = filled[side] + adds(side) + (essenceMod && essenceMod.side === side ? 1 : 0) - max[side];
+    const drop = plain.length - Math.max(0, need);
+    if (drop <= 0) continue;
+    // The ones that stay: the most wanted of the junk; a random mod from Regal is never kept (it exists only when there is no room).
+    for (const r of plain.filter((x) => x.tag !== 'random').sort((a, b) => (b.pct || 0) - (a.pct || 0)).slice(0, drop)) {
+      remove.splice(remove.indexOf(r), 1);
+      keep.push({ ...r, stays: true });
+    }
+  }
+  // 1. First remove the junk ("Annul down to the base"), then add. Desecrated — targeted: Annulment + Omen of Light.
   for (const r of remove.filter((x) => x.tag === 'desecrated')) {
     plan.push({ act: 'remove', side: r.side, mod: r.text, currencies: ['Orb of Annulment', 'Omen of Light'], chance: 1, targeted: true });
     filled[r.side]--;
@@ -938,7 +971,10 @@ function planGoal(mine, candidates, max, want, magic, magicFree = [], itemClass 
         return src ? src.name : null;
       });
       // full — no room on the side: Desecrate with this side's Necromancy removes a random mod by itself (verified in game).
-      sides[side] = { J, K, restore, omen: `Omen of ${side === 'prefix' ? 'Sinistral' : 'Dextral'} Annulment`, full: filled[side] >= max[side],
+      // free — empty slots before the removal: a plan variant with fewer mods may not need to remove anything here.
+      sides[side] = { J, K, restore, omen: `Omen of ${side === 'prefix' ? 'Sinistral' : 'Dextral'} Annulment`, full: filled[side] >= max[side], free: max[side] - filled[side],
+        // The wanted mods an Annulment can hit instead of the junk — named in the step's warning.
+        names: keepers.map((a) => ((a.lines || []).length ? a.lines.join(' / ') : a.mod ? a.mod.lines.join(' / ') : a.name)),
         necro: `Omen of ${side === 'prefix' ? 'Sinistral' : 'Dextral'} Necromancy` };
     }
     // Chaos + Omen of Whittling removes the lowest-level mod — if a junk mod is strictly below all other removable ones
@@ -958,7 +994,7 @@ function planGoal(mine, candidates, max, want, magic, magicFree = [], itemClass 
     // Mark of the Abyssal Lord — a desecrated mod, removed by Omen of Light + Annulment (player, 2026-10-19; Ame's videos).
     // Needs a free desecrated slot; the crafted slot is required too (the essence does not apply to an item with a crafted mod — data notes).
     const abyss = desFree && craftedFree && craftedSources.some((x) => x.name === 'Essence of the Abyss');
-    plan.push({ act: 'remove', mods: junk.map((x) => x.text), sides, whittle, whittleWrong, freeQuality, abyss,
+    plan.push({ act: 'remove', mods: junk.map((x) => x.text), modSides: junk.map((x) => x.side), sides, whittle, whittleWrong, freeQuality, abyss,
       currencies: ['Orb of Annulment', 'Omen of Sinistral Annulment', 'Omen of Dextral Annulment', ...(whittle ? ['Chaos Orb', 'Omen of Whittling'] : []),
         ...(abyss ? ['Essence of the Abyss', 'Omen of Sinistral Crystallisation', 'Omen of Dextral Crystallisation', 'Omen of Light'] : [])] });
     for (const x of junk) filled[x.side]--;
@@ -970,6 +1006,7 @@ function planGoal(mine, candidates, max, want, magic, magicFree = [], itemClass 
   const toAdd = add.filter((c) => c !== essenceMod);
   const lotteryFill = toAdd.length > 0 && toAdd.every((c) => c.chanceUnknown && !c.craftedOnly && !c.desecrateOnly)
     && ['prefix', 'suffix'].every((s) => toAdd.filter((c) => c.side === s).length === max[s] - filled[s]);
+  const startFilled = { ...filled }; // before any addition — where a Desecrate moved to the front of the additions stands
   // 2. Add the wanted ones: first the side with the most in-demand mod.
   for (const side of ['prefix', 'suffix'].sort((x, y) => top(y) - top(x))) {
     const into = add.filter((c) => c.side === side && c !== essenceMod);
@@ -977,7 +1014,8 @@ function planGoal(mine, candidates, max, want, magic, magicFree = [], itemClass 
     const S = side === 'prefix' ? 'Sinistral' : 'Dextral';
     // Is there room on the other side: if not, Exalted lands here even without an omen — the side omen is not needed.
     const other = side === 'prefix' ? 'suffix' : 'prefix';
-    const otherOpen = max[other] - filled[other] > 0 && !lotteryFill;
+    const otherRoom = max[other] - filled[other] > 0;
+    const otherOpen = otherRoom && !lotteryFill;
     const sideOmen = otherOpen ? `Omen of ${S} Exaltation` : null;
     // Which Exalted to use (regular / Greater / Perfect) and with which omens — the window picks by currency prices.
     // onSide / onItem — how many mods are already there (all wanted: junk removed earlier) — determines how to remove a miss.
@@ -986,9 +1024,17 @@ function planGoal(mine, candidates, max, want, magic, magicFree = [], itemClass 
       sideOmen, otherOpen, retry: ['Orb of Annulment', `Omen of ${S} Annulment`],
       // Instead of Exalted — Desecrate (bone + side Necromancy omen): pick 1 of 3 on reveal. The window decides which pays off.
       desecrate: desFree && c.desecrate && Object.keys(c.desecrate).length ? c.desecrateAny || c.desecrate : null,
-      necro: otherOpen ? `Omen of ${S} Necromancy` : null,
+      // Desecrate reveals 3 options from the side it landed on: the mod picked for it exists only on this side, so the
+      // side omen is needed whenever the other side has room — even in a lottery fill.
+      necro: otherRoom ? `Omen of ${S} Necromancy` : null,
+      // The window may move the Desecrate step ahead of all additions (plancost withDesecrate): the other side may have room then.
+      necroEarly: max[other] - startFilled[other] > 0 ? `Omen of ${S} Necromancy` : null,
+      // A lottery fill dropped the side omen; a plan variant that leaves some goal mods out restores it (craft.js renderer).
+      fillOmen: lotteryFill && otherRoom ? `Omen of ${S} Exaltation` : null,
       // Perfect/corrupted essence with this mod: a sacrificial Exalted on the side → the side's Crystallisation + essence.
-      crafted: craftedFree && c.crafted && c.crafted.length ? c.crafted : null, craftedOnly: c.craftedOnly || null, desecrateOnly: c.desecrateOnly || null, craftedSlots,
+      crafted: craftedFree && c.crafted && c.crafted.length ? c.crafted : null, essTier: c.essTier || null,
+      // Best tier the item can roll (T1 may need a higher item level: topLevel / topRange).
+      bestTier: c.tier || null, topLevel: c.ladder && c.tier > 1 ? c.ladder[0].level : null, topRange: c.ladder && c.tier > 1 ? c.ladder[0].range : null, craftedOnly: c.craftedOnly || null, desecrateOnly: c.desecrateOnly || null, craftedSlots,
       crystal: `Omen of ${S} Crystallisation`,
       cap: max[side] - fixed[side], // how many mods the essence can remove on the side (excluding fractured)
       // Key mods of this side (used by ≥ KEY_PCT% or tier 1–2): an essence / Alloy with a Crystallisation omen removes

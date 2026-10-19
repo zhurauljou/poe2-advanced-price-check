@@ -1,0 +1,512 @@
+{
+ "league": "Forbidden Rites",
+ "class": "Gloves",
+ "themed": [
+  "# to maximum Energy Shield",
+  "#% increased Energy Shield"
+ ],
+ "mods": [
+  {
+   "name": "# to maximum Energy Shield",
+   "count": 10787,
+   "pct": 100
+  },
+  {
+   "name": "#% increased Energy Shield",
+   "count": 10787,
+   "pct": 100
+  },
+  {
+   "name": "# to maximum Life",
+   "count": 5182,
+   "pct": 48
+  },
+  {
+   "name": "#% to Lightning Resistance",
+   "count": 4203,
+   "pct": 39
+  },
+  {
+   "name": "#% to Fire Resistance",
+   "count": 4114,
+   "pct": 38.1
+  },
+  {
+   "name": "#% to Cold Resistance",
+   "count": 4112,
+   "pct": 38.1
+  },
+  {
+   "name": "Destroys all Augment Sockets on the item to create a Jewel Socket",
+   "count": 3801,
+   "pct": 35.2
+  },
+  {
+   "name": "#% increased Critical Damage Bonus",
+   "count": 3742,
+   "pct": 34.7
+  },
+  {
+   "name": "#% increased Rarity of Items found",
+   "count": 3588,
+   "pct": 33.3
+  },
+  {
+   "name": "# to maximum Mana",
+   "count": 3322,
+   "pct": 30.8
+  },
+  {
+   "name": "#% increased Armour, Evasion and Energy Shield",
+   "count": 2839,
+   "pct": 26.3
+  },
+  {
+   "name": "# to Intelligence",
+   "count": 1989,
+   "pct": 18.4
+  },
+  {
+   "name": "#% increased effect of Socketed Augment Items",
+   "count": 1439,
+   "pct": 13.3
+  },
+  {
+   "name": "Can roll Marksman modifiers",
+   "count": 1430,
+   "pct": 13.3
+  },
+  {
+   "name": "# to Dexterity",
+   "count": 1374,
+   "pct": 12.7
+  },
+  {
+   "name": "# to Level of all Projectile Skills",
+   "count": 1291,
+   "pct": 12
+  },
+  {
+   "name": "#% increased Cast Speed",
+   "count": 1172,
+   "pct": 10.9
+  },
+  {
+   "name": "#% to Chaos Resistance",
+   "count": 1123,
+   "pct": 10.4
+  },
+  {
+   "name": "Adds # to # Physical Damage to Attacks",
+   "count": 745,
+   "pct": 6.9
+  },
+  {
+   "name": "#% chance to Gain Arcane Surge when you deal a Critical Hit",
+   "count": 646,
+   "pct": 6
+  },
+  {
+   "name": "Gain # Mana per enemy killed",
+   "count": 641,
+   "pct": 5.9
+  },
+  {
+   "name": "#% increased Energy Shield Recharge Rate",
+   "count": 522,
+   "pct": 4.8
+  },
+  {
+   "name": "Gain # Life per enemy killed",
+   "count": 468,
+   "pct": 4.3
+  },
+  {
+   "name": "Adds # to # Lightning damage to Attacks",
+   "count": 460,
+   "pct": 4.3
+  },
+  {
+   "name": "#% increased Attack Speed",
+   "count": 445,
+   "pct": 4.1
+  },
+  {
+   "name": "Leech #% of Physical Attack Damage as Mana",
+   "count": 431,
+   "pct": 4
+  },
+  {
+   "name": "#% increased Projectile Damage",
+   "count": 421,
+   "pct": 3.9
+  },
+  {
+   "name": "#% increased Life Cost Efficiency",
+   "count": 418,
+   "pct": 3.9
+  },
+  {
+   "name": "Adds # to # Cold damage to Attacks",
+   "count": 390,
+   "pct": 3.6
+  },
+  {
+   "name": "Adds # to # Fire damage to Attacks",
+   "count": 371,
+   "pct": 3.4
+  },
+  {
+   "name": "#% increased Projectile Speed",
+   "count": 358,
+   "pct": 3.3
+  },
+  {
+   "name": "Leech #% of Physical Attack Damage as Life",
+   "count": 354,
+   "pct": 3.3
+  },
+  {
+   "name": "#% reduced Attribute Requirements",
+   "count": 316,
+   "pct": 2.9
+  },
+  {
+   "name": "#% increased Critical Hit Chance",
+   "count": 300,
+   "pct": 2.8
+  },
+  {
+   "name": "# to Accuracy Rating",
+   "count": 294,
+   "pct": 2.7
+  },
+  {
+   "name": "#% increased Withered Magnitude",
+   "count": 210,
+   "pct": 1.9
+  },
+  {
+   "name": "#% increased Curse Magnitudes",
+   "count": 201,
+   "pct": 1.9
+  },
+  {
+   "name": "# to Level of all Melee Skills",
+   "count": 193,
+   "pct": 1.8
+  },
+  {
+   "name": "Gain # Life per Enemy Hit with Attacks",
+   "count": 187,
+   "pct": 1.7
+  },
+  {
+   "name": "#% Surpassing chance to fire an additional Projectile",
+   "count": 147,
+   "pct": 1.4
+  },
+  {
+   "name": "# Suffix Modifier allowed",
+   "count": 145,
+   "pct": 1.3
+  },
+  {
+   "name": "Bonded: # to maximum Life",
+   "count": 142,
+   "pct": 1.3
+  },
+  {
+   "name": "Bonded: # to maximum Mana",
+   "count": 142,
+   "pct": 1.3
+  },
+  {
+   "name": "#% chance to Pierce an Enemy",
+   "count": 135,
+   "pct": 1.3
+  },
+  {
+   "name": "#% increased Magnitude of Non-Damaging Ailments you inflict",
+   "count": 119,
+   "pct": 1.1
+  },
+  {
+   "name": "#% increased Magnitude of Damaging Ailments you inflict",
+   "count": 111,
+   "pct": 1
+  },
+  {
+   "name": "Damage Penetrates #% Lightning Resistance",
+   "count": 110,
+   "pct": 1
+  },
+  {
+   "name": "Damage Penetrates #% Cold Resistance",
+   "count": 106,
+   "pct": 1
+  },
+  {
+   "name": "Remnants can be collected from #% further away",
+   "count": 102,
+   "pct": 0.9
+  },
+  {
+   "name": "#% to all Elemental Resistances",
+   "count": 91,
+   "pct": 0.8
+  },
+  {
+   "name": "#% to Cold and Chaos Resistances",
+   "count": 87,
+   "pct": 0.8
+  },
+  {
+   "name": "#% to Lightning and Chaos Resistances",
+   "count": 85,
+   "pct": 0.8
+  },
+  {
+   "name": "Can roll Decay modifiers",
+   "count": 85,
+   "pct": 0.8
+  },
+  {
+   "name": "Damage Penetrates #% Fire Resistance",
+   "count": 85,
+   "pct": 0.8
+  },
+  {
+   "name": "#% to Fire and Chaos Resistances",
+   "count": 79,
+   "pct": 0.7
+  },
+  {
+   "name": "Break #% increased Armour",
+   "count": 78,
+   "pct": 0.7
+  },
+  {
+   "name": "#% increased Glory generation",
+   "count": 71,
+   "pct": 0.7
+  },
+  {
+   "name": "#% increased Mana Cost Efficiency",
+   "count": 64,
+   "pct": 0.6
+  },
+  {
+   "name": "#% increased effect of Arcane Surge on you",
+   "count": 59,
+   "pct": 0.5
+  },
+  {
+   "name": "Gain # Rage on Melee Hit",
+   "count": 56,
+   "pct": 0.5
+  },
+  {
+   "name": "# to Strength",
+   "count": 51,
+   "pct": 0.5
+  },
+  {
+   "name": "Bonded: #% increased Projectile Damage",
+   "count": 47,
+   "pct": 0.4
+  },
+  {
+   "name": "Energy Shield Recharge starts after spending a total of\n # Mana, no more than once every # seconds",
+   "count": 47,
+   "pct": 0.4
+  },
+  {
+   "name": "# to Maximum Frenzy Charges",
+   "count": 44,
+   "pct": 0.4
+  },
+  {
+   "name": "#% increased Quantity of Gold Dropped by Slain Enemies",
+   "count": 43,
+   "pct": 0.4
+  },
+  {
+   "name": "# to maximum Runic Ward",
+   "count": 41,
+   "pct": 0.4
+  },
+  {
+   "name": "#% increased Cast Speed when on Full Life",
+   "count": 37,
+   "pct": 0.3
+  },
+  {
+   "name": "#% increased Accuracy Rating",
+   "count": 36,
+   "pct": 0.3
+  },
+  {
+   "name": "#% increased Skill Speed for each Corrupted Item Equipped",
+   "count": 35,
+   "pct": 0.3
+  },
+  {
+   "name": "#% of Armour also applies to Fire Damage",
+   "count": 35,
+   "pct": 0.3
+  },
+  {
+   "name": "Corrupting will always result in change",
+   "count": 35,
+   "pct": 0.3
+  },
+  {
+   "name": "Your Energy Shield Recharge starts when your Minions are Reformed",
+   "count": 30,
+   "pct": 0.3
+  },
+  {
+   "name": "#% increased Mana Regeneration Rate",
+   "count": 29,
+   "pct": 0.3
+  },
+  {
+   "name": "Bonded: #% increased Mana Cost Efficiency while on Low Mana",
+   "count": 27,
+   "pct": 0.3
+  },
+  {
+   "name": "Projectiles have #% chance for an additional Projectile when Forking",
+   "count": 27,
+   "pct": 0.3
+  },
+  {
+   "name": "#% increased Magnitude of Bleeding you inflict",
+   "count": 26,
+   "pct": 0.2
+  },
+  {
+   "name": "#% increased Magnitude of Ailments you inflict",
+   "count": 25,
+   "pct": 0.2
+  },
+  {
+   "name": "#% to Maximum Fire Resistance",
+   "count": 25,
+   "pct": 0.2
+  },
+  {
+   "name": "# to Strength and Intelligence",
+   "count": 24,
+   "pct": 0.2
+  },
+  {
+   "name": "Gain #% of Damage as Extra Damage of a random Element per\nRune Socketed in Equipped Items",
+   "count": 23,
+   "pct": 0.2
+  }
+ ],
+ "bases": [
+  {
+   "name": "Sirenscale Gloves",
+   "count": 5274,
+   "pct": 48.9
+  },
+  {
+   "name": "Vaal Gloves",
+   "count": 1880,
+   "pct": 17.4
+  },
+  {
+   "name": "Runeforged Sirenscale Gloves",
+   "count": 1026,
+   "pct": 9.5
+  },
+  {
+   "name": "Opulent Gloves",
+   "count": 822,
+   "pct": 7.6
+  },
+  {
+   "name": "Grim Gloves",
+   "count": 558,
+   "pct": 5.2
+  },
+  {
+   "name": "Runeforged Vaal Gloves",
+   "count": 337,
+   "pct": 3.1
+  },
+  {
+   "name": "Gold Gloves",
+   "count": 294,
+   "pct": 2.7
+  },
+  {
+   "name": "Runeforged Opulent Gloves",
+   "count": 169,
+   "pct": 1.6
+  },
+  {
+   "name": "Runeforged Gold Gloves",
+   "count": 110,
+   "pct": 1
+  },
+  {
+   "name": "Runeforged Grim Gloves",
+   "count": 109,
+   "pct": 1
+  },
+  {
+   "name": "Baroque Gloves",
+   "count": 87,
+   "pct": 0.8
+  },
+  {
+   "name": "Pauascale Gloves",
+   "count": 54,
+   "pct": 0.5
+  },
+  {
+   "name": "Runeforged Baroque Gloves",
+   "count": 26,
+   "pct": 0.2
+  },
+  {
+   "name": "Runeforged Pauascale Gloves",
+   "count": 22,
+   "pct": 0.2
+  },
+  {
+   "name": "Intricate Gloves",
+   "count": 6,
+   "pct": 0.1
+  },
+  {
+   "name": "Jewelled Gloves",
+   "count": 5,
+   "pct": 0
+  },
+  {
+   "name": "Runeforged Intricate Gloves",
+   "count": 4,
+   "pct": 0
+  },
+  {
+   "name": "Sombre Gloves",
+   "count": 2,
+   "pct": 0
+  },
+  {
+   "name": "Runeforged Jewelled Gloves",
+   "count": 1,
+   "pct": 0
+  },
+  {
+   "name": "Runeforged Stitched Gloves",
+   "count": 1,
+   "pct": 0
+  }
+ ]
+}

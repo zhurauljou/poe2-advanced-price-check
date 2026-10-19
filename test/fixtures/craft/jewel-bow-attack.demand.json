@@ -1,0 +1,451 @@
+{
+ "league": "Forbidden Rites",
+ "class": "Jewels",
+ "themed": [
+  "#% increased Attack Damage"
+ ],
+ "mods": [
+  {
+   "name": "#% increased Attack Damage",
+   "count": 6972,
+   "pct": 100
+  },
+  {
+   "name": "#% increased Critical Damage Bonus for Attack Damage",
+   "count": 4029,
+   "pct": 57.8
+  },
+  {
+   "name": "#% increased Critical Hit Chance for Attacks",
+   "count": 3827,
+   "pct": 54.9
+  },
+  {
+   "name": "Upgrades Radius to Very Large",
+   "count": 3288,
+   "pct": 47.2
+  },
+  {
+   "name": "#% increased Attack Speed",
+   "count": 2978,
+   "pct": 42.7
+  },
+  {
+   "name": "#% increased Effect of Suffixes",
+   "count": 2729,
+   "pct": 39.1
+  },
+  {
+   "name": "Notable Passive Skills in Radius also grant #% increased Critical Damage Bonus for Attack Damage",
+   "count": 2571,
+   "pct": 36.9
+  },
+  {
+   "name": "Notable Passive Skills in Radius also grant #% increased Critical Hit Chance for Attacks",
+   "count": 2368,
+   "pct": 34
+  },
+  {
+   "name": "#% increased Effect of Prefixes",
+   "count": 2103,
+   "pct": 30.2
+  },
+  {
+   "name": "#% increased Elemental Damage",
+   "count": 2083,
+   "pct": 29.9
+  },
+  {
+   "name": "#% increased maximum Energy Shield",
+   "count": 1972,
+   "pct": 28.3
+  },
+  {
+   "name": "#% increased Projectile Damage",
+   "count": 1932,
+   "pct": 27.7
+  },
+  {
+   "name": "#% increased Effect of Notable Passive Skills in Radius",
+   "count": 1683,
+   "pct": 24.1
+  },
+  {
+   "name": "#% increased Critical Damage Bonus",
+   "count": 1610,
+   "pct": 23.1
+  },
+  {
+   "name": "#% increased Critical Damage Bonus with Spears",
+   "count": 1352,
+   "pct": 19.4
+  },
+  {
+   "name": "#% increased Evasion Rating",
+   "count": 1313,
+   "pct": 18.8
+  },
+  {
+   "name": "Notable Passive Skills in Radius also grant #% increased Projectile Speed",
+   "count": 1193,
+   "pct": 17.1
+  },
+  {
+   "name": "#% increased Critical Hit Chance",
+   "count": 1055,
+   "pct": 15.1
+  },
+  {
+   "name": "Notable Passive Skills in Radius also grant #% increased Critical Damage Bonus with Spears",
+   "count": 1039,
+   "pct": 14.9
+  },
+  {
+   "name": "#% increased Damage with Spears",
+   "count": 963,
+   "pct": 13.8
+  },
+  {
+   "name": "Notable Passive Skills in Radius also grant #% increased Attack Speed",
+   "count": 957,
+   "pct": 13.7
+  },
+  {
+   "name": "Notable Passive Skills in Radius also grant #% increased Critical Damage Bonus",
+   "count": 933,
+   "pct": 13.4
+  },
+  {
+   "name": "#% increased Attack Speed with Spears",
+   "count": 924,
+   "pct": 13.3
+  },
+  {
+   "name": "Notable Passive Skills in Radius also grant #% increased Critical Hit Chance",
+   "count": 919,
+   "pct": 13.2
+  },
+  {
+   "name": "#% increased Damage with Bows",
+   "count": 876,
+   "pct": 12.6
+  },
+  {
+   "name": "#% increased Attack Speed with Bows",
+   "count": 834,
+   "pct": 12
+  },
+  {
+   "name": "#% increased Damage with Quarterstaves",
+   "count": 795,
+   "pct": 11.4
+  },
+  {
+   "name": "#% increased Projectile Speed",
+   "count": 758,
+   "pct": 10.9
+  },
+  {
+   "name": "#% increased Damage with Hits against Rare and Unique Enemies",
+   "count": 728,
+   "pct": 10.4
+  },
+  {
+   "name": "Recover #% of maximum Mana on Kill",
+   "count": 586,
+   "pct": 8.4
+  },
+  {
+   "name": "Small Passive Skills in Radius also grant #% increased Attack Damage",
+   "count": 581,
+   "pct": 8.3
+  },
+  {
+   "name": "Small Passive Skills in Radius also grant #% increased maximum Energy Shield",
+   "count": 575,
+   "pct": 8.2
+  },
+  {
+   "name": "#% increased Lightning Damage",
+   "count": 495,
+   "pct": 7.1
+  },
+  {
+   "name": "#% increased Attack Speed with Quarterstaves",
+   "count": 491,
+   "pct": 7
+  },
+  {
+   "name": "#% increased Armour",
+   "count": 476,
+   "pct": 6.8
+  },
+  {
+   "name": "#% increased Spell Damage",
+   "count": 424,
+   "pct": 6.1
+  },
+  {
+   "name": "Small Passive Skills in Radius also grant #% increased Projectile Damage",
+   "count": 423,
+   "pct": 6.1
+  },
+  {
+   "name": "#% increased Flammability Magnitude",
+   "count": 401,
+   "pct": 5.8
+  },
+  {
+   "name": "#% faster start of Energy Shield Recharge",
+   "count": 394,
+   "pct": 5.7
+  },
+  {
+   "name": "#% increased Damage with Crossbows",
+   "count": 392,
+   "pct": 5.6
+  },
+  {
+   "name": "#% increased Cold Damage",
+   "count": 347,
+   "pct": 5
+  },
+  {
+   "name": "#% increased Fire Damage",
+   "count": 333,
+   "pct": 4.8
+  },
+  {
+   "name": "#% increased Magnitude of Ailments you inflict",
+   "count": 333,
+   "pct": 4.8
+  },
+  {
+   "name": "Notable Passive Skills in Radius also grant #% increased Attack Speed with Spears",
+   "count": 317,
+   "pct": 4.5
+  },
+  {
+   "name": "#% increased Life Recovery from Flasks",
+   "count": 310,
+   "pct": 4.4
+  },
+  {
+   "name": "#% increased Attack Speed with Crossbows",
+   "count": 306,
+   "pct": 4.4
+  },
+  {
+   "name": "#% increased Ignite Magnitude",
+   "count": 302,
+   "pct": 4.3
+  },
+  {
+   "name": "#% to Fire Resistance",
+   "count": 274,
+   "pct": 3.9
+  },
+  {
+   "name": "#% increased Accuracy Rating",
+   "count": 270,
+   "pct": 3.9
+  },
+  {
+   "name": "#% to Lightning Resistance",
+   "count": 269,
+   "pct": 3.9
+  },
+  {
+   "name": "Small Passive Skills in Radius also grant #% increased Elemental Damage",
+   "count": 267,
+   "pct": 3.8
+  },
+  {
+   "name": "#% increased Life Regeneration rate",
+   "count": 262,
+   "pct": 3.8
+  },
+  {
+   "name": "#% to Cold Resistance",
+   "count": 255,
+   "pct": 3.7
+  },
+  {
+   "name": "# to Maximum Rage",
+   "count": 247,
+   "pct": 3.5
+  },
+  {
+   "name": "#% increased Area of Effect",
+   "count": 246,
+   "pct": 3.5
+  },
+  {
+   "name": "# to Dexterity",
+   "count": 242,
+   "pct": 3.5
+  },
+  {
+   "name": "# to Intelligence",
+   "count": 240,
+   "pct": 3.4
+  },
+  {
+   "name": "# to Strength",
+   "count": 238,
+   "pct": 3.4
+  },
+  {
+   "name": "#% increased Melee Damage",
+   "count": 235,
+   "pct": 3.4
+  },
+  {
+   "name": "Small Passive Skills in Radius also grant #% increased Damage with Bows",
+   "count": 233,
+   "pct": 3.3
+  },
+  {
+   "name": "#% increased Global Physical Damage",
+   "count": 223,
+   "pct": 3.2
+  },
+  {
+   "name": "Recover #% of maximum Life on Kill",
+   "count": 223,
+   "pct": 3.2
+  },
+  {
+   "name": "Damage Penetrates #% Lightning Resistance",
+   "count": 220,
+   "pct": 3.2
+  },
+  {
+   "name": "#% increased Elemental Ailment Threshold",
+   "count": 215,
+   "pct": 3.1
+  },
+  {
+   "name": "#% increased Stun Buildup",
+   "count": 214,
+   "pct": 3.1
+  },
+  {
+   "name": "Gain # Rage on Melee Hit",
+   "count": 210,
+   "pct": 3
+  },
+  {
+   "name": "Notable Passive Skills in Radius also grant # to Maximum Rage",
+   "count": 210,
+   "pct": 3
+  },
+  {
+   "name": "#% increased Cooldown Recovery Rate",
+   "count": 209,
+   "pct": 3
+  },
+  {
+   "name": "#% increased Movement Speed",
+   "count": 203,
+   "pct": 2.9
+  },
+  {
+   "name": "Minions deal #% increased Damage",
+   "count": 202,
+   "pct": 2.9
+  },
+  {
+   "name": "#% increased amount of Life Leeched",
+   "count": 200,
+   "pct": 2.9
+  },
+  {
+   "name": "Upgrades Radius to Large",
+   "count": 197,
+   "pct": 2.8
+  },
+  {
+   "name": "#% increased amount of Mana Leeched",
+   "count": 194,
+   "pct": 2.8
+  },
+  {
+   "name": "Small Passive Skills in Radius also grant #% increased Damage with Quarterstaves",
+   "count": 190,
+   "pct": 2.7
+  },
+  {
+   "name": "Notable Passive Skills in Radius also grant #% increased Area of Effect",
+   "count": 186,
+   "pct": 2.7
+  },
+  {
+   "name": "#% increased Projectile Damage if you've dealt a Melee Hit in the past eight seconds",
+   "count": 181,
+   "pct": 2.6
+  },
+  {
+   "name": "#% increased Stun Threshold",
+   "count": 174,
+   "pct": 2.5
+  },
+  {
+   "name": "#% increased Effect of Small Passive Skills in Radius",
+   "count": 169,
+   "pct": 2.4
+  },
+  {
+   "name": "Herald Skills deal #% increased Damage",
+   "count": 169,
+   "pct": 2.4
+  },
+  {
+   "name": "Small Passive Skills in Radius also grant #% increased Damage with Spears",
+   "count": 169,
+   "pct": 2.4
+  }
+ ],
+ "bases": [
+  {
+   "name": "Emerald",
+   "count": 5635,
+   "pct": 80.8
+  },
+  {
+   "name": "Time-Lost Emerald",
+   "count": 3006,
+   "pct": 43.1
+  },
+  {
+   "name": "Sapphire",
+   "count": 1896,
+   "pct": 27.2
+  },
+  {
+   "name": "Diamond",
+   "count": 1005,
+   "pct": 14.4
+  },
+  {
+   "name": "Time-Lost Sapphire",
+   "count": 943,
+   "pct": 13.5
+  },
+  {
+   "name": "Ruby",
+   "count": 847,
+   "pct": 12.1
+  },
+  {
+   "name": "Time-Lost Diamond",
+   "count": 363,
+   "pct": 5.2
+  },
+  {
+   "name": "Time-Lost Ruby",
+   "count": 128,
+   "pct": 1.8
+  }
+ ]
+}

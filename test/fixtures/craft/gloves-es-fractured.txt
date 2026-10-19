@@ -1,0 +1,32 @@
+Item Class: Gloves
+Rarity: Rare
+Apocalypse Fist
+Runeforged Sirenscale Gloves
+--------
+Quality: +20% (augmented)
+Energy Shield: 210 (augmented)
+Runic Ward: 154 (augmented)
+--------
+Requires: Level 80, 101 Int
+--------
+Sockets: S J 
+--------
+Item Level: 80
+--------
+Destroys all Augment Sockets on the item to create a Jewel Socket (rune)
+--------
+{ Fractured Prefix Modifier "Blazing" (Tier: 1) — Energy Shield }
++57(48-60) to maximum Energy Shield
+{ Prefix Modifier "Pope's" (Tier: 1) — Life, Energy Shield }
+42(39-42)% increased Energy Shield
++44(42-49) to maximum Life
+{ Desecrated Prefix Modifier "Indomitable" (Tier: 2) — Energy Shield }
+82(80-91)% increased Energy Shield
+{ Suffix Modifier "of Archaeology" (Tier: 1) }
+17(15-18)% increased Rarity of Items found
+{ Suffix Modifier "of the Maelstrom" (Tier: 3) — Elemental, Lightning, Resistance }
++33(31-35)% to Lightning Resistance
+{ Suffix Modifier "of the Phantom" (Tier: 2) — Attribute }
++31(31-33) to Dexterity
+--------
+Fractured Item

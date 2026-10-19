@@ -88,6 +88,20 @@ test('boots without speed: Movement Speed via Essence of Hysteria (crafted slot)
   assert.equal(p.steps[firstAdd], ms.s, 'essence is the first addition');
 });
 
+test('ilvl 82 boots: Hysteria 30% speed is tier 2 — with a known goal price the plan weighs the lower tier', { skip }, async () => {
+  const p = await plan('boots-no-ms');
+  const ms = p.steps.find((s) => s.act === 'add' && /movement speed$/.test(s.mod));
+  assert.deepEqual(ms.essTier['Essence of Hysteria'], { tier: 2, value: '30' }, 'Hysteria is placed on the ladder');
+  assert.equal(ms.bestTier, 1, 'ilvl 82 rolls T1');
+  const r = p.r;
+  const planner = PlanCost.create(() => ({ prices, goalValue: 2000, est: 100 }));
+  const steps = planner.expandPlan(r.goal.plan);
+  const i = steps.findIndex((s) => s.act === 'add' && /movement speed$/.test(s.mod));
+  const c = planner.stepCost(steps[i]);
+  // Exalted at T1 speed stays a long lottery, so the guaranteed essence still wins — but its lower tier is priced in.
+  assert.ok(c.k === 'essence' && c.low === 1, 'the essence step carries the one-tier loss');
+});
+
 test('wand: spell levels via Perfect Essence (crafted slot)', { skip }, async () => {
   const p = await plan('wand-open-prefixes');
   const lv = stepFor(p, /level of all spell skills/);
@@ -349,6 +363,26 @@ test('magic jewel: Augmentation and Regal add random mods — the plan counts th
   assert.ok(r.goal.plan.every((s) => !s.sideOmen), r.goal.plan.map((s) => `${s.act}:${s.sideOmen || '-'}`).join(', '));
 });
 
+test('every scenario: an unwanted mod is removed only when its slot is needed for a goal mod', { skip }, async () => {
+  await init();
+  const names = fs.readdirSync(FIX).filter((f) => f.endsWith('.txt') && fs.existsSync(path.join(FIX, f.replace(/\.txt$/, '.demand.json')))).map((f) => f.replace(/\.txt$/, ''));
+  let checked = 0;
+  for (const name of names) {
+    const r = await craft.advise(item(name), json(`${name}.demand.json`).mods, cached);
+    if (!r.goal) continue;
+    for (const side of ['prefix', 'suffix']) {
+      const plain = r.goal.remove.filter((x) => x.side === side && !['desecrated', 'crafted', 'random'].includes(x.tag)).length;
+      if (!plain) continue;
+      const occupied = r.goal.keep.filter((x) => x.side === side).length + r.goal.remove.filter((x) => x.side === side).length;
+      const added = r.goal.add.filter((x) => x.side === side).length;
+      const need = occupied + added - r.max[side];
+      assert.ok(plain <= Math.max(0, need), `${name}: ${side} removes ${plain} unwanted, only ${Math.max(0, need)} slot(s) needed`);
+      checked++;
+    }
+  }
+  assert.ok(checked > 0, 'no scenario removes an unwanted mod — the check is empty');
+});
+
 test('magic helmet (3 + 3): there is room for the Regal mod — the plan does not remove it', { skip }, async () => {
   await init();
   const it = parseItem(read('../magic-helmet.txt'));
@@ -372,4 +406,51 @@ test('jewel with a side over the limit (3 suffixes after removing "+1"): suffixe
   const r = await craft.advise(parseItem(read('../jewel-overfull-suffixes.txt')), demand, cached);
   assert.ok(r.sections.some((s) => s.kind === 'overfull' && s.side === 'suffix'));
   assert.ok(r.goal.plan.every((s) => s.side !== 'suffix' && !(s.sides && s.sides.suffix && s.sides.suffix.J)), JSON.stringify(r.goal.plan));
+});
+
+test('shield: Desecrate for a suffix-only mod takes the side Necromancy omen even when the goal fills every slot', { skip }, async () => {
+  const p = await plan('shield-armour-ele');
+  const des = p.steps.map((s, i) => ({ s, c: p.cost[i] })).filter(({ c }) => c.k === 'desecrate');
+  for (const { s, c } of des) {
+    const other = s.side === 'prefix' ? 'suffix' : 'prefix';
+    const room = p.r.max[other] > (p.r.goal.keep.filter((x) => x.side === other).length);
+    if (room) assert.ok(c.currencies.some((n) => /Necromancy$/.test(n)), `${s.mod}: Desecrate without a side omen (${c.currencies.join(', ')})`);
+  }
+});
+
+test('plan variants: each is clearly cheaper than a fuller one and removes only what its mods need', { skip }, async () => {
+  const variantsOf = async (name) => {
+    const p = await plan(name);
+    const planner = PlanCost.create(() => ({ prices, goalValue: 40, est: 0.01 }));
+    return { planner, vs: planner.variants(p.goal) };
+  };
+  const { planner, vs } = await variantsOf('boots-no-ms');
+  assert.ok(vs && vs.length >= 2 && vs[vs.length - 1].key === 'ideal', 'boots: a cheaper variant next to the full goal');
+  for (let i = 0; i + 1 < vs.length; i++) assert.ok(vs[i].spend < vs[i + 1].spend * 0.9 && vs[i].mods.length < vs[i + 1].mods.length, `${vs[i].key} saves currency`);
+  // A variant without a side's mods does not pay for that side's removal.
+  for (const v of vs) {
+    const sides = new Set(planner.expandPlan(v.plan).flatMap((s) => (s.act === 'add2' ? s.steps : s.act === 'add' ? [s] : [])).map((x) => x.side));
+    for (const s of v.plan.filter((x) => x.act === 'remove' && x.sides)) assert.ok(Object.keys(s.sides).every((sd) => !s.sides[sd].J || sides.has(sd)), `${v.key}: removal for an unused side`);
+  }
+  // The wand: the risky suffix removal costs nearly everything; prefixes are free — a variant fills them and removes nothing.
+  const wand = (await variantsOf('wand-open-prefixes')).vs;
+  assert.ok(wand && wand.some((v) => v.key !== 'ideal' && !v.plan.some((s) => s.act === 'remove')), 'wand: free prefixes without the removal');
+  // The jewel has a free suffix: the variant with one suffix mod just adds it — no removal of the bow attack speed.
+  const jewel = await variantsOf('jewel-bow-attack');
+  const one = jewel.vs.find((v) => v.mods.length === 1);
+  assert.ok(one && !one.plan.some((s) => s.act === 'remove'), 'one mod into the free slot needs no removal');
+});
+
+test('ES gloves: the theme is the ES archetype, not «Rarity + Dexterity» — the plan keeps the caster mods', { skip }, async () => {
+  await init();
+  const { themeMods } = require('../src/main/weights');
+  const it = item('gloves-es-fractured');
+  const theme = themeMods(pricing.prepare(it, null, () => true).filters.mods, it.itemClass);
+  assert.ok(theme.length && theme.every((m) => /Energy Shield/.test(m)), `theme: ${theme.join(', ')}`);
+  // With demand among ES glove builds: no Marksman rune, no projectile levels; the lightning resistance stays, Dexterity goes.
+  const p = await plan('gloves-es-fractured');
+  assert.ok(!p.steps.some((s) => s.act === 'rune'), 'no influence rune for another archetype');
+  assert.ok(!p.goal.add.some((a) => /projectile/.test(a.text)), 'no projectile mods');
+  assert.ok(!p.goal.remove.some((r) => /lightning resistance/.test(r.text)), 'lightning resistance stays');
+  assert.ok(p.goal.remove.some((r) => /dexterity/.test(r.text)), 'Dexterity is the junk');
 });
