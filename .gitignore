@@ -8,3 +8,6 @@ data/*.partial.json
 data/weights.log
 data/weights-store/
 test/visual/
+research/
+scripts/collect-weights.js
+Collect weights.bat
