@@ -1,16 +1,16 @@
-// Классы предметов — как в строке «Item Class:» игры. Одно место для списков, которые раньше повторялись в модулях
-// (поиск, крафт, веса модов, справочник статов).
+// Item classes — as in the game's "Item Class:" line. One place for lists that used to be repeated across modules
+// (search, craft, mod weights, stat reference).
 
-// Оружие ближнего / дальнего боя и талисманы (аугменты «martial weapon», ключевые моды «оружия»).
+// Melee / ranged weapons and talismans ("martial weapon" augments, key "weapon" mods).
 const MARTIAL_WEAPONS = ['One Hand Maces', 'Two Hand Maces', 'Quarterstaves', 'Bows', 'Crossbows', 'Spears', 'Flails', 'Claws',
   'Daggers', 'One Hand Swords', 'Two Hand Swords', 'One Hand Axes', 'Two Hand Axes', 'Talismans'];
-// Оружие заклинателя (аугменты «caster weapon»). Скипетры — отдельно: у них свои правила.
+// Caster weapons ("caster weapon" augments). Sceptres are separate: they have their own rules.
 const CASTER_WEAPONS = ['Wands', 'Staves'];
-// Броня (аугменты «armour»).
+// Armour ("armour" augments).
 const ARMOUR = ['Body Armours', 'Helmets', 'Gloves', 'Boots', 'Shields', 'Bucklers', 'Foci'];
-// Руны Альдура (смена стихии модов) вставляются в любое оружие, кроме скипетров.
+// Aldur runes (change the element of mods) socket into any weapon except sceptres.
 const ALDUR_WEAPONS = [...MARTIAL_WEAPONS, ...CASTER_WEAPONS];
-// Классы, у которых часть модов локальная («(Local)» на трейде): броня, оружие, скипетры, ловушки.
+// Classes where some mods are local ("(Local)" on trade): armour, weapons, sceptres, traps.
 const LOCAL_CLASSES = [...ARMOUR, ...MARTIAL_WEAPONS, ...CASTER_WEAPONS, 'Sceptres', 'Traps'];
 
 module.exports = { MARTIAL_WEAPONS, CASTER_WEAPONS, ARMOUR, ALDUR_WEAPONS, LOCAL_CLASSES };
