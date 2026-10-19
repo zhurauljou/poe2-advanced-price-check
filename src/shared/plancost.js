@@ -1,11 +1,11 @@
-// Модель стоимости плана крафта — общая для окна (<script> до частей окна) и для тестов / симуляции (require).
-// create(ctx): ctx() → { prices: { валюта: div }, goalValue: цена цели | null | undefined, est: цена вещи сейчас }.
-// Всё про выбор способа шага: Exalted / Greater / Perfect (с оменами), Desecrate, эссенции и Alloys (crafted-слот),
-// Omen of Greater Exaltation (пары), снятие лишнего Annulment'ами с учётом задетых нужных модов.
+// Craft plan cost model — shared by the window (<script> before the window parts) and by tests / simulation (require).
+// create(ctx): ctx() → { prices: { currency: div }, goalValue: goal price | null | undefined, est: item price now }.
+// Everything about choosing a step's method: Exalted / Greater / Perfect (with omens), Desecrate, essences and Alloys (crafted slot),
+// Omen of Greater Exaltation (pairs), removing extras with Annulments, accounting for wanted mods hit along the way.
 (function (root) {
   function create(C) {
-    let restoreCost = null; // цена «вернуть задетый нужный мод» (медиана добавлений плана) — считает expandPlan
-  // Затраты на шаг: сравниваем варианты (с оменом стороны и без) и берём дешевле в среднем.
+    let restoreCost = null; // price of "restoring a wanted mod that got hit" (median of the plan's additions) — computed by expandPlan
+  // Step cost: compare the options (with and without a side omen) and take the cheaper one on average.
   function stepCost(s) {
     const p = (n) => C().prices[n];
     const sum = (list) => list.reduce((a, n) => (a == null || p(n) == null ? null : a + p(n)), 0);
@@ -13,14 +13,14 @@
     if (s.act === 'remove') return removeCost(s);
     if (s.act === 'add') return addCost(s, 1);
     if (s.act === 'add2') {
-      // Omen of Greater Exaltation: один Exalted — два мода; каждый бросок стоит половину (Exalted + омены).
+      // Omen of Greater Exaltation: one Exalted — two mods; each roll costs half (Exalted + omens).
       const g = addCost(s.steps[0], 2, s.steps[1]);
       const des = s.steps.find((x) => x.useDes);
       return { ...g, two: true, desAlt: des ? addCost(des, 1).desAlt.map((o) => ({ ...o, mod: des.mod })) : [] };
     }
     if (s.act === 'regal') {
       const opts = M.tiers('regal').filter(([n]) => p(n) != null).map(([n, lv]) => ({ orb: n, level: lv, cost: p(n) }));
-      // Greater / Perfect отсекают низкие тиры случайного мода; если стоят копейки (≤ 0.1 div или ≤ 3× обычного) — по умолчанию лучший.
+      // Greater / Perfect cut off the random mod's low tiers; if they cost next to nothing (≤ 0.1 div or ≤ 3× the regular) — best by default.
       const cheapest = opts[0] ? opts[0].cost : 0;
       const pick = [...opts].reverse().find((o) => o.cost <= Math.max(0.1, cheapest * 3)) || opts[0] || { orb: 'Regal Orb', cost: p('Regal Orb') };
       return { cost: pick.cost, chance: 1, currencies: [pick.orb], regal: opts.filter((o) => o !== pick) };
@@ -29,20 +29,20 @@
     return { cost, chance: 1, currencies: s.currencies };
   }
 
-  // Добавить мод: перебираем Exalted / Greater / Perfect (с оменом стороны и без) и берём самый дешёвый в среднем.
-  // Шанс — попасть в нужное семейство в T1–T2; промах убираем Annulment'ом. rolls = 2 — с Omen of Greater Exaltation
-  // (тогда s2 — второй мод пары). Шанс неизвестен (ценный мод) — выбираем по guess (все семейства равновероятны), цену не пишем.
+  // Add a mod: try Exalted / Greater / Perfect (with and without a side omen) and take the cheapest on average.
+  // Chance — hitting the wanted family at T1–T2; a miss is removed with Annulment. rolls = 2 — with Omen of Greater Exaltation
+  // (then s2 is the pair's second mod). Chance unknown (valuable mod) — pick by guess (all families equally likely), no price shown.
   const M = typeof module !== 'undefined' && module.exports ? require('./methods') : root.CraftMethods;
   const EXALT_NAME = Object.fromEntries(M.tiers('exalt').map(([n], i) => [['base', 'greater', 'perfect'][i], n]));
-  // Снять J лишних модов, когда рядом K нужных (Annulment берёт случайный из J + K): ожидаемо Σ (j+K)/j попыток,
-  // из них Σ K/j заденут нужный мод — его придётся добавлять снова (restoreCost — цена одного такого добавления).
-  // Попадание в другой лишний мод — не промах, а прогресс. Сравниваем: Annulment по всей вещи или с оменом стороны.
-  // Цена потери нужного мода: его добавление, но не меньше четверти цены цели — без ключевого мода вещь почти ничего не стоит.
-  // Потеря ключевого мода — четверть цены вещи (без него вещь стоит намного меньше); если цен нет — его повторное добавление.
-  // Больше доли мода в цене вещи потеря стоить не может: дорогое «добавить заново» — не повод платить больше вещи.
+  // Remove J extra mods while K wanted ones sit next to them (Annulment takes a random one of J + K): expected Σ (j+K)/j attempts,
+  // of which Σ K/j hit a wanted mod — it has to be added again (restoreCost — the price of one such addition).
+  // Hitting another extra mod is not a miss but progress. Compare: Annulment over the whole item or with a side omen.
+  // Cost of losing a wanted mod: re-adding it, but no less than a quarter of the goal price — without a key mod the item is worth almost nothing.
+  // Losing a key mod — a quarter of the item price (without it the item is worth much less); if there are no prices — re-adding it.
+  // The loss can't cost more than the mod's share of the item price: an expensive "add again" is no reason to pay more than the item.
   const valueShare = () => Math.max(C().goalValue ? C().goalValue / 4 : 0, C().est ? C().est / 4 : 0);
   const restoreValue = () => valueShare() || (restoreCost ?? (C().prices['Orb of Annulment'] ?? 0) * 10);
-  // Средняя потеря от промаха эссенции / Alloy на стороне: снимается случайный из onSide нужных модов и жертвы.
+  // Average loss from an essence / Alloy miss on a side: a random one of the onSide wanted mods and the sacrifice is removed.
   function essenceLoss(s) {
     const n = (s.onSide || 0) + 1;
     const k = Math.min((s.atRisk || []).length, n - 1);
@@ -54,13 +54,13 @@
     const ann = p('Orb of Annulment');
     if (ann == null) return { cost: null, chance: null, currencies: ['Orb of Annulment'], lottery: true };
     const run = (J, K) => { let tries = 0, hits = 0; for (let j = J; j >= 1; j--) { tries += (j + K) / j; hits += K / j; } return { tries, hits }; };
-    // Задетый нужный мод: вернуть его стоит как его добавление, но не меньше четверти цены цели — без ключевого мода
-    // вещь почти ничего не стоит.
+    // A wanted mod that got hit: restoring it costs as much as adding it, but no less than a quarter of the goal price — without a key mod
+    // the item is worth almost nothing.
     const restore = restoreValue();
-    // Средняя цена «вернуть задетый» по нужным модам стороны: крафтовый — его эссенция / Alloy, остальные — restoreValue.
+    // Average price of "restoring a hit mod" over the side's wanted mods: crafted — its essence / Alloy, the rest — restoreValue.
     const sideRestore = (x) => {
       const list = (x.restore || []).length ? x.restore : [null];
-      // второстепенный мод — его повторное добавление, но не дороже половины доли ключевого
+      // secondary mod — re-adding it, but no more than half of the key mod's share
       const minor = Math.min(restoreCost ?? (p('Orb of Annulment') ?? 0) * 10, valueShare() ? valueShare() / 2 : Infinity);
       return list.reduce((a, n) => a + (n === 'minor' ? minor : n && p(n) != null ? p(n) : restore), 0) / list.length;
     };
@@ -79,7 +79,7 @@
       }
       opts.push({ currencies: ['Orb of Annulment', ...sides.filter((x) => x.J).map((x) => x.omen)], tries, hits, spent, cost: spent + lost });
     }
-    // Первую попытку снять лишний мод этой стороны уже сделал Desecrate (desFirst) — она не нужна.
+    // The first attempt to remove an extra mod on this side was already made by Desecrate (desFirst) — not needed.
     if (s.desMerge) {
       const x = s.sides[s.desMerge.side];
       for (const o of opts) {
@@ -87,9 +87,9 @@
         o.tries -= 1; o.spent -= one; o.cost -= one;
       }
     }
-    // Essence of the Abyss + Crystallisation стороны снимает случайный мод этой стороны (как Annulment с оменом — те же
-    // попытки и задетые нужные) и ставит Mark of the Abyssal Lord; Mark — desecrated, его сразу снимает Omen of Light +
-    // Annulment (игрок, 2026-10-19). Полноценный вариант: выбирается, если дешевле всех.
+    // Essence of the Abyss + side Crystallisation removes a random mod on that side (like Annulment with an omen — same
+    // attempts and hit wanted mods) and adds Mark of the Abyssal Lord; Mark is desecrated, Omen of Light +
+    // Annulment removes it right away (player, 2026-10-19). A full option: chosen if it's the cheapest of all.
     let abyss = null;
     const crystal = (side) => `Omen of ${side === 'prefix' ? 'Sinistral' : 'Dextral'} Crystallisation`;
     const sideJ = Object.entries(s.sides || {}).filter(([, x]) => x.J);
@@ -122,13 +122,13 @@
       viaAbyss: best === abyss, abyss: abyss && abyss !== best ? abyss : null, other: opts.find((o) => o !== best && o !== abyss) || null, desMerge: s.desMerge || null };
   }
 
-  // Средняя стоимость до удачи с учётом того, чем снимать промах: per — цена попытки, pc — шанс,
-  // removal — [{ a: цена снятия, q: шанс задеть нужный мод }]. Задетый нужный мод придётся добавлять снова (≈ та же
-  // стоимость E): E = (per + (1−pc)·a) / (pc − (1−pc)·q). Знаменатель ≤ 0 — путь безнадёжен (Infinity).
+  // Average cost until success, given how the miss is removed: per — attempt price, pc — chance,
+  // removal — [{ a: removal price, q: chance to hit a wanted mod }]. A wanted mod that got hit must be added again (≈ the same
+  // cost E): E = (per + (1−pc)·a) / (pc − (1−pc)·q). Denominator ≤ 0 — the path is hopeless (Infinity).
   function tries(per, pc, removal) {
     return bestRemoval(per, pc, removal).cost;
   }
-  // То же, но с выбранным способом снятия промаха ({ a, q }) — для симуляции.
+  // Same, but with the chosen miss-removal method ({ a, q }) — for the simulation.
   function bestRemoval(per, pc, removal) {
     let best = { cost: Infinity, a: 0, q: 0 };
     for (const { a, q } of removal) {
@@ -137,8 +137,8 @@
     }
     return best;
   }
-  // Чем снять промах Exalted: Annulment с оменом стороны (1 из модов стороны) или без (1 из всех модов).
-  // Остальные моды к этому моменту — нужные (лишнее убрано раньше): задеть их — потеря.
+  // How to remove an Exalted miss: Annulment with a side omen (1 of the side's mods) or without (1 of all mods).
+  // By this point the other mods are wanted (extras were removed earlier): hitting them is a loss.
   function exaltRemoval(s) {
     const p = (n) => C().prices[n];
     const ann = p('Orb of Annulment') ?? 0;
@@ -154,9 +154,9 @@
     for (const k of s.craftedOnly || s.desecrateOnly ? [] : Object.keys(EXALT_NAME)) {
       const os = [s, s2].filter(Boolean).map((x) => x.exalt[k]);
       if (os.some((o) => !o) || p(EXALT_NAME[k]) == null) continue;
-      // Есть место на другой стороне — омен стороны обязателен: иначе мод может занять слот, нужный следующему шагу плана.
+      // There is room on the other side — the side omen is required: otherwise the mod may take a slot the plan's next step needs.
       for (const omen of s.sideOmen ? [true] : [false]) {
-        if (rolls === 2 && s.otherOpen && !omen) continue; // два мода на одну сторону — только с оменом стороны
+        if (rolls === 2 && s.otherOpen && !omen) continue; // two mods on one side — only with a side omen
         const cur = [EXALT_NAME[k], ...(rolls === 2 ? ['Omen of Greater Exaltation'] : []), ...(omen ? [s.sideOmen] : [])];
         if (cur.some((n) => p(n) == null)) continue;
         const per = cur.reduce((a, n) => a + p(n), 0) / rolls;
@@ -166,20 +166,20 @@
         opts.push({ k, currencies: cur, chances: os.map((o) => (lottery ? null : odds(o))), pool: os[0].pool, cost, per: per * rolls, slam: per / odds(os[0]), p: os.reduce((a, o) => a * odds(o), 1), ps: os.map(odds), rem });
       }
     }
-    // Desecrate (только для шага, которому окно его отдало: одна desecration на вещь). Кость + Necromancy на сторону
-    // (если на другой есть место), при раскрытии — лучший из 3 вариантов (6 с Omen of Abyssal Echoes).
-    // Промах — убрать desecrated-мод прицельно: Orb of Annulment + Omen of Light.
-    // Perfect/порченая эссенция (crafted-слот): жертвенный мод Exalted'ом на эту сторону → Omen of Crystallisation
-    // стороны + эссенция: снимает случайный мод стороны (жертву — если других снимаемых там нет) и ставит свой мод.
+    // Desecrate (only for the step the window gave it to: one desecration per item). Bone + Necromancy on a side
+    // (if the other side has room); on reveal — best of 3 options (6 with Omen of Abyssal Echoes).
+    // Miss — remove the desecrated mod precisely: Orb of Annulment + Omen of Light.
+    // Perfect/corrupted essence (crafted slot): a sacrificial mod via Exalted on this side → side Omen of Crystallisation
+    // + essence: removes a random mod on the side (the sacrifice — if there are no other removable ones there) and adds its own mod.
     if (rolls === 1 && (s.useCrafted || s.craftedOnly) && s.crafted) {
       const P = 1 / ((s.onSide || 0) + 1);
       for (const name of s.crafted || []) {
         const cur = [name, s.crystal, 'Exalted Orb', ...(s.sideOmen ? [s.sideOmen] : [])];
         if (cur.some((n) => p(n) == null)) continue;
         const per = cur.reduce((a, n) => a + p(n), 0);
-        // Промах: эссенция сняла нужный мод (мод эссенции всё равно встал) — вернуть его и снять жертву. Ключевой мод
-        // вещи (atRisk: был на ней до крафта) вернуть дорого — restoreValue; добавленный по плану — его повторное добавление.
-        // Поэтому эссенцию выгоднее ставить, когда на стороне уже есть дешёвые нужные моды: промах чаще попадёт в них.
+        // Miss: the essence removed a wanted mod (the essence mod still landed) — restore it and remove the sacrifice. A key mod
+        // of the item (atRisk: it was there before crafting) is expensive to restore — restoreValue; one added by the plan — re-adding it.
+        // So the essence is better used when the side already has cheap wanted mods: a miss will hit them more often.
         const cost = per + essenceLoss(s) + (1 - P) * (p('Orb of Annulment') ?? 0);
         opts.push({ k: 'essence', essence: name, currencies: cur, chances: [P], pool: 0, cost, per, slam: per / P, p: P, ps: [P] });
       }
@@ -188,13 +188,13 @@
       const desRetry = (p('Orb of Annulment') ?? 0) + (p('Omen of Light') ?? 0);
       for (const [bone, o] of Object.entries(s.desecrate)) {
         for (const echo of [false, true]) {
-          const boneName = bone.split('|')[0]; // ключ «кость|лич-омен»
+          const boneName = bone.split('|')[0]; // key "bone|lich omen"
           const cur = [boneName, ...(o.extra || []), ...(s.necro ? [s.necro] : []), ...(echo ? ['Omen of Abyssal Echoes'] : [])];
           if (cur.some((n) => p(n) == null)) continue;
           const one = lottery ? o.guess : o.chance;
-          // Подходящих модов на стороне ≤ 3 — нужный гарантированно среди вариантов (остаётся только тир).
-          // В тройке варианты не повторяются (выбор без возврата), а реролл Abyssal Echoes — новая независимая тройка:
-          // шанс тройки 1 − Π (1 − g / (N − i)), g = one·N «подходящих» из N семейств; с Echoes — две тройки.
+          // Matching mods on the side ≤ 3 — the wanted one is guaranteed among the options (only the tier remains).
+          // Within a triple the options don't repeat (drawn without replacement), and an Abyssal Echoes reroll is a new independent triple:
+          // triple chance 1 − Π (1 − g / (N − i)), g = one·N "matching" of N families; with Echoes — two triples.
           const three = o.pool > 3 ? 1 - [0, 1, 2].reduce((a, i) => a * Math.max(0, 1 - (one * o.pool) / (o.pool - i)), 1) : null;
           const pc = o.pool <= 3 ? o.good : three != null ? 1 - Math.pow(1 - three, echo ? 2 : 1) : 1 - Math.pow(1 - one, echo ? 6 : 3);
           const per = cur.reduce((a, n) => a + p(n), 0);
@@ -203,31 +203,31 @@
       }
     }
     if (!opts.length) return { cost: null, chance: null, currencies: ['Exalted Orb'], lottery: true };
-    // Ни один способ «до победы» не сходится — значит, одна попытка (слэм), промах остаётся на вещи: берём способ
-    // с лучшим «шансом за цену попытки».
-    // Одна попытка (до победы не сходится) на вещи с известной выгодой: промах — испорченная вещь, а не цена сферы.
-    // Тогда выбираем по выгоде попытки: шанс × (цена цели − цена сейчас) − цена попытки (Perfect Exalted на дорогой вещи).
-    // «До победы» дороже самой цели — так не крафтят: это одна попытка (промах остаётся на вещи).
+    // No "until success" method converges — so it's a single attempt (slam), the miss stays on the item: take the method
+    // with the best "chance per attempt price".
+    // Single attempt (until-success doesn't converge) on an item with a known gain: a miss is a ruined item, not the orb's price.
+    // Then choose by the attempt's gain: chance × (goal price − price now) − attempt price (Perfect Exalted on an expensive item).
+    // "Until success" costs more than the goal itself — nobody crafts like that: it's a single attempt (the miss stays on the item).
     if (C().goalValue) for (const o of opts) if (o.cost > C().goalValue) o.cost = Infinity;
     const gain = C().goalValue != null && C().est != null ? Math.max(0, C().goalValue - C().est) : 0;
     if (gain && opts.every((o) => !Number.isFinite(o.cost))) opts.sort((a, b) => (b.p * gain - b.per) - (a.p * gain - a.per));
     else opts.sort((a, b) => a.cost - b.cost || a.slam - b.slam);
     const best = opts[0];
-    // Другие способы — для сравнения (по одному лучшему варианту каждого).
+    // Other methods — for comparison (one best option of each).
     const kind = (o) => (o.k === 'desecrate' ? o.bone : o.k);
     const alts = opts.filter((o, i) => kind(o) !== kind(best) && opts.findIndex((x) => kind(x) === kind(o)) === i);
     const desAlt = alts.filter((o) => (o.k === 'desecrate' || o.k === 'essence') && o.k !== best.k);
-    // Ни один способ не сходится: промах чаще снимет нужный мод, чем лишний.
+    // No method converges: a miss removes a wanted mod more often than an extra one.
     const hopeless = !Number.isFinite(best.cost);
-    // Эссенция ставит мод наверняка — её цена известна, даже если шанс Exalted для этого мода неизвестен.
+    // An essence adds the mod for sure — its price is known even if the Exalted chance for this mod is unknown.
     const lot = lottery && best.k !== 'essence';
     return { hopeless, perTry: best.per, ps: best.ps, rem: best.rem, cost: lot || hopeless ? null : best.cost, score: best.cost, chance: best.chances[0], chances: best.chances, currencies: best.currencies,
       lottery: lot, pool: best.pool, k: best.k, echo: best.echo, bone: best.bone, lich: best.lich, alts: lottery ? [] : alts, desAlt };
   }
 
-  // add2, если два отдельных Exalted выходят дешевле, — разворачиваем обратно в два шага.
+  // add2: if two separate Exalteds come out cheaper — expand it back into two steps.
   function expandPlan(plan) {
-    // Цена «вернуть задетый нужный мод» — медиана средних цен добавления в этом плане (для снятия лишнего).
+    // Price of "restoring a wanted mod that got hit" — median of the plan's average addition prices (for removing extras).
     const adds = plan.flatMap((s) => (s.act === 'add2' ? s.steps : s.act === 'add' ? [s] : [])).map((x) => addCost(x, 1).score).filter(Number.isFinite).sort((a, b) => a - b);
     restoreCost = adds.length ? adds[Math.floor(adds.length / 2)] : null;
     plan = desFirst(pairUp(withDesecrate(plan)));
@@ -240,8 +240,8 @@
     });
   }
 
-  // Два Exalted подряд на одну сторону — снова в пару (Omen of Greater Exaltation + омен стороны: омены складываются).
-  // Пара могла распасться, когда один её мод забрал Desecrate или crafted-слот; дешевле ли пара — решит expandPlan.
+  // Two Exalteds in a row on one side — pair them again (Omen of Greater Exaltation + side omen: the omens stack).
+  // The pair could have split when one of its mods was taken by Desecrate or the crafted slot; expandPlan decides if the pair is cheaper.
   function pairUp(plan) {
     const solo = (s) => s && s.act === 'add' && !s.useDes && !s.useCrafted && !s.craftedOnly && !s.desecrateOnly && s.exalt;
     const out = [];
@@ -256,12 +256,12 @@
     return out;
   }
 
-  // Desecration одна на вещь — отдаём её шагу, где она выгоднее всего относительно Exalted. Дешевле — станет основным
-  // способом шага, нет — покажется в «Вместо этого» (видно шанс и цену). Мод из пары Greater Exaltation (только если
-  // десекрейт там выгоднее) уходит в отдельный шаг.
-  // Desecrate на полную сторону (с Necromancy этой стороны) сам снимает случайный мод стороны — проверено в игре
-  // (2026-10-18). Если на стороне один лишний мод, это ровно одна попытка Annulment стороны: лишний уходит с тем же
-  // шансом 1 из (J + K), промах снимает нужный так же. Поэтому Desecrate — до снятий: экономит одну Annulment с оменом.
+  // One desecration per item — give it to the step where it beats Exalted by the most. If cheaper — it becomes the step's main
+  // method, if not — it shows up in "Instead" (chance and price visible). A mod from a Greater Exaltation pair (only if
+  // desecrating it is better there) moves to a separate step.
+  // Desecrate on a full side (with that side's Necromancy) itself removes a random mod on the side — verified in game
+  // (2026-10-18). If the side has one extra mod, that's exactly one side-Annulment attempt: the extra goes with the same
+  // 1 in (J + K) chance, a miss removes a wanted one the same way. So Desecrate goes before removals: saves one Annulment with an omen.
   function desFirst(plan) {
     const p = (n) => C().prices[n];
     const r = plan.findIndex((s) => s.act === 'remove' && s.sides);
@@ -272,7 +272,7 @@
     const x = plan[r].sides[D.side];
     if (!x || x.J !== 1 || !x.full || p(x.necro) == null || addCost(D, 1).k !== 'desecrate') return plan;
     const D2 = { ...D, necro: x.necro, desFirst: true };
-    // Омен Necromancy и так был нужен — экономия вся; не был — его цена вычитается из сэкономленной Annulment.
+    // The Necromancy omen was needed anyway — the whole saving counts; if not — its price is subtracted from the saved Annulment.
     const extra = D.necro ? 0 : p(x.necro);
     const R2 = { ...plan[r], desMerge: { side: D.side, extra, mod: D.mod } };
     if (removeCost(plan[r]).cost - removeCost(R2).cost <= extra) return plan;
@@ -282,27 +282,27 @@
   }
 
   function withDesecrate(plan) {
-    // Сначала crafted-слот (эссенция ставит мод наверняка), потом desecration — на лучший из оставшихся шагов.
-    // Crafted-слотов может быть два (руна Astrid's Creativity) — раздаём столько, сколько свободно.
+    // First the crafted slot (an essence adds the mod for sure), then desecration — to the best of the remaining steps.
+    // There can be two crafted slots (Astrid's Creativity rune) — hand out as many as are free.
     const slots = Math.max(1, ...plan.flatMap((s) => (s.act === 'add2' ? s.steps : [s])).map((s) => s.craftedSlots || 0));
     let withCrafted = plan;
     for (let i = 0; i < slots; i++) withCrafted = withSlot(withCrafted, 'crafted', 'useCrafted', 'essence');
     const out = withSlot(withCrafted, 'desecrate', 'useDes', 'desecrate');
-    // Порядок добавлений: эссенция первой (пока на стороне меньше модов — выше шанс, что снимет жертву),
-    // затем desecrate (на полной вещи он заменяет случайный мод), потом Exalted.
+    // Order of additions: essence first (while the side has fewer mods — higher chance it removes the sacrifice),
+    // then desecrate (on a full item it replaces a random mod), then Exalted.
     for (const flag of ['useDes', 'useCrafted']) {
       const d = out.findIndex((s) => s.act === 'add' && s[flag]);
       const first = out.findIndex((s) => s.act === 'add' || s.act === 'add2');
       if (d >= 0 && first >= 0 && first < d) {
-        // Шаг встаёт раньше добавлений first..d−1 на своей стороне: модов там к этому моменту меньше (onSide и onItem
-        // в craft.js растут только с добавлениями своей стороны).
+        // The step moves before additions first..d−1 on its side: there are fewer mods there at that point (onSide and onItem
+        // in craft.js grow only with additions on their own side).
         const s = out[d];
         const n = out.slice(first, d).flatMap((x) => (x.act === 'add2' ? x.steps : x.act === 'add' ? [x] : [])).filter((x) => x.side === s.side).length;
         const moved = { ...s, onSide: Math.max(0, (s.onSide || 0) - n), onItem: Math.max(0, (s.onItem || 0) - n) };
-        // Эссенция первой — выше шанс снять жертву, но промах чаще снимает ключевой мод (на стороне меньше других).
-        // Ставим туда, где дешевле в среднем.
+        // Essence first — higher chance to remove the sacrifice, but a miss more often removes a key mod (fewer others on the side).
+        // Place it where it's cheaper on average.
         if (flag === 'useCrafted' && addCost(moved, 1).score > addCost(s, 1).score) continue;
-        // Шаги, перед которыми он встал, — на его стороне теперь на мод больше.
+        // Steps it moved ahead of — now have one more mod on its side.
         const bump = (x) => (x.side === s.side ? { ...x, onSide: (x.onSide || 0) + 1, onItem: (x.onItem || 0) + 1 } : x);
         for (let i = first; i < d; i++) {
           const x = out[i];
@@ -316,17 +316,17 @@
     return out;
   }
 
-  // Отдать «одноразовый» способ (desecration, crafted-слот) шагу, где он выгоднее всего относительно Exalted.
+  // Give a "one-time" method (desecration, crafted slot) to the step where it beats Exalted by the most.
   function withSlot(plan, field, flag, kind) {
-    // Мод, который даёт только crafted-слот (Alloy), — слот за ним.
+    // A mod only the crafted slot provides (Alloy) — the slot is reserved for it.
     if (kind === 'essence' && plan.some((s) => s.act === 'add' && s.craftedOnly && !s[flag])) {
-      let done = false; // по одному слоту за вызов
+      let done = false; // one slot per call
       return plan.map((s) => { if (!done && s.act === 'add' && s.craftedOnly && !s[flag]) { done = true; return { ...s, [flag]: true }; } return s; });
     }
-    // Мод, который даёт только Desecrate (моды личей), — desecration за ним.
+    // A mod only Desecrate provides (lich mods) — desecration is reserved for it.
     if (kind === 'desecrate' && plan.some((s) => s.act === 'add' && s.desecrateOnly)) return plan.map((s) => (s.act === 'add' && s.desecrateOnly ? { ...s, [flag]: true } : s));
     let best = null, ratio = Infinity, top = null;
-    // Источник crafted-слота (эссенция / Alloy) один раз на вещь: занятые уже не предлагаем другим шагам.
+    // A crafted-slot source (essence / Alloy) is once per item: taken ones are no longer offered to other steps.
     const used = new Set();
     if (kind === 'essence') {
       for (const s of plan.flatMap((y) => (y.act === 'add2' ? y.steps : [y]))) {
@@ -343,8 +343,8 @@
         const alt = yes.k === kind ? yes.score : (yes.alts || []).concat(yes.desAlt || []).find((o) => o.k === kind)?.cost;
         if (alt == null || !no) continue;
         const r = !Number.isFinite(no) ? (Number.isFinite(alt) ? 0 : Infinity) : alt / no;
-        // Desecrate (6 вариантов на выбор) — самому ценному моду, где он помогает; эссенция — где выгоднее по цене.
-        // Desecrate и crafted-слот — самому ценному моду, где они помогают (а не там, где выигрыш по цене больше).
+        // Desecrate (6 options to choose from) — to the most valuable mod where it helps; essence — where it's cheaper.
+        // Desecrate and the crafted slot — to the most valuable mod where they help (not where the price gain is largest).
         if ((kind === 'desecrate' || kind === 'essence') && (r < 1 || yes.k === kind)) {
           const v = x.worth || 0;
           if (!top || v > top.v || (v === top.v && r < top.r)) top = { i, j, wins: yes.k === kind, v, r, crafted: x.crafted };
@@ -352,7 +352,7 @@
         if (r < ratio) { ratio = r; best = { i, j, wins: yes.k === kind }; }
       }
     });
-    // Desecrate помогает нескольким шагам — отдаём самому ценному; не помогает ни одному — покажется как альтернатива.
+    // Desecrate helps several steps — give it to the most valuable; helps none — shown as an alternative.
     if (top) best = top;
     if (!best) return plan;
     const mark = (x) => ({ ...x, [flag]: true, ...(best.crafted ? { crafted: best.crafted } : {}) });
@@ -360,17 +360,17 @@
       if (i !== best.i) return [s];
       if (s.act === 'add') return [mark(s)];
       if (!best.wins) return [{ ...s, steps: s.steps.map((x, j) => (j === best.j ? mark(x) : x)) }];
-      // Пара Greater Exaltation через стороны разворачивается в исходные шаги (с оменами стороны).
+      // A Greater Exaltation pair across sides expands into the original steps (with side omens).
       return (s.alt || s.steps).map((x, j) => (j === best.j ? mark(x) : x));
     });
   }
 
-    // Симуляция всего плана (Монте-Карло): каждый шаг «проигрывается» по нашим шансам. Шаг «до победы» повторяется,
-    // промах снимается (с шансом q заденет нужный мод); «одна попытка» попадает или оставляет промах на вещи;
-    // эссенция ставит свой мод наверняка, но может снять нужный. Итог — затраты и цена вещи: между ценой сейчас и
-    // ценой цели по доле достигнутых модов (по их ценности), минус потерянные нужные моды.
-    // info: { keep: сколько нужных модов на вещи }. → null, если нет цены цели или вещи.
-    // random — генератор [0, 1) (тесты передают свой, с зерном, чтобы результат повторялся).
+    // Simulation of the whole plan (Monte Carlo): each step is "played out" with our chances. An "until success" step repeats,
+    // the miss is removed (with chance q it hits a wanted mod); a "single attempt" hits or leaves the miss on the item;
+    // an essence adds its mod for sure but may remove a wanted one. Result — costs and item price: between the price now and
+    // the goal price by the share of achieved mods (by their value), minus lost wanted mods.
+    // info: { keep: how many wanted mods are on the item }. → null if there is no goal or item price.
+    // random — a [0, 1) generator (tests pass their own, seeded, so the result is reproducible).
     function simulate(plan, info = {}, runs = 2000, random = Math.random) {
       const { goalValue: goal, est, prices } = C();
       if (goal == null || est == null) return null;
@@ -391,7 +391,7 @@
           const parts = s.act === 'add2' ? s.steps : [s];
           const ps = c.ps || [];
           const per = c.perTry || 0;
-          if (c.k === 'essence') { // мод ставится наверняка; жертва снимается с шансом P, иначе — нужный мод
+          if (c.k === 'essence') { // the mod lands for sure; the sacrifice is removed with chance P, otherwise a wanted mod
             spent += per; got += s.worth || s.pct || 1;
             if (random() > (ps[0] || 1)) { lost++; spent += ann; }
             return;
@@ -400,12 +400,12 @@
           parts.forEach((x, j) => {
             const p = ps[j] != null ? ps[j] : ps[0] || 0;
             const w = x.worth || x.pct || 1;
-            if (!loop) { // одна попытка: попал — мод есть, нет — промах остаётся
+            if (!loop) { // single attempt: hit — the mod is there, miss — the miss stays
               spent += j === 0 ? per : 0;
               if (random() < p) got += w;
               return;
             }
-            for (let k = 0; k < 200; k++) { // до победы: каждый промах снимается (rem.a), иногда вместе с нужным модом
+            for (let k = 0; k < 200; k++) { // until success: every miss is removed (rem.a), sometimes along with a wanted mod
               spent += per / parts.length;
               if (random() < p) { got += w; return; }
               spent += (c.rem && c.rem.a) || 0;
@@ -422,8 +422,8 @@
       return {
         runs, value: { p10: q(vals, 0.1), p50: q(vals, 0.5), p90: q(vals, 0.9) },
         spent: { mean: spends.reduce((a, b) => a + b, 0) / runs, p50: q(spends, 0.5), p90: q(spends, 0.9) },
-        profit: out.filter((o) => o.net > est).length / runs, // крафт выгоднее, чем продать как есть
-        full: out.filter((o) => o.full).length / runs, // все нужные моды получены, ни один не потерян
+        profit: out.filter((o) => o.net > est).length / runs, // crafting beats selling as is
+        full: out.filter((o) => o.full).length / runs, // all wanted mods obtained, none lost
       };
     }
 
