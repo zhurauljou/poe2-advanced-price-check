@@ -1,267 +1,267 @@
-# PoE 2 — заметки по крафту (для вкладки Craft)
+# PoE 2 — crafting notes (for the Craft tab)
 
-- **Актуально для:** патч **0.5.5** (последний подпатч — **0.5.5e**, 6 окт. 2026), лига **Forbidden Rites** (event-лига, старт 4 сент. 2026) + Standard. Ядро крафта не менялось с **0.5.0** («Return of the Ancients», лига **Runes of Aldur**, старт 29 мая 2026). Следующий большой патч — **1.0, 11 дек. 2026** (по сторонним источникам, не проверено по официальному анонсу).
-- **Составлено:** 2026-10-17.
-- Обозначения: [S#] — ссылка на источник из раздела 7. «(не проверено)» — факт не подтверждён найденным источником или подтверждён только сомнительным.
-- Примечание: maxroll.gg не отдавался (обрыв соединения), poe2wiki.net и mobalytics блокируют загрузку — основа: официальные патчноуты + poe2db.
-- **Поправки и приёмы — в `docs/crafting-tricks.md` (§0 «Поправки»)**: раскрытие desecrate — 3 варианта, без лич-омена в них и обычные моды; «нет desecrated-префиксов на броне» верно только для эксклюзивов личей (Rib + Sinistral Necromancy даёт обычные префиксы); Greater/Perfect/Ancient отсекают низкие тиры, но семейство без тиров выше порога выпадает лучшим тиром; Whittling считает нераскрытый desecrated уровнем 1; Putrefaction обходит лимит одного desecrated.
+- **Current for:** patch **0.5.5** (latest subpatch — **0.5.5e**, Oct 6, 2026), league **Forbidden Rites** (event league, launched Sep 4, 2026) + Standard. The crafting core has not changed since **0.5.0** ("Return of the Ancients", league **Runes of Aldur**, launched May 29, 2026). The next big patch is **1.0, Dec 11, 2026** (per third-party sources, unverified against an official announcement).
+- **Compiled:** 2026-10-17.
+- Notation: [S#] — a reference to a source in section 7. "(unverified)" — the fact is not confirmed by any source found, or is confirmed only by a dubious one.
+- Note: maxroll.gg would not load (connection dropped), poe2wiki.net and mobalytics block downloads — the basis is official patch notes + poe2db.
+- **Corrections and techniques are in `docs/crafting-tricks.md` (§0 "Corrections")**: a desecrate reveal offers 3 options, and without a lich omen these include regular mods too; "no desecrated prefixes on armour" holds only for lich exclusives (Rib + Sinistral Necromancy gives regular prefixes); Greater/Perfect/Ancient cut off low tiers, but a family with no tiers above the threshold rolls at its best tier; Whittling treats an unrevealed desecrated mod as level 1; Putrefaction bypasses the one-desecrated limit.
 
-## 1. Что изменилось за последние 2 патча (только крафт)
+## 1. What changed in the last 2 patches (crafting only)
 
-**0.5.0 (Runes of Aldur, патчноуты ~21–26 мая 2026) [S1][S2]:**
-- **Один crafted-мод на предмет.** «All crafted modifiers are now guaranteed, but items can only have 1 crafted modifier at a time.» Моды эссенций (включая Perfect и corrupted, в т.ч. Mark of the Abyssal Lord) и Alloy — это crafted-моды: вторая эссенция/Alloy на ту же вещь даёт ошибку «This item already has a crafted modifier» [S1][S9][S10][S11]. Цепочки «эссенция → Perfect-эссенция» больше не работают.
-- **Один desecrated-мод на предмет**, и он больше НЕ считается crafted → на вещи можно иметь 1 crafted + 1 desecrated [S1].
-- Desecrated-моды с Instant Leech больше не выпадают [S2].
-- Greater Orb of Transmutation / Augmentation: мин. уровень мода **44** (было 55); Transmutation/Augmentation стали заметно реже; Greater/Perfect валюта «somewhat rarer»; Divine Orb — чаще [S2].
-- **Fracturing Orb** теперь падает только при специализации через атласные пассивы (Exceptional Items, Fracturing Orbs) [S2].
-- **Recombinator отключён**, Omen of Recombination удалён (удаляется при входе) [S2][S6]. В 0.5.5 о возвращении не сказано — считать отключённым (не проверено).
-- **Omen of Corruption больше не добывается**; Omen of Corruption, Omen of Homogenising Coronation, Omen of Homogenising Exaltation — на Currency Exchange только в Standard [S1].
-- Omen of Chaotic Rarity/Quantity/Monsters (для Waystone) теперь ЗАПРЕЩАЮТ свой тип мода; новый Omen of Chaotic Effectiveness [S2].
-- Abyss-омены не падают в зонах ниже 65 уровня [S2].
-- Perfect Essence of Battle: +3 (было +5) для 2H/Crossbow, +2 (было +3) для 1H/Bow; Essence of Hysteria на Focus: 20–23% ES Recharge Rate (было 41–45%) [S2]. Melee/Projectile +уровни на оружии понижены (2H +7→+5, 1H +5→+4), спелл-уровни не трогали (не проверено, [S6]).
-- Catalysts больше не падают с монстров — только Genesis Tree (Breach); добавлены 12/13 **Refined**-катализаторов для самоцветов [S2][S4].
-- 13 **Alloys** (Verisium): «add various new crafted modifiers to items by replacing an existing modifier» — аналог Perfect-эссенции, занимают crafted-слот [S1][S4].
-- **Liquid Emotions** (Delirium) крафтят доп. моды на самоцветы как Greater Essence (не проверено, [S6]).
-- Vaal Orb: исход «переролл значений за пределами диапазона» теперь **умножает** каждый мод от текущего значения; то же для Sanctification (Omen of Sanctification) [S2].
-- Vaal Infusers разделены на 4 типа (Armourer's / Blacksmith's / Arcanist's / Catalysing), работают только на вещах с quality ≥ 20% [S2].
-- Jeweller's Orbs можно использовать на вещах со скиллами (добавить сокеты) [S1].
-- Cast Speed на кольцах — с 60 ур., на амулетах — с 66 ур.; Leech-моды на перчатках/кольцах переразмечены по уровням, «of the Parasite»/«of the Thirsty» убраны [S1][S2].
-- Новые руны: 13 Ancient, 13 Mythical, 3 Flux, 15 meta-crafting рун (напр. Astrid's Creativity — «+1 Crafted Modifier allowed», Serle's Triumph — «+1 Suffix Modifier allowed») [S2][S14].
+**0.5.0 (Runes of Aldur, patch notes ~May 21–26, 2026) [S1][S2]:**
+- **One crafted mod per item.** "All crafted modifiers are now guaranteed, but items can only have 1 crafted modifier at a time." Essence mods (including Perfect and corrupted ones, incl. Mark of the Abyssal Lord) and Alloys are crafted mods: a second essence/Alloy on the same item gives the error "This item already has a crafted modifier" [S1][S9][S10][S11]. "Essence → Perfect essence" chains no longer work.
+- **One desecrated mod per item**, and it NO LONGER counts as crafted → an item can have 1 crafted + 1 desecrated [S1].
+- Desecrated mods with Instant Leech no longer roll [S2].
+- Greater Orb of Transmutation / Augmentation: min. mod level **44** (was 55); Transmutation/Augmentation became noticeably rarer; Greater/Perfect currency "somewhat rarer"; Divine Orb — more common [S2].
+- **Fracturing Orb** now drops only when specialising via atlas passives (Exceptional Items, Fracturing Orbs) [S2].
+- **Recombinator disabled**, Omen of Recombination removed (deleted on login) [S2][S6]. 0.5.5 says nothing about it returning — treat it as disabled (unverified).
+- **Omen of Corruption is no longer obtainable**; Omen of Corruption, Omen of Homogenising Coronation, Omen of Homogenising Exaltation — on the Currency Exchange only in Standard [S1].
+- Omen of Chaotic Rarity/Quantity/Monsters (for Waystones) now FORBID their mod type; new Omen of Chaotic Effectiveness [S2].
+- Abyss omens don't drop in zones below level 65 [S2].
+- Perfect Essence of Battle: +3 (was +5) for 2H/Crossbow, +2 (was +3) for 1H/Bow; Essence of Hysteria on Focus: 20–23% ES Recharge Rate (was 41–45%) [S2]. Melee/Projectile +levels on weapons were lowered (2H +7→+5, 1H +5→+4), spell levels were not touched (unverified, [S6]).
+- Catalysts no longer drop from monsters — only the Genesis Tree (Breach); 12/13 **Refined** catalysts for jewels were added [S2][S4].
+- 13 **Alloys** (Verisium): "add various new crafted modifiers to items by replacing an existing modifier" — analogous to a Perfect essence, they take the crafted slot [S1][S4].
+- **Liquid Emotions** (Delirium) craft extra mods onto jewels like a Greater Essence (unverified, [S6]).
+- Vaal Orb: the "reroll values beyond the range" outcome now **multiplies** each mod from its current value; the same for Sanctification (Omen of Sanctification) [S2].
+- Vaal Infusers split into 4 types (Armourer's / Blacksmith's / Arcanist's / Catalysing), work only on items with quality ≥ 20% [S2].
+- Jeweller's Orbs can be used on items with skills (to add sockets) [S1].
+- Cast Speed on rings — from lvl 60, on amulets — from lvl 66; Leech mods on gloves/rings were re-tiered by level, "of the Parasite"/"of the Thirsty" removed [S1][S2].
+- New runes: 13 Ancient, 13 Mythical, 3 Flux, 15 meta-crafting runes (e.g. Astrid's Creativity — "+1 Crafted Modifier allowed", Serle's Triumph — "+1 Suffix Modifier allowed") [S2][S14].
 
-**0.5.5 (Forbidden Rites, 3–4 сент. 2026) и подпатчи b–e [S3][S5][S7]:**
-- Изменений механики крафт-валюты/оменов/эссенций нет. 0.5.5b–e — только багфиксы.
-- Doryani's Refined Formula удалён; новый атласный вариант **Archaic Corruption** — монстры из эссенций становятся Corrupted (больше corrupted-эссенций) [S3][S8].
-- Trial of Chaos: награды теперь только валюта и Soul Cores (corrupted-вещей больше нет) [S3].
-- Expedition/Fallow/Verisium Anvil — в ядре игры (Standard и Forbidden Rites); Verisium Anvil открывается квестом Act 4 «The Runeseeker» [S3].
-- 17 новых Soul Cores, ряд переработан, 8 ограничены «Limit 1» [S3].
-- Лига-механика: Ritual в каждой зоне кампании — дают валюту для крафта на прокачке; на крафт эндгейм-вещей не влияет [S3][S8].
+**0.5.5 (Forbidden Rites, Sep 3–4, 2026) and subpatches b–e [S3][S5][S7]:**
+- No changes to the mechanics of crafting currency/omens/essences. 0.5.5b–e — bug fixes only.
+- Doryani's Refined Formula removed; new atlas option **Archaic Corruption** — essence monsters become Corrupted (more corrupted essences) [S3][S8].
+- Trial of Chaos: rewards are now only currency and Soul Cores (no more corrupted items) [S3].
+- Expedition/Fallow/Verisium Anvil — in the core game (Standard and Forbidden Rites); the Verisium Anvil is unlocked by the Act 4 quest "The Runeseeker" [S3].
+- 17 new Soul Cores, a number reworked, 8 restricted to "Limit 1" [S3].
+- League mechanic: Ritual in every campaign zone — gives currency for crafting while levelling; doesn't affect endgame item crafting [S3][S8].
 
-## 2. Базовые правила
+## 2. Basic rules
 
-### 2.1 Слоты модов
-- Rare: до **3 prefix + 3 suffix**; Magic: **1 prefix + 1 suffix** [S12].
-- Самоцветы (Jewel), rare: **2 + 2** (не проверено, следует из игровых данных, источника не найдено).
-- Поправки: «+1 Suffix Modifier allowed» (руна Serle's Triumph и т.п.) [S14]; «+1 Crafted Modifier allowed» — Astrid's Creativity [S14].
-- Лимиты сверх слотов: **1 crafted** (эссенция / Alloy / прочие «гарантированные» моды) и **1 desecrated** [S1].
-- Desecrated-префиксы на Body Armour/Gloves/Boots/Helmets — по poe2db «нет» (не проверено, на странице есть противоречие) [S13].
+### 2.1 Mod slots
+- Rare: up to **3 prefix + 3 suffix**; Magic: **1 prefix + 1 suffix** [S12].
+- Jewels, rare: **2 + 2** (unverified, follows from game data, no source found).
+- Modifiers: "+1 Suffix Modifier allowed" (the Serle's Triumph rune, etc.) [S14]; "+1 Crafted Modifier allowed" — Astrid's Creativity [S14].
+- Limits on top of slots: **1 crafted** (essence / Alloy / other "guaranteed" mods) and **1 desecrated** [S1].
+- Desecrated prefixes on Body Armour/Gloves/Boots/Helmets — per poe2db "none" (unverified, the page contains a contradiction) [S13].
 
-### 2.2 Уровень мода и ilvl
-- Мод может выпасть, только если его уровень ≤ ilvl предмета. Greater/Perfect-валюта дополнительно отсекает моды ниже порога [S4].
-- Пороги (poe2db) [S4]:
+### 2.2 Mod level and ilvl
+- A mod can roll only if its level is ≤ the item's ilvl. Greater/Perfect currency additionally cuts off mods below a threshold [S4].
+- Thresholds (poe2db) [S4]:
 
-| Валюта | Greater | Perfect |
+| Currency | Greater | Perfect |
 |---|---|---|
 | Orb of Transmutation | 44 | 70 |
 | Orb of Augmentation | 44 | 70 |
 | Regal Orb | 35 | 50 |
 | Exalted Orb | 35 | 50 |
-| Chaos Orb | 35 | 50 (добавляемый мод) |
+| Chaos Orb | 35 | 50 (the added mod) |
 
-- По [S12], порог «never removes a modifier family entirely» — семейство без тира выше порога, видимо, всё равно может выпасть лучшим доступным тиром (не проверено).
-- Perfect-валюта на базе с ilvl < порога бесполезна/запрещена (не проверено) — минимум для Perfect Exalt — ilvl ≥ 50, лучше ≥ 75–82 для T1.
-- Выше — не всегда лучше: у ботинок полезные пороги 71 и 82, а 72–75 добавляют «мусорные» тиры — база ilvl 71 даёт лучшие шансы на MS + сопротивления (см. `market-notes.md` §2, **M**).
+- Per [S12], the threshold "never removes a modifier family entirely" — a family with no tier above the threshold apparently can still roll at its best available tier (unverified).
+- Perfect currency on a base with ilvl < threshold is useless/forbidden (unverified) — the minimum for a Perfect Exalt is ilvl ≥ 50, better ≥ 75–82 for T1.
+- Higher isn't always better: boots have useful thresholds at 71 and 82, while 72–75 add "junk" tiers — an ilvl 71 base gives the best chances for MS + resistances (see `market-notes.md` §2, **M**).
 
-### 2.3 Основная валюта [S4]
-- **Orb of Transmutation** — Normal → Magic (1 мод). **Orb of Augmentation** — +1 мод на Magic.
-- **Regal Orb** — Magic → Rare (+1 мод). Omen of Sinistral/Dextral Coronation — только prefix/suffix.
-- **Orb of Alchemy** — Normal/Magic → Rare с 4 модами. Omen of Sinistral/Dextral Alchemy — максимум префиксов/суффиксов [S15].
-- **Exalted Orb** — +1 случайный мод на Rare.
-- **Chaos Orb** — удалить 1 случайный мод и добавить 1 случайный (не полный реролл) [S4].
-- **Orb of Annulment** — удалить 1 случайный мод.
-- **Divine Orb** — реролл чисел у модов (в пределах тира). Omen of the Blessed — только implicit; Omen of Sanctification — Sanctify rare-вещи (множитель значений, дальше вещь почти не крафтится; ~78–122% — не проверено, [S12]).
-- **Fracturing Orb** — фиксирует случайный мод на Rare с **≥ 4 модами**; fractured мод не меняется Chaos/Annul/Divine (по [S12], не проверено для Divine). Fracture может попасть и на crafted-мод [S10].
-- **Hinekora's Lock** — «Allows an item to foresee the result of the next Currency item used on it. Modifying the item in any way removes the ability to foresee.» Стак 10 [S16]. Предпросмотр не тратит валюту; работает с Vaal/Divine/Chaos/Exalted (не проверено, [S17]). Дорогой (сотни Divine по [S17] — не проверено).
-- **Orb of Chance** — Normal → случайный Unique или уничтожение. Omen of Chance — не уничтожает; Omen of the Ancients — гарантирует апгрейд в unique того же класса [S15]. В 0.5 Chance можно применять к Tablets [S2].
-- **Artificer's Orb** — +1 Augment socket на martial weapon, wand, staff или armour [S4]. Лимиты сокетов по слотам — (не проверено). Vaal может добавить сокет сверх лимита (не проверено, [S18]).
-- **Jeweller's Orbs** — Lesser/Greater/Perfect: 3/4/5 support-сокетов у гема; в 0.5 работают и на item-skills [S1][S4].
-- **Vaal Orb** — непредсказуемое изменение + Corrupted. Исходы (не проверено, ~по 25% [S18]): без изменений; corruption-enchant/implicit; «reforge» модов; +сокет (на wand/staff — вместо этого quality до 23%?). Исход с рандомизацией значений в 0.5 умножает от текущего [S2]. Omen of Corruption («всегда изменяет») — в лиге не добывается [S1][S15]. Повторная коррупция — Architect's Orb, 50/50 «второй enchant / уничтожение» (не проверено, [S18]).
+### 2.3 Core currency [S4]
+- **Orb of Transmutation** — Normal → Magic (1 mod). **Orb of Augmentation** — +1 mod on Magic.
+- **Regal Orb** — Magic → Rare (+1 mod). Omen of Sinistral/Dextral Coronation — prefix/suffix only.
+- **Orb of Alchemy** — Normal/Magic → Rare with 4 mods. Omen of Sinistral/Dextral Alchemy — maximum prefixes/suffixes [S15].
+- **Exalted Orb** — +1 random mod on a Rare.
+- **Chaos Orb** — remove 1 random mod and add 1 random (not a full reroll) [S4].
+- **Orb of Annulment** — remove 1 random mod.
+- **Divine Orb** — rerolls mod numbers (within the tier). Omen of the Blessed — implicit only; Omen of Sanctification — Sanctify a rare item (value multiplier, after which the item can hardly be crafted; ~78–122% — unverified, [S12]).
+- **Fracturing Orb** — locks a random mod on a Rare with **≥ 4 mods**; a fractured mod isn't changed by Chaos/Annul/Divine (per [S12], unverified for Divine). Fracture can also land on a crafted mod [S10].
+- **Hinekora's Lock** — "Allows an item to foresee the result of the next Currency item used on it. Modifying the item in any way removes the ability to foresee." Stack 10 [S16]. The preview doesn't consume currency; works with Vaal/Divine/Chaos/Exalted (unverified, [S17]). Expensive (hundreds of Divines per [S17] — unverified).
+- **Orb of Chance** — Normal → a random Unique or destruction. Omen of Chance — doesn't destroy; Omen of the Ancients — guarantees an upgrade to a unique of the same class [S15]. In 0.5 Chance can be applied to Tablets [S2].
+- **Artificer's Orb** — +1 Augment socket on a martial weapon, wand, staff or armour [S4]. Socket limits per slot — (unverified). Vaal can add a socket beyond the limit (unverified, [S18]).
+- **Jeweller's Orbs** — Lesser/Greater/Perfect: 3/4/5 support sockets on a gem; in 0.5 they also work on item skills [S1][S4].
+- **Vaal Orb** — unpredictable change + Corrupted. Outcomes (unverified, ~25% each [S18]): no change; corruption enchant/implicit; mod "reforge"; +socket (on wand/staff — quality up to 23% instead?). The value-randomisation outcome in 0.5 multiplies from the current value [S2]. Omen of Corruption ("always changes") — not obtainable in the league [S1][S15]. Second corruption — Architect's Orb, 50/50 "second enchant / destruction" (unverified, [S18]).
 
-### 2.4 Качество и катализаторы [S4][S2]
-- Blacksmith's Whetstone — martial weapons; Arcanist's Etcher — wands, staves, sceptres; Armourer's Scrap — armour; до 20%.
-- Vaal Infusers (Armourer's/Blacksmith's/Arcanist's/Catalysing) — до +10% сверх максимума, шанс коррупции, только при quality ≥ 20%.
-- Catalysts (кольца, амулеты): Flesh (life), Neural (mana), Carapace (armour/evasion/ES), Uul-Netol's (physical), Xoph's (fire), Tul's (cold), Esh's (lightning), Chayula's (chaos), Reaver (attack), Sibilant (caster), Skittering (speed), Adaptive (attributes), Necrotic (minion). Новый тип качества заменяет старый.
-- **Refined**-катализаторы (те же 13 типов) — для самоцветов [S4].
-- Essence of the Breach — +20% к максимальному quality бижутерии [S13b].
-- **Omen of Catalysing Exaltation** — следующий Exalted Orb «consumes all Catalyst Quality» и повышает шанс мода совпадающего типа [S15].
-- Catalysts теперь только из Genesis Tree [S2].
+### 2.4 Quality and catalysts [S4][S2]
+- Blacksmith's Whetstone — martial weapons; Arcanist's Etcher — wands, staves, sceptres; Armourer's Scrap — armour; up to 20%.
+- Vaal Infusers (Armourer's/Blacksmith's/Arcanist's/Catalysing) — up to +10% beyond the maximum, chance of corruption, only at quality ≥ 20%.
+- Catalysts (rings, amulets): Flesh (life), Neural (mana), Carapace (armour/evasion/ES), Uul-Netol's (physical), Xoph's (fire), Tul's (cold), Esh's (lightning), Chayula's (chaos), Reaver (attack), Sibilant (caster), Skittering (speed), Adaptive (attributes), Necrotic (minion). A new quality type replaces the old one.
+- **Refined** catalysts (the same 13 types) — for jewels [S4].
+- Essence of the Breach — +20% to maximum jewellery quality [S13b].
+- **Omen of Catalysing Exaltation** — the next Exalted Orb "consumes all Catalyst Quality" and increases the chance of a mod of the matching type [S15].
+- Catalysts now come only from the Genesis Tree [S2].
 
 ### 2.5 Desecration (Abyss) [S4][S13]
-- Кости: **Jawbone** — weapons/quivers; **Rib** — armour; **Collarbone** — amulets/rings/belts; **Cranium** — jewels (только Preserved); **Vertebrae** — waystones (Preserved). **Gnawed** — ilvl предмета ≤ 64; **Preserved** — любой; **Ancient** — моды уровня ≥ 40. **Altered Collarbone** — бижутерия, шанс «otherworldly» модов.
-- Применяется к Rare: добавляет Unrevealed desecrated-мод; **если вещь полная — ещё и удаляет случайный мод** [S13]. Раскрытие — у Well of Souls, выбор из вариантов (3 — по [S12], не проверено). Вещь с desecrated-модом нельзя desecrate повторно [S13].
-- Омены: Abyssal Echoes — один реролл вариантов; Sinistral/Dextral Necromancy — только prefix/suffix; the Sovereign (Ulaman) / the Liege (Amanamu) / the Blackblooded (Kurgal) — гарантированный мод пула лича, **только на Weapon или Jewellery**; Putrefaction — заменяет все моды до 6 Unrevealed и коррумпирует (как работает с лимитом 1 desecrated — не проверено); **Omen of Light** — Annulment удаляет только desecrated-моды [S13][S15].
-- **Essence of the Abyss** даёт Mark of the Abyssal Lord (crafted-слот!); desecrate такой вещи всегда удаляет Mark и добавляет Unrevealed desecrated-мод **более высокого тира** [S13].
-  **Mark — desecrated-мод:** его сразу снимает Omen of Light + Annulment, без Desecrate (игрок, 2026-10-19, 0.5.5, H). Отсюда дешёвое снятие мода с нужной стороны: Essence of the Abyss + Omen of Sinistral/Dextral Crystallisation → Omen of Light + Annulment. В `plancost.js` `removeCost` это вариант снятия наравне с Annulment с оменом стороны.
+- Bones: **Jawbone** — weapons/quivers; **Rib** — armour; **Collarbone** — amulets/rings/belts; **Cranium** — jewels (Preserved only); **Vertebrae** — waystones (Preserved). **Gnawed** — item ilvl ≤ 64; **Preserved** — any; **Ancient** — mods of level ≥ 40. **Altered Collarbone** — jewellery, chance of "otherworldly" mods.
+- Applied to a Rare: adds an Unrevealed desecrated mod; **if the item is full — also removes a random mod** [S13]. Revealing — at the Well of Souls, a choice among options (3 — per [S12], unverified). An item with a desecrated mod can't be desecrated again [S13].
+- Omens: Abyssal Echoes — one reroll of the options; Sinistral/Dextral Necromancy — prefix/suffix only; the Sovereign (Ulaman) / the Liege (Amanamu) / the Blackblooded (Kurgal) — a guaranteed mod from the lich's pool, **only on Weapon or Jewellery**; Putrefaction — replaces all mods with up to 6 Unrevealed and corrupts (how it works with the 1-desecrated limit — unverified); **Omen of Light** — Annulment removes only desecrated mods [S13][S15].
+- **Essence of the Abyss** gives Mark of the Abyssal Lord (crafted slot!); desecrating such an item always removes the Mark and adds an Unrevealed desecrated mod **of a higher tier** [S13].
+  **The Mark is a desecrated mod:** Omen of Light + Annulment removes it right away, without a Desecrate (player, 2026-10-19, 0.5.5, H). Hence a cheap way to remove a mod from the wanted side: Essence of the Abyss + Omen of Sinistral/Dextral Crystallisation → Omen of Light + Annulment. In `plancost.js` `removeCost` this is a removal option on par with Annulment with a side omen.
 
-### 2.6 Эссенции [S13b]
-- Lesser / обычная / Greater: Magic → Rare + гарантированный мод (тир фиксирован эссенцией и классом вещи).
-- Perfect и corrupted-эссенции: на Rare — удаляют случайный мод и добавляют свой. Omen of Sinistral/Dextral Crystallisation — удаляется только prefix/suffix.
-- Все моды эссенций — crafted → **одна эссенция на вещь** [S1][S10].
-- Corrupted-эссенции (получаются коррупцией монстра-эссенции Vaal Orb'ом, Archaic Corruption на атласе): **Hysteria** — Helmet +1 к уровню Minion-скиллов; Body 64–97 to 98–145 Physical Thorns; Gloves 25–29% Crit Damage Bonus; Boots 30% Movement Speed; Ring 50–59% Mana Regen; Amulet 19–21% damage taken recouped as Life; Belt +254–304 Stun Threshold; Shield 20–24% Block; Quiver 43–50% Bow damage; Focus 20–23% ES Recharge. **Delirium** — Body: аллоцирует случайный Notable. **Horror** — Gloves/Boots: 60% increased effect of Socketed Augments. **Insanity** — Belt: при коррупции 2 enchant'а. **Abyss** — Mark of the Abyssal Lord. **Breach** — бижутерия +20% max Quality.
-- Perfect-эссенции (значения сверены с poe2db, совпадают с `essences.js`): Body (Body Armour, 8–10% max Life), Mind (Ring, 4–6% max Mana), Enhancement (Amulet, 20–30% global def), Ruin (Body, 10–15% phys as chaos), Infinite (Amulet, 7–10% attrs), Opulence (Gloves, gold), Insulation/Thawing/Grounding (Belt/Helmet/Gloves recoup), Battle (+2 1H/Bow, +3 2H/Crossbow), Haste (martial, Onslaught), Seeking (Body, -crit dmg taken), Sorcery (Wand +3 / Staff +5 spell levels), Alacrity (Focus/Wand 18–20%, Staff 28–32% Mana Cost Efficiency), Command (Sceptre, 15–20% aura magnitudes), Abrasion/Flames/Ice/Electricity (1H/Bow 15–20%, 2H/Crossbow 25–33% gain as extra).
+### 2.6 Essences [S13b]
+- Lesser / regular / Greater: Magic → Rare + a guaranteed mod (tier fixed by the essence and the item class).
+- Perfect and corrupted essences: on a Rare — remove a random mod and add their own. Omen of Sinistral/Dextral Crystallisation — only a prefix/suffix is removed.
+- All essence mods are crafted → **one essence per item** [S1][S10].
+- Corrupted essences (obtained by corrupting an essence monster with a Vaal Orb, Archaic Corruption on the atlas): **Hysteria** — Helmet +1 to level of Minion skills; Body 64–97 to 98–145 Physical Thorns; Gloves 25–29% Crit Damage Bonus; Boots 30% Movement Speed; Ring 50–59% Mana Regen; Amulet 19–21% damage taken recouped as Life; Belt +254–304 Stun Threshold; Shield 20–24% Block; Quiver 43–50% Bow damage; Focus 20–23% ES Recharge. **Delirium** — Body: allocates a random Notable. **Horror** — Gloves/Boots: 60% increased effect of Socketed Augments. **Insanity** — Belt: 2 enchants on corruption. **Abyss** — Mark of the Abyssal Lord. **Breach** — jewellery +20% max Quality.
+- Perfect essences (values checked against poe2db, they match `essences.js`): Body (Body Armour, 8–10% max Life), Mind (Ring, 4–6% max Mana), Enhancement (Amulet, 20–30% global def), Ruin (Body, 10–15% phys as chaos), Infinite (Amulet, 7–10% attrs), Opulence (Gloves, gold), Insulation/Thawing/Grounding (Belt/Helmet/Gloves recoup), Battle (+2 1H/Bow, +3 2H/Crossbow), Haste (martial, Onslaught), Seeking (Body, -crit dmg taken), Sorcery (Wand +3 / Staff +5 spell levels), Alacrity (Focus/Wand 18–20%, Staff 28–32% Mana Cost Efficiency), Command (Sceptre, 15–20% aura magnitudes), Abrasion/Flames/Ice/Electricity (1H/Bow 15–20%, 2H/Crossbow 25–33% gain as extra).
 
 ### 2.7 Alloys (Verisium, 0.5) [S4][S1]
-- 13 штук, открываются через Remnant-энкаунтеры после квеста Farrow в Act 2. Большинство: «removes a random modifier and augments» гарантированным crafted-модом (зависит от класса). Занимают crafted-слот → несовместимы с эссенцией.
-- Runic (Runic Ward на бижутерии), Adaptive, Protective (Runic Ward/recovery на оружии/щитах), Expansive (Presence, mana efficiency, minion limit…), Swift (cast/attack speed…), Cyclonic (durations), Prismatic (penetration, ailment magnitude, exposure), Mystic (AoE, Spirit, chaining), Sovereign (augment effect, resists), Celestial (mana, **spell level**, accuracy, attack speed), Transcendent (cast speed, cold dmg, attributes, phys), Runebinder's, Runefather's. Точные значения по слотам — не найдены (не проверено).
-- Verisium Runeforging (Verisium Anvil) — Runic Ward на броню; ниже ур. 55 без минусов, выше — за счёт части базовой защиты [S1][S2].
+- 13 of them, unlocked via Remnant encounters after the Farrow quest in Act 2. Most: "removes a random modifier and augments" with a guaranteed crafted mod (depends on the class). They take the crafted slot → incompatible with an essence.
+- Runic (Runic Ward on jewellery), Adaptive, Protective (Runic Ward/recovery on weapons/shields), Expansive (Presence, mana efficiency, minion limit…), Swift (cast/attack speed…), Cyclonic (durations), Prismatic (penetration, ailment magnitude, exposure), Mystic (AoE, Spirit, chaining), Sovereign (augment effect, resists), Celestial (mana, **spell level**, accuracy, attack speed), Transcendent (cast speed, cold dmg, attributes, phys), Runebinder's, Runefather's. Exact values per slot — not found (unverified).
+- Verisium Runeforging (Verisium Anvil) — Runic Ward on armour; below lvl 55 with no downsides, above — at the cost of part of the base defences [S1][S2].
 
 ### 2.8 Recombinators
-- Отключены с 0.5.0; Omen of Recombination удалён [S2]. В 0.5.5 Expedition стал «ядром», но о возврате Recombinator не сказано (не проверено). Не советовать.
+- Disabled since 0.5.0; Omen of Recombination removed [S2]. In 0.5.5 Expedition became "core", but nothing is said about the Recombinator returning (unverified). Do not recommend.
 
 ### 2.9 Forbidden Rites
-- Новой крафт-механики нет; Ritual в кампании даёт крафт-валюту на прокачке [S3][S8]. Royal Lenience — Defer за уже отданный Tribute (+500% цены отложенного) [S5].
+- No new crafting mechanic; Ritual in the campaign gives crafting currency while levelling [S3][S8]. Royal Lenience — Defer for an already paid Tribute (+500% of the deferred item's price) [S5].
 
-## 3. Омены крафта [S15][S13]
+## 3. Crafting omens [S15][S13]
 
-| Omen | Валюта | Эффект |
+| Omen | Currency | Effect |
 |---|---|---|
-| Sinistral / Dextral Exaltation | Exalted | только prefix / только suffix |
-| Greater Exaltation | Exalted | добавляет **два** мода |
-| Homogenising Exaltation | Exalted | мод того же типа (тега), что уже есть; только Standard (Currency Exchange) |
-| Catalysing Exaltation | Exalted | тратит весь Catalyst Quality, повышает шанс мода этого типа |
-| Sinistral / Dextral Coronation | Regal | только prefix / suffix |
-| Homogenising Coronation | Regal | мод того же типа; только Standard |
-| Sinistral / Dextral Alchemy | Alchemy | максимум префиксов / суффиксов |
-| Whittling | Chaos | удаляет мод с **наименьшим уровнем мода** (не тиром) |
-| Sinistral / Dextral Erasure | Chaos | удаляет только prefix / suffix |
-| Greater Annulment | Annulment | удаляет **два** мода |
-| Sinistral / Dextral Annulment | Annulment | удаляет только prefix / suffix |
-| Light | Annulment | удаляет только desecrated-мод |
-| Sinistral / Dextral Crystallisation | Perfect / Corrupted Essence | удаляет только prefix / suffix |
-| the Blessed | Divine | реролл только implicit |
-| Sanctification | Divine | Sanctify rare-вещь (множитель значений, вещь «заморожена») |
-| Corruption | Vaal | всегда вызывает изменение; в лиге не добывается |
-| Chance | Orb of Chance | не уничтожает предмет |
-| the Ancients | Orb of Chance | случайный unique того же класса |
-| Abyssal Echoes | Desecration reveal | один реролл вариантов |
-| Sinistral / Dextral Necromancy | Desecration | только prefix / suffix |
-| the Sovereign / the Liege / the Blackblooded | Desecration (Weapon/Jewellery) | гарантированно мод Ulaman / Amanamu / Kurgal |
-| Putrefaction | Desecration | все моды → до 6 Unrevealed, Corrupted |
-| Chaotic Rarity / Quantity / Monsters / Effectiveness | Chaos на Waystone | запрещают мод своего типа (0.5) |
-| Recombination | — | удалён в 0.5 |
+| Sinistral / Dextral Exaltation | Exalted | prefix only / suffix only |
+| Greater Exaltation | Exalted | adds **two** mods |
+| Homogenising Exaltation | Exalted | a mod of the same type (tag) as one already present; Standard only (Currency Exchange) |
+| Catalysing Exaltation | Exalted | consumes all Catalyst Quality, increases the chance of a mod of that type |
+| Sinistral / Dextral Coronation | Regal | prefix / suffix only |
+| Homogenising Coronation | Regal | a mod of the same type; Standard only |
+| Sinistral / Dextral Alchemy | Alchemy | maximum prefixes / suffixes |
+| Whittling | Chaos | removes the mod with the **lowest mod level** (not tier) |
+| Sinistral / Dextral Erasure | Chaos | removes only a prefix / suffix |
+| Greater Annulment | Annulment | removes **two** mods |
+| Sinistral / Dextral Annulment | Annulment | removes only a prefix / suffix |
+| Light | Annulment | removes only the desecrated mod |
+| Sinistral / Dextral Crystallisation | Perfect / Corrupted Essence | removes only a prefix / suffix |
+| the Blessed | Divine | rerolls implicit only |
+| Sanctification | Divine | Sanctify a rare item (value multiplier, the item is "frozen") |
+| Corruption | Vaal | always causes a change; not obtainable in the league |
+| Chance | Orb of Chance | doesn't destroy the item |
+| the Ancients | Orb of Chance | a random unique of the same class |
+| Abyssal Echoes | Desecration reveal | one reroll of the options |
+| Sinistral / Dextral Necromancy | Desecration | prefix / suffix only |
+| the Sovereign / the Liege / the Blackblooded | Desecration (Weapon/Jewellery) | guaranteed Ulaman / Amanamu / Kurgal mod |
+| Putrefaction | Desecration | all mods → up to 6 Unrevealed, Corrupted |
+| Chaotic Rarity / Quantity / Monsters / Effectiveness | Chaos on Waystone | forbid a mod of their type (0.5) |
+| Recombination | — | removed in 0.5 |
 
-Комбинирование: одновременно активны до трёх оменов (сформулировано для Waystone-оменов в 0.5 [S2]; для обычного крафта — не проверено, но комбо «Greater Exaltation + Sinistral Exaltation» описывается в гайдах [S19]).
+Combining: up to three omens can be active at once (stated for Waystone omens in 0.5 [S2]; for regular crafting — unverified, but the "Greater Exaltation + Sinistral Exaltation" combo is described in guides [S19]).
 
-## 4. Рецепты
+## 4. Recipes
 
-**Общий принцип (все источники):** дешёвое и обратимое — сначала, необратимое (Vaal, Sanctify) — в конце; одна эссенция и одна desecration — планировать заранее, что займёт crafted-слот [S12][S19].
+**General principle (all sources):** cheap and reversible first, irreversible (Vaal, Sanctify) last; one essence and one desecration — plan in advance what will take the crafted slot [S12][S19].
 
-### R1. Magic-база → эссенция → добивка (основа, дёшево–средне)
-1. База с высоким ilvl (≥ 75–82 под T1; проверять ilvl, а не требование уровня [S19]). Magic с 1–2 нужными модами (Transmute/Augment; Greater 44+, Perfect 70+).
-2. Greater Essence нужного мода → Rare с гарантированным модом (crafted-слот занят).
-3. Desecrate (кость по слоту, Necromancy-омен на нужную сторону) **до** Exalt-ов, пока есть место — иначе снимется случайный мод [S13][S19].
-4. Exalted (+ Sinistral/Dextral Exaltation) на оставшиеся места; на дорогих базах — Greater/Perfect Exalted.
-5. Divine — когда набор модов финальный. Quality, сокеты, руны.
-- Риск: средний (Exalt-ы случайны). Когда: броня/бижутерия под «life + резисты», оружие под конкретный урон.
+### R1. Magic base → essence → finishing (basic, cheap–medium)
+1. A base with high ilvl (≥ 75–82 for T1; check the ilvl, not the level requirement [S19]). Magic with 1–2 wanted mods (Transmute/Augment; Greater 44+, Perfect 70+).
+2. Greater Essence of the wanted mod → Rare with a guaranteed mod (crafted slot taken).
+3. Desecrate (bone for the slot, Necromancy omen on the wanted side) **before** the Exalts, while there is room — otherwise a random mod gets removed [S13][S19].
+4. Exalted (+ Sinistral/Dextral Exaltation) into the remaining slots; on expensive bases — Greater/Perfect Exalted.
+5. Divine — when the mod set is final. Quality, sockets, runes.
+- Risk: medium (Exalts are random). When: armour/jewellery for "life + resists", weapons for a specific damage type.
 
-### R2. Perfect Exalt + омены (дорого)
-- Perfect Exalted (моды 50+) + Sinistral/Dextral Exaltation; на 2 свободных места одной стороны — + Greater Exaltation (два мода). Пример из гайдов: wand/staff — Perfect Exalt + Greater Exaltation на два сильных префикса [S19]; амулеты — сторона-омен + Catalysing Exaltation [S19].
-- Перед дорогим шагом — Hinekora's Lock, если цена Lock меньше риска.
+### R2. Perfect Exalt + omens (expensive)
+- Perfect Exalted (mods 50+) + Sinistral/Dextral Exaltation; for 2 free slots on one side — + Greater Exaltation (two mods). Example from guides: wand/staff — Perfect Exalt + Greater Exaltation for two strong prefixes [S19]; amulets — side omen + Catalysing Exaltation [S19].
+- Before an expensive step — Hinekora's Lock, if the Lock's price is lower than the risk.
 
-### R3. Убрать один плохой мод
-- Плохой мод — самый низкоуровневый → **Chaos + Whittling** (снимает его и сразу добавляет новый; Greater/Perfect Chaos — новый мод 35+/50+).
-- Плохой мод — один на своей стороне (или остальные на стороне fractured) → **Annulment + Sinistral/Dextral Annulment** = 100% попадание.
-- Несколько на стороне → Annulment + сторона-омен (1/N) или Chaos + Erasure (меняет на случайный).
-- Плохой мод desecrated → **Annulment + Omen of Light** (гарантированно он), потом desecrate снова.
-- Плохой мод — эссенция (crafted) → её можно снять только Annul/Chaos случайно; освобождает crafted-слот (не проверено).
+### R3. Remove one bad mod
+- The bad mod is the lowest-level one → **Chaos + Whittling** (removes it and immediately adds a new one; Greater/Perfect Chaos — the new mod is 35+/50+).
+- The bad mod is alone on its side (or the rest on the side are fractured) → **Annulment + Sinistral/Dextral Annulment** = 100% hit.
+- Several on the side → Annulment + side omen (1/N) or Chaos + Erasure (replaces it with a random one).
+- The bad mod is desecrated → **Annulment + Omen of Light** (guaranteed to hit it), then desecrate again.
+- The bad mod is an essence (crafted) → it can only be removed by Annul/Chaos at random; frees the crafted slot (unverified).
 
-### R4. Desecration-таргетинг
-- Weapon/Jewellery: лич-омен (Sovereign/Liege/Blackblooded) + Necromancy-омен на сторону; Ancient-кость (моды 40+); Abyssal Echoes — только на почти идеальных вещах [S19].
-- **Essence of the Abyss → desecrate**: Mark гарантированно заменяется desecrated-модом более высокого тира [S13]; но Essence of the Abyss — Perfect-подобная (снимает случайный мод) и занимает crafted-слот, а значит до desecrate нельзя ставить другую эссенцию.
-- Не забыть: на полной вещи desecrate удаляет случайный мод.
+### R4. Desecration targeting
+- Weapon/Jewellery: lich omen (Sovereign/Liege/Blackblooded) + Necromancy omen for the side; Ancient bone (mods 40+); Abyssal Echoes — only on almost perfect items [S19].
+- **Essence of the Abyss → desecrate**: the Mark is guaranteed to be replaced with a higher-tier desecrated mod [S13]; but Essence of the Abyss is Perfect-like (removes a random mod) and takes the crafted slot, which means no other essence can be applied before the desecrate.
+- Don't forget: on a full item desecrate removes a random mod.
 
 ### R5. Fracture-then-craft
-- Rare с ≥ 4 модами, где один ключевой (например, +уровни на посохе) → Fracturing Orb (риск: зафиксируется не тот). Лучше на вещи с 4 модами, где 3 «мусорные» нас не волнуют, или где все хорошие.
-- После fracture — агрессивно Annul/Chaos остальное; сторона с fractured-модом становится легче для сторонних оменов.
-- Fracturing Orb дефицитен в 0.5 (атлас) [S2].
+- A Rare with ≥ 4 mods, one of which is key (e.g. +levels on a staff) → Fracturing Orb (risk: the wrong one gets locked). Better on an item with 4 mods where we don't care about the 3 "junk" ones, or where all are good.
+- After the fracture — aggressively Annul/Chaos the rest; the side with the fractured mod becomes easier for side omens.
+- Fracturing Orb is scarce in 0.5 (atlas) [S2].
 
 ### R6. Hinekora's Lock
-- Перед: Vaal Orb на дорогой вещи, Perfect Exalt/Chaos на почти готовой, Fracturing Orb (не проверено, что Lock работает с Fracturing), Divine на вещи с узким окном. Если предпросмотр плохой — валюту не применять; но любое изменение вещи (в т.ч. другой валютой) снимает предвидение, так что «посмотреть другой вариант» нельзя — Lock нужен новый [S16][S17].
+- Before: a Vaal Orb on an expensive item, Perfect Exalt/Chaos on an almost finished one, Fracturing Orb (unverified that the Lock works with Fracturing), Divine on an item with a narrow window. If the preview is bad — don't apply the currency; but any change to the item (including with another currency) removes the foresight, so you can't "look at another option" — you need a new Lock [S16][S17].
 
-### R7. Бижутерия: catalyst + Catalysing Exaltation
-- Кольцо/амулет с открытыми местами → Catalyst нужного типа до 20% (Breach Ring/Essence of the Breach — выше) → Exalted + Omen of Catalysing Exaltation (+ сторона-омен) → тратит quality, повышает шанс мода этого тега. После — заново катализировать для финального бонуса quality (качество усиливает совпадающие моды).
-- Кольца часто дешевле купить [S19].
+### R7. Jewellery: catalyst + Catalysing Exaltation
+- Ring/amulet with open slots → Catalyst of the wanted type up to 20% (Breach Ring/Essence of the Breach — higher) → Exalted + Omen of Catalysing Exaltation (+ side omen) → consumes quality, increases the chance of a mod with that tag. Afterwards — catalyse again for the final quality bonus (quality boosts matching mods).
+- Rings are often cheaper to buy [S19].
 
-### R8. Самоцветы
-- 2+2 мода; Refined-катализатор для quality; Preserved Cranium для desecrate; Liquid Emotions (Delirium) — доп. моды «как Greater Essence» (не проверено) [S6].
+### R8. Jewels
+- 2+2 mods; Refined catalyst for quality; Preserved Cranium for desecrate; Liquid Emotions (Delirium) — extra mods "like a Greater Essence" (unverified) [S6].
 
-### R9. Оружие
-- Spell staves/wands: база с высоким ilvl → Magic с +уровнями спеллов (Perfect Transmute/Augment 70+) → Greater Essence (Sorcery / Alacrity / Seeking) → Exalt/Perfect Exalt на префиксы; альтернатива для финала — Celestial/Transcendent Alloy (spell level/cast speed), если crafted-слот свободен [S20, низкая надёжность]. Perfect Essence of Sorcery (+3 wand / +5 staff) — только если crafted-слот свободен.
-- Phys/Attack: высокий ilvl, Greater Essence of Abrasion/Haste/Battle; desecrate prefix (Jawbone + Sinistral Necromancy + лич-омен); Perfect Essence of Battle (+2/+3 к атакам) или Abrasion (gain as extra) как альтернатива другой эссенции — выбирается одна.
+### R9. Weapons
+- Spell staves/wands: high-ilvl base → Magic with +spell levels (Perfect Transmute/Augment 70+) → Greater Essence (Sorcery / Alacrity / Seeking) → Exalt/Perfect Exalt on prefixes; an alternative finisher — Celestial/Transcendent Alloy (spell level/cast speed), if the crafted slot is free [S20, low reliability]. Perfect Essence of Sorcery (+3 wand / +5 staff) — only if the crafted slot is free.
+- Phys/Attack: high ilvl, Greater Essence of Abrasion/Haste/Battle; desecrate prefix (Jawbone + Sinistral Necromancy + lich omen); Perfect Essence of Battle (+2/+3 to attacks) or Abrasion (gain as extra) as an alternative to another essence — pick one.
 
-### R10. Броня (ES / life)
-- Greater Essence of Enhancement (68–79%) или Body; desecrate (Rib), Necromancy на нужную сторону; Exalt-добивка только если вещь уже хорошая; Verisium Runeforging — сравнить защиту до/после [S19].
-- Ботинки — крафтить только если уже есть Movement Speed (или Essence of Hysteria на ботинки — 30% MS, crafted-слот) [S19][S13b].
+### R10. Armour (ES / life)
+- Greater Essence of Enhancement (68–79%) or Body; desecrate (Rib), Necromancy on the wanted side; Exalt finishing only if the item is already good; Verisium Runeforging — compare defences before/after [S19].
+- Boots — craft only if Movement Speed is already there (or Essence of Hysteria on boots — 30% MS, crafted slot) [S19][S13b].
 
-### R11. «Детерминированный» подход топ-крафтеров (сводка)
-- Сокращать случайность: сторона-омены на каждый Exalt/Annul/Chaos; Whittling на самый низкоуровневый мод; Omen of Light для desecrated; Crystallisation для Perfect-эссенций; Fracture ключевого мода; Hinekora's Lock перед дорогими шагами; Greater/Perfect-валюта для отсечения низких тиров. Crafted-слот и desecrated-слот — заранее решить, чем их занять [S12][S1].
+### R11. The "deterministic" approach of top crafters (summary)
+- Reduce randomness: side omens on every Exalt/Annul/Chaos; Whittling on the lowest-level mod; Omen of Light for desecrated; Crystallisation for Perfect essences; Fracture the key mod; Hinekora's Lock before expensive steps; Greater/Perfect currency to cut off low tiers. Decide in advance what will occupy the crafted slot and the desecrated slot [S12][S1].
 
-## 5. Практические советы и типовые ошибки
-- Проверять ilvl базы (не уровень требования); на низком ilvl Perfect-валюта и T1 недоступны [S19][S4].
-- Divine — только когда набор модов финальный [S19].
-- Exalted на сторону, которая уже полная, — потеря валюты (Exalt выберет другую сторону или не сработает; не проверено).
-- Desecrate до Exalt-ов (пока есть место) [S19].
-- Не планировать две эссенции/эссенция + Alloy — это один crafted-слот [S1][S10].
-- Старые гайды (до 0.5) со стеком эссенций и Recombinator — устарели [S11].
-- Vaal — только на готовых вещах, которые не жалко [S18].
-- Цены: курс Exalted→Divine в 0.5 скакал ~90–300+ (не проверено, [S11]); актуальные — poe.ninja.
+## 5. Practical tips and common mistakes
+- Check the base's ilvl (not the level requirement); at low ilvl Perfect currency and T1 are unavailable [S19][S4].
+- Divine — only when the mod set is final [S19].
+- Exalted onto a side that is already full — wasted currency (the Exalt will pick the other side or won't work; unverified).
+- Desecrate before the Exalts (while there is room) [S19].
+- Don't plan two essences / essence + Alloy — it's one crafted slot [S1][S10].
+- Old guides (pre-0.5) with essence stacking and the Recombinator are outdated [S11].
+- Vaal — only on finished items you don't mind losing [S18].
+- Prices: the Exalted→Divine rate in 0.5 jumped around ~90–300+ (unverified, [S11]); current ones — poe.ninja.
 
-## 6. Выводы для вкладки Craft (сверка с `src/main/craft.js`, `src/main/essences.js`)
+## 6. Conclusions for the Craft tab (checked against `src/main/craft.js`, `src/main/essences.js`)
 
-> **Статус (сверено с кодом в v0.3.113, 2026-10-18):** пункты 1–5, 7–9, 11, 13, 16, 17 сделаны — crafted-слот и его
-> лимит (`craftedCap`, руна Astrid's Creativity), порченые эссенции и Alloys (`data/crafting-currency.json`), омены
-> Desecrate (Necromancy, лич-омены, Abyssal Echoes), Hinekora's Lock и Fracturing Orb — в разделе рискованных шагов,
-> Greater / Perfect Transmutation, Omen of Greater Exaltation в плане, гнёзда Artificer's Orb, Liquid Emotions,
-> совет про Omen of Catalysing Exaltation (тратит всё качество).
-> Открыты: 6 (Altered-кости — только упоминание), 10 (снимает ли Whittling desecrated-мод — проверить в игре),
-> 12 (подсветка «гарантированно»).
-> Ниже — исходный список (как был составлен для 0.5.5).
+> **Status (checked against the code in v0.3.113, 2026-10-18):** items 1–5, 7–9, 11, 13, 16, 17 are done — the crafted slot and its
+> limit (`craftedCap`, the Astrid's Creativity rune), corrupted essences and Alloys (`data/crafting-currency.json`), Desecrate
+> omens (Necromancy, lich omens, Abyssal Echoes), Hinekora's Lock and Fracturing Orb — in the risky steps section,
+> Greater / Perfect Transmutation, Omen of Greater Exaltation in the plan, Artificer's Orb sockets, Liquid Emotions,
+> the tip about Omen of Catalysing Exaltation (consumes all quality).
+> Open: 6 (Altered bones — only a mention), 10 (whether Whittling removes a desecrated mod — verify in game),
+> 12 ("guaranteed" highlighting).
+> Below is the original list (as compiled for 0.5.5).
 
-**Несоответствия / устаревшее:**
-1. **Нет учёта лимита «1 crafted-мод».** `advise()` предлагает эссенцию для magic→rare и одновременно секцию `perfect` (Perfect-эссенции) для rare, не проверяя, есть ли уже crafted/essence-мод. Если на вещи есть мод эссенции/Alloy (tag `crafted` в Advanced Mod Descriptions, у Mark of the Abyssal Lord — тоже), Perfect-эссенции, corrupted-эссенции и Alloys неприменимы (ошибка «This item already has a crafted modifier»). Нужно: скрывать/помечать секцию `perfect` при наличии crafted-мода; в `planGoal` для magic не обещать «эссенция + позже Perfect».
-2. **Perfect-эссенция = crafted-слот.** В секции `perfect` стоит предупредить: «займёт единственный crafted-слот; после неё эссенции/Alloy уже не встанут».
-3. **Нет corrupted-эссенций** (Hysteria, Delirium, Horror, Insanity, Abyss, Breach) в `essences.js` — Hysteria на ботинки (30% MS), перчатки (Crit Damage), шлем (+1 minion) и т.д. ценны; Essence of the Abyss → desecrate даёт desecrated-мод выше тиром.
-4. **Нет Alloys** — альтернатива Perfect-эссенции (тоже replace + crafted-слот). Добавить хотя бы упоминание для оружия/бижутерии (данные по значениям — нужно собрать с poe2db).
-5. **Desecration-секция** не упоминает омены: Sinistral/Dextral Necromancy (сторона), Sovereign/Liege/Blackblooded (лич-пул, только Weapon/Jewellery), Abyssal Echoes. Также не говорится, что на полной вещи удалится случайный мод — сейчас есть «replaces a random one when full», ок; но стоит советовать desecrate **раньше** Exalt-ов, когда места есть.
-6. `boneFor()` — корректно (Gnawed ≤ 64, Preserved, Ancient 40+, Cranium только Preserved). Можно добавить Altered Collarbone для бижутерии.
-7. **Hinekora's Lock** советуется только в секции magic→rare (там он почти бессмыслен по цене). Лучше: советовать перед дорогими шагами — Perfect Exalt/Chaos, Fracturing Orb, Vaal на почти готовой вещи, Perfect-эссенция; и только если ожидаемая цена вещи ≫ цены Lock.
-8. **Fracturing Orb** (`cheap`) помечен как «дёшево и без риска» — в 0.5 он дефицитен (атлас) и рискован (случайный мод). Перенести из `cheap` в отдельную секцию с риском; советовать, только если ключевой мод ≥ ~50% модов вещи или если хороших модов большинство.
-9. **Magic-база:** не советуются Greater/Perfect Transmutation/Augmentation (44+/70+) — полезно для подготовки magic-базы перед эссенцией. Также нет Orb of Alchemy + Sinistral/Dextral Alchemy.
-10. **Whittling** (`lowest`): берёт мин. `required_level` среди всех не-fractured модов, включая desecrated и crafted — снимает ли Whittling desecrated/crafted-мод, не проверено; безопаснее исключить desecrated (у него свой путь через Omen of Light).
-11. **Catalyst-совет** для колец/амулетов: стоит уточнить, что Catalysing Exaltation **тратит всё качество** — после него катализировать заново; и что катализаторы теперь только из Genesis Tree (дороже).
-12. **Annulment + сторона-омен:** если на стороне только один не-fractured мод — шанс 100% (сейчас `sameSide` уже считает только не-fractured — хорошо; можно явно подсвечивать «гарантированно»).
-13. **Omen of Greater Exaltation** предлагается при `open[side] >= 2` — ок; можно добавить комбинацию с Perfect Exalted для дорогих баз.
-14. **Recombinator / Omen of Corruption / Homogenising-омены** в приложении не советуются — правильно (в лиге их нет/не добываются). Не добавлять.
-15. Значения эссенций в `essences.js` сверены с poe2db (Body, Mind, Enhancement, Insulation, Command, Infinite, Battle, Sorcery, Alacrity, Haste — совпадают, включая нерф Perfect Battle +2/+3). Command: Perfect — «Aura Skills have (15–20)% increased Magnitudes» — совпадает.
-16. `Artificer's Orb` исключает Sceptre — по poe2db список «martial weapon, wand, staff или armour» — совпадает. Лимиты сокетов не проверялись (`!item.sockets` — советует только при 0 сокетов; у 2H/Body может быть 2 — не проверено).
-17. Самоцветы: можно добавить Liquid Emotions (Delirium) как способ добавить мод (не проверено).
+**Mismatches / outdated:**
+1. **The "1 crafted mod" limit isn't accounted for.** `advise()` offers an essence for magic→rare and at the same time the `perfect` section (Perfect essences) for rare, without checking whether there is already a crafted/essence mod. If the item has an essence/Alloy mod (tag `crafted` in Advanced Mod Descriptions, Mark of the Abyssal Lord too), Perfect essences, corrupted essences and Alloys are inapplicable (error "This item already has a crafted modifier"). Needed: hide/flag the `perfect` section when a crafted mod is present; in `planGoal` for magic, don't promise "essence + Perfect later".
+2. **Perfect essence = crafted slot.** The `perfect` section should warn: "will take the only crafted slot; after it, essences/Alloys can no longer be applied".
+3. **No corrupted essences** (Hysteria, Delirium, Horror, Insanity, Abyss, Breach) in `essences.js` — Hysteria on boots (30% MS), gloves (Crit Damage), helmet (+1 minion), etc. are valuable; Essence of the Abyss → desecrate gives a higher-tier desecrated mod.
+4. **No Alloys** — an alternative to Perfect essences (also replace + crafted slot). Add at least a mention for weapons/jewellery (value data needs to be collected from poe2db).
+5. **The Desecration section** doesn't mention omens: Sinistral/Dextral Necromancy (side), Sovereign/Liege/Blackblooded (lich pool, Weapon/Jewellery only), Abyssal Echoes. It also isn't stated that on a full item a random mod will be removed — currently there is "replaces a random one when full", OK; but it's worth advising to desecrate **before** the Exalts, while there is room.
+6. `boneFor()` — correct (Gnawed ≤ 64, Preserved, Ancient 40+, Cranium Preserved only). Altered Collarbone could be added for jewellery.
+7. **Hinekora's Lock** is advised only in the magic→rare section (where it makes almost no sense price-wise). Better: advise it before expensive steps — Perfect Exalt/Chaos, Fracturing Orb, Vaal on an almost finished item, Perfect essence; and only if the expected item price ≫ the Lock's price.
+8. **Fracturing Orb** (`cheap`) is labelled "cheap and risk-free" — in 0.5 it is scarce (atlas) and risky (random mod). Move it from `cheap` to a separate risk section; advise it only if the key mod is ≥ ~50% of the item's mods or if most mods are good.
+9. **Magic base:** Greater/Perfect Transmutation/Augmentation (44+/70+) aren't suggested — useful for preparing a magic base before an essence. Orb of Alchemy + Sinistral/Dextral Alchemy are also missing.
+10. **Whittling** (`lowest`): takes the min. `required_level` among all non-fractured mods, including desecrated and crafted — whether Whittling removes a desecrated/crafted mod is unverified; safer to exclude desecrated (it has its own path via Omen of Light).
+11. **Catalyst tip** for rings/amulets: worth clarifying that Catalysing Exaltation **consumes all quality** — catalyse again after it; and that catalysts now come only from the Genesis Tree (more expensive).
+12. **Annulment + side omen:** if the side has only one non-fractured mod — 100% chance (currently `sameSide` already counts only non-fractured — good; could explicitly highlight "guaranteed").
+13. **Omen of Greater Exaltation** is offered when `open[side] >= 2` — OK; could add the combination with Perfect Exalted for expensive bases.
+14. **Recombinator / Omen of Corruption / Homogenising omens** are not recommended in the app — correct (they aren't in the league / aren't obtainable). Don't add them.
+15. Essence values in `essences.js` were checked against poe2db (Body, Mind, Enhancement, Insulation, Command, Infinite, Battle, Sorcery, Alacrity, Haste — they match, including the Perfect Battle +2/+3 nerf). Command: Perfect — "Aura Skills have (15–20)% increased Magnitudes" — matches.
+16. `Artificer's Orb` excludes Sceptre — per poe2db the list is "martial weapon, wand, staff or armour" — matches. Socket limits weren't checked (`!item.sockets` — advises only at 0 sockets; 2H/Body can have 2 — unverified).
+17. Jewels: Liquid Emotions (Delirium) could be added as a way to add a mod (unverified).
 
-**Что приложение должно проверять/советовать дополнительно:**
-- ilvl < 50 → предупреждение: Perfect Exalted/Regal/Chaos бессмысленны; ilvl < 70 → Perfect Transmute/Augment; ilvl ниже уровня T1 нужного мода → «T1 невозможен на этой базе» (частично уже есть через `bestIdx`).
-- Предупреждать, если вещь Sanctified/Corrupted (уже есть) и если есть crafted-мод (нет).
-- Если desecrated-мод уже есть — не предлагать вторую desecration (уже есть), но предлагать Omen of Light при слабом desecrated-моде (есть).
-- Для fractured вещи: подсвечивать, что сторона с fractured упрощает сторона-омены (Annul 1/(N-1)).
-- Порядок шагов в `planGoal`: эссенция → desecrate (если место) → Exalt-ы → Divine → quality/сокеты → (Vaal).
+**What the app should additionally check/advise:**
+- ilvl < 50 → warning: Perfect Exalted/Regal/Chaos are pointless; ilvl < 70 → Perfect Transmute/Augment; ilvl below the T1 level of the wanted mod → "T1 impossible on this base" (partly already there via `bestIdx`).
+- Warn if the item is Sanctified/Corrupted (already there) and if there is a crafted mod (not there).
+- If a desecrated mod is already present — don't offer a second desecration (already there), but offer Omen of Light for a weak desecrated mod (there).
+- For a fractured item: highlight that the side with the fractured mod makes side omens easier (Annul 1/(N-1)).
+- Step order in `planGoal`: essence → desecrate (if there is room) → Exalts → Divine → quality/sockets → (Vaal).
 
-## 7. Источники
-- [S1] Официальные патчноуты 0.5.0 (Return of the Ancients / Runes of Aldur), форум PoE, ~21–26.05.2026 — https://www.pathofexile.com/forum/view-thread/3932540
-- [S2] Тот же тред, раздел изменений предметов/валюты (обе части) — https://www.pathofexile.com/forum/view-thread/3932540
-- [S3] Официальные патчноуты 0.5.5 (Forbidden Rites), 03.09.2026 — https://www.pathofexile.com/forum/view-thread/4000864
-- [S4] poe2db Stackable Currency (данные 0.5) — https://poe2db.tw/us/Stackable_Currency
-- [S5] Конспект 0.5.5 (note.com, koni_pu3), 03.09.2026 — https://note.com/koni_pu3/n/n5ab3664d0265?hl=en
-- [S6] BugFree.gg, «0.5.0 Crafting Changes», 23.05.2026 — https://bugfree.gg/guides/poe2-crafting-changes-0-5-0
-- [S7] Патчноуты 0.5.5b (11.09), 0.5.5c (18.09), 0.5.5d (~28.09), 0.5.5e (06.10.2026) — https://www.pathofexile.com/forum/view-thread/4004106 · /4006357 · /4008534 · /4009785 ; список: https://www.pathofexile.com/forum/view-forum/2212
-- [S8] Kami-labs, 0.5.5 patch notes summary, сент. 2026 — https://kami-labs.fr/en/path-of-exile-2/patch-notes-0-5-5-path-of-exile-2-forbidden-rites/
-- [S9] Форум, фидбек «Please Revert The Essence Crafting Change», 25.05.2026 — https://www.pathofexile.com/forum/view-thread/3933180
-- [S10] Форум, баг-репорт «Non-crafted weapon has a crafted mod error», 09.06.2026 — https://www.pathofexile.com/forum/view-thread/3956910 ; «Essence of Abyss: this item already has a crafted modifier», 12.06.2026 — https://www.pathofexile.com/forum/view-thread/3960848
-- [S11] Timesaver.gg, «PoE2 0.5 Crafting Guide», 05.06 / обн. 06.08.2026 (коммерческий, есть ошибки) — https://timesaver.gg/blog/poe2-0-5-crafting-guide
-- [S12] PoE2 Crafting Codex (domistae, сверен с 0.5.0, заголовок 0.5.5) — https://domistae.github.io/poe2-leveling/poe2_crafting_codex.html
+## 7. Sources
+- [S1] Official 0.5.0 patch notes (Return of the Ancients / Runes of Aldur), PoE forum, ~21–26.05.2026 — https://www.pathofexile.com/forum/view-thread/3932540
+- [S2] The same thread, item/currency changes section (both parts) — https://www.pathofexile.com/forum/view-thread/3932540
+- [S3] Official 0.5.5 patch notes (Forbidden Rites), 03.09.2026 — https://www.pathofexile.com/forum/view-thread/4000864
+- [S4] poe2db Stackable Currency (0.5 data) — https://poe2db.tw/us/Stackable_Currency
+- [S5] 0.5.5 summary (note.com, koni_pu3), 03.09.2026 — https://note.com/koni_pu3/n/n5ab3664d0265?hl=en
+- [S6] BugFree.gg, "0.5.0 Crafting Changes", 23.05.2026 — https://bugfree.gg/guides/poe2-crafting-changes-0-5-0
+- [S7] Patch notes 0.5.5b (11.09), 0.5.5c (18.09), 0.5.5d (~28.09), 0.5.5e (06.10.2026) — https://www.pathofexile.com/forum/view-thread/4004106 · /4006357 · /4008534 · /4009785 ; list: https://www.pathofexile.com/forum/view-forum/2212
+- [S8] Kami-labs, 0.5.5 patch notes summary, Sep 2026 — https://kami-labs.fr/en/path-of-exile-2/patch-notes-0-5-5-path-of-exile-2-forbidden-rites/
+- [S9] Forum, feedback "Please Revert The Essence Crafting Change", 25.05.2026 — https://www.pathofexile.com/forum/view-thread/3933180
+- [S10] Forum, bug report "Non-crafted weapon has a crafted mod error", 09.06.2026 — https://www.pathofexile.com/forum/view-thread/3956910 ; "Essence of Abyss: this item already has a crafted modifier", 12.06.2026 — https://www.pathofexile.com/forum/view-thread/3960848
+- [S11] Timesaver.gg, "PoE2 0.5 Crafting Guide", 05.06 / upd. 06.08.2026 (commercial, contains errors) — https://timesaver.gg/blog/poe2-0-5-crafting-guide
+- [S12] PoE2 Crafting Codex (domistae, checked against 0.5.0, header says 0.5.5) — https://domistae.github.io/poe2-leveling/poe2_crafting_codex.html
 - [S13] poe2db Desecrated Modifiers (0.5) — https://poe2db.tw/us/Desecrated_Modifiers
 - [S13b] poe2db Essence (0.5) — https://poe2db.tw/us/Essence
-- [S14] PoE2Craft codex, Runes («0.5.4, June 2026») — https://poe2craft.com/codex/runes
+- [S14] PoE2Craft codex, Runes ("0.5.4, June 2026") — https://poe2craft.com/codex/runes
 - [S15] poe2db Omen (0.5) — https://poe2db.tw/us/Omen
 - [S16] poe2db Hinekora's Lock — https://poe2db.tw/us/Hinekoras_Lock
-- [S17] Timesaver.gg, Hinekora's Lock guide, 01.07 / обн. 06.09.2026 (коммерческий) — https://timesaver.gg/blog/poe2-hinekoras-lock-guide
-- [S18] Timesaver.gg, Double Corruption guide, 22.07 / обн. 22.08.2026 (коммерческий, внутренние противоречия) — https://timesaver.gg/blog/poe2-double-corruption-guide
-- [S19] Elyxir.gg, «Crafting Guide under the New Essence Rules», 09.06.2026 (коммерческий) + сводка Mobalytics-гайдов 0.5 из поиска (страницы 403) — https://www.elyxir.gg/guide/path-of-exile-2/path-of-exile-2-crafting-guide-how-to-make-better-weapons-and-armor-under-the-new-essence-rules ; https://mobalytics.gg/poe-2/guides/ssf-crafting
-- [S20] Mobalytics, «[0.5] Low/High Budget Equipment Crafting Guide» (только сниппет поиска, 403) — https://mobalytics.gg/poe-2/profile/paintmaster/guides/recoup-chronomancer-gear-crafting-guide
-- Недоступны при сборе: maxroll.gg/poe2 (обрыв соединения), poe2wiki.net (Anubis), mobalytics (403).
+- [S17] Timesaver.gg, Hinekora's Lock guide, 01.07 / upd. 06.09.2026 (commercial) — https://timesaver.gg/blog/poe2-hinekoras-lock-guide
+- [S18] Timesaver.gg, Double Corruption guide, 22.07 / upd. 22.08.2026 (commercial, internal contradictions) — https://timesaver.gg/blog/poe2-double-corruption-guide
+- [S19] Elyxir.gg, "Crafting Guide under the New Essence Rules", 09.06.2026 (commercial) + a summary of Mobalytics 0.5 guides from search (pages 403) — https://www.elyxir.gg/guide/path-of-exile-2/path-of-exile-2-crafting-guide-how-to-make-better-weapons-and-armor-under-the-new-essence-rules ; https://mobalytics.gg/poe-2/guides/ssf-crafting
+- [S20] Mobalytics, "[0.5] Low/High Budget Equipment Crafting Guide" (search snippet only, 403) — https://mobalytics.gg/poe-2/profile/paintmaster/guides/recoup-chronomancer-gear-crafting-guide
+- Unavailable during collection: maxroll.gg/poe2 (connection dropped), poe2wiki.net (Anubis), mobalytics (403).
