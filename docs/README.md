@@ -11,7 +11,7 @@
 | [crafting-tricks.md](crafting-tricks.md) | Приёмы и комбо: Desecration подробно, стек оменов, детерминированные приёмы, типовые цепочки, ловушки | 0.5.5 / 2026-10-18 | план крафта (`plancost.js`) |
 | [crafting-methods-research.md](crafting-methods-research.md) | Лич-омены, Abyss Gaze, Verisium, руны и soul cores, прочая валюта (по строке) | 0.5.5e / 2026-10-18 | `src/shared/methods.js`, `data/crafting-methods-research.json` |
 | [corruption-sanctification.md](corruption-sanctification.md) | Vaal Orb, Infusers, двойная порча, Sanctify, пулы модов порчи по классам | 0.5.5 / 2026-10-18 | `data/gamble-currency.json` (тест `test/gamble.test.js` сверяет с данными игры) |
-| [jewels-crafting.md](jewels-crafting.md) | Самоцветы: пулы, Liquid Emotions, Cranium, оценка | 0.5.5 / 2026-10-17 | крафт самоцветов в `craft.js` |
+| [jewels-crafting.md](jewels-crafting.md) | Самоцветы: пулы, Liquid Emotions, Cranium, оценка, спрос по базе, перекрытие лимита | 0.5.5 / 2026-10-19 | крафт самоцветов в `craft.js` |
 | [market-notes.md](market-notes.md) | Рынок и спрос: что дорого, как оценивают базы и дропы, билды 0.5.5 и нужные им статы, скрижали | 0.5.5 / 2026-10-18 | пока нет — идеи для оценки цены |
 
 Данные игры, на которые опираются документы: RePoE (`repoe-mods.json`, `repoe-base-items.json` в кэше программы,
@@ -39,6 +39,10 @@
 | **Abyssal Echoes:** после реролла можно взять вариант из первой тройки (выбор из 6) или только из новой? | Игрок (2026-10-18): омен даёт увидеть 3 варианта и один раз перекрутить — «3 + 3». Можно ли вернуться к первой тройке — не уточнено, но **на расчёт не влияет**: нужный мод в первой тройке берут, нет — перекручивают, шанс тот же 1 − (1 − p)⁶. Разница только при выборе лучшего из нескольких подходящих | две независимые тройки, внутри тройки без повторов (игрок: один мод может вернуться во второй тройке): 1 − Π(1 − g/(N − i)) на тройку (`plancost.js`, 0.3.146) |
 | ~~**Desecrate полной вещи с Necromancy-оменом** снимает мод с той же стороны?~~ **Да** — игрок, 2026-10-18 (H): на полных суффиксах с Dextral Necromancy исчез суффикс, встал нераскрытый desecrated-суффикс | Mobalytics abyss-crafting, talisman-craft | `plancost.js` `desFirst`: один лишний мод на полной стороне — Desecrate до снятий, вместо одной попытки Annulment |
 | **Essence of the Abyss + Fracturing Orb:** Mark можно зафиксировать? | tricks D-3 [T15]: можно; Mobalytics ssf-crafting: Mark — desecrated, фиксировать нельзя | — |
+| **Самоцвет: перекрытие лимита после Contempt** — снять crafted «+1 Suffix allowed», три суффикса остаются? Работает в 0.5.5? | форум GGG 2026-06-04, poecurrency 2026-08-07 (M/L); в патчноутах исправления нет | сторона сверх лимита не трогается, раздел «Сверх лимита» (`craft.js`) |
+| **Greater Exalted / Chaos на самоцвете** — применяются (как обычные) или отказывают? | poe2wiki, codex: семейство не исключается (M); timesaver: строгий порог (L) | не советуем, «пользы нет» |
+| **Эмоция на полном самоцвете, когда её мод одной стороны** (Paranoia → суффикс): какой мод снимается? Contempt на 3-модовом (2P+1S)? | гайды: «50/50» для Ferocity/Contempt на 2+2 (M) | варианты эмоций — без встраивания в план; риск — ключевые из всех модов |
+| **Omen of Catalysing Exaltation на самоцветах** (Refined Catalysts) | poe2db: без ограничений; mobalytics: Ring/Amulet (L) | не советуем |
 | **Значения эссенций** (Perfect Battle +2/+3 или +4/+6, Horror 60% или 100%, Hysteria на фокусе) | poe2db (`essences.js`) против Mobalytics essences (обн. 2026-06-16) | poe2db |
 | **Лимит гнёзд Artificer's Orb** по слотам | Mobalytics currency-guide: тело / двуручное 2, остальное 1 (там же устаревшее «у оружия заклинателя гнёзд нет») | 2 / 1 по гайдам |
 
@@ -55,7 +59,6 @@
 3. `node scripts/audit-craft.js` — советник на 840 случайных вещах: 0 нарушений.
 4. Сверить вручную собранное (`data/crafting-currency.json`, `data/gamble-currency.json`, `src/main/essences.js`,
    `src/shared/methods.js`) с патчноутом и poe2db; обновить «Патч / проверено» в таблице выше.
-5. Оценка весов модов для новой лиги — `Collect weights.bat` (или `npm run collect-weights -- --league "<лига>"`):
-   ходит по классам по кругу, пока вы не за компьютером, и копит новые лоты в `data/weights-store/` (локально, не в git);
-   `data/weights.json` пересобирается после каждого класса — закоммитить, когда наберётся (часы / ночь).
+5. Оценка весов модов для новой лиги — локальной утилитой сбора (не в git): `data/weights.json` закоммитить,
+   когда наберётся (часы / ночь).
 6. `node scripts/snapshot-test-data.js` — новый снимок данных для тестов.

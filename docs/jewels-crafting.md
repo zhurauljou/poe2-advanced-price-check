@@ -251,7 +251,46 @@ Time-Lost (Ancient, нужен Delirium Atlas Tree) [S1][S15]:
 
 ---
 
+## 4.4 Спрос по базе (poe.ninja, Forbidden Rites, 2026-10-19) [T]
+
+Общий спрос «Rare Jewel» смешивает цвета и Time-Lost. Моды Time-Lost в нём — 10–14% билдов (ниже порога 15%).
+Среди билдов, которые носят **эту базу** (фильтр poe.ninja по базе), картина другая:
+
+| База | Билдов 90+ | Топ модов |
+|---|---|---|
+| Time-Lost Sapphire | 22 424 | Very Large 80%; Notable Crit Damage Bonus 58.5%; Notable Crit Chance 48%; Notable Spell Crit Chance 41%; Notable Crit Spell Damage Bonus 39% |
+| Time-Lost Emerald | 15 635 | Very Large 67%; Notable Attack Crit Bonus 66%; Notable Attack Crit Chance 62%; Notable Projectile Speed 36%; Notable Spear Crit Bonus 33% |
+| Sapphire | 60 818 | ES 51%; Spell Damage 50%; Crit Damage Bonus 47%; Crit Chance 43%; Spell Crit Chance 39% |
+| Emerald | 28 336 | Attack Crit Chance 46%; Attack Crit Bonus 43%; Attack Speed 40%; Projectile Damage 36% |
+
+Программа (0.3.160+) считает спрос самоцвета среди билдов с той же базой (`ninjaBuilds.categoryDemand` `withBase`).
+
+## 4.5 Новое из исследования 2026-10-19 (отчёт по источникам)
+
+- **Перекрытие лимита после Contempt** (M/L): если после Potent Contempt снять crafted «+1 Suffix Modifier allowed»,
+  три суффикса остаются. Chaos и Exalt эту сторону не трогают («no space»), crafted-слот снова свободен под вторую эмоцию.
+  Снимают «+1» Omen of Sinistral/Dextral Erasure + Chaos или Annulment со стороной (не Omen of Light — он только для desecrated).
+  Источники: форум GGG «Ancient Potent Liquid Contempt intended?» (2026-06-04, https://www.pathofexile.com/forum/view-thread/3948475),
+  poecurrency (2026-08-07). В патчноутах 0.5.1–0.5.5 исправления нет — **проверить в игре**. В программе: сторона сверх лимита не
+  трогается, раздел «Сверх лимита».
+- **Greater / Perfect** на самоцветах, скорее всего, **работают как обычные** (M: poe2wiki, crafting codex — порог уровня не
+  исключает семейство целиком, остаётся его высший тир; у самоцветов один тир). Против — timesaver («строгий порог», L).
+  Советовать их не за что (дороже, пользы нет); «не применится» — не писать.
+- **Эмоции:** полная таблица «эмоция × цвет → мод и сторона» — `data/liquid-emotions.json` (poe2db Liquid_Emotions, 2026-10-19, H).
+  Ancient Potent Ferocity — Notable **сопротивления**, а не Effect of Suffixes (частая путаница). Ferocity и Contempt — сторона по
+  стороне снятого мода, на полном 2+2 — «50/50» (M, гайды). Цены poe.ninja 2026-10-19: Potent Ferocity ≈ 6 div, Potent Contempt
+  ≈ 2.6 div, Ancient Potent Contempt ≈ 17 div, Ancient Melancholy ≈ 1.4 chaos, цветные — 1–15 ex.
+- **Порча Time-Lost:** те же 11 энчантов, радиуса среди них нет (poe2db Time-Lost Emerald, H) — «Radius to Large от порчи» у timesaver — ошибка.
+- **0.5.1:** 40 новых Elemental-пассивов рядом с Jewel Sockets (Sorceress/Witch, Druid) — радиусные самоцветы там ценнее (H, патчноут).
+
 ## 5. Что это значит для нашего приложения
+
+**Статус на 2026-10-19 (0.3.160):** сделано — п. 1 (текст радиусных модов, `craft-data.radiusText`), 2 (Greater/Perfect не
+советуем), 3 (эмоции — варианты по цвету с ценой и риском; в план не встроены), 4 (Desecrate — кандидаты и из обычного пула),
+7 (стат «(Jewel)»), 8 частично (радиус в поиске, Ferocity/Contempt — всегда ключевые; «count» по ключевым — нет), спрос по базе (§4.4),
+тир не признак ключевого мода, сторона сверх лимита. Открыто: эмоции в плане крафта (сторона снятия на полной вещи), «count»-поиск,
+Omen of Catalysing Exaltation на самоцветах.
+
 
 Как сейчас: `craft.js` берёт моды `misc` как `item` (верно); 2+2 для тега `jewel` (верно); правку «±N Modifier allowed» парсит (верно).
 Кость Cranium только Preserved (верно), лич-омены на самоцветах не советуем (верно). Совет «Refined Catalyst» есть.
