@@ -701,6 +701,8 @@ app.whenReady().then(singleInstance).then((ok) => {
     const prices = {};
     for (const name of ['Vaal Orb', 'Omen of Sanctification', 'Divine Orb', 'Orb of Transmutation', 'Greater Orb of Transmutation', 'Perfect Orb of Transmutation', 'Orb of Annulment', 'Fracturing Orb', "Hinekora's Lock", 'Omen of Putrefaction', 'Chaos Orb', 'Greater Chaos Orb', 'Perfect Chaos Orb', 'Omen of Whittling', 'Omen of Sinistral Erasure', 'Omen of Dextral Erasure', 'Regal Orb', 'Greater Regal Orb', 'Perfect Regal Orb']) { const row = api.ninja.byName.get(name); prices[name] = row ? row.divine : null; }
     for (const a of r.augments || []) { const row = api.ninja.byName.get(a.name); prices[a.name] = row ? row.divine : null; }
+    // Эмоции на самоцветах (раздел вариантов) — их цены сильно разные: Potent Ferocity ≈ 6 div, цветные — несколько ex.
+    for (const s of r.sections || []) for (const o of s.options || []) { const row = api.ninja.byName.get(o.name); prices[o.name] = row ? row.divine : null; }
     for (const s of (r.goal && r.goal.plan) || []) {
       for (const name of [...s.currencies, ...(s.retry || [])]) {
         const row = api.ninja.byName.get(name);

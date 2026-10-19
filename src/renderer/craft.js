@@ -207,6 +207,23 @@ function keyRisk(s) {
   return `<div class="ps-risk">⚠ ${esc(t('{odds}: it removes {mods} instead of the sacrificial modifier', { odds: fmtOdds(r), mods: s.atRisk.map((m) => `«${m}»`).join(t(' or ')) }) + full)}</div>`;
 }
 
+// Liquid Emotions на самоцвете: варианты для этой базы — какой мод даст, сколько билдов носят, цена эмоции; риск снять
+// ключевой мод (эмоция снимает случайный).
+function emotionsHtml(s, how) {
+  const head = `<div class="k">${esc(t('Liquid Emotions (Delirium) — the main jewel craft'))}</div>`;
+  if (s.blocked || !s.options.length) return `<div class="craft-sec">${head}${how(s.how)}</div>`;
+  const side = (o) => (o.two ? t('prefix or suffix — the side of the removed modifier') : t(o.side));
+  const rows = s.options.map((o) => `<div class="erow"><span class="ename">${curChips([o.name])}</span>
+    <span class="emod">${esc(o.text)} <small class="muted">· ${esc(side(o))}</small></span>
+    <span class="edem">${o.pct ? `${hot(o.pct)}${fmt(o.pct)}%` : '—'}</span>
+    <span class="epx">${craftPrices[o.name] != null ? money(craftPrices[o.name]) : '—'}</span></div>`).join('');
+  const r = s.risk;
+  const risk = r.keys.length
+    ? `<div class="ps-risk">⚠ ${esc(t('Removes a random one of the {n} modifiers: {k} of them are key ({mods}) — {odds} to lose one', { n: r.n, k: r.keys.length, mods: r.keys.join(', '), odds: r.keys.length / r.n >= 0.5 ? `~${Math.round(r.keys.length / r.n * 100)}%` : oneIn(r.keys.length / r.n) }))}</div>`
+    : `<div class="craft-sub">${esc(t('No key modifiers on the item — a removed one is no loss'))}</div>`;
+  return `<div class="craft-sec">${head}<div class="erows"><div class="erow ehead"><span>${esc(t('Emotion'))}</span><span>${esc(t('Modifier'))}</span><span>${esc(t('builds'))}</span><span>${esc(t('price'))}</span></div>${rows}</div>${risk}${how(s.how)}</div>`;
+}
+
 function essenceSeq(s, c) {
   const [ess, crystal, ...sac] = c.currencies;
   const side = t(s.side);
@@ -673,7 +690,7 @@ function renderCraft(r) {
       parts.push(`<div class="craft-sec"><div class="k">${t('Key modifier, weak tier — keep it')}</div>${s.mods.map((m) => `
         <div class="craft-weak">${esc(m.text)} <span class="craft-tier">T${m.tier} → T${m.best}${m.range ? ` (${esc(m.range)})` : ''} · ${esc(t('{pct}% builds', { pct: fmt(m.pct) }))}</span></div>${how(m.how)}`).join('')}</div>`);
     } else if (s.kind === 'emotions') {
-      parts.push(`<div class="craft-sec"><div class="k">${t('Liquid Emotions (Delirium) — the main jewel craft')}</div>${how(s.how)}</div>`);
+      parts.push(emotionsHtml(s, how));
     } else if (s.kind === 'magicfill') {
       parts.push(`<div class="craft-sec"><div class="k">${t('While it is magic')}</div>${how(s.how)}${s.candidates.length ? `<div class="craft-sub">${t('Popular modifiers for the free slot:')}</div>${craftRows(s.candidates)}` : ''}</div>`);
     } else if (s.kind === 'risky') {

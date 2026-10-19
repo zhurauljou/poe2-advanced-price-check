@@ -6,7 +6,7 @@
 const fsW = require('fs');
 const pathW = require('path');
 const craftData = require('./craft-data');
-const { load, templates, tradeStats, weights, guaranteedFor, corruptedFor, canRoll } = craftData;
+const { load, templates, tradeStats, weights, guaranteedFor, corruptedFor, emotionsFor, canRoll } = craftData;
 // Шанс словами: «1 из 3»; лучше, чем 1 из 2, — процентом («~60%»): «1 из 1.7» читается плохо.
 const oddsOf = (p) => (p >= 0.5 ? `~${Math.round(Math.min(1, p) * 100)}%` : t('1 in {n}', { n: Math.round(10 / p) / 10 }));
 
@@ -583,17 +583,25 @@ async function advise(item, demandMods, cached) {
   const perfect = item.rarity === 'Rare' ? [...perfectFor(item.itemClass), ...guaranteedFor(item.itemClass)] : [];
   if (jewel && item.rarity === 'Rare') {
     const timeLost = tags.includes('radius_jewel');
-    // Обычные Potent-эмоции — только на базовые самоцветы, Ancient — только на Time-Lost (у них свои моды).
-    const emotions = timeLost
-      ? [t('Ancient Potent Liquid Contempt — +1 Prefix / Suffix Modifier allowed'),
-        t('Ancient Potent Liquid Melancholy — Upgrades Radius to Very Large (prefix)'),
-        t('Ancient Potent Liquid Ferocity — Notable Passives in Radius also grant +(5–7)% Fire / Cold / Lightning Resistance (Diamond: Chaos)'),
-        t('Regular Potent emotions fit only basic jewels')]
-      : [t('Potent Ferocity — (40–60)% increased Effect of Suffixes (as a prefix) or of Prefixes'),
-        t('Potent Contempt — +1 Suffix / Prefix Modifier allowed: a third modifier on one side for a slot on the other ("5-line" jewels)')];
-    sections.push({ kind: 'emotions', how: hasCrafted
-      ? [t('This item already has a crafted modifier — Liquid Emotions cannot be used (one crafted modifier per item)')]
-      : [...emotions, t('Removes a random modifier; uses the only crafted-modifier slot'), t("Hinekora's Lock first — see the result before you commit")] });
+    // Варианты для этой базы (обычные эмоции — basic jewels, Ancient — Time-Lost): какой мод даст, сколько билдов его
+    // носят. Эмоция снимает СЛУЧАЙНЫЙ мод: risk — сколько ключевых модов (по спросу) из всех на вещи может уйти.
+    // В план не встраиваем: с какой стороны снимается мод на полной вещи, когда мод эмоции одной стороны, не проверено.
+    const pctOf = (lines) => Math.max(0, ...lines.map((l) => want.get(l) || 0));
+    const all = emotionsFor(item.baseType).filter((e) => !e.lines.every((l) => own.has(l)));
+    const POTENT = /Potent /;
+    // Две записи одной эмоции (Ferocity, Contempt: префикс или суффикс) — одной строкой.
+    const byName = new Map();
+    for (const e of all) {
+      const o = byName.get(e.name);
+      if (o) { o.text += ` / ${e.text}`; o.two = true; o.pct = Math.max(o.pct, pctOf(e.lines)); } else byName.set(e.name, { name: e.name, side: e.side, text: e.text, pct: pctOf(e.lines), two: false });
+    }
+    const options = [...byName.values()]
+      .filter((o) => o.pct >= WANT_PCT || POTENT.test(o.name))
+      .sort((a, b) => b.pct - a.pct || POTENT.test(b.name) - POTENT.test(a.name)).slice(0, 8);
+    const keys = mine.filter((a) => a.tag !== 'fractured' && a.mod && pctOf(a.mod.lines) >= KEY_PCT).map((a) => a.mod.lines.join(' / '));
+    sections.push({ kind: 'emotions', timeLost, blocked: hasCrafted, options, risk: { n: mine.filter((a) => a.tag !== 'fractured').length, keys },
+      how: hasCrafted ? [t('This item already has a crafted modifier — Liquid Emotions cannot be used (one crafted modifier per item)')]
+        : [t('Removes a random modifier; uses the only crafted-modifier slot'), t("Hinekora's Lock first — see the result before you commit")] });
   }
   if (perfect.length && hasCrafted) {
     sections.push({ kind: 'perfect', blocked: true, how: [] });

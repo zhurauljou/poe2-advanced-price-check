@@ -698,3 +698,12 @@ body.wide .craft-cols > .more-ways > summary { pointer-events: none; }
 .set-hint { margin-top: 4px; font-size: 13px; color: var(--muted); }
 /* Колонки крафта — те же отступы, что у .builds (в обычном блоке отступы схлопывались бы) */
 .craft-cols, .craft-l { display: flex; flex-direction: column; gap: 4px; }
+/* Эмоции на самоцвете: эмоция | мод | нужен билдам | цена */
+.erows { margin: 4px 0; }
+.erow { display: grid; grid-template-columns: 150px 1fr 56px 64px; column-gap: 8px; align-items: center; padding: 3px 6px; font-size: 13.5px; }
+.erow + .erow { border-top: 1px solid var(--line2); }
+.erow.ehead { font: 700 12px/1.2 var(--body); text-transform: uppercase; letter-spacing: .3px; color: var(--muted); border-bottom: 1px solid var(--line2); }
+.erow .edem, .erow .epx, .erow.ehead span:nth-child(n+3) { text-align: right; white-space: nowrap; }
+.erow .ename .cur { white-space: normal; }
+.erow .ename .cur, .erow .ename .plus { display: inline-block; padding: 0 5px; border-radius: 3px; border: 1px solid; font-size: 13px; line-height: 1.4;
+  color: #ff9bd8; border-color: rgba(255, 155, 216, .45); background: rgba(255, 155, 216, .08); }

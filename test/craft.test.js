@@ -309,3 +309,19 @@ test('скрижаль: непорченая — среди ровно 10 исп
   const thirteen = await uses('tablet-corrupted-13.txt');
   assert.deepEqual([thirteen.value, thirteen.min, thirteen.max], [13, 13, undefined]);
 });
+
+test('самоцветы: эмоции — варианты по цвету базы (Ancient — только Time-Lost), риск — ключевые из всех модов', { skip }, async () => {
+  await init();
+  const demand = [{ name: 'Upgrades Radius to Very Large', pct: 80 }, { name: 'Notable Passive Skills in Radius also grant #% increased Critical Hit Chance for Spells', pct: 41 },
+    { name: 'Small Passive Skills in Radius also grant #% increased Spell Damage', pct: 35 }];
+  const r = await craft.advise(parseItem(read('../rare-timelost-sapphire.txt')), demand, cached);
+  const em = r.sections.find((s) => s.kind === 'emotions');
+  const names = em.options.map((o) => o.name);
+  assert.ok(names.includes('Ancient Potent Liquid Melancholy') && names.includes('Ancient Liquid Despair'), names.join(', '));
+  assert.ok(!names.some((n) => !/^Ancient /.test(n)), 'на Time-Lost — только Ancient');
+  assert.equal(names.filter((n) => n === 'Ancient Potent Liquid Contempt').length, 1, 'две стороны — одна строка');
+  // Small Spell Damage на вещи есть и нужен (35%) — ключевой; снимет 1 из 3 модов.
+  assert.deepEqual([em.risk.n, em.risk.keys.length], [3, 1]);
+  const basic = await craft.advise(parseItem(read('../rare-jewel-full.txt')), [], cached);
+  assert.ok(basic.sections.find((s) => s.kind === 'emotions').blocked, 'crafted-мод уже есть');
+});

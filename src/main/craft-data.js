@@ -136,6 +136,24 @@ function corruptedFor(itemClass) {
   return out;
 }
 
+// Liquid Emotions (Delirium) на самоцветах: эмоция снимает случайный мод и ставит свой crafted-мод — по цвету базы
+// (data/liquid-emotions.json, poe2db). Обычные — на Ruby / Sapphire / Emerald / Diamond, Ancient — только на Time-Lost.
+// → [{ name, side, text, lines }]; у Ferocity / Contempt две записи (сторона — по стороне снятого мода).
+let emotionData;
+function emotionsFor(baseType) {
+  if (emotionData === undefined) {
+    try { emotionData = JSON.parse(fsW.readFileSync(pathW.join(__dirname, '..', '..', 'data', 'liquid-emotions.json'), 'utf8')); } catch { emotionData = null; }
+  }
+  if (!emotionData || !baseType) return [];
+  const timeLost = /^Time-Lost /.test(baseType);
+  const color = baseType.replace(/^Time-Lost /, '');
+  const out = [];
+  for (const e of (timeLost ? emotionData.timeLost : emotionData.basic) || []) {
+    for (const m of (e.mods && e.mods[color]) || []) out.push({ name: e.name, side: m.side, text: m.text, lines: templates(m.text) });
+  }
+  return out;
+}
+
 // Вес мода на базе: первый тег из spawn_weights, который есть у базы (в PoE 2 — только 0 или 1).
 function canRoll(mod, tags) {
   for (const sw of mod.spawn_weights || []) if (tags.includes(sw.tag)) return sw.weight > 0;
@@ -145,4 +163,4 @@ function canRoll(mod, tags) {
 // Загруженный пул (или null, пока не загружен) — для быстрых проверок без await.
 const current = () => data;
 
-module.exports = { load, reset, onReset, current, templates, tradeStats, weights, guaranteedFor, corruptedFor, canRoll };
+module.exports = { load, reset, onReset, current, templates, tradeStats, weights, guaranteedFor, corruptedFor, emotionsFor, canRoll };

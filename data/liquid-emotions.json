@@ -1,0 +1,694 @@
+{
+ "meta": {
+  "source": "https://poe2db.tw/us/Liquid_Emotions",
+  "checked": "2026-10-19",
+  "patch": "0.5.5",
+  "note": "Each emotion removes a random modifier from a Rare jewel and adds its own guaranteed Crafted modifier (one crafted modifier per item). Basic emotions - Ruby/Sapphire/Emerald/Diamond; Ancient - Time-Lost jewels only. Two entries for a color (Ferocity, Contempt) - the side follows the side of the removed modifier (guides: 50/50 on a full 2+2 jewel; not verified in game)."
+ },
+ "basic": [
+  {
+   "name": "Diluted Liquid Ire",
+   "mods": {
+    "Ruby": [
+     {
+      "side": "prefix",
+      "text": "(10-20)% increased Armour"
+     }
+    ],
+    "Sapphire": [
+     {
+      "side": "prefix",
+      "text": "(10-20)% increased maximum Energy Shield"
+     }
+    ],
+    "Emerald": [
+     {
+      "side": "prefix",
+      "text": "(10-20)% increased Evasion Rating"
+     }
+    ]
+   }
+  },
+  {
+   "name": "Diluted Liquid Guilt",
+   "mods": {
+    "Ruby": [
+     {
+      "side": "prefix",
+      "text": "(5-15)% increased Fire Damage"
+     }
+    ],
+    "Sapphire": [
+     {
+      "side": "prefix",
+      "text": "(5-15)% increased Cold Damage"
+     }
+    ],
+    "Emerald": [
+     {
+      "side": "prefix",
+      "text": "(5-15)% increased Lightning Damage"
+     }
+    ]
+   }
+  },
+  {
+   "name": "Diluted Liquid Greed",
+   "mods": {
+    "Ruby": [
+     {
+      "side": "prefix",
+      "text": "(5-15)% increased Global Physical Damage"
+     }
+    ],
+    "Sapphire": [
+     {
+      "side": "prefix",
+      "text": "(7-13)% increased Chaos Damage"
+     }
+    ],
+    "Emerald": [
+     {
+      "side": "prefix",
+      "text": "(5-15)% increased Elemental Damage"
+     }
+    ]
+   }
+  },
+  {
+   "name": "Liquid Paranoia",
+   "mods": {
+    "Ruby": [
+     {
+      "side": "prefix",
+      "text": "(5-15)% increased Attack Damage"
+     }
+    ],
+    "Sapphire": [
+     {
+      "side": "suffix",
+      "text": "(2-4)% increased Cast Speed"
+     }
+    ],
+    "Emerald": [
+     {
+      "side": "suffix",
+      "text": "(2-4)% increased Attack Speed"
+     }
+    ]
+   }
+  },
+  {
+   "name": "Liquid Envy",
+   "mods": {
+    "Ruby": [
+     {
+      "side": "suffix",
+      "text": "(4-6)% of Skill Mana Costs Converted to Life Costs"
+     }
+    ],
+    "Sapphire": [
+     {
+      "side": "prefix",
+      "text": "(5-15)% increased Spell Damage"
+     }
+    ],
+    "Emerald": [
+     {
+      "side": "suffix",
+      "text": "(3-5)% increased Cooldown Recovery Rate"
+     }
+    ]
+   }
+  },
+  {
+   "name": "Liquid Disgust",
+   "mods": {
+    "Ruby": [
+     {
+      "side": "suffix",
+      "text": "(5-10)% increased Life Regeneration rate"
+     }
+    ],
+    "Sapphire": [
+     {
+      "side": "suffix",
+      "text": "Recover (1-2)% of maximum Mana on Kill"
+     }
+    ],
+    "Emerald": [
+     {
+      "side": "suffix",
+      "text": "Recover (1-2)% of maximum Life on Kill"
+     }
+    ]
+   }
+  },
+  {
+   "name": "Liquid Despair",
+   "mods": {
+    "Ruby": [
+     {
+      "side": "suffix",
+      "text": "Gain 1 Rage on Melee Hit"
+     }
+    ],
+    "Sapphire": [
+     {
+      "side": "suffix",
+      "text": "(5-15)% increased Critical Hit Chance for Spells"
+     }
+    ],
+    "Emerald": [
+     {
+      "side": "suffix",
+      "text": "(6-16)% increased Critical Hit Chance for Attacks"
+     }
+    ]
+   }
+  },
+  {
+   "name": "Concentrated Liquid Fear",
+   "mods": {
+    "Ruby": [
+     {
+      "side": "suffix",
+      "text": "(10-20)% increased Warcry Speed"
+     }
+    ],
+    "Sapphire": [
+     {
+      "side": "suffix",
+      "text": "(10-20)% increased Critical Spell Damage Bonus"
+     }
+    ],
+    "Emerald": [
+     {
+      "side": "suffix",
+      "text": "(10-20)% increased Critical Damage Bonus for Attack Damage"
+     }
+    ]
+   }
+  },
+  {
+   "name": "Concentrated Liquid Suffering",
+   "mods": {
+    "Ruby": [
+     {
+      "side": "prefix",
+      "text": "+(1-2) to Maximum Rage"
+     }
+    ],
+    "Sapphire": [
+     {
+      "side": "prefix",
+      "text": "(4-6)% increased Area of Effect"
+     }
+    ],
+    "Emerald": [
+     {
+      "side": "suffix",
+      "text": "(1-2)% increased Movement Speed"
+     }
+    ]
+   }
+  },
+  {
+   "name": "Concentrated Liquid Isolation",
+   "mods": {
+    "Ruby": [
+     {
+      "side": "suffix",
+      "text": "+1% to Maximum Fire Resistance"
+     }
+    ],
+    "Sapphire": [
+     {
+      "side": "suffix",
+      "text": "+1% to Maximum Cold Resistance"
+     }
+    ],
+    "Emerald": [
+     {
+      "side": "suffix",
+      "text": "+1% to Maximum Lightning Resistance"
+     }
+    ],
+    "Diamond": [
+     {
+      "side": "suffix",
+      "text": "+1% to Maximum Chaos Resistance"
+     }
+    ]
+   }
+  },
+  {
+   "name": "Potent Liquid Melancholy",
+   "mods": {
+    "Ruby": [
+     {
+      "side": "suffix",
+      "text": "Debilitate Enemies on Hit while you have an Emerald and a Sapphire socketed in your tree"
+     }
+    ],
+    "Sapphire": [
+     {
+      "side": "suffix",
+      "text": "Inflict Elemental Exposure on Hit while you have a Ruby and an Emerald socketed in your tree"
+     }
+    ],
+    "Emerald": [
+     {
+      "side": "suffix",
+      "text": "Blind Enemies on Hit while you have a Ruby and a Sapphire socketed in your tree"
+     }
+    ]
+   }
+  },
+  {
+   "name": "Potent Liquid Ferocity",
+   "mods": {
+    "Ruby": [
+     {
+      "side": "prefix",
+      "text": "(40-60)% increased Effect of Suffixes"
+     },
+     {
+      "side": "suffix",
+      "text": "(40-60)% increased Effect of Prefixes"
+     }
+    ],
+    "Sapphire": [
+     {
+      "side": "prefix",
+      "text": "(40-60)% increased Effect of Suffixes"
+     },
+     {
+      "side": "suffix",
+      "text": "(40-60)% increased Effect of Prefixes"
+     }
+    ],
+    "Emerald": [
+     {
+      "side": "prefix",
+      "text": "(40-60)% increased Effect of Suffixes"
+     },
+     {
+      "side": "suffix",
+      "text": "(40-60)% increased Effect of Prefixes"
+     }
+    ],
+    "Diamond": [
+     {
+      "side": "prefix",
+      "text": "(40-60)% increased Effect of Suffixes"
+     },
+     {
+      "side": "suffix",
+      "text": "(40-60)% increased Effect of Prefixes"
+     }
+    ]
+   }
+  },
+  {
+   "name": "Potent Liquid Contempt",
+   "mods": {
+    "Ruby": [
+     {
+      "side": "prefix",
+      "text": "+1 Suffix Modifier allowed"
+     },
+     {
+      "side": "suffix",
+      "text": "+1 Prefix Modifier allowed"
+     }
+    ],
+    "Sapphire": [
+     {
+      "side": "prefix",
+      "text": "+1 Suffix Modifier allowed"
+     },
+     {
+      "side": "suffix",
+      "text": "+1 Prefix Modifier allowed"
+     }
+    ],
+    "Emerald": [
+     {
+      "side": "prefix",
+      "text": "+1 Suffix Modifier allowed"
+     },
+     {
+      "side": "suffix",
+      "text": "+1 Prefix Modifier allowed"
+     }
+    ],
+    "Diamond": [
+     {
+      "side": "prefix",
+      "text": "+1 Suffix Modifier allowed"
+     },
+     {
+      "side": "suffix",
+      "text": "+1 Prefix Modifier allowed"
+     }
+    ]
+   }
+  }
+ ],
+ "timeLost": [
+  {
+   "name": "Ancient Diluted Liquid Ire",
+   "mods": {
+    "Ruby": [
+     {
+      "side": "prefix",
+      "text": "Small Passive Skills in Radius also grant (2-3)% increased Armour"
+     }
+    ],
+    "Sapphire": [
+     {
+      "side": "prefix",
+      "text": "Small Passive Skills in Radius also grant (2-3)% increased maximum Energy Shield"
+     }
+    ],
+    "Emerald": [
+     {
+      "side": "prefix",
+      "text": "Small Passive Skills in Radius also grant (2-3)% increased Evasion Rating"
+     }
+    ]
+   }
+  },
+  {
+   "name": "Ancient Diluted Liquid Guilt",
+   "mods": {
+    "Ruby": [
+     {
+      "side": "prefix",
+      "text": "Small Passive Skills in Radius also grant (1-2)% increased Fire Damage"
+     }
+    ],
+    "Sapphire": [
+     {
+      "side": "prefix",
+      "text": "Small Passive Skills in Radius also grant (1-2)% increased Cold Damage"
+     }
+    ],
+    "Emerald": [
+     {
+      "side": "prefix",
+      "text": "Small Passive Skills in Radius also grant (1-2)% increased Lightning Damage"
+     }
+    ]
+   }
+  },
+  {
+   "name": "Ancient Diluted Liquid Greed",
+   "mods": {
+    "Ruby": [
+     {
+      "side": "prefix",
+      "text": "Small Passive Skills in Radius also grant (1-2)% increased Global Physical Damage"
+     }
+    ],
+    "Sapphire": [
+     {
+      "side": "prefix",
+      "text": "Small Passive Skills in Radius also grant (1-2)% increased Chaos Damage"
+     }
+    ],
+    "Emerald": [
+     {
+      "side": "prefix",
+      "text": "Small Passive Skills in Radius also grant (1-2)% increased Elemental Damage"
+     }
+    ]
+   }
+  },
+  {
+   "name": "Ancient Liquid Paranoia",
+   "mods": {
+    "Ruby": [
+     {
+      "side": "prefix",
+      "text": "Small Passive Skills in Radius also grant (1-2)% increased Attack Damage"
+     }
+    ],
+    "Sapphire": [
+     {
+      "side": "suffix",
+      "text": "Notable Passive Skills in Radius also grant (1-2)% increased Cast Speed"
+     }
+    ],
+    "Emerald": [
+     {
+      "side": "suffix",
+      "text": "Notable Passive Skills in Radius also grant (1-2)% increased Attack Speed"
+     }
+    ]
+   }
+  },
+  {
+   "name": "Ancient Liquid Envy",
+   "mods": {
+    "Ruby": [
+     {
+      "side": "suffix",
+      "text": "Notable Passive Skills in Radius also grant (2-3)% of Skill Mana Costs Converted to Life Costs"
+     }
+    ],
+    "Sapphire": [
+     {
+      "side": "prefix",
+      "text": "Small Passive Skills in Radius also grant (1-2)% increased Spell Damage"
+     }
+    ],
+    "Emerald": [
+     {
+      "side": "suffix",
+      "text": "Notable Passive Skills in Radius also grant (1-3)% increased Cooldown Recovery Rate"
+     }
+    ]
+   }
+  },
+  {
+   "name": "Ancient Liquid Disgust",
+   "mods": {
+    "Ruby": [
+     {
+      "side": "suffix",
+      "text": "Notable Passive Skills in Radius also grant (3-5)% increased Life Regeneration rate"
+     }
+    ],
+    "Sapphire": [
+     {
+      "side": "suffix",
+      "text": "Notable Passive Skills in Radius also grant Recover 1% of maximum Mana on Kill"
+     }
+    ],
+    "Emerald": [
+     {
+      "side": "suffix",
+      "text": "Notable Passive Skills in Radius also grant Recover 1% of maximum Life on Kill"
+     }
+    ]
+   }
+  },
+  {
+   "name": "Ancient Liquid Despair",
+   "mods": {
+    "Ruby": [
+     {
+      "side": "suffix",
+      "text": "Notable Passive Skills in Radius also grant Gain 1 Rage on Melee Hit"
+     }
+    ],
+    "Sapphire": [
+     {
+      "side": "suffix",
+      "text": "Notable Passive Skills in Radius also grant (3-7)% increased Critical Hit Chance for Spells"
+     }
+    ],
+    "Emerald": [
+     {
+      "side": "suffix",
+      "text": "Notable Passive Skills in Radius also grant (3-7)% increased Critical Hit Chance for Attacks"
+     }
+    ]
+   }
+  },
+  {
+   "name": "Ancient Concentrated Liquid Fear",
+   "mods": {
+    "Ruby": [
+     {
+      "side": "suffix",
+      "text": "Small Passive Skills in Radius also grant (2-3)% increased Warcry Speed"
+     }
+    ],
+    "Sapphire": [
+     {
+      "side": "suffix",
+      "text": "Notable Passive Skills in Radius also grant (5-10)% increased Critical Spell Damage Bonus"
+     }
+    ],
+    "Emerald": [
+     {
+      "side": "suffix",
+      "text": "Notable Passive Skills in Radius also grant (5-10)% increased Critical Damage Bonus for Attack Damage"
+     }
+    ]
+   }
+  },
+  {
+   "name": "Ancient Concentrated Liquid Suffering",
+   "mods": {
+    "Ruby": [
+     {
+      "side": "prefix",
+      "text": "Notable Passive Skills in Radius also grant +1 to Maximum Rage"
+     }
+    ],
+    "Sapphire": [
+     {
+      "side": "prefix",
+      "text": "Notable Passive Skills in Radius also grant (2-3)% increased Area of Effect"
+     }
+    ],
+    "Emerald": [
+     {
+      "side": "suffix",
+      "text": "Notable Passive Skills in Radius also grant 1% increased Movement Speed"
+     }
+    ]
+   }
+  },
+  {
+   "name": "Ancient Concentrated Liquid Isolation",
+   "mods": {
+    "Ruby": [
+     {
+      "side": "prefix",
+      "text": "Increases and Reductions to Cold and Lightning Damage in Radius are transformed to apply to Fire Damage"
+     }
+    ],
+    "Sapphire": [
+     {
+      "side": "prefix",
+      "text": "Increases and Reductions to Fire and Lightning Damage in Radius are transformed to apply to Cold Damage"
+     }
+    ],
+    "Emerald": [
+     {
+      "side": "prefix",
+      "text": "Increases and Reductions to Cold and Fire Damage in Radius are transformed to apply to Lightning Damage"
+     }
+    ]
+   }
+  },
+  {
+   "name": "Ancient Potent Liquid Melancholy",
+   "mods": {
+    "Ruby": [
+     {
+      "side": "prefix",
+      "text": "Upgrades Radius to Very Large"
+     }
+    ],
+    "Sapphire": [
+     {
+      "side": "prefix",
+      "text": "Upgrades Radius to Very Large"
+     }
+    ],
+    "Emerald": [
+     {
+      "side": "prefix",
+      "text": "Upgrades Radius to Very Large"
+     }
+    ],
+    "Diamond": [
+     {
+      "side": "prefix",
+      "text": "Upgrades Radius to Very Large"
+     }
+    ]
+   }
+  },
+  {
+   "name": "Ancient Potent Liquid Ferocity",
+   "mods": {
+    "Ruby": [
+     {
+      "side": "suffix",
+      "text": "Notable Passive Skills in Radius also grant +(5-7)% to Fire Resistance"
+     }
+    ],
+    "Sapphire": [
+     {
+      "side": "suffix",
+      "text": "Notable Passive Skills in Radius also grant +(5-7)% to Cold Resistance"
+     }
+    ],
+    "Emerald": [
+     {
+      "side": "suffix",
+      "text": "Notable Passive Skills in Radius also grant +(5-7)% to Lightning Resistance"
+     }
+    ],
+    "Diamond": [
+     {
+      "side": "suffix",
+      "text": "Notable Passive Skills in Radius also grant +(4-5)% to Chaos Resistance"
+     }
+    ]
+   }
+  },
+  {
+   "name": "Ancient Potent Liquid Contempt",
+   "mods": {
+    "Ruby": [
+     {
+      "side": "prefix",
+      "text": "+1 Suffix Modifier allowed"
+     },
+     {
+      "side": "suffix",
+      "text": "+1 Prefix Modifier allowed"
+     }
+    ],
+    "Sapphire": [
+     {
+      "side": "prefix",
+      "text": "+1 Suffix Modifier allowed"
+     },
+     {
+      "side": "suffix",
+      "text": "+1 Prefix Modifier allowed"
+     }
+    ],
+    "Emerald": [
+     {
+      "side": "prefix",
+      "text": "+1 Suffix Modifier allowed"
+     },
+     {
+      "side": "suffix",
+      "text": "+1 Prefix Modifier allowed"
+     }
+    ],
+    "Diamond": [
+     {
+      "side": "prefix",
+      "text": "+1 Suffix Modifier allowed"
+     },
+     {
+      "side": "suffix",
+      "text": "+1 Prefix Modifier allowed"
+     }
+    ]
+   }
+  }
+ ]
+}
