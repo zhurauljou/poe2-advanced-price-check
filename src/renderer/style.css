@@ -622,12 +622,12 @@ body.wide .steps-toggle { display: none; }
 .profit-row small { color: var(--muted); }
 .profit-row .rec { margin-left: 6px; font-size: 12px; color: var(--good); border: 1px solid var(--good); border-radius: 3px; padding: 0 4px; }
 .cm.diff i, .cmp-legend .diff { color: var(--warn); }
-.ps-how .cur, .ps-seq .cur { display: inline-block; padding: 0 5px; margin: 1px 0; border-radius: 3px; border: 1px solid; font-size: 13.5px; line-height: 1.5; }
-.ps-how .cur.orb, .ps-seq .cur.orb { color: #e8c674; border-color: rgba(232, 198, 116, .45); background: rgba(232, 198, 116, .08); }
-.ps-how .cur.omen, .ps-seq .cur.omen { color: #c9a0ff; border-color: rgba(201, 160, 255, .45); background: rgba(201, 160, 255, .08); }
-.ps-how .cur.bone, .ps-seq .cur.bone { color: #ff9b8a; border-color: rgba(255, 155, 138, .45); background: rgba(255, 155, 138, .08); }
-.ps-how .cur.essence, .ps-seq .cur.essence { color: #7fd8d0; border-color: rgba(127, 216, 208, .45); background: rgba(127, 216, 208, .08); }
-.ps-how .plus, .ps-seq .plus { margin: 0 3px; color: var(--muted); }
+.ps-how .cur, .ps-seq .cur, .craft-how .cur { display: inline-block; padding: 0 5px; margin: 1px 0; border-radius: 3px; border: 1px solid; font-size: 13.5px; line-height: 1.5; }
+.ps-how .cur.orb, .ps-seq .cur.orb, .craft-how .cur.orb { color: #e8c674; border-color: rgba(232, 198, 116, .45); background: rgba(232, 198, 116, .08); }
+.ps-how .cur.omen, .ps-seq .cur.omen, .craft-how .cur.omen { color: #c9a0ff; border-color: rgba(201, 160, 255, .45); background: rgba(201, 160, 255, .08); }
+.ps-how .cur.bone, .ps-seq .cur.bone, .craft-how .cur.bone { color: #ff9b8a; border-color: rgba(255, 155, 138, .45); background: rgba(255, 155, 138, .08); }
+.ps-how .cur.essence, .ps-seq .cur.essence, .craft-how .cur.essence { color: #7fd8d0; border-color: rgba(127, 216, 208, .45); background: rgba(127, 216, 208, .08); }
+.ps-how .plus, .ps-seq .plus, .craft-how .plus { margin: 0 3px; color: var(--muted); }
 .range-in { display: inline-flex; gap: 3px; flex-shrink: 0; }
 .mod .range-in input.max { width: 44px; }
 .mod .range-in input.max.empty { opacity: .45; }
@@ -718,18 +718,31 @@ footer > span:first-child { min-width: 0; overflow: hidden; text-overflow: ellip
 .lot.st-mirrored, .lot.st-unidentified { box-shadow: inset 3px 0 var(--muted); }
 /* Craft candidates — a table: mod | wanted by builds | chance per attempt | price with it */
 .crow { display: grid; grid-template-columns: 1fr 66px 70px 76px; column-gap: 8px; align-items: center; padding: 4px 6px; }
-.crow .bname { white-space: normal; }
+.crow .bname { white-space: normal; color: var(--g-mod); font-weight: 700; } /* mods in the mod colour, as in the plan */
+.crow .bname .craft-tier { margin-left: 4px; font-weight: 400; font-size: 12.5px; color: var(--muted); }
+/* Rows separated by the same dots as the plan's profit rows */
+.clist .crow:not(.chead) { background: radial-gradient(circle, rgba(218, 193, 142, .25) 1px, transparent 1.4px) left bottom / 5px 2px repeat-x; padding: 5px 6px; }
+.clist .crow:not(.chead):last-of-type { background: none; }
+/* "All methods" — each side / method group is a card like the plan steps; methods as currency chips */
+.more-ways .craft-sec { margin-top: 8px; padding: 9px 10px 8px; border-radius: 3px; background: rgba(241, 228, 194, .045); }
+.more-ways .craft-sec > .k { font-size: 15px; }
+.cfree { margin-left: 6px; font-weight: 400; font-size: 13px; color: var(--muted); }
+.craft-how.chips { display: block; font-size: 13px; color: var(--note); line-height: 1.9; }
+.craft-how.chips::before { display: none; }
+.ctop { display: flex; justify-content: space-between; align-items: baseline; gap: 8px; margin: 8px 0 2px; }
+.ctop .craft-sub { margin: 0; font-size: 12.5px; }
+.ctop .cprice-all { display: inline; margin: 0; flex: none; font-size: 12.5px; }
 .crow .cdem { text-align: right; color: var(--text); font-variant-numeric: tabular-nums; white-space: nowrap; }
 .crow .cch { text-align: right; }
 .crow .cch .chance { margin-left: 0; font-size: 13px; }
 .crow .cpx { text-align: right; }
 .crow .cpx .cprice, .crow .cpx .cpr { margin-left: 0; }
 .crow .cvia { display: block; margin-top: 1px; font-size: 13px; color: #c9a0e8; }
-.crow.chead { padding: 0 6px 2px; border-bottom: 1px solid var(--line2); font: 700 12px/1.2 var(--body); letter-spacing: .3px;
-              text-transform: uppercase; color: var(--muted); }
+.crow.chead { padding: 0 6px 3px; border-bottom: 1px solid var(--line2); font: 700 11.5px/1.2 var(--body); letter-spacing: .6px;
+              text-transform: uppercase; color: var(--bronze); }
 .crow.chead span:not(:first-child) { text-align: right; }
 /* "Evaluate" buttons — grey until pressed: gold highlights a price already found, not four identical links */
-.crow .cpx .cprice { color: var(--muted); font-weight: 400; }
+.crow .cpx .cprice { color: var(--bronze); font-weight: 400; font-size: 15px; } /* ⌕ icon until priced */
 .crow .cpx .cprice:hover { color: var(--gold); }
 .craft-chance-note { margin-top: 4px; padding: 0 6px; font-size: 13px; color: var(--muted); cursor: help; }
 /* Alternatives to the main plan — quieter headings */

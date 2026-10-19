@@ -870,7 +870,9 @@ function planGoal(mine, candidates, max, want, magic, magicFree = [], itemClass 
   if (magic) {
     const ess = add.find((c) => c.essence);
     essenceMod = ess || null;
-    plan.push(ess ? { act: 'essence', mod: ess.text, currencies: [ess.essence.name], chance: 1 } : { act: 'regal', currencies: ['Regal Orb'], chance: 1 });
+    // Jewels: one tier per mod — Greater / Perfect Regal cut nothing, so the plan prices only the plain Regal Orb.
+    plan.push(ess ? { act: 'essence', mod: ess.text, currencies: [ess.essence.name], chance: 1 }
+      : { act: 'regal', currencies: ['Regal Orb'], chance: 1, oneTier: /Jewel/i.test(itemClass) });
   }
   // First the side with the most in-demand (key) mod — it raises the price the most.
   const top = (side) => Math.max(0, ...add.filter((c) => c.side === side).map((c) => c.pct));
@@ -887,6 +889,19 @@ function planGoal(mine, candidates, max, want, magic, magicFree = [], itemClass 
   for (const a of mine) filled[a.side]++;
   const fixed = { prefix: 0, suffix: 0 }; // fractured — Annulment will not remove them
   for (const a of mine) if (a.tag === 'fractured') fixed[a.side]++;
+  // Orb of Augmentation and Regal Orb each add a random mod: it takes a slot (a jewel has only 2 + 2) and is most likely
+  // not wanted — counted as junk for the removal step. Augmentation: the free magic side; Regal: the side the plan adds
+  // more to (the worst case). An essence adds a wanted mod instead (filled below via essenceMod).
+  const randomSides = [];
+  if (magicFree.length) randomSides.push(['Orb of Augmentation', magicFree[0]]);
+  if (magic && !essenceMod) {
+    const more = (s) => add.filter((c) => c.side === s).length;
+    randomSides.push(['Regal Orb', more('suffix') > more('prefix') ? 'suffix' : 'prefix']);
+  }
+  for (const [orb, side] of randomSides) {
+    filled[side]++;
+    remove.push({ side, text: t('the random modifier from {orb}', { orb }), tag: 'random', level: null });
+  }
   // 1. First remove all the junk ("Annul down to the base"), then add. Desecrated — targeted: Annulment + Omen of Light.
   for (const r of remove.filter((x) => x.tag === 'desecrated')) {
     plan.push({ act: 'remove', side: r.side, mod: r.text, currencies: ['Orb of Annulment', 'Omen of Light'], chance: 1, targeted: true });

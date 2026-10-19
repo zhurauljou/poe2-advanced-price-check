@@ -448,6 +448,11 @@
     Remove: 'Убрать',
     Add: 'Добавить',
     'per attempt': 'за попытку',
+    'the random modifier from {orb}': 'случайный мод от {orb}',
+    '{n} free': ['{n} свободный', '{n} свободных', '{n} свободных'],
+    'Popular here · best tier for this item level': 'Популярные здесь · лучший тир для этого уровня предмета',
+    '— chance unknown (valuable modifier, not enough data) · green — likely, orange — a few tries, red — expensive':
+      '— шанс неизвестен (ценный мод, мало данных) · зелёный — вероятно, оранжевый — несколько попыток, красный — дорого',
     'Market price — click to copy the price note': 'Рыночная цена — клик копирует её для выставления',
     'Most listings are stronger than your item — estimated from the weaker ones; your item is likely worth less than the list suggests':
       'Большинство лотов сильнее вашей вещи — оценка по более слабым; ваша вещь, скорее всего, стоит меньше, чем в списке',

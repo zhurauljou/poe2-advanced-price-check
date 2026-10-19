@@ -19,7 +19,8 @@
       return { ...g, two: true, desAlt: des ? addCost(des, 1).desAlt.map((o) => ({ ...o, mod: des.mod })) : [] };
     }
     if (s.act === 'regal') {
-      const opts = M.tiers('regal').filter(([n]) => p(n) != null).map(([n, lv]) => ({ orb: n, level: lv, cost: p(n) }));
+      // oneTier (jewels): only the plain Regal Orb — Greater / Perfect cut nothing there.
+      const opts = M.tiers('regal').slice(0, s.oneTier ? 1 : undefined).filter(([n]) => p(n) != null).map(([n, lv]) => ({ orb: n, level: lv, cost: p(n) }));
       // Greater / Perfect cut off the random mod's low tiers; if they cost next to nothing (≤ 0.1 div or ≤ 3× the regular) — best by default.
       const cheapest = opts[0] ? opts[0].cost : 0;
       const pick = [...opts].reverse().find((o) => o.cost <= Math.max(0.1, cheapest * 3)) || opts[0] || { orb: 'Regal Orb', cost: p('Regal Orb') };

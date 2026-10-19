@@ -31,12 +31,13 @@ const demTitle = (c) => (c.pctParts && c.pctParts.length > 1 ? c.pctParts.map(([
 // Craft candidates as a table with labeled columns: mod (tier, range; how to get it on the line below) | how many
 // builds use it | chance per Exalted attempt | item price with it. Previously one unlabeled line held demand (large,
 // on the right, with a background bar), chance and essence, so demand was easy to mistake for chance.
-function craftRows(list) {
-  const head = `<div class="crow chead"><span>${esc(t('Modifier'))}</span><span>${esc(t('builds'))}</span><span title="${esc(t('Chance per try: Exalted Orb + omen of its side'))}">${esc(t('chance'))}</span><span>${esc(t('price with it'))}</span></div>`;
+// sub — the caption above the table ("Popular prefixes…"); it shares a line with "Price all and sort".
+function craftRows(list, sub = '') {
+  const head = `<div class="crow chead"><span>${esc(t('Modifier'))}</span><span>${esc(t('builds'))}</span><span title="${esc(`${t('Chance per try: Exalted Orb + omen of its side')}\n${t('— chance unknown (valuable modifier, not enough data) · green — likely, orange — a few tries, red — expensive')}`)}">${esc(t('chance'))}</span><span>${esc(t('price'))}</span></div>`;
   const rows = head + list.map((c) => {
     const key = String(craftCands.size);
     craftCands.set(key, c);
-    const btn = c.stats ? `<button class="link cprice" data-ck="${key}" title="${t('Search for your item with this modifier added (lowest roll of the tier)')}">${t('estimate')}</button>` : '';
+    const btn = c.stats ? `<button class="link cprice" data-ck="${key}" title="${t('Search for your item with this modifier added (lowest roll of the tier)')}">${PRICE_ICON}</button>` : '';
     // A regular essence turns a magic item rare; this path doesn't work on a rare.
     const via = c.fromNormal ? `<span class="cvia" title="${esc(t('Guides: when the desecrated modifier is revealed, normal modifiers of the pool are offered too — not verified in game'))}">${esc(t('normal modifier — can be offered on reveal'))}</span>`
       : c.essence && state.item.rarity === 'Magic' ? `<span class="cvia" title="${esc(t('{essence} makes a magic item rare with this modifier: {tiers}', { essence: c.essence.name, tiers: c.essence.tiers.join(' · ') }))}">${esc(t('guaranteed: {how}', { how: c.essence.name }))}</span>` : '';
@@ -44,7 +45,7 @@ function craftRows(list) {
     <div class="brow crow" data-row="${key}">
       <span class="bname">${esc(c.text)} ${c.tiers > 1 ? `<span class="craft-tier" title="${esc(t('Tier {n} of {m} — the best one this item level allows', { n: c.tier, m: c.tiers }))}">T${c.tier}${c.range ? ` · ${esc(c.range)}` : ''}</span>` : c.range ? `<span class="craft-tier" title="${esc(t('One tier — only Divine Orb improves the roll'))}">${esc(c.range)}</span>` : ''}${via}</span>
       <span class="cdem" title="${esc(demTitle(c) || t('Share of builds that wear this modifier on this item class (poe.ninja)'))}">${hot(demPct(c))}${fmt(demPct(c))}%</span>
-      <span class="cch">${chanceTag(c.chance, c.chanceUnknown)}</span>
+      <span class="cch">${chanceTag(c.chance, c.chanceUnknown, true)}</span>
       <span class="cpx">${btn}</span></div>`;
   }).join('');
   // "Price all": one short search per row, then the list sorted by price gain, best one marked.
@@ -52,7 +53,25 @@ function craftRows(list) {
   // Where the odds come from: one line under the first table with them (details in the tooltip).
   let note = '';
   if (chanceNote && list.some((c) => c.chance != null)) { note = chanceNote; chanceNote = ''; }
-  return `<div class="clist">${priceable > 1 ? `<button class="link cprice-all" data-priceall title="${esc(t('One trade search per row, then the list is sorted by how much each modifier adds to the price'))}">⇅ ${esc(t('Price all and sort'))}</button>` : ''}${rows}${note}</div>`;
+  const all = priceable > 1 ? `<button class="link cprice-all" data-priceall title="${esc(t('One trade search per row, then the list is sorted by how much each modifier adds to the price'))}">⇅ ${esc(t('Price all and sort'))}</button>` : '';
+  return `<div class="clist">${sub || all ? `<div class="ctop"><span class="craft-sub">${esc(sub)}</span>${all}</div>` : ''}${rows}${note}</div>`;
+}
+const PRICE_ICON = '⌕'; // "price with it" per row: an icon instead of a repeated word; the price replaces it
+
+// Method lines of the "All methods" cards: currency names become the same chips as in the plan steps
+// ("Greater / Perfect Exalted Orb" is spelled out into two chips), " + " becomes the chip separator, the rest stays text.
+// A name glued to more letters ("Exalted Orbs") is left as text — a chip must not cut a word.
+const CUR_RE = /((?:Omen of (?:the )?[A-Z][a-z']+(?: [A-Z][a-z']+)*|(?:Greater |Perfect )?(?:Exalted|Chaos|Regal|Divine|Vaal|Fracturing|Artificer's|Transmutation|Augmentation) Orb|Orb of (?:Annulment|Transmutation|Augmentation|Alchemy|Chance)|(?:Lesser |Greater |Perfect )?Essence of (?:the )?[A-Z][a-z]+|(?:Gnawed|Preserved|Ancient|Altered) (?:Jawbone|Rib|Collarbone|Cranium|Vertebrae)|[A-Z][a-z']+ Alloy|Hinekora's Lock)(?![\w']))/;
+function chipify(text) {
+  // Shorthand pairs are spelled out so each name becomes a whole chip.
+  const s = String(text).replace(/Greater \/ Perfect ([A-Z][a-z]+ Orb)/g, 'Greater $1 / Perfect $1')
+    .replace(/Omen of (Sinistral|Dextral) \/ (Sinistral|Dextral) ([A-Z][a-z]+)/g, 'Omen of $1 $3 / Omen of $2 $3')
+    .replace(/Omen of the ([A-Z][a-z]+)((?: \/ the [A-Z][a-z]+)+)/g, (m, first, rest) => `Omen of the ${first}${rest.replace(/ \/ the /g, ' / Omen of the ')}`);
+  const parts = s.split(CUR_RE);
+  if (parts.length < 2) return { html: esc(s), chips: false };
+  const html = parts.map((p, i) => (i % 2 ? `<span class="cur ${curKind(p)}">${esc(p)}</span>`
+    : esc(p).replace(/^\s*\+\s*$/, '<span class="plus">+</span>').replace(/^\s*\/\s*$/, '<span class="plus">/</span>'))).join('');
+  return { html, chips: true };
 }
 
 async function priceAll(btn) {
@@ -115,7 +134,7 @@ async function priceCraft(b) {
   } catch (e) {
     if (state !== mine) return;
     b.disabled = false;
-    b.textContent = b.closest('.crow') ? t('estimate') : t('price?');
+    b.textContent = b.closest('.crow') ? PRICE_ICON : t('price?');
     setStatus(errText(e), true);
     if (isLimit(e)) return 'limit';
   }
@@ -150,8 +169,9 @@ function withMods(f, adds) {
 
 // Approximate chance of a mod with Exalted plus the omen for its side: "common / medium / rare" label and "≈ 1 in N".
 // Chance per attempt as "1 in 6", colored by rarity (common / medium / rare); unknown: "—" with an explanation.
-function chanceTag(p, unknown) {
-  if (unknown) return ` <span class="chance unknown" title="${esc(t('Valuable modifiers cannot be estimated from trade listings — items with them are priced and listed differently'))}">${esc(t('unknown'))}</span>`;
+// dash — in the candidates table "unknown" is a muted dash (explained in the column header tooltip).
+function chanceTag(p, unknown, dash = false) {
+  if (unknown) return ` <span class="chance unknown" title="${esc(t('Valuable modifiers cannot be estimated from trade listings — items with them are priced and listed differently'))}">${dash ? '—' : esc(t('unknown'))}</span>`;
   if (p == null) return '';
   const cls = p >= 0.12 ? 'common' : p >= 0.04 ? 'uncommon' : 'rare';
   const n = Math.max(1, Math.round(1 / p));
@@ -288,7 +308,7 @@ function planHtml(plan) {
     if (!side && c.cost != null) side = { cost: c.cost, sub: s.mods ? t('≈ {n} attempts', { n: fmt(Math.round(c.tries * 10) / 10) }) : '' };
     const notes = [];
     const key = []; // the step can't be done without these, shown up front; the rest goes under "details"
-    if (c.two) notes.push(t('one Exalted Orb adds both modifiers'));
+    if (c.two) key.push(t('one Exalted Orb adds both modifiers')); // visible: otherwise two "Add" steps look like four Exalts
     if (s.mods) notes.push(c.hits > 0.05
       ? t('on average ≈{n} needed modifiers get hit too — re-adding them is counted in the price', { n: fmt(Math.round(c.hits * 10) / 10) })
       : t('only unwanted modifiers can be hit'));
@@ -698,7 +718,8 @@ function renderCraft(r) {
   if (r.note) { $('craft').innerHTML = head + voidState('◇', t('No craft tips'), esc(r.note)); return; }
   if (r.unique) { renderUniqueCraft(r, head); return; }
   if (r.normal) { renderNormalCraft(r, head); return; }
-  const how = (list) => list.map((h) => `<div class="craft-how">${esc(h)}</div>`).join('');
+  // Method lines: currency names as chips (no bullet then); plain advice keeps its ◆.
+  const how = (list) => list.map((h) => { const c = chipify(h); return `<div class="craft-how${c.chips ? ' chips' : ''}">${c.html}</div>`; }).join('');
   // On top, brief for beginners: slots on the item, "sell or craft", step-by-step plan with costs.
   // Everything else (all methods, mod options) is collapsed below.
   const top = [slotsHtml(r) + (state.item.rarity === 'Magic' ? ilvlHintHtml(r.ilvlHint) : '')];
@@ -714,16 +735,16 @@ function renderCraft(r) {
   const parts = [];
   for (const s of r.sections) {
     if (s.kind === 'open') {
-      parts.push(`<div class="craft-sec"><div class="k">${t(`{n} free ${s.side}es`, { n: s.count })}</div>${how(s.how)}
-        ${s.candidates.length ? `<div class="craft-sub">${t(`Popular ${s.side}es that can roll here (best tier for this item level):`)}</div>${craftRows(s.candidates)}`
+      parts.push(`<div class="craft-sec"><div class="k">${t(s.side === 'prefix' ? 'Prefixes' : 'Suffixes')} <span class="cfree">${esc(t('{n} free', { n: s.count }))}</span></div>${how(s.how)}
+        ${s.candidates.length ? craftRows(s.candidates, t('Popular here · best tier for this item level'))
           : `<div class="craft-sub">${t('No popular modifiers left for this side.')}</div>`}</div>`);
     } else if (s.kind === 'replace') {
       const w = s.weak;
       parts.push(`<div class="craft-sec"><div class="k">${t(`Full — replace the weakest ${w.side}`)}</div>
         <div class="craft-weak">${esc(w.text)} <span class="craft-tier">${w.tier ? `T${w.tier}` : ''}${w.pct ? ` · ${t('{pct}% builds', { pct: fmt(w.pct) })}` : ''}</span></div>${how(s.how)}
-        ${s.candidates.length ? `<div class="craft-sub">${t('Could become:')}</div>${craftRows(s.candidates)}` : ''}</div>`);
+        ${s.candidates.length ? craftRows(s.candidates, t('Could become:')) : ''}</div>`);
     } else if (s.kind === 'desecrate') {
-      parts.push(`<div class="craft-sec"><div class="k">${t('Desecration')}</div>${how(s.how)}<div class="craft-sub">${t('Popular desecrated modifiers for this base:')}</div>${craftRows(s.candidates)}</div>`);
+      parts.push(`<div class="craft-sec"><div class="k">${t('Desecration')}</div>${how(s.how)}${craftRows(s.candidates, t('Popular desecrated modifiers for this base:'))}</div>`);
     } else if (s.kind === 'upgrade') {
       parts.push(`<div class="craft-sec"><div class="k">${t('Make it rare first')}</div>${how(s.how)}</div>`);
     } else if (s.kind === 'perfect' && s.blocked) {
@@ -738,7 +759,7 @@ function renderCraft(r) {
     } else if (s.kind === 'emotions') {
       parts.push(emotionsHtml(s, how));
     } else if (s.kind === 'magicfill') {
-      parts.push(`<div class="craft-sec"><div class="k">${t('While it is magic')}</div>${how(s.how)}${s.candidates.length ? `<div class="craft-sub">${t('Popular modifiers for the free slot:')}</div>${craftRows(s.candidates)}` : ''}</div>`);
+      parts.push(`<div class="craft-sec"><div class="k">${t('While it is magic')}</div>${how(s.how)}${s.candidates.length ? craftRows(s.candidates, t('Popular modifiers for the free slot:')) : ''}</div>`);
     } else if (s.kind === 'risky') {
       const pr = (s.prices || []).filter((n) => craftPrices[n] != null).map((n) => `${n} ≈ ${money(craftPrices[n])}`).join(' · ');
       parts.push(`<div class="craft-sec alt"><div class="k">${t('Risky')}</div>${how(s.how)}${pr ? `<div class="craft-sub">${esc(t('Prices'))} · ${esc(pr)}</div>` : ''}</div>`);

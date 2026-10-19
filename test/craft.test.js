@@ -326,6 +326,27 @@ test('jewels: emotions — variants by base colour (Ancient — Time-Lost only),
   assert.ok(basic.sections.find((s) => s.kind === 'emotions').blocked, 'a crafted mod is already present');
 });
 
+test('magic jewel: Augmentation and Regal add random mods — the plan counts their slots and never exceeds 2 + 2', { skip }, async () => {
+  await init();
+  const demand = [{ name: '#% increased Critical Hit Chance for Attacks', pct: 70 }, { name: '#% increased Critical Damage Bonus for Attack Damage', pct: 65 },
+    { name: '#% increased Projectile Damage', pct: 50 }, { name: '#% increased Attack Damage', pct: 45 }];
+  const it = parseItem(read('../magic-jewel-one-mod.txt'));
+  it.baseType = bases.filter((n) => it.name.includes(n)).sort((a, b) => b.length - a.length)[0];
+  const r = await craft.advise(it, demand, cached);
+  assert.ok(r.goal, r.note || 'plan not built');
+  assert.ok(r.goal.remove.some((x) => x.tag === 'random'), 'the random mod is removed as junk');
+  const steps = PlanCost.create(() => ({ prices, goalValue: null, est: null })).expandPlan(r.goal.plan);
+  let mods = 1, most = 1; // the fixture has one mod
+  for (const s of steps) {
+    if (s.act === 'augment' || s.act === 'regal' || s.act === 'essence') mods += 1;
+    else if (s.act === 'remove') mods -= s.mods ? s.mods.length : 1;
+    else if (s.act === 'add') mods += 1;
+    else if (s.act === 'add2') mods += 2;
+    most = Math.max(most, mods);
+  }
+  assert.ok(most <= 4, `slots exceeded: ${most} (${steps.map((s) => s.act).join(', ')})`);
+});
+
 test('jewel: Ferocity (Effect of Prefixes / Suffixes) — always in the search and key', { skip }, async () => {
   const f = await filters('rare-jewel-full.txt');
   const fer = f.mods.find((m) => /Effect of Prefixes/.test(m.text));

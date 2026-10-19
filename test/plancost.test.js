@@ -86,6 +86,10 @@ test('no method converges (a miss removes a wanted mod more often) — the step 
 test('Regal: Greater / Perfect by default only if dirt cheap (≤ 0.1 div or ≤ 3× the regular)', () => {
   const c = planner().stepCost({ act: 'regal' });
   assert.deepEqual(c.currencies, ['Greater Regal Orb']); // 0.02 ≤ 0.1, but Perfect (0.5) is not
+  // Jewels (one tier per mod): only the plain Regal Orb, even when Greater is dirt cheap.
+  const j = planner().stepCost({ act: 'regal', oneTier: true });
+  assert.deepEqual(j.currencies, ['Regal Orb']);
+  assert.deepEqual(j.regal, []);
 });
 
 test('a pair via Omen of Greater Exaltation expands into two steps if separately cheaper', () => {
