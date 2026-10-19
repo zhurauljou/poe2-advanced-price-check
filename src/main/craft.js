@@ -1,13 +1,13 @@
-// Советы по крафту: что и чем можно добавить или заменить, чтобы вещь стала дороже.
-// Пул модов — RePoE (выгрузка из файлов игры): какие моды и тиры вообще могут встать на эту базу.
-// Весов выпадения в файлах PoE 2 нет (только «может / не может»), поэтому вероятностей не считаем —
-// показываем, какие ВОСТРЕБОВАННЫЕ (по poe.ninja) моды могут встать и каким способом.
+// Craft tips: what can be added or replaced, and with what, to make the item worth more.
+// Mod pool comes from RePoE (a dump of the game files): which mods and tiers can roll on this base at all.
+// PoE 2 game files have no spawn weights (only "can / cannot"), so we do not compute probabilities —
+// we show which IN-DEMAND (per poe.ninja) mods can roll and by which method.
 
 const fsW = require('fs');
 const pathW = require('path');
 const craftData = require('./craft-data');
 const { load, templates, tradeStats, weights, guaranteedFor, corruptedFor, emotionsFor, canRoll } = craftData;
-// Шанс словами: «1 из 3»; лучше, чем 1 из 2, — процентом («~60%»): «1 из 1.7» читается плохо.
+// Odds in words: "1 in 3"; better than 1 in 2 — as a percentage ("~60%"): "1 in 1.7" reads badly.
 const oddsOf = (p) => (p >= 0.5 ? `~${Math.round(Math.min(1, p) * 100)}%` : t('1 in {n}', { n: Math.round(10 / p) / 10 }));
 
 const { essenceFor, perfectFor } = require('./essences');
@@ -19,16 +19,16 @@ const { t } = require('../shared/i18n');
 
 const ELEMENTS = ['Fire', 'Cold', 'Lightning', 'Chaos'];
 const ALDUR_RUNE = { Fire: 'Passion of Aldur', Cold: 'Breath of Aldur', Lightning: 'Ire of Aldur', Chaos: 'Betrayal of Aldur' };
-// Мод «нужен» (востребован), если его носят от стольких % билдов класса (poe.ninja): ниже — не советуем, не ценим.
+// A mod is "wanted" (in demand) if at least this % of the class's builds use it (poe.ninja): below that we neither suggest nor value it.
 const WANT_PCT = 15;
 const classes = require('../shared/item-classes');
 const ALDUR_WEAPONS = new Set(classes.ALDUR_WEAPONS);
 
-// Лич-омены: гарантированный мод лича при Desecrate (только оружие и бижутерия; моды личей — уровня 65).
+// Lich omens: a guaranteed lich mod on Desecrate (weapons and jewellery only; lich mods are level 65).
 const LICH_OMEN = { ulaman: 'Omen of the Sovereign', amanamu: 'Omen of the Liege', kurgal: 'Omen of the Blackblooded' };
 const LICH_CLASSES = ['weapon', 'wand', 'staff', 'ring', 'amulet', 'belt'];
 
-// Руны влияния (Runes of Aldur): навсегда открывают вещи пул модов (spawn-тег в RePoE).
+// Influence runes (Runes of Aldur): permanently unlock a mod pool for the item (spawn tag in RePoE).
 const INFLUENCE_RUNES = [
   { rune: "Thrud's Might", name: 'Destruction', tag: 'destruction', on: ['weapon', 'wand', 'staff', 'sceptre'] },
   { rune: "Kolr's Hunt", name: 'Marksman', tag: 'marksman', on: ['gloves'] },
@@ -39,10 +39,10 @@ const INFLUENCE_RUNES = [
 ];
 const INF_TAG = Object.fromEntries(INFLUENCE_RUNES.map((r) => [r.name, r.tag]));
 
-// Порченые эссенции с их модами для класса — [{ name, text }] (для плана: гарантированный мод через crafted-слот).
-// Классы вещей для целей аугментов («Martial Weapon», «Wand or Staff», «Armour», «All Equipment», ["Boots"]…).
+// Corrupted essences with their mods for the class — [{ name, text }] (for the plan: a guaranteed mod via the crafted slot).
+// Item classes for augment targets ("Martial Weapon", "Wand or Staff", "Armour", "All Equipment", ["Boots"]…).
 const AUG_GROUPS = {
-  'all equipment': null, // любой
+  'all equipment': null, // any
   armour: classes.ARMOUR,
   'martial weapon': classes.MARTIAL_WEAPONS,
   'caster weapon': classes.CASTER_WEAPONS,
@@ -58,8 +58,8 @@ function augFits(target, itemClass) {
 }
 
 
-// «Рискованный финал»: порча и освящение (docs/corruption-sanctification.md, data/gamble-currency.json).
-// Шансы — оценки сообщества, GGG их не публикует. Показываем с дисклеймерами.
+// "Risky finish": corruption and sanctification (docs/corruption-sanctification.md, data/gamble-currency.json).
+// Odds are community estimates, GGG does not publish them. Shown with disclaimers.
 let gambleData;
 function gambleFor(item, tags) {
   if (gambleData === undefined) {
@@ -69,7 +69,7 @@ function gambleFor(item, tags) {
   const caster = tags.includes('wand') || tags.includes('staff');
   const how = [t('Irreversible. Odds are community estimates — GGG does not publish them.')];
   if (item.rarity === 'Unique') {
-    // У уников вместо переката — значения модов ×0.78–1.22 от текущих (могут выйти за обычный диапазон).
+    // For uniques, instead of a reroll — mod values ×0.78–1.22 of the current ones (can go beyond the normal range).
     if (tags.includes('jewel') || jewellery) how.push(t('Vaal Orb — ~50% nothing, ~25% corruption enchant, ~25% modifier values ×0.78–1.22 of the current ones (can go beyond the normal range); the item becomes unmodifiable'));
     else how.push(t('Vaal Orb — ~25% each: nothing, corruption enchant, modifier values ×0.78–1.22 of the current ones (can go beyond the normal range), +1 augment socket beyond the limit; the item becomes unmodifiable'));
     how.push(t('Divine to good rolls first: after corruption the values can no longer be rerolled, and ×1.22 of a high roll is worth the most'));
@@ -83,7 +83,7 @@ function gambleFor(item, tags) {
   if (inf && (item.quality || 0) >= 20) how.push(t('{infuser} — up to +10% quality above the maximum (needs 20% quality); may only add the Corrupted tag', { infuser: inf.name }));
   if (item.rarity === 'Rare' && bonesFor(tags, item.ilvl || 100).length) how.push(t('Omen of Putrefaction + a bone: all modifiers become 6 unrevealed ones (3 prefixes + 3 suffixes), each revealed from 3 options, and the item becomes corrupted — a «slot machine» for cheap bases (quivers, armour)'));
   how.push(t('Omen of Corruption (a guaranteed change) is not obtainable this league'));
-  // «(only str_armour bases)» — только для баз с таким тегом; остальные не показываем.
+  // "(only str_armour bases)" — only for bases with that tag; the rest are hidden.
   const enchants = ((gambleData && gambleData.corruptedEnchants && gambleData.corruptedEnchants[item.itemClass]) || [])
     .filter((e) => { const m = e.match(/\(only (\w+) bases\)/); return !m || tags.includes(m[1]); })
     .map((e) => e.replace(/\s*\(only \w+ bases\)/, ''));
@@ -91,13 +91,13 @@ function gambleFor(item, tags) {
 }
 
 
-// Кости для Desecration по слоту (poe2db): Gnawed — только до ilvl 64, Preserved — любые, Ancient — моды от 40 уровня.
-// Cranium (самоцветы) бывает только Preserved.
-// У палочек, посохов и скипетров в тегах нет «weapon», но desecrate на них работает (на скипетре встречаются
-// desecrated-моды, при раскрытии — обычные моды) — кость та же, Jawbone.
+// Bones for Desecration by slot (poe2db): Gnawed — only up to ilvl 64, Preserved — any, Ancient — mods of level 40+.
+// Cranium (jewels) is only Preserved.
+// Wands, staves and sceptres have no "weapon" tag, but desecrate works on them (sceptres do show
+// desecrated mods, which reveal as normal mods) — same bone, Jawbone.
 const BONES = { armour: 'Rib', weapon: 'Jawbone', wand: 'Jawbone', staff: 'Jawbone', sceptre: 'Jawbone', quiver: 'Jawbone', ring: 'Collarbone', amulet: 'Collarbone', belt: 'Collarbone', jewel: 'Cranium' };
 
-// Кости для плана: Gnawed — только ilvl ≤ 64, Preserved — любой, Ancient — моды 40+; Cranium (самоцветы) — только Preserved.
+// Bones for the plan: Gnawed — only ilvl ≤ 64, Preserved — any, Ancient — mods 40+; Cranium (jewels) — only Preserved.
 function bonesFor(tags, ilvl) {
   const bone = Object.entries(BONES).find(([tag]) => tags.includes(tag));
   if (!bone) return [];
@@ -113,7 +113,7 @@ function boneFor(tags, ilvl) {
   return `${ilvl <= 64 ? `Gnawed ${bone[1]} (${t('item level ≤ 64')}) / ` : ''}Preserved ${bone[1]} / Ancient ${bone[1]} (${t('only modifier level 40+')})`;
 }
 
-// Валюта качества по классу вещи.
+// Quality currency by item class.
 function qualityCurrency(tags) {
   if (tags.includes('wand') || tags.includes('staff') || tags.includes('sceptre')) return "Arcanist's Etcher";
   if (tags.includes('weapon')) return "Blacksmith's Whetstone";
@@ -125,15 +125,15 @@ const range = (text) => {
   return m ? `${m[1]}–${m[2]}` : null;
 };
 
-// item — разобранный предмет (item.affixes из расширенного формата), demandMods — [{ name, pct }] с poe.ninja.
+// item — the parsed item (item.affixes from the advanced format), demandMods — [{ name, pct }] from poe.ninja.
 async function advise(item, demandMods, cached) {
   if (!['Rare', 'Magic', 'Unique', 'Normal'].includes(item.rarity)) return { note: t('Craft tips are for rare, magic, unique items and white bases.') };
-  // Скрижали: моды и их пул не как у экипировки (порча с гнёздами, 3 + 3 места) — советы были бы неверными.
+  // Tablets: their mods and pool differ from equipment (corruption with sockets, 3 + 3 slots) — tips would be wrong.
   if (item.itemClass === 'Tablet') return { note: t('No craft tips for tablets yet. The Price tab searches by their modifiers and uses left.') };
   if (item.corrupted || item.mirrored || item.sanctified) {
     return { blocked: item.corrupted ? 'Corrupted' : item.mirrored ? 'Mirrored' : 'Sanctified' };
   }
-  // Уник: моды не меняются — только значения (Divine) и рискованный финал (Vaal). Роллы окно считает по фильтрам.
+  // Unique: mods do not change — only values (Divine) and the risky finish (Vaal). The window computes rolls from filters.
   if (item.rarity === 'Unique') {
     const d = await load(cached);
     const base = d.bases.get(item.baseType);
@@ -146,33 +146,33 @@ async function advise(item, demandMods, cached) {
   const base = d.bases.get(item.baseType);
   if (!base) return { note: t('Unknown base "{base}" in RePoE data.', { base: item.baseType }) };
   const tags = base.tags || [];
-  // Самоцветы: у каждого мода один тир уровня 1 — Greater/Perfect валюта и Whittling бесполезны (docs/jewels-crafting.md).
+  // Jewels: each mod has a single level-1 tier — Greater/Perfect currency and Whittling are useless (docs/jewels-crafting.md).
   const jewel = tags.includes('jewel');
   const ilvl = item.ilvl || 100;
 
-  // Руна влияния в гнезде («Can roll Destruction modifiers») открывает вещи свой пул модов — добавляем его тег.
+  // An influence rune in a socket ("Can roll Destruction modifiers") unlocks its own mod pool for the item — add its tag.
   const hasInf = (item.modLines || []).map((l) => l.text.match(/^Can roll (\w+) modifiers$/)).filter(Boolean).map((m) => INF_TAG[m[1]]).filter(Boolean);
-  // Моды, которые могут встать на эту базу, и наши аффиксы среди них (по имени и стороне).
-  // Мод вещи по аффиксу: название не уникально (у модов личей — «of Kurgal», «Amanamu's» на десятки модов) — при нескольких
-  // совпадениях выбираем по тексту строк; моды эссенций (Essences) в пул выпадения не входят — ищем и среди всех модов.
+  // Mods that can roll on this base, and our affixes among them (by name and side).
+  // Item mod for an affix: the name is not unique (lich mods — "of Kurgal", "Amanamu's" across dozens of mods) — with several
+  // matches we pick by line text; essence mods (Essences) are not in the drop pool — so also search all mods.
   const findMod = (a, pool) => {
     let same = pool.filter((m) => m.name === a.name && m.generation_type === a.side);
     if (!same.length) same = d.pool.filter((m) => m.name === a.name && m.generation_type === a.side && m.domain !== 'desecrated' === (a.tag !== 'desecrated'));
-    // Имя не латиницей — клиент не на английском: ищем по строкам. Английское имя, которого нет в RePoE (устарело), —
-    // мод неизвестен, как и раньше (план его не трогает).
+    // Non-Latin name — the client is not in English: search by lines. An English name missing from RePoE (outdated) —
+    // the mod is unknown, as before (the plan leaves it alone).
     if (!same.length) return /[^\p{ASCII}]/u.test(a.name || '') ? findByLines(a, pool) : null;
     if (same.length > 1 && !(a.lines || []).length) return null;
     if (same.length <= 1 || !(a.lines || []).length) return same[0] || null;
     const lines = new Set((a.lines || []).flatMap((l) => templates(l)));
     return same.find((m) => m.lines.length && m.lines.every((l) => lines.has(l))) || same.find((m) => m.lines.some((l) => lines.has(l))) || null;
   };
-  // Клиент не на английском («Божественный»): строки clientLang уже перевёл, ищем мод по ним.
-  // Семейство — моды стороны с теми же строками; тир — по номеру из заголовка (T1 — самый высокий из тех, что
-  // могут встать на эту базу), без номера — лучший по item level.
+  // Client not in English (e.g. a Russian mod name): clientLang has already translated the lines, find the mod by them.
+  // Family — mods of the side with the same lines; tier — by the number from the header (T1 is the highest of those that
+  // can roll on this base), without a number — the best by item level.
   const findByLines = (a, pool) => {
     const lines = new Set((a.lines || []).flatMap((l) => templates(l)));
     if (!lines.size) return null;
-    // Desecrated на вещи — чаще обычный мод (в RePoE domain item), реже свой (domain desecrated: моды личей и т.п.).
+    // Desecrated on an item is usually a normal mod (domain item in RePoE), less often its own (domain desecrated: lich mods etc.).
     const fits = (m) => m.generation_type === a.side && m.lines.length === lines.size && m.lines.every((l) => lines.has(l));
     let same = pool.filter(fits);
     if (!same.length) same = d.pool.filter(fits);
@@ -183,18 +183,18 @@ async function advise(item, demandMods, cached) {
     if (a.tier && tiers[a.tier - 1]) return tiers[a.tier - 1];
     return tiers.find((m) => m.required_level <= (item.ilvl || 100)) || tiers[tiers.length - 1];
   };
-  // Моды вещи добавляют ей теги (adds_tags): «+# to Level of all Fire Spell Skills» — no_cold_spell_mods и т.п. (на посох
-  // уже не выпадут Cold / Lightning / Chaos Damage), genesis_tree_minion — минионские моды колец. Пул — с учётом этих тегов.
+  // Item mods add tags to it (adds_tags): "+# to Level of all Fire Spell Skills" — no_cold_spell_mods etc. (the staff
+  // will no longer roll Cold / Lightning / Chaos Damage), genesis_tree_minion — minion mods on rings. The pool accounts for these tags.
   const basePool = d.pool.filter((m) => canRoll(m, [...tags, ...hasInf]));
   const addedTags = new Set(item.affixes.flatMap((a) => ((findMod(a, basePool) || {}).adds_tags || [])));
   const onBase = addedTags.size ? d.pool.filter((m) => canRoll(m, [...tags, ...hasInf, ...addedTags])) : basePool;
-  // У модов самоцвета один тир — «T1» у всех, это не признак ценного мода: ключевой на самоцвете только по спросу.
+  // Jewel mods have one tier — "T1" on all of them, not a sign of a valuable mod: on a jewel a mod is key only by demand.
   const mine = item.affixes.map((a) => ({ ...a, tier: jewel ? null : a.tier, mod: findMod(a, onBase) }));
   const present = new Set(mine.flatMap((a) => (a.mod ? a.mod.groups || [] : [])));
 
-  // Сколько мест: у редкой 3+3 (у самоцветов 2+2 — всего 4 мода), у магической 1+1;
-  // «-1 Suffix Modifier allowed» и т.п. — поправка.
-  // Магическую вещь Regal Orb делает редкой — поэтому места считаем как у редкой, а первым шагом советуем Regal.
+  // How many slots: a rare has 3+3 (jewels 2+2 — 4 mods total), a magic item 1+1;
+  // "-1 Suffix Modifier allowed" etc. — an adjustment.
+  // Regal Orb makes a magic item rare — so slots are counted as for a rare, and Regal is suggested as the first step.
   const magic = item.rarity === 'Magic';
   const perSide = tags.includes('jewel') ? 2 : 3;
   const max = { prefix: perSide, suffix: perSide };
@@ -204,17 +204,17 @@ async function advise(item, demandMods, cached) {
   }
   const used = { prefix: mine.filter((a) => a.side === 'prefix').length, suffix: mine.filter((a) => a.side === 'suffix').length };
   const open = { prefix: Math.max(0, max.prefix - used.prefix), suffix: Math.max(0, max.suffix - used.suffix) };
-  // Сторона сверх лимита (после снятия crafted «+1 … Modifier allowed»): Chaos и Annulment её не трогают, а снятый
-  // мод не вернуть. Проверено сообществом в 0.5 (docs/jewels-crafting.md), в 0.5.5 — не проверено.
+  // Side over the limit (after removing the crafted "+1 … Modifier allowed"): Chaos and Annulment do not touch it, and a removed
+  // mod cannot be brought back. Verified by the community in 0.5 (docs/jewels-crafting.md), not verified in 0.5.5.
   const overfull = ['prefix', 'suffix'].filter((s) => used[s] > max[s]);
 
-  // Востребованные моды (≥ 15% билдов), которые могут встать: лучший доступный по ilvl тир.
-  // Ключ мода для сравнения: нижний регистр, без «+» перед числом — как строки модов RePoE (templates); у poe.ninja
-  // и трейда плюс бывает и не бывает («+# maximum stacks of Puppet Master» против «# maximum stacks…»).
+  // In-demand mods (≥ 15% of builds) that can roll: the best tier available at this ilvl.
+  // Mod key for comparison: lowercase, no "+" before the number — like RePoE mod lines (templates); poe.ninja
+  // and trade sometimes have the plus and sometimes not ("+# maximum stacks of Puppet Master" vs "# maximum stacks…").
   const key = (s) => s.toLowerCase().replace(/\+#/g, '#');
   const want = new Map((demandMods || []).filter((r) => r.pct >= WANT_PCT).map((r) => [key(r.name), r.pct]));
-  // Редкое оружие без руны Альдура: стихию модов можно сменить руной (Passion / Ire / Breath / Betrayal) — спрос на
-  // стихийный мод считаем по лучшей стихии (Extra Cold на посохе — как Extra Fire), лучшую стихию — советуем.
+  // Rare weapon without an Aldur rune: the mods' element can be changed with a rune (Passion / Ire / Breath / Betrayal) — demand for an
+  // elemental mod is taken from the best element (Extra Cold on a staff counts as Extra Fire), and the best element is suggested.
   const aldur = item.rarity === 'Rare' && ALDUR_WEAPONS.has(item.itemClass) && !(item.modLines || []).some((l) => /^Forged by the \w+ of Aldur$/.test(l.text));
   const bestElement = {};
   if (aldur) {
@@ -227,10 +227,10 @@ async function advise(item, demandMods, cached) {
       bestElement[key(r.name)] = top;
     }
   }
-  // Строки, которые на вещи уже есть, не делают кандидата востребованным: у гибрида «броня / урон миньонов»
-  // спрос считаем по броне — урон миньонов у вещи уже есть (а при спросе «среди билдов с ним» он был бы 100%).
+  // Lines the item already has do not make a candidate wanted: for an "armour / minion damage" hybrid
+  // demand is counted by armour — the item already has minion damage (and with "among builds using it" demand it would be 100%).
   const own = new Set((item.modLines || []).flatMap((l) => templates(l.text)));
-  // Руна Альдура переведёт стихию — тот же мод в другой стихии на вещи уже «есть» (не кандидат: Fire Spell Skills к Cold).
+  // An Aldur rune converts the element — the same mod in another element is already "present" (not a candidate: Fire Spell Skills to Cold).
   if (aldur) for (const l of [...own]) if (/\b(fire|cold|lightning)\b/.test(l)) for (const e of ELEMENTS) own.add(l.replace(/\b(fire|cold|lightning)\b/g, e.toLowerCase()));
   const candidates = (domain, src = onBase) => {
     const byType = new Map();
@@ -251,7 +251,7 @@ async function advise(item, demandMods, cached) {
     }).filter(Boolean).sort((a, b) => b.pct - a.pct);
   };
 
-  // Ключевой мод со слабым тиром: его носят многие билды, но тир низкий — ценен тир повыше, а не другой мод.
+  // Key mod with a weak tier: many builds use it but the tier is low — a higher tier is valuable, not a different mod.
   const tierUps = mine.filter((a) => a.mod && a.tag !== 'fractured' && a.tier >= 3).map((a) => {
     const pct = Math.max(0, ...a.mod.lines.map((l) => want.get(l) || 0));
     if (pct < KEY_PCT) return null;
@@ -266,10 +266,10 @@ async function advise(item, demandMods, cached) {
   }).filter(Boolean);
 
   const normal = candidates('item');
-  // Что может занять crafted-слот и дать конкретный мод: Perfect- и порченые эссенции, Alloys этого класса.
+  // What can take the crafted slot and give a specific mod: Perfect and corrupted essences, Alloys for this class.
   const craftedSources = [...perfectFor(item.itemClass).map((x) => ({ name: x.name, text: x.mod })), ...corruptedFor(item.itemClass)];
-  // Руна влияния ещё не вставлена: моды её пула, нужные по спросу, — тоже кандидаты, но с условием «сначала руна»
-  // (вставляется навсегда в свободное augment-гнездо). Thrud's Might на оружии → «Explicit Speed Modifier magnitudes» и т.п.
+  // Influence rune not socketed yet: in-demand mods from its pool are candidates too, but with the condition "rune first"
+  // (socketed permanently into a free augment socket). Thrud's Might on a weapon → "Explicit Speed Modifier magnitudes" etc.
   const runes = (item.modLines || []).filter((l) => l.tag === 'rune').length;
   const freeSocket = (item.sockets || 0) > runes;
   for (const r of INFLUENCE_RUNES) {
@@ -280,22 +280,22 @@ async function advise(item, demandMods, cached) {
       normal.push({ ...c, needs: { rune: r.rune, line: `Can roll ${r.name} modifiers`, free: freeSocket } });
     }
   }
-  // Crafted-слотов на вещи: один, плюс руна Astrid's Creativity — «Can have 1 additional Crafted Modifier».
+  // Crafted slots on the item: one, plus the Astrid's Creativity rune — "Can have 1 additional Crafted Modifier".
   const craftedCap = 1 + (item.modLines || []).reduce((n, l) => { const m = l.text.match(/^Can have (\d+) additional Crafted Modifiers?$/); return n + (m ? +m[1] : 0); }, 0);
-  // Крафтовый мод, которого нет обычным аффиксом (Celestial Alloy — «+Accuracy / Attack Speed» на копьях, булавах, луках…):
-  // кандидат «только через crafted-слот» (снимает случайный мод стороны и ставит свой). Ценность — по спросу его строк.
-  // Берём один лучший: crafted-слот на вещи один.
+  // A crafted mod that does not exist as a normal affix (Celestial Alloy — "+Accuracy / Attack Speed" on spears, maces, bows…):
+  // a "crafted slot only" candidate (removes a random mod of the side and adds its own). Value — by demand for its lines.
+  // Take the single best one: the item has one crafted slot.
   if (item.affixes.filter((a) => a.tag === 'crafted').length < craftedCap) {
     let best = null;
     for (const x of craftedSources) {
       if (!x.side || !['prefix', 'suffix'].includes(x.side)) continue;
-      const raw = x.text.replace(/–/g, '-').replace(/ \/ /g, '\n'); // гибрид в данных — через « / »
+      const raw = x.text.replace(/–/g, '-').replace(/ \/ /g, '\n'); // hybrids in the data are joined with " / "
       const lines = templates(raw);
-      if (normal.some((c) => c.side === x.side && lines.every((l) => c.text.split(' / ').includes(l)))) continue; // такое и Exalted даёт
-      if (lines.every((l) => own.has(l))) continue; // такой мод на вещи уже есть (гибрид с одной общей строкой — можно)
+      if (normal.some((c) => c.side === x.side && lines.every((l) => c.text.split(' / ').includes(l)))) continue; // Exalted gives this too
+      if (lines.every((l) => own.has(l))) continue; // the item already has this mod (a hybrid sharing one line is fine)
       const ps = lines.map((l) => want.get(l) || 0).sort((a, b) => b - a);
-      // Ценность гибрида: лучшая строка + половина второй (для выбора и плана). Это не доля билдов — может быть больше 100;
-      // окно показывает долю лучшей строки (shownPct) и по строкам (pctParts).
+      // Hybrid value: best line + half of the second (for picking and the plan). Not a share of builds — can exceed 100;
+      // the window shows the best line's share (shownPct) and per-line shares (pctParts).
       const pct = (ps[0] || 0) + (ps[1] || 0) / 2;
       if (pct >= WANT_PCT && (!best || pct > best.pct)) best = { side: x.side, pct, shownPct: ps[0] || 0, pctParts: lines.map((l) => [l, want.get(l) || 0]),
         text: lines.join(' / '), tier: null, tiers: 1, range: null, level: 0,
@@ -304,9 +304,9 @@ async function advise(item, demandMods, cached) {
     if (best) normal.push(best);
   }
   normal.sort((a, b) => b.pct - a.pct);
-  // Примерный шанс, что следующий мод на этой стороне (Exalted + омен стороны) — именно этот: частота семейства среди всех,
-  // что могут встать сюда (без уже занятых групп), по собранной статистике. Семейства без данных считаем как самые редкие.
-  // Что может добавить Exalted на каждую сторону: семейство → уровни его тиров на этой вещи (без занятых групп).
+  // Rough chance that the next mod on this side (Exalted + side omen) is exactly this one: the family's frequency among all
+  // that can roll here (excluding taken groups), per collected stats. Families without data count as the rarest.
+  // What Exalted can add to each side: family → levels of its tiers on this item (excluding taken groups).
   const sidePool = {};
   for (const side of ['prefix', 'suffix']) {
     const lv = new Map();
@@ -318,15 +318,15 @@ async function advise(item, demandMods, cached) {
     }
     sidePool[side] = lv;
   }
-  let nOf = null; // частота семейства по собранной статистике (если есть)
+  let nOf = null; // family frequency from collected stats (if any)
   const W = weights();
   const wc = classWeights(W, item.itemClass, base, d);
   let chanceMeta = null;
   if (wc && wc.items >= 50) {
     chanceMeta = { items: wc.items, collected: W.meta.collected, league: W.meta.league };
     const counts = familyCounts(wc, (type) => Math.max(0, ...(d.typeLines.get(type) || []).map((l) => want.get(l) || 0)));
-    // Статистика — по всему классу (все ботинки), а моды защиты встают только на свои базы (уклонение — на «ловкие»).
-    // Делим частоту на долю «типов баз» класса, где семейство вообще может выпасть: оценка веса, как если бы оно было везде.
+    // Stats are per whole class (all boots), but defence mods roll only on their own bases (evasion — on "dex" ones).
+    // Divide the frequency by the share of the class's "base types" where the family can roll at all: a weight estimate as if it rolled everywhere.
     const share = eligibleShare(d, base);
     for (const type of Object.keys(counts)) counts[type] /= Math.max(share(type), 0.1);
     const n = (type) => (counts[type] || 0) + SMOOTH;
@@ -334,38 +334,38 @@ async function advise(item, demandMods, cached) {
     for (const side of ['prefix', 'suffix']) {
       const types = new Set(sidePool[side].keys());
       const total = [...types].reduce((s, type) => s + n(type), 0);
-      // Ценные моды (≥ SALE_REASON% билдов) по трейду честно не оценить: без потолка цены они завышены (такие вещи охотнее
-      // выставляют), с потолком — занижены (такие вещи дороже). Шанс для них не показываем.
+      // Valuable mods (≥ SALE_REASON% of builds) cannot be estimated fairly from trade: without a price cap they are inflated (such items
+      // are listed more eagerly), with a cap — deflated (such items cost more). No chance is shown for them.
       for (const c of normal.filter((x) => x.side === side)) {
         if (c.pct >= SALE_REASON) c.chance = null, c.chanceUnknown = true;
         else if (total && types.has(c.type)) c.chance = n(c.type) / total;
       }
     }
   }
-  // Exalted / Greater (моды 35+) / Perfect (50+): шанс, что следующий мод — это семейство в одном из двух лучших тиров
-  // (цель крафта считается по лучшему тиру). Веса тиров внутри семейства неизвестны — считаем равными.
-  // chance — по статистике (null у ценных модов и без данных), guess — как если бы все семейства были равновероятны:
-  // им окно выбирает валюту, когда шанс неизвестен. pool — сколько семейств вообще может выпасть.
-  // Desecration: при раскрытии у Well of Souls предлагают 3 мода на выбор — из обычного пула стороны и своих
-  // desecrated-модов (их веса неизвестны — считаем средними). single — шанс одного варианта; окно считает «среди 3 (6 с Abyssal Echoes)».
+  // Exalted / Greater (mods 35+) / Perfect (50+): chance that the next mod is this family in one of its two best tiers
+  // (the craft goal is counted at the best tier). Tier weights within a family are unknown — treated as equal.
+  // chance — from stats (null for valuable mods and without data), guess — as if all families were equally likely:
+  // the window uses it to pick currency when the chance is unknown. pool — how many families can roll at all.
+  // Desecration: on reveal at the Well of Souls you get 3 mods to choose from — from the side's normal pool and its own
+  // desecrated mods (their weights are unknown — treated as average). single — chance of one option; the window computes "among 3 (6 with Abyssal Echoes)".
   const desFamilies = {};
   for (const side of ['prefix', 'suffix']) {
     desFamilies[side] = new Set(onBase.filter((m) => m.domain === 'desecrated' && m.generation_type === side && m.required_level <= ilvl).map((m) => m.type)).size;
   }
   const bones = bonesFor(tags, ilvl);
   const desecrateOK = !item.desecratedItem;
-  // Desecrated-мод, которого нет обычным аффиксом (моды личей: «+1 Ballista Totem», «ES from Equipped Body Armour»…):
-  // кандидат «только через Desecrate» (docs/crafting-methods-research.md). Без омена — 1 из всех семейств стороны;
-  // с лич-оменом (Sovereign → Ulaman, Liege → Amanamu, Blackblooded → Kurgal; оружие и бижутерия, ilvl 65+) все
-  // варианты раскрытия — из пула этого лича: при ≤ 3 модах на стороне нужный гарантирован. Слот один — берём лучший.
+  // A desecrated mod that does not exist as a normal affix (lich mods: "+1 Ballista Totem", "ES from Equipped Body Armour"…):
+  // a "Desecrate only" candidate (docs/crafting-methods-research.md). Without an omen — 1 of all the side's families;
+  // with a lich omen (Sovereign → Ulaman, Liege → Amanamu, Blackblooded → Kurgal; weapons and jewellery, ilvl 65+) all
+  // reveal options come from that lich's pool: with ≤ 3 mods on the side the wanted one is guaranteed. One slot — take the best.
   if (desecrateOK && !mine.some((a) => a.tag === 'desecrated') && bones.length) {
     let best = null;
     for (const c of candidates('desecrated')) {
       if (normal.some((x) => x.type === c.type || x.text === c.text)) continue;
       if (c.pct >= WANT_PCT && (!best || c.pct > best.pct)) best = c;
     }
-    // Altered Collarbone (бижутерия): Desecrate «с шансом на потусторонние моды» — свой пул Breach-модов
-    // (тег breach_desecration, уровень 1 — Whittling снимет их первыми). Доля потусторонних среди вариантов неизвестна.
+    // Altered Collarbone (jewellery): Desecrate "with a chance of otherworldly mods" — its own pool of Breach mods
+    // (tag breach_desecration, level 1 — Whittling removes them first). The share of otherworldly ones among the options is unknown.
     const jewellery = ['ring', 'amulet', 'belt'].some((tg) => tags.includes(tg));
     if (jewellery) {
       const altered = d.pool.filter((m) => m.domain === 'desecrated' && canRoll(m, [...tags, 'breach_desecration']) && !canRoll(m, tags));
@@ -395,7 +395,7 @@ async function advise(item, demandMods, cached) {
       best.desecrateOnly = true;
       best.desecrate = {};
       for (const b of bones) {
-        // Gnawed — вещи до ilvl 64: эксклюзивов 65 уровня (моды личей) не даёт (docs/crafting-tricks.md).
+        // Gnawed — items up to ilvl 64: does not give level-65 exclusives (lich mods) (docs/crafting-tricks.md).
         if (mod && mod.required_level >= 65 && /^Gnawed/.test(b.name)) continue;
         best.desecrate[b.name] = { pool: fam, good: 1, guess: 1 / fam, chance: 1 / fam };
         if (lichOK) best.desecrate[`${b.name}|${LICH_OMEN[lich]}`] = { pool: lichN, good: 1, guess: 1 / lichN, chance: 1 / lichN, extra: [LICH_OMEN[lich]], lich: { name: lich, n: lichN } };
@@ -409,9 +409,9 @@ async function advise(item, demandMods, cached) {
     const mineLv = lv.get(c.type);
     if (!mineLv) continue;
     const top = [...mineLv].sort((a, b) => b - a).slice(0, 2).pop();
-    // Шанс, что мод (среди обычных с уровнем ≥ L и extra «чужих» семейств средним весом) — это семейство в T1–T2.
-    // Мин. уровень (Greater/Perfect, Ancient-кость) отсекает низкие тиры, но семейство без тиров выше порога
-    // всё равно выпадает своим лучшим тиром (docs/crafting-tricks.md §0) — семейства из пула не исчезают.
+    // Chance that the mod (among normal ones with level ≥ L plus "extra" foreign families at average weight) is this family in T1–T2.
+    // The min. level (Greater/Perfect, Ancient bone) cuts off low tiers, but a family with no tiers above the threshold
+    // still rolls at its best tier (docs/crafting-tricks.md §0) — families do not vanish from the pool.
     const at = (L, extra = 0) => {
       const allowed = (type) => { const l = lv.get(type); const ok = l.filter((x) => x >= L); return ok.length ? ok : [Math.max(...l)]; };
       const share = (type) => allowed(type).length / lv.get(type).length;
@@ -423,7 +423,7 @@ async function advise(item, demandMods, cached) {
     };
     c.exalt = {};
     for (const [k, L] of Object.entries(EXALT_MIN)) {
-      if (L && tags.includes('jewel')) continue; // у самоцветов один тир — дорогие Exalted ничего не дают
+      if (L && tags.includes('jewel')) continue; // jewels have one tier — the pricier Exalted give nothing
       const o = at(L);
       if (o) c.exalt[k] = o;
     }
@@ -431,12 +431,12 @@ async function advise(item, demandMods, cached) {
       c.desecrate = {};
       for (const b of bones) { const o = at(b.minLevel, desFamilies[c.side]); if (o) c.desecrate[b.name] = o; }
     }
-    // Гарантированный мод через crafted-слот: Perfect- и порченые эссенции («снимают случайный мод и добавляют свой»).
+    // Guaranteed mod via the crafted slot: Perfect and corrupted essences ("remove a random mod and add their own").
     const lines = c.text.split(' / ');
-    // Источник подходит, если даёт ВСЕ строки мода (Celestial Alloy «Mana / +1 Spell Skills» — для «+Mana», но не для «Spell Damage / Mana»).
+    // A source fits if it gives ALL the mod's lines (Celestial Alloy "Mana / +1 Spell Skills" — for "+Mana", but not for "Spell Damage / Mana").
     if (!c.craftedOnly) c.crafted = craftedSources.filter((x) => { const src = templates(x.text.replace(/–/g, '-').split(' / ').join('\n')); return lines.every((l) => src.includes(l)); }).map((x) => x.name);
-    // Блокер (docs/crafting-tricks.md T-08, D-5): на стороне есть частое ненужное семейство — дешёвый мод этой группы
-    // (например, выбранный при раскрытии desecrate) закрывает её для следующих Exalted; потом его снимают.
+    // Blocker (docs/crafting-tricks.md T-08, D-5): the side has a common unwanted family — a cheap mod of that group
+    // (e.g. picked on a desecrate reveal) closes it off for the following Exalted; it is removed later.
     if (nOf) {
       const isWanted = (type) => normal.some((x) => x.type === type && x.side === c.side);
       let sum = 0, junk = null;
@@ -449,8 +449,8 @@ async function advise(item, demandMods, cached) {
     }
   }
   for (const c of normal) c.essence = essenceFor(c.text, item.itemClass);
-  // Крафтовый гибрид (Alloy) не нужен, если нужный мод сопоставимой ценности ставит эссенция (Perfect Essence of Sorcery +3
-  // к уровням на палочке лучше гибрида «mana / spell levels»): crafted-слот один.
+  // A crafted hybrid (Alloy) is not needed if an essence adds a wanted mod of comparable value (Perfect Essence of Sorcery +3
+  // to levels on a wand beats the "mana / spell levels" hybrid): there is only one crafted slot.
   const co = normal.find((c) => c.craftedOnly);
   if (co && normal.some((c) => c !== co && c.crafted && c.crafted.some((n) => n !== co.craftedOnly) && c.pct >= co.pct * 0.6)) normal.splice(normal.indexOf(co), 1);
   for (const c of normal) {
@@ -466,12 +466,12 @@ async function advise(item, demandMods, cached) {
     }
     c.orMods = others.map((x) => x.text);
   }
-  // «Удачный ilvl» (docs/market-notes.md §2): последний уровень, где у нужного билдам семейства открылся тир. Выше него —
-  // только тиры ненужных: для нужных модов база не лучше базы этого уровня, а лишние тиры разбавляют пул (вес семейства
-  // растёт с числом тиров). Для белой / магической базы — подсказка и покупателю, и продавцу.
+  // "Lucky ilvl" (docs/market-notes.md §2): the last level where a tier opened for a family builds want. Above it —
+  // only tiers of unwanted ones: for wanted mods the base is no better than a base of that level, and the extra tiers dilute the pool (family weight
+  // grows with the number of tiers). For a white / magic base — a hint for both buyer and seller.
   let ilvlHint = null;
   if (item.rarity === 'Normal' || item.rarity === 'Magic') {
-    const lv = new Map(); // семейство → уровни тиров до ilvl вещи
+    const lv = new Map(); // family → tier levels up to the item's ilvl
     for (const m of onBase) {
       if (m.domain !== 'item' || m.is_essence_only || m.required_level > ilvl) continue;
       if (!lv.has(m.type)) lv.set(m.type, { lines: m.lines, levels: [] });
@@ -485,8 +485,8 @@ async function advise(item, demandMods, cached) {
   if (item.rarity === 'Normal') return { normal: transmuteOptions(normal, sidePool, nOf, ilvl, jewel), popular: normal.slice(0, 8), chanceMeta, ilvlHint };
   const sections = [];
 
-  // 0. Магическая → редкая: эссенция даёт гарантированный мод, Regal — случайный из всего пула.
-  // Магическая со свободным местом (1 префикс + 1 суффикс): сначала дёшево добить Augmentation, пока она магическая.
+  // 0. Magic → rare: an essence gives a guaranteed mod, Regal — a random one from the whole pool.
+  // Magic with a free slot (1 prefix + 1 suffix): first cheaply fill it with Augmentation while it is still magic.
   const magicFree = magic ? ['prefix', 'suffix'].filter((s) => !mine.some((a) => a.side === s)) : [];
   if (magicFree.length) {
     sections.push({ kind: 'magicfill', how: [
@@ -504,11 +504,11 @@ async function advise(item, demandMods, cached) {
       ...(jewel ? [] : [t('Greater / Perfect Regal Orb — the same, but only modifiers of level 35+ / 50+')]),
       t('Omen of Sinistral / Dextral Coronation — the next Regal Orb adds only a prefix / only a suffix'),
       t('Orb of Alchemy — rerolls into a rare with 4 new random modifiers (current ones are lost); Omen of Sinistral / Dextral Alchemy — as many prefixes / suffixes as possible'),
-      // Магическая с одним модом — второй можно добавить до Regal: Greater / Perfect Augmentation даёт только моды высокого уровня.
+      // Magic with one mod — a second can be added before Regal: Greater / Perfect Augmentation gives only high-level mods.
     ] });
   }
 
-  // 1. Свободные места — Exalted Orb (Omen Sinistral/Dextral Exaltation — только префикс/суффикс).
+  // 1. Free slots — Exalted Orb (Omen Sinistral/Dextral Exaltation — prefix/suffix only).
   for (const side of ['prefix', 'suffix']) {
     if (!open[side]) continue;
     const list = normal.filter((c) => c.side === side).slice(0, 6);
@@ -522,10 +522,10 @@ async function advise(item, demandMods, cached) {
     });
   }
 
-  // 2. Всё занято — заменить самый слабый мод: тир хуже всех и не востребован. Fractured не снять.
+  // 2. All taken — replace the weakest mod: worst tier and not in demand. Fractured cannot be removed.
   if (!open.prefix && !open.suffix) {
-    // Хорошие тиры (T1–T2) не меняем никогда: даже невостребованный T1 дороже лотереи с Annulment.
-    // Востребованные моды (≥ KEY_PCT% билдов) тоже не меняем на другие — даже со слабым тиром: им нужен тир повыше (блок ниже).
+    // Good tiers (T1–T2) are never replaced: even an unwanted T1 is worth more than an Annulment lottery.
+    // In-demand mods (≥ KEY_PCT% of builds) are not swapped for others either — even with a weak tier: they need a higher tier (block below).
     const scored = mine.filter((a) => a.mod && a.tag !== 'fractured' && !(a.tier && a.tier <= 2)).map((a) => {
       const pct = Math.max(0, ...a.mod.lines.map((l) => want.get(l) || 0));
       return { ...a, pct, score: pct / 100 * 3 - (a.tier || 3) / 3 };
@@ -534,7 +534,7 @@ async function advise(item, demandMods, cached) {
     if (!weak) { if (!tierUps.length) sections.push({ kind: 'keep' }); }
     else {
       const sameSide = mine.filter((a) => a.side === weak.side && a.tag !== 'fractured').length;
-      // Whittling смотрит на ВСЕ моды вещи (кроме fractured), а не только на кандидатов в замену.
+      // Whittling looks at ALL mods on the item (except fractured), not only at replacement candidates.
       const cands = mine.filter((a) => a.tag !== 'fractured');
       const known = cands.every((a) => a.mod);
       const byLevel = cands.filter((a) => a.mod).sort((a, b) => a.mod.required_level - b.mod.required_level);
@@ -542,11 +542,11 @@ async function advise(item, demandMods, cached) {
       const erasure = weak.side === 'prefix' ? 'Omen of Sinistral Erasure' : 'Omen of Dextral Erasure';
       const omen = weak.side === 'prefix' ? 'Omen of Sinistral Annulment' : 'Omen of Dextral Annulment';
       const how = weak.tag === 'desecrated'
-        // Desecrated снимается прицельно: Omen of Light — Annulment убирает только desecrated-моды.
+        // Desecrated is removed in a targeted way: with Omen of Light, Annulment removes only desecrated mods.
         ? [t('Orb of Annulment + Omen of Light — removes the desecrated modifier (any tier), then desecrate again or Exalted Orb')]
         : [t(`Orb of Annulment + {omen} — removes a random ${weak.side} (1 in {n} to hit this one), then Exalted Orb`, { omen, n: sameSide }),
           t(`Chaos Orb + {omen} — removes a random ${weak.side} and adds a random modifier (Greater / Perfect Chaos: level 35+ / 50+)`, { omen: erasure })];
-      // У самоцветов все моды одного уровня — Whittling снимает фактически случайный.
+      // On jewels all mods are the same level — Whittling effectively removes a random one.
       if (!jewel && lowest && lowest.name === weak.name && weak.tag !== 'desecrated') {
         how.unshift(t('Chaos Orb + Omen of Whittling — removes the lowest-level modifier (this one) and adds a random modifier'));
       }
@@ -559,12 +559,12 @@ async function advise(item, demandMods, cached) {
 
   if (tierUps.length) sections.push({ kind: 'tierup', mods: tierUps });
 
-  // 3. Desecration — свой пул desecrated-модов, одна на вещь.
+  // 3. Desecration — its own pool of desecrated mods, one per item.
   if (!item.desecratedItem && !mine.some((a) => a.tag === 'desecrated')) {
     const fits = (c) => open[c.side] || (!open.prefix && !open.suffix);
-    // Самоцветы: свой desecrated-пул — гибридные префиксы и три суффикса на атрибуты, а при раскрытии предлагают и обычные
-    // моды пула — ради них самоцветы и оскверняют (вторая крит-строка, Movement Speed: docs/jewels-crafting.md §2.3, M).
-    // Гибриды desecrated с одной и той же нужной строкой («ES / Spell», «ES / Attack», …) — один, с самой нужной второй.
+    // Jewels: their own desecrated pool — hybrid prefixes and three attribute suffixes, and on reveal normal pool mods are offered too
+    // — that is why jewels get desecrated (a second crit line, Movement Speed: docs/jewels-crafting.md §2.3, M).
+    // Desecrated hybrids sharing the same wanted line ("ES / Spell", "ES / Attack", …) — keep one, with the most wanted second line.
     const lineOf = (c) => c.text.split(' / ').reduce((a, l) => ((want.get(l) || 0) > (want.get(a) || 0) ? l : a));
     const second = (c) => c.text.split(' / ').filter((l) => l !== lineOf(c)).reduce((s, l) => Math.max(s, want.get(l) || 0), 0);
     const oneHybrid = (list) => list.filter((c) => !list.some((x) => x !== c && lineOf(x) === lineOf(c) && (second(x) > second(c) || (second(x) === second(c) && list.indexOf(x) < list.indexOf(c)))));
@@ -573,9 +573,9 @@ async function advise(item, demandMods, cached) {
         .filter(fits).sort((a, b) => b.pct - a.pct).slice(0, 6)
       : candidates('desecrated').filter(fits).slice(0, 4);
     if (des.length) {
-      // Desecrated — отдельный слот (не crafted), но на полной вещи снимает случайный мод: осквернять ДО Exalt-ов.
-      // Лич-омены — «Weapon or Jewellery» (и пояса — подтверждено, docs/crafting-methods-research.md), моды личей — 65 уровня.
-      // Те же правила, что у плана (LICH_CLASSES): иначе план тратил омен, а подсказка о нём молчала.
+      // Desecrated is a separate slot (not crafted), but on a full item it removes a random mod: desecrate BEFORE the Exalts.
+      // Lich omens — "Weapon or Jewellery" (and belts — confirmed, docs/crafting-methods-research.md), lich mods are level 65.
+      // Same rules as the plan (LICH_CLASSES): otherwise the plan spent the omen while the hint stayed silent about it.
       const lich = ilvl >= 65 && LICH_CLASSES.some((tg) => tags.includes(tg));
       const bodyGear = ['body_armour', 'helmet', 'gloves', 'boots'].some((x) => tags.includes(x));
       sections.push({ kind: 'desecrate', how: [
@@ -589,10 +589,10 @@ async function advise(item, demandMods, cached) {
     }
   }
 
-  // Perfect-эссенции — только на редких: убирают случайный мод и добавляют свой (у слота свой набор, не тот, что у Greater).
-  // С 0.5 на вещи только один crafted-мод (эссенции, в т.ч. Perfect и порченые, и Alloy). Есть — Perfect/Alloy не встанут.
+  // Perfect essences — rares only: remove a random mod and add their own (the slot has its own set, not the Greater one).
+  // Since 0.5 an item has only one crafted mod (essences, incl. Perfect and corrupted, and Alloy). If present — Perfect/Alloy will not apply.
   const hasCrafted = mine.some((a) => a.tag === 'crafted');
-  // Всё, что заменяет случайный мод гарантированным crafted-модом: Perfect-эссенции, порченые эссенции, Alloy (data/crafting-currency.json).
+  // Everything that replaces a random mod with a guaranteed crafted mod: Perfect essences, corrupted essences, Alloy (data/crafting-currency.json).
   const perfect = item.rarity === 'Rare' ? [...perfectFor(item.itemClass), ...guaranteedFor(item.itemClass)] : [];
   if (overfull.length) {
     const s = t(overfull[0]);
@@ -606,13 +606,13 @@ async function advise(item, demandMods, cached) {
   }
   if (jewel && item.rarity === 'Rare') {
     const timeLost = tags.includes('radius_jewel');
-    // Варианты для этой базы (обычные эмоции — basic jewels, Ancient — Time-Lost): какой мод даст, сколько билдов его
-    // носят. Эмоция снимает СЛУЧАЙНЫЙ мод: risk — сколько ключевых модов (по спросу) из всех на вещи может уйти.
-    // В план не встраиваем: с какой стороны снимается мод на полной вещи, когда мод эмоции одной стороны, не проверено.
+    // Options for this base (regular emotions — basic jewels, Ancient — Time-Lost): which mod it gives, how many builds
+    // use it. An emotion removes a RANDOM mod: risk — how many key mods (by demand) out of all on the item may go.
+    // Not built into the plan: which side loses a mod on a full item when the emotion's mod is one-sided is unverified.
     const pctOf = (lines) => Math.max(0, ...lines.map((l) => want.get(l) || 0));
     const all = emotionsFor(item.baseType).filter((e) => !e.lines.every((l) => own.has(l)));
     const POTENT = /Potent /;
-    // Две записи одной эмоции (Ferocity, Contempt: префикс или суффикс) — одной строкой.
+    // Two entries of one emotion (Ferocity, Contempt: prefix or suffix) — as one line.
     const byName = new Map();
     for (const e of all) {
       const o = byName.get(e.name);
@@ -635,11 +635,11 @@ async function advise(item, demandMods, cached) {
       t("Hinekora's Lock first — see the result before you commit")] });
   }
 
-  // 4. Дёшево и без риска.
+  // 4. Cheap and risk-free.
   const cheap = [];
   const armourOrWeapon = tags.includes('armour') || tags.includes('weapon') || tags.includes('onehand') || tags.includes('twohand');
-  // Artificer's Orb — оружие, жезлы, посохи и броня (скипетров в списке нет).
-  // Artificer's: 2 гнезда на двуручном оружии и нательнике, 1 на остальном (по гайдам).
+  // Artificer's Orb — weapons, wands, staves and armour (sceptres are not on the list).
+  // Artificer's: 2 sockets on two-handed weapons and body armour, 1 elsewhere (per guides).
   const maxSockets = tags.includes('twohand') || tags.includes('body_armour') ? 2 : 1;
   if (armourOrWeapon && !tags.includes('sceptre') && (item.sockets || 0) < maxSockets) cheap.push(t("Artificer's Orb — add an augment socket (2 max on two-handed weapons and body armour, 1 elsewhere), then a rune or soul core"));
   if (armourOrWeapon && (item.quality || 0) < 20) cheap.push(t('Quality to 20% (currently {n}%) — {currency}', { n: item.quality || 0, currency: qualityCurrency(tags) }));
@@ -660,15 +660,15 @@ async function advise(item, demandMods, cached) {
     const best = Object.entries(tally).sort((a, b) => b[1].gain - a[1].gain)[0];
     if (best && best[1].gain >= 10) cheap.push(t('{rune} turns the {from} modifiers into {to} for good — {to} versions are more in demand; check «Other elements» on the Price tab before you socket it', { rune: ALDUR_RUNE[best[0]], from: best[1].from, to: best[0] }));
   }
-  // +3 к уровню умений на бижутерии при качестве 34%+ становится +4 (3 × 1.34); Essence of the Breach поднимает
-  // потолок качества на 20% (docs/crafting-tricks.md T-11, по данным сообщества).
+  // +3 to skill levels on jewellery becomes +4 at 34%+ quality (3 × 1.34); Essence of the Breach raises
+  // the quality cap by 20% (docs/crafting-tricks.md T-11, per community data).
   const plus3 = (tags.includes('ring') || tags.includes('amulet')) && (item.modLines || []).find((l) => /^\+3 to Level of all .*Skills$/.test(l.text));
   if (plus3 && (item.quality || 0) < 34) cheap.push(t('Quality 34%+ turns «{mod}» into +4: a matching catalyst, and Essence of the Breach raises the quality cap by 20% (community finding, not verified)', { mod: plus3.text }));
   const total = mine.length;
   if (cheap.length) sections.push({ kind: 'cheap', how: cheap });
-  // Fracturing — не «дёшево и без риска»: в 0.5 редкий (только атлас) и фиксирует СЛУЧАЙНЫЙ мод.
-  // Нужно ≥ 4 модов (desecrated, даже нераскрытый, в счёт входит), но desecrated и уже fractured не фиксируются:
-  // шанс = ключевые / фиксируемые. Приём: 3 обычных мода + Desecrate без раскрытия → 4 мода, шанс 1/3 вместо 1/4
+  // Fracturing is not "cheap and risk-free": in 0.5 it is rare (atlas only) and locks a RANDOM mod.
+  // Needs ≥ 4 mods (desecrated, even unrevealed, counts), but desecrated and already fractured mods cannot be locked:
+  // chance = key / lockable. Trick: 3 normal mods + Desecrate without revealing → 4 mods, chance 1/3 instead of 1/4
   // (docs/crafting-tricks.md D-4, T-05).
   if (!magic && !item.fracturedItem) {
     const pctOf = (a) => (a.mod ? Math.max(0, ...a.mod.lines.map((l) => want.get(l) || 0)) : 0);
@@ -692,14 +692,14 @@ async function advise(item, demandMods, cached) {
   }
 
   const goal = planGoal(mine, normal, max, want, magic, magicFree, item.itemClass, craftedSources, item.quality || 0, craftedCap);
-  // Руны / Soul Cores в гнёзда: аугменты для класса, чьи статы носят билды (спрос ≥ 15%) — лучший по семейству статов.
+  // Runes / Soul Cores for sockets: augments for the class whose stats builds use (demand ≥ 15%) — the best per stat family.
   const augments = [];
   if (!jewel) {
     const fam = new Map();
     for (const a of d.augs || []) {
       const cat = a.cats.find((c) => augFits(c.target, item.itemClass));
       if (!cat || a.level > (item.reqLevel || 100) + 20) continue;
-      // Руны влияния, Альдура и Legacy (только уники) учитываются отдельно.
+      // Influence, Aldur and Legacy runes (uniques only) are handled separately.
       const kind = methods.byName(a.name);
       if ((kind && ['rune-influence', 'rune-aldur', 'rune-special'].includes(kind.id)) || /Legacy/.test(a.limit || '') || /^Legacy of /.test(a.name)) continue;
       const pct = Math.max(0, ...cat.lines.map((l) => want.get(l) || 0));
@@ -716,9 +716,9 @@ async function advise(item, demandMods, cached) {
   return { open, max, sections, goal, gamble, augments, freeSockets: Math.max(0, (item.sockets || 0) - runesIn), chanceMeta, ilvlHint, source: 'RePoE (game files) · demand: poe.ninja' };
 }
 
-// Белая база → магическая: Orb of Transmutation даёт один случайный мод (префикс или суффикс);
-// Greater — только моды уровня 44+, Perfect — 70+ (меньше мусора, выше тиры). Для каждого: сколько семейств может выпасть,
-// шанс популярного мода (любой тир) и популярного в одном из двух лучших тиров. Веса — по статистике (nOf) или поровну.
+// White base → magic: Orb of Transmutation gives one random mod (prefix or suffix);
+// Greater — only mods of level 44+, Perfect — 70+ (less junk, higher tiers). For each: how many families can roll,
+// chance of a popular mod (any tier) and of a popular one in one of its two best tiers. Weights — from stats (nOf) or equal.
 const TRANSMUTE = methods.tiers('transmute');
 function transmuteOptions(popular, sidePool, nOf, ilvl, jewel) {
   const out = [];
@@ -727,7 +727,7 @@ function transmuteOptions(popular, sidePool, nOf, ilvl, jewel) {
     let total = 0, any = 0, top = 0, pool = 0;
     for (const side of ['prefix', 'suffix']) {
       for (const [type, lv] of sidePool[side]) {
-        // Семейство без тиров выше порога выпадает лучшим тиром (как у Exalted).
+        // A family with no tiers above the threshold rolls at its best tier (as with Exalted).
         const hi = lv.filter((x) => x >= L);
         const ok = hi.length ? hi : [Math.max(...lv)];
         const w = (nOf ? nOf(type) : 1) * ok.length / lv.length;
@@ -745,7 +745,7 @@ function transmuteOptions(popular, sidePool, nOf, ilvl, jewel) {
   return out;
 }
 
-// Доля «типов баз» класса (по набору тегов: str_armour, dex_int_armour…), на которых семейство мода может выпасть.
+// Share of the class's "base types" (by tag set: str_armour, dex_int_armour…) on which the mod family can roll.
 const shareCache = new Map();
 craftData.onReset(() => shareCache.clear());
 function eligibleShare(d, base) {
@@ -768,13 +768,13 @@ function eligibleShare(d, base) {
   return shareCache.get(key);
 }
 
-// Частоты семейств модов для оценки шансов.
-// По модам каждой вещи (raw): на каждой вещи не считаем «причину продажи» — самый востребованный мод, если его
-// носят ≥ SALE_REASON% билдов: вещь выставили ради него, а остальные её моды выпали случайно.
+// Mod family frequencies for estimating odds.
+// From each item's mods (raw): on each item we skip the "reason for sale" — the most in-demand mod, if
+// ≥ SALE_REASON% of builds use it: the item was listed for it, and its other mods rolled by chance.
 const SALE_REASON = 30;
-const SMOOTH = 1; // +1 к каждому семейству: единичные находки не раздуваются, ненайденные не уходят в ноль
-// Статистика весов для вещи. Палочки и посохи со стихией (Volatile Wand — огонь, Frigid — холод…): если на базах той же
-// стихии набралось от 100 вещей — по ним (моды своей стихии там выпадают чаще); иначе — по всему классу.
+const SMOOTH = 1; // +1 to each family: single finds do not get inflated, unseen ones do not drop to zero
+// Weight stats for an item. Wands and staves with an element (Volatile Wand — fire, Frigid — cold…): if bases of the same
+// element have 100+ items — use them (mods of that element roll more often there); otherwise — the whole class.
 function classWeights(W, itemClass, base, d) {
   const wc = W && W.classes[itemClass];
   if (!wc || !wc.rowBase || !(wc.bases || []).length || !base) return wc;
@@ -798,177 +798,177 @@ function familyCounts(wc, pctOf) {
       if (k !== drop) kept[type] = (kept[type] || 0) + 1;
     });
   }
-  // Мод, который почти всегда и есть «причина продажи» (+уровни на посохах), без него почти не встречается —
-  // честно его по трейду не оценить. Берём не меньше половины сырой частоты: скидка на отбор, но не ноль.
+  // A mod that is almost always the "reason for sale" (+levels on staves) and almost never appears without it —
+  // cannot be estimated fairly from trade. Take at least half of the raw frequency: a selection discount, but not zero.
   const counts = {};
   for (const type of Object.keys(raw)) counts[type] = Math.max(kept[type] || 0, raw[type] * 0.5);
   return counts;
 }
 
-// Цель крафта: какой была бы лучшая вещь из этой базы. На каждой стороне — самые ценные моды из текущих и возможных:
-// ценность = спрос (% билдов) × качество тира; кандидату засчитываем средний тир (что выпадет — неизвестно).
-// Fractured снять нельзя — остаются всегда. Возвращает { keep, remove, add } или null, если улучшать нечего.
-// Greater / Perfect Exalted Orb — только моды этого уровня и выше (src/shared/methods.js — реестр методов крафта).
+// Craft goal: what the best item from this base would be. On each side — the most valuable of the current and possible mods:
+// value = demand (% of builds) × tier quality; a candidate is credited with an average tier (what will roll is unknown).
+// Fractured cannot be removed — they always stay. Returns { keep, remove, add }, or null if there is nothing to improve.
+// Greater / Perfect Exalted Orb — only mods of that level and above (src/shared/methods.js — the craft method registry).
 const EXALT_KEYS = ['base', 'greater', 'perfect'];
 const EXALT_MIN = Object.fromEntries(methods.tiers('exalt').map(([, lv], i) => [EXALT_KEYS[i], lv]));
 const EXALT_NAME = Object.fromEntries(methods.tiers('exalt').map(([n], i) => [EXALT_KEYS[i], n]));
-const KEY_PCT = 30; // мод, который носит столько % билдов, на другой не меняем
+const KEY_PCT = 30; // a mod used by this % of builds is not swapped for another
 const KEEP_BONUS = 1.5;
 function planGoal(mine, candidates, max, want, magic, magicFree = [], itemClass = '', craftedSources = [], itemQuality = 0, craftedCap = 1) {
-  // Ключевой для слота мод (уровни умений, Spirit, скорость на ботинках…) поднимает цену сильнее, чем говорит его
-  // популярность: «+2 к миньонам» на скипетре дороже Mana Regeneration, даже если тот встречается чаще.
+  // A key mod for the slot (skill levels, Spirit, speed on boots…) raises the price more than its popularity
+  // suggests: "+2 to minions" on a sceptre is worth more than Mana Regeneration, even if the latter is more common.
   const KEY_BONUS = 2;
-  // «#% increased Explicit Speed Modifier magnitudes» (руна Thrud's Might) усиливает моды своего типа — ключевой,
-  // если такой мод на вещи уже есть (Attack Speed → speed, %Phys → physical, крит → critical…).
+  // "#% increased Explicit Speed Modifier magnitudes" (Thrud's Might rune) boosts mods of its type — key
+  // if the item already has such a mod (Attack Speed → speed, %Phys → physical, crit → critical…).
   const myTags = new Set(mine.flatMap((a) => (a.mod ? a.mod.implicit_tags || [] : [])));
   const boosts = (l) => { const m = l.match(/explicit (\w+)(?: damage)? modifier magnitudes/i); return !!m && myTags.has(m[1].toLowerCase()); };
-  const known = want.size > 0; // спрос загружен — правило слота проверяем им
+  const known = want.size > 0; // demand is loaded — check the slot rule against it
   const keyOf = (lines) => lines.some((l) => boosts(l) || (isKey(itemClass, l) && (!known || (want.get(l) || 0) >= WANT_PCT)));
-  // Качество тира — та же шкала, что у важности мода в поиске (weights.tierFactor), чтобы цель и цена не спорили.
+  // Tier quality — same scale as mod importance in search (weights.tierFactor), so the goal and the price do not disagree.
   const value = (pct, tier) => pct * tierFactor(tier || null);
   const keep = [], remove = [], add = [];
   for (const side of ['prefix', 'suffix']) {
-    // Сторона сверх лимита (самоцвет: сняли crafted «+1 Suffix Modifier allowed» после Potent Contempt — три суффикса
-    // остаются): снятый мод не вернуть, место пропадёт — моды такой стороны не трогаем.
+    // Side over the limit (jewel: the crafted "+1 Suffix Modifier allowed" was removed after Potent Contempt — three suffixes
+    // remain): a removed mod cannot be brought back, the slot would be lost — mods on such a side are left alone.
     const over = mine.filter((a) => a.side === side).length > max[side];
     const cur = mine.filter((a) => a.side === side).map((a) => {
       const pct = a.mod ? Math.max(0, ...a.mod.lines.map((l) => want.get(l) || 0)) : 0;
-      // Fractured и хорошие тиры (T1–T2) не трогаем: даже не самый ходовой T1 дороже лотереи Annulment + Exalted.
-      // Остальные держим, пока кандидат не ценнее в полтора раза — замена случайна и стоит валюты.
+      // Fractured and good tiers (T1–T2) are left alone: even a not-so-popular T1 is worth more than the Annulment + Exalted lottery.
+      // The rest are kept until a candidate is worth 1.5× more — replacement is random and costs currency.
       const weak = a.mod && a.mod.lines.every((l) => isWeak(l));
-      // Хороший тир держим, только если мод хоть кому-то нужен (+28 Dexterity T2 при 0% билдов — не повод).
+      // A good tier is kept only if someone needs the mod at all (+28 Dexterity T2 at 0% of builds is no reason).
       const spentQuality = a.mod && a.mod.lines.some((l) => /to maximum quality$/.test(l)) && itemQuality > 20;
       if (spentQuality) return { kind: 'cur', a, pct: 0, v: 0, spentQuality: true };
       const locked = over || a.tag === 'fractured' || a.tag === 'crafted' || !a.mod || (a.tier && a.tier <= 2 && !weak && pct >= 5) || pct >= KEY_PCT;
-      // Неключевой desecrated-мод держит единственный desecrate-слот; снять его можно наверняка (Omen of Light) и
-      // раскрыть вместо него выбор 1 из 3–6 для нужного мода — поэтому держим его вдвое слабее.
+      // A non-key desecrated mod holds the only desecrate slot; it can be removed for sure (Omen of Light) and
+      // a 1-of-3–6 choice revealed in its place for the wanted mod — so it is held at half strength.
       const desSlot = a.tag === 'desecrated' ? 0.5 : 1;
       return { kind: 'cur', a, pct, v: locked ? Infinity : value(pct, a.tier) * KEEP_BONUS * desSlot * (a.mod && keyOf(a.mod.lines) ? KEY_BONUS : 1) };
     });
-    // Гибрид с мусорной половиной («Light Radius / Mana Regeneration») ценнее пустого места, но хуже чистого мода.
+    // A hybrid with a junk half ("Light Radius / Mana Regeneration") is worth more than an empty slot, but less than a pure mod.
     const worth = (c) => value(c.pct, 2) * (keyOf(c.text.split(' / ')) ? KEY_BONUS : 1) * (c.text.split(' / ').some((l) => isWeak(l) && !((want.get(l) || 0) >= WANT_PCT)) ? 0.6 : 1);
     const cand = candidates.filter((c) => c.side === side).map((c) => ({ kind: 'add', c, pct: c.pct, v: worth(c) }));
     const chosen = over ? cur : [...cur, ...cand].sort((x, y) => y.v - x.v).slice(0, max[side]);
     for (const x of cur) {
       const info = { side, tag: x.a.tag, text: x.a.mod ? x.a.mod.lines.join(' / ') : x.a.name, templates: x.a.mod ? x.a.mod.lines : [], tier: x.a.tier, pct: x.pct,
-        level: x.a.mod ? x.a.mod.required_level : null, // для Whittling (снимает мод с наименьшим уровнем)
-        spentQuality: !!x.spentQuality, // качество останется — снять можно даром
-        up: x.pct >= KEY_PCT && x.a.tier >= 3 }; // ключевой, но слабый тир — «↑ тир»
+        level: x.a.mod ? x.a.mod.required_level : null, // for Whittling (removes the lowest-level mod)
+        spentQuality: !!x.spentQuality, // the quality stays — can be removed for free
+        up: x.pct >= KEY_PCT && x.a.tier >= 3 }; // key, but weak tier — "↑ tier"
       (chosen.includes(x) ? keep : remove).push(info);
     }
     for (const x of cand) if (chosen.includes(x)) add.push({ ...x.c, side });
   }
   if (!add.length) return null;
   add.sort((x, y) => y.pct - x.pct);
-  // План для окна: шаги с валютой и шансом — по ним считаются затраты (цены валюты подставляет main.js по poe.ninja).
-  // retry — чем убирать неудачный результат, чтобы попробовать снова.
+  // Plan for the window: steps with currency and chance — costs are computed from them (main.js fills in currency prices from poe.ninja).
+  // retry — what removes a failed result so you can try again.
   const plan = [];
   const needRune = add.find((c) => c.needs);
   if (needRune) plan.push({ act: 'rune', mod: needRune.needs.line, free: needRune.needs.free, currencies: [needRune.needs.rune], chance: 1 });
-  let essenceMod = null; // мод, который поставит эссенция magic → rare — его не добавляем второй раз
+  let essenceMod = null; // mod the magic → rare essence will add — do not add it a second time
   if (magicFree.length) plan.push({ act: 'augment', side: magicFree[0], currencies: ['Orb of Augmentation'], chance: 1 });
   if (magic) {
     const ess = add.find((c) => c.essence);
     essenceMod = ess || null;
     plan.push(ess ? { act: 'essence', mod: ess.text, currencies: [ess.essence.name], chance: 1 } : { act: 'regal', currencies: ['Regal Orb'], chance: 1 });
   }
-  // Сначала сторона, где самый востребованный мод (ключевой) — он сильнее всего поднимает цену.
+  // First the side with the most in-demand (key) mod — it raises the price the most.
   const top = (side) => Math.max(0, ...add.filter((c) => c.side === side).map((c) => c.pct));
-  // Сколько модов на стороне сейчас — меняется по ходу плана (омен стороны нужен, только пока на другой есть место).
-  // Desecration — одна на вещь: можно, если desecrated-мода не останется (нет или убирается Omen of Light).
+  // How many mods are on the side now — changes as the plan goes (the side omen is needed only while the other side has room).
+  // Desecration — one per item: allowed if no desecrated mod remains (none, or removed via Omen of Light).
   const desFree = mine.filter((a) => a.tag === 'desecrated').every((a) => remove.some((r) => r.tag === 'desecrated' && r.text === (a.mod ? a.mod.lines.join(' / ') : a.name)));
-  // Crafted-слот — один на вещь: свободен, если crafted-мода не останется и эссенция не ушла на magic → rare.
-  // Сколько crafted-слотов свободно после снятий (эссенция magic → rare тоже занимает слот).
+  // Crafted slot — one per item: free if no crafted mod remains and the essence was not used for magic → rare.
+  // How many crafted slots are free after removals (the magic → rare essence also takes a slot).
   const craftedLeft = mine.filter((a) => a.tag === 'crafted' && !remove.some((r) => r.tag === 'crafted' && r.text === (a.mod ? a.mod.lines.join(' / ') : a.name))).length
     + (magic && add.some((c) => c.essence) ? 1 : 0);
   const craftedSlots = Math.max(0, craftedCap - craftedLeft);
   const craftedFree = craftedSlots > 0;
   const filled = { prefix: 0, suffix: 0 };
   for (const a of mine) filled[a.side]++;
-  const fixed = { prefix: 0, suffix: 0 }; // fractured — Annulment их не снимет
+  const fixed = { prefix: 0, suffix: 0 }; // fractured — Annulment will not remove them
   for (const a of mine) if (a.tag === 'fractured') fixed[a.side]++;
-  // 1. Сначала снять всё лишнее («Annul до основы»), потом добавлять. Desecrated — прицельно: Annulment + Omen of Light.
+  // 1. First remove all the junk ("Annul down to the base"), then add. Desecrated — targeted: Annulment + Omen of Light.
   for (const r of remove.filter((x) => x.tag === 'desecrated')) {
     plan.push({ act: 'remove', side: r.side, mod: r.text, currencies: ['Orb of Annulment', 'Omen of Light'], chance: 1, targeted: true });
     filled[r.side]--;
   }
-  // Остальное — Annulment'ами (с оменом стороны или без): окно считает попытки и сколько нужных модов заденет.
-  // sides: J — лишних на стороне, K — нужных, которые Annulment может снять (не fractured).
+  // The rest — with Annulments (with or without a side omen): the window counts attempts and how many wanted mods get hit.
+  // sides: J — junk on the side, K — wanted ones that Annulment can remove (not fractured).
   const junk = remove.filter((x) => x.tag !== 'desecrated');
   if (junk.length) {
     const sides = {};
     for (const side of ['prefix', 'suffix']) {
       const J = junk.filter((x) => x.side === side).length;
       const K = filled[side] - fixed[side] - J;
-      // Чем вернуть каждый нужный мод стороны, если Annulment заденет его: крафтовый — своей эссенцией / Alloy.
+      // How to restore each wanted mod of the side if Annulment hits it: a crafted one — with its essence / Alloy.
       const keepers = mine.filter((a) => a.side === side && a.tag !== 'fractured' && !junk.some((x) => x.side === side && x.text === (a.mod ? a.mod.lines.join(' / ') : a.name)));
       const restore = keepers.map((a) => {
         if (a.tag !== 'crafted' || !a.mod) {
-          // Ключевой (носят ≥ KEY_PCT% или хороший тир) — потеря дорога; второстепенный — просто докрафтить заново.
+          // Key (used by ≥ KEY_PCT% or a good tier) — losing it is costly; a minor one — just craft it again.
           const pct = a.mod ? Math.max(0, ...a.mod.lines.map((l) => want.get(l) || 0)) : 0;
           return !a.mod || pct >= KEY_PCT || (a.tier && a.tier <= 2) ? null : 'minor';
         }
         const src = craftedSources.find((x) => templates(x.text.replace(/–/g, '-').replace(/ \/ /g, '\n')).some((l) => a.mod.lines.includes(l)));
         return src ? src.name : null;
       });
-      // full — на стороне нет места: Desecrate с Necromancy этой стороны сам снимет случайный мод (проверено в игре).
+      // full — no room on the side: Desecrate with this side's Necromancy removes a random mod by itself (verified in game).
       sides[side] = { J, K, restore, omen: `Omen of ${side === 'prefix' ? 'Sinistral' : 'Dextral'} Annulment`, full: filled[side] >= max[side],
         necro: `Omen of ${side === 'prefix' ? 'Sinistral' : 'Dextral'} Necromancy` };
     }
-    // Chaos + Omen of Whittling снимает мод с наименьшим уровнем — если лишний мод строго ниже всех остальных снимаемых
-    // (desecrated уже снят), он уйдёт наверняка, но на его место встанет случайный мод.
-    // Уровень известен только у сопоставленных модов: если хоть один неизвестен — Whittling не оцениваем.
+    // Chaos + Omen of Whittling removes the lowest-level mod — if a junk mod is strictly below all other removable ones
+    // (desecrated already removed), it goes for sure, but a random mod takes its place.
+    // The level is known only for matched mods: if even one is unknown — Whittling is not evaluated.
     const removable = mine.filter((a) => a.tag !== 'fractured' && a.tag !== 'desecrated');
     const known = removable.every((a) => a.mod);
     const levels = removable.map((a) => (a.mod ? a.mod.required_level : 0));
     const low = Math.min(...levels);
     const lowJunk = junk.filter((x) => x.level === low);
     const whittle = known && lowJunk.length === 1 && levels.filter((l) => l === low).length === 1 ? lowJunk[0].text : null;
-    // Самый низкоуровневый — нужный мод: Whittling снял бы его (показываем, почему Whittling тут не годится).
+    // The lowest-level one is a wanted mod: Whittling would remove it (we show why Whittling does not fit here).
     const lowest = mine.filter((a) => a.tag !== 'fractured' && a.tag !== 'desecrated' && a.mod && a.mod.required_level === low);
     const whittleWrong = known && !whittle && lowest.length && !lowJunk.length ? { mod: lowest.map((a) => a.mod.lines.join(' / ')).join(', '), level: low } : null;
     const freeQuality = (junk.find((x) => x.spentQuality) || {}).text || null;
-    // Essence of the Abyss + Crystallisation стороны снимает случайный мод этой стороны (как Annulment с оменом) и ставит
-    // Mark of the Abyssal Lord — desecrated-мод, его снимает Omen of Light + Annulment (игрок, 2026-10-19; ролики Ame).
-    // Нужен свободный desecrated-слот; crafted-слот тоже требуем (эссенция не ставится на вещь с crafted-модом — data notes).
+    // Essence of the Abyss + the side's Crystallisation removes a random mod of that side (like Annulment with an omen) and adds
+    // Mark of the Abyssal Lord — a desecrated mod, removed by Omen of Light + Annulment (player, 2026-10-19; Ame's videos).
+    // Needs a free desecrated slot; the crafted slot is required too (the essence does not apply to an item with a crafted mod — data notes).
     const abyss = desFree && craftedFree && craftedSources.some((x) => x.name === 'Essence of the Abyss');
     plan.push({ act: 'remove', mods: junk.map((x) => x.text), sides, whittle, whittleWrong, freeQuality, abyss,
       currencies: ['Orb of Annulment', 'Omen of Sinistral Annulment', 'Omen of Dextral Annulment', ...(whittle ? ['Chaos Orb', 'Omen of Whittling'] : []),
         ...(abyss ? ['Essence of the Abyss', 'Omen of Sinistral Crystallisation', 'Omen of Dextral Crystallisation', 'Omen of Light'] : [])] });
     for (const x of junk) filled[x.side]--;
   }
-  if (essenceMod) filled[essenceMod.side]++; // эссенция уже заняла место на своей стороне
-  // 2. Добавить нужное: сначала сторона, где самый востребованный мод.
+  if (essenceMod) filled[essenceMod.side]++; // the essence has already taken a slot on its side
+  // 2. Add the wanted ones: first the side with the most in-demand mod.
   for (const side of ['prefix', 'suffix'].sort((x, y) => top(y) - top(x))) {
     const into = add.filter((c) => c.side === side && c !== essenceMod);
     if (!into.length) continue;
     const S = side === 'prefix' ? 'Sinistral' : 'Dextral';
-    // Есть ли место на другой стороне: если нет, Exalted и без омена ляжет сюда — омен стороны не нужен.
+    // Is there room on the other side: if not, Exalted lands here even without an omen — the side omen is not needed.
     const other = side === 'prefix' ? 'suffix' : 'prefix';
     const otherOpen = max[other] - filled[other] > 0;
     const sideOmen = otherOpen ? `Omen of ${S} Exaltation` : null;
-    // Какой Exalted взять (обычный / Greater / Perfect) и с какими оменами — выбирает окно по ценам валюты.
-    // onSide / onItem — сколько модов уже стоит (все нужные: лишнее убрано раньше) — от этого зависит, чем снимать промах.
+    // Which Exalted to use (regular / Greater / Perfect) and with which omens — the window picks by currency prices.
+    // onSide / onItem — how many mods are already there (all wanted: junk removed earlier) — determines how to remove a miss.
     const step = (c, i) => ({ act: 'add', side, mod: c.text, pct: c.pct, worth: c.pct * (keyOf(c.text.split(' / ')) ? KEY_BONUS : 1), onSide: filled[side] - fixed[side] + i, onItem: filled.prefix + filled.suffix - fixed.prefix - fixed.suffix + i,
       annulOmen: `Omen of ${S} Annulment`, exalt: c.exaltAny || c.exalt || { base: { chance: c.chanceUnknown ? null : c.chance || null } }, orMods: c.orMods || null,
       sideOmen, otherOpen, retry: ['Orb of Annulment', `Omen of ${S} Annulment`],
-      // Вместо Exalted — Desecrate (кость + Necromancy-омен на сторону): выбор 1 из 3 при раскрытии. Окно решит, где выгоднее.
+      // Instead of Exalted — Desecrate (bone + side Necromancy omen): pick 1 of 3 on reveal. The window decides which pays off.
       desecrate: desFree && c.desecrate && Object.keys(c.desecrate).length ? c.desecrateAny || c.desecrate : null,
       necro: otherOpen ? `Omen of ${S} Necromancy` : null,
-      // Perfect/порченая эссенция с этим модом: жертвенный Exalted на сторону → Crystallisation стороны + эссенция.
+      // Perfect/corrupted essence with this mod: a sacrificial Exalted on the side → the side's Crystallisation + essence.
       crafted: craftedFree && c.crafted && c.crafted.length ? c.crafted : null, craftedOnly: c.craftedOnly || null, desecrateOnly: c.desecrateOnly || null, craftedSlots,
       crystal: `Omen of ${S} Crystallisation`,
-      cap: max[side] - fixed[side], // сколько модов эссенция может снять на стороне (без fractured)
-      // Ключевые моды этой стороны (носят ≥ KEY_PCT% или тир 1–2): эссенция / Alloy с оменом Crystallisation снимает
-      // случайный мод стороны — промах снимет один из них, а не жертвенный. Окно пишет это красным.
+      cap: max[side] - fixed[side], // how many mods the essence can remove on the side (excluding fractured)
+      // Key mods of this side (used by ≥ KEY_PCT% or tier 1–2): an essence / Alloy with a Crystallisation omen removes
+      // a random mod of the side — a miss removes one of them, not the sacrificial one. The window shows this in red.
       atRisk: mine.filter((a) => a.side === side && a.tag !== 'fractured' && a.mod && !remove.some((r) => r.text === a.mod.lines.join(' / '))
         && (Math.max(0, ...a.mod.lines.map((l) => want.get(l) || 0)) >= KEY_PCT || (a.tier && a.tier <= 2))).map((a) => ((a.lines || []).length ? a.lines.join(' / ') : a.mod.lines.join(' / '))),
       blocker: c.blocker || null,
       currencies: [...Object.keys(c.exalt || { base: 1 }).map((k) => EXALT_NAME[k]), ...(sideOmen ? [sideOmen] : []),
         ...(desFree && c.desecrate ? [...new Set(Object.keys(c.desecrate).flatMap((k) => k.split('|'))), `Omen of ${S} Necromancy`, 'Omen of Abyssal Echoes', 'Omen of Light'] : []),
         ...(craftedFree && c.crafted ? [...c.crafted, `Omen of ${S} Crystallisation`, 'Exalted Orb'] : [])] });
-    // Два мода на одну сторону — можно одним Exalted с Omen of Greater Exaltation (если дешевле, окно так и предложит).
-    // Мод «только через crafted-слот» — отдельным шагом (не в паре Greater Exaltation).
+    // Two mods on one side — can be done with one Exalted and Omen of Greater Exaltation (if cheaper, the window suggests it).
+    // A "crafted slot only" mod — as a separate step (not in a Greater Exaltation pair).
     const solo = into.filter((c) => c.craftedOnly || c.desecrateOnly);
     into.splice(0, into.length, ...into.filter((c) => !c.craftedOnly && !c.desecrateOnly), ...solo);
     const pairable = into.length - solo.length;
@@ -982,8 +982,8 @@ function planGoal(mine, candidates, max, want, magic, magicFree = [], itemClass 
     }
     filled[side] += into.length;
   }
-  // Последние два добавления — по одному на префикс и суффикс, и на каждой стороне ровно одно свободное место:
-  // Omen of Greater Exaltation кладёт оба мода одним Exalted (каждый — на свою сторону), омены стороны не нужны.
+  // The last two additions are one prefix and one suffix, and each side has exactly one free slot:
+  // Omen of Greater Exaltation places both mods with one Exalted (each on its own side), side omens are not needed.
   const singles = plan.filter((s) => s.act === 'add');
   const last = plan.slice(-2);
   if (last.length === 2 && last.every((s) => s.act === 'add' && !s.craftedOnly && !s.desecrateOnly) && last[0].side !== last[1].side && singles.length >= 2
@@ -995,7 +995,7 @@ function planGoal(mine, candidates, max, want, magic, magicFree = [], itemClass 
   return { keep, remove, add: add.map(({ side, text, pct, shownPct, pctParts, tier, tiers, range, stats, essence, chance, chanceUnknown, needs, desecrateOnly, craftedOnly }) => ({ side, text, pct, shownPct, pctParts, tier, tiers, range, stats, essence, chance, chanceUnknown, needs, desecrateOnly, craftedOnly })), plan };
 }
 
-// Может ли мод (шаблон poe.ninja: «# to Level of all Spell Skills») встать на эту базу. null — пул модов ещё не загружен.
+// Whether a mod (poe.ninja template: "# to Level of all Spell Skills") can roll on this base. null — mod pool not loaded yet.
 function rollsOn(baseType, template) {
   const data = craftData.current();
   if (!data) return null;
@@ -1005,14 +1005,14 @@ function rollsOn(baseType, template) {
   return data.pool.some((m) => (m.domain === 'item' || m.domain === 'desecrated') && m.lines.includes(want) && canRoll(m, base.tags || []));
 }
 
-// Уровни предмета, на которых у базы открываются новые тиры модов. Белая / магическая база с ilvl 84 ничем не лучше
-// базы 82, если выше 82 тиров нет, — ищем «такие же по тирам»: от последней ступени до следующей (не включая).
-// null — данных о базе нет. next — следующая ступень и что на ней открывается (для подсказки).
+// Item levels at which the base unlocks new mod tiers. A white / magic base at ilvl 84 is no better than
+// a base at 82 if there are no tiers above 82 — we look for "same by tiers": from the last step up to the next (exclusive).
+// null — no data on the base. next — the next step and what unlocks on it (for the hint).
 function ilvlBand(baseType, ilvl) {
   const data = craftData.current();
   const base = data && data.bases.get(baseType);
   if (!base || !ilvl) return null;
-  const at = new Map(); // уровень → семейства, у которых на нём тир
+  const at = new Map(); // level → families that have a tier at it
   for (const m of data.pool) {
     if (m.domain !== 'item' || m.is_essence_only || !canRoll(m, base.tags || [])) continue;
     if (!at.has(m.required_level)) at.set(m.required_level, new Set());
@@ -1025,9 +1025,9 @@ function ilvlBand(baseType, ilvl) {
   return { min, max: next != null ? next - 1 : null, next: next != null ? { level: next, mods: [...at.get(next)] } : null };
 }
 
-// Может ли мод вообще оказаться на этой базе: выпасть или быть её implicit'ом. Для списков спроса poe.ninja —
-// в его «Rare Sceptre» попадают и палочки (уровни заклинаний, Cast Speed), которых на скипетре не бывает.
-const linesCache = new Map(); // база → все строки модов, которые могут на ней быть
+// Whether a mod can end up on this base at all: roll or be its implicit. For poe.ninja demand lists —
+// its "Rare Sceptre" also includes wands (spell levels, Cast Speed), which never appear on a sceptre.
+const linesCache = new Map(); // base → all mod lines that can appear on it
 craftData.onReset(() => linesCache.clear());
 function canAppear(baseType, template) {
   const data = craftData.current();
@@ -1042,7 +1042,7 @@ function canAppear(baseType, template) {
   return linesCache.get(baseType).has(templates(template)[0]);
 }
 
-// Тот же ли класс вещей у двух баз (null — неизвестно).
+// Whether two bases share the same item class (null — unknown).
 function sameClass(a, b) {
   const data = craftData.current();
   const x = data && data.bases.get(a);
