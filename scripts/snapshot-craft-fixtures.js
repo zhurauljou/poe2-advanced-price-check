@@ -1,8 +1,8 @@
-// Снимок спроса poe.ninja и цен валюты для контрольных сценариев крафта (test/fixtures/craft/*.json).
-// Сценарии — вещи, на которых советы ошибались; тесты (test/craft.test.js) проверяют свойства плана на этих снимках,
-// чтобы результат не зависел от сегодняшнего рынка. Обновлять снимки — только осознанно (после патча / смены лиги):
-//   node scripts/snapshot-craft-fixtures.js            (всё)
-//   node scripts/snapshot-craft-fixtures.js --prices   (только цены и категории валюты)
+// Snapshot of poe.ninja demand and currency prices for the craft control scenarios (test/fixtures/craft/*.json).
+// Scenarios are items the advice got wrong; the tests (test/craft.test.js) check plan properties on these snapshots
+// so the result doesn't depend on today's market. Update snapshots only deliberately (after a patch / league change):
+//   node scripts/snapshot-craft-fixtures.js            (everything)
+//   node scripts/snapshot-craft-fixtures.js --prices   (only currency prices and categories)
 const fs = require('fs');
 const path = require('path');
 const Module = require('module');
@@ -13,7 +13,7 @@ const nb = require('../src/main/ninjaBuilds');
 const DIR = path.join(__dirname, '..', 'test', 'fixtures', 'craft');
 const fb = async (u) => { const r = await fetch(u, { headers: { 'User-Agent': 'poe2-price-checker' } }); if (!r.ok) throw new Error(`${u} ${r.status}`); return Buffer.from(await r.arrayBuffer()); };
 
-// item — файл с текстом вещи в той же папке; theme — моды темы спроса (как в окне); class — класс для poe.ninja.
+// item — a file with the item text in the same folder; theme — demand theme mods (as in the window); class — the poe.ninja class.
 const SCENARIOS = [
   { name: 'sceptre-minion', class: 'Sceptres', theme: ['58% increased Spirit', 'Allies in your Presence deal 81% increased Damage'] },
   { name: 'tiara-minion', class: 'Helmets', theme: ['+2 to Level of all Minion Skills'] },
@@ -33,7 +33,7 @@ const PRICE_TYPES = ['Currency', 'Ritual', 'Abyss', 'Essences', 'Runes', 'Verisi
 (async () => {
   const leagues = await (await fetch('https://www.pathofexile.com/api/trade2/data/leagues', { headers: { 'User-Agent': 'poe2-price-checker' } })).json();
   const league = leagues.result[0].id;
-  // --prices — только цены (снимки спроса не трогаем)
+  // --prices — prices only (demand snapshots are left alone)
   for (const s of process.argv.includes('--prices') ? [] : SCENARIOS) {
     const d = await nb.categoryDemand({ itemClass: s.class, rarity: 'Rare', limit: 80, minLevel: 95, withMods: s.theme }, fb);
     fs.writeFileSync(path.join(DIR, `${s.name}.demand.json`), JSON.stringify({ league: d.league, class: s.class, themed: d.themed, mods: d.mods, bases: d.bases }, null, 1));
@@ -44,7 +44,7 @@ const PRICE_TYPES = ['Currency', 'Ritual', 'Abyss', 'Essences', 'Runes', 'Verisi
     fs.writeFileSync(path.join(DIR, `unique-${u.toLowerCase().replace(/\W+/g, '-')}.demand.json`), JSON.stringify({ mods: b.mods }, null, 1));
   }
   const prices = {};
-  const categories = {}; // имя → категория poe.ninja (для аудита реестра методов крафта)
+  const categories = {}; // name → poe.ninja category (for auditing the craft method registry)
   for (const t of PRICE_TYPES) {
     const d = await (await fetch(`https://poe.ninja/poe2/api/economy/exchange/current/overview?league=${encodeURIComponent(league)}&type=${t}`)).json();
     const names = new Map((d.items || []).map((i) => [i.id, i.name]));
