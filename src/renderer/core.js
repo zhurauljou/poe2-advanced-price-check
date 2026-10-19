@@ -1,31 +1,31 @@
-// Общее для всех частей окна: состояние вещи, форматирование, статус и отсчёт, короткий поиск ради цены.
-// Части окна — обычные скрипты с общей областью видимости (index.html подключает их по порядку).
+// Shared by all parts of the window: item state, formatting, status and countdown, the short price-only search.
+// The window parts are plain scripts sharing one global scope (index.html loads them in order).
 
 const $ = (id) => document.getElementById(id);
-// Язык интерфейса (EN / RU) — src/shared/i18n.js; игровые названия не переводим.
+// UI language (EN / RU) — src/shared/i18n.js; in-game names are not translated.
 const { t } = window.i18n;
 window.i18n.setLang(window.pc.uiLang());
 let state = null; // { item, exchange, filters, searchable, league, leagues, rates, priceCurrency }
-let rates = {}; // { chaos, exalted } за 1 div, mirror — div за 1 зеркало
+let rates = {}; // { chaos, exalted } per 1 div, mirror — div per 1 mirror
 let searchSeq = 0;
 
 function esc(s) {
   return String(s == null ? '' : s).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
 }
 
-// Текст ошибки из главного процесса без обёртки Electron («Error invoking remote method 'search': Error: …»).
+// Error text from the main process without the Electron wrapper ("Error invoking remote method 'search': Error: …").
 function errText(e) {
   return String((e && e.message) || e).replace(/^Error invoking remote method '[\w-]+': (Error: )?/, '');
 }
-// Лимит трейда (⏳) — следующие запросы тоже упадут, серию поисков останавливаем.
+// Trade rate limit (⏳) — the next requests will fail too, so a series of searches stops.
 const isLimit = (e) => errText(e).startsWith('⏳');
 
-// Меньше MIN_LOTS лотов — не оценка: одна-две цены бывают какими угодно (скипетр: цель 900 div при цене вещи 13 div).
-// Такую цену показываем серой с «?», но решений по ней не принимаем (цель крафта, «оценить», «что двигает цену»).
+// Fewer than MIN_LOTS listings is not an estimate: one or two prices can be anything (sceptre: target 900 div, item at 13 div).
+// Such a price is shown grey with "?", but no decisions are made on it (craft target, "evaluate", "what drives the price").
 const MIN_LOTS = 3;
 
-// Короткий поиск ради цены — один раз на вещь и фильтры: перерисовка (смена языка, крафт после поиска) не тратит лимит
-// трейда. Сбрасывается с новой вещью и сменой лиги; ошибки не запоминаем.
+// The short price-only search runs once per item and filters: a re-render (language change, craft after search) doesn't spend
+// the trade limit. Reset with a new item and on league change; errors are not remembered.
 let quickMemo = new Map();
 function quickPrice(item, filters) {
   const key = JSON.stringify([item, filters]);
@@ -45,21 +45,21 @@ function fmt(n) {
   return (+n.toFixed(d)).toLocaleString('en-US');
 }
 
-// Цена в дивайнах → понятная строка: от 1 div — в div, дешевле — в chaos.
-// Большое количество — коротко: 38 416 → «38k» (рус. «38 тыс.»).
+// Price in divines → readable string: from 1 div — in div, cheaper — in chaos.
+// Large counts — short: 38 416 → "38k" (RU "38 тыс.").
 function countText(n) {
   const v = Math.round(n);
   if (v >= 1e6) return t('{n}M', { n: fmt(v / 1e6) });
   if (v >= 1e4) return t('{n}k', { n: String(Math.round(v / 1000)) });
   return v.toLocaleString('en-US');
 }
-// Шанс «1 из N»; от тысячи — словами: «почти невозможно (1 из 38 тыс.)».
+// "1 in N" chance; from a thousand up — in words: "almost impossible (1 in 38k)".
 function oddsText(n) {
   const s = t('1 in {n}', { n: countText(n) });
   return n >= 1000 ? t('almost impossible ({odds})', { odds: s }) : s;
 }
 
-// Цена — в той валюте, где число не меньше 1: от 1 div — div, от 1 chaos — chaos, дешевле — exalted.
+// Price in the currency where the number is at least 1: from 1 div — div, from 1 chaos — chaos, cheaper — exalted.
 function moneyUnit(div) {
   if (div >= 1 || !rates.chaos) return 'div';
   if (div * rates.chaos >= 1 || !rates.exalted) return 'chaos';
@@ -78,8 +78,8 @@ function ago(iso) {
   return t('{n}d', { n: Math.round(s / 86400) });
 }
 
-// Мини-график как во флиппере (trendSvg): пунктир нуля, выше нуля линия зелёная, ниже — красная,
-// точка на последнем значении. Одна и та же линия рисуется дважды, обрезанная по нулю.
+// Mini chart as in the flipper (trendSvg): dashed zero line, the line is green above zero, red below,
+// a dot on the last value. The same line is drawn twice, clipped at zero.
 let svgUid = 0;
 function spark(vals, { w = 96, h = 26 } = {}) {
   const pts = (vals || []).map((v, i) => [i, v]).filter((p) => p[1] != null && isFinite(p[1]));
@@ -101,8 +101,8 @@ function spark(vals, { w = 96, h = 26 } = {}) {
 
 const pct1 = (v) => `${v > 0 ? '+' : ''}${v.toFixed(1)}%`;
 
-// Широкое окно: в одну колонку вещь не помещается по высоте экрана — окно расширяется в две (цена: оценка и лоты |
-// фильтры, спрос: билды | моды, крафт: план | все способы). Сбрасывается с новой вещью; настройка «никогда» — allowWide.
+// Wide window: the item doesn't fit the screen height in one column — the window widens to two (price: estimate and listings |
+// filters, demand: builds | mods, craft: plan | all methods). Reset with a new item; the "never" setting — allowWide.
 let wide = false;
 let allowWide = true;
 function setWide(on) {
@@ -112,17 +112,17 @@ function setWide(on) {
 }
 
 function fit() {
-  // Высота содержимого (шапка + main + футер), а не body: body растянут на всё окно ради прокрутки, и по нему
-  // окно никогда бы не уменьшалось.
-  // Открытый список лиг — поверх содержимого (position: absolute) и в сумму не входит: окно не короче его низа.
+  // Content height (header + main + footer), not body: body is stretched over the whole window for scrolling, and by it
+  // the window would never shrink.
+  // An open league list sits over the content (position: absolute) and isn't in the sum: the window is no shorter than its bottom.
   requestAnimationFrame(async () => {
-    // Высота шапки и футера — для закреплённых вкладок и кнопки «Поиск» (position: sticky).
+    // Header and footer height — for the pinned tabs and the "Search" button (position: sticky).
     document.body.style.setProperty('--head-h', `${document.querySelector('.head').offsetHeight}px`);
     document.body.style.setProperty('--foot-h', `${document.querySelector('footer').offsetHeight}px`);
     const content = [...document.body.children].reduce((s, el) => s + el.offsetHeight, 0) + 2;
     const menus = ['leagueMenu', 'histMenu'].map($).filter((m) => m && !m.hidden);
     const r = await window.pc.fit(Math.max(content, ...menus.map((m) => Math.ceil(m.getBoundingClientRect().bottom) + 8)), wide);
-    // Упёрлись в высоту экрана — пробуем две колонки (экран узкий — окно останется узким, main это решит сам).
+    // Hit the screen height — try two columns (on a narrow screen the window stays narrow, main handles that itself).
     if (r && r.capped && !wide && allowWide && state) { setWide(true); fit(); }
     else if (r && wide && !r.wide) setWide(false);
   });
@@ -135,9 +135,9 @@ function setStatus(text, error) {
   s.classList.toggle('error', !!error);
 }
 
-// ---- обратный отсчёт: элементы с data-until (время в мс) показывают оставшиеся секунды; дошёл до нуля — строка
-// статуса гаснет, а data-then="search:<seq>" повторяет поиск (если вещь та же и окно открыто) ----
-// Текст с «{n}» → разметка с отсчётом на месте числа.
+// ---- countdown: elements with data-until (time in ms) show the seconds left; at zero the status line
+// goes out, and data-then="search:<seq>" repeats the search (if the item is the same and the window is open) ----
+// Text with "{n}" → markup with the countdown in place of the number.
 function untilHtml(key, until) {
   const [a, b] = t(key, { n: '\u0001' }).split('\u0001');
   return `${esc(a)}<span data-until="${until}"></span>${esc(b || '')}`;
