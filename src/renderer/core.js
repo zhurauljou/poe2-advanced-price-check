@@ -124,6 +124,45 @@ function stuckTabs() {
 }
 document.addEventListener('scroll', stuckTabs, { capture: true, passive: true });
 
+// Overlay scrollbar: the native one of the window is hidden (CSS body::-webkit-scrollbar), so the layout never shifts
+// when the content starts to scroll (e.g. the plan is expanded). This thin thumb is drawn over the content: it shows
+// while scrolling or with the mouse at the right edge, and can be dragged. Lives in <html>, not <body>: fit() sums
+// the heights of body's children.
+const sbar = document.createElement('div');
+sbar.id = 'sbar';
+sbar.hidden = true;
+document.documentElement.appendChild(sbar);
+let sbarTimer = null;
+function updateSbar(show) {
+  const b = document.body;
+  const h = b.clientHeight, sh = b.scrollHeight;
+  sbar.hidden = sh <= h + 1;
+  if (sbar.hidden) return;
+  const thumb = Math.max(28, (h * h) / sh);
+  sbar.style.height = `${thumb}px`;
+  sbar.style.top = `${((h - thumb) * b.scrollTop) / (sh - h)}px`;
+  if (show) {
+    sbar.classList.add('on');
+    clearTimeout(sbarTimer);
+    sbarTimer = setTimeout(() => sbar.classList.remove('on'), 900);
+  }
+}
+document.body.addEventListener('scroll', () => updateSbar(true), { passive: true });
+window.addEventListener('resize', () => updateSbar(false));
+document.addEventListener('mousemove', (e) => { if (e.clientX > window.innerWidth - 16) updateSbar(true); }, { passive: true });
+sbar.addEventListener('pointerdown', (e) => {
+  const b = document.body;
+  const startY = e.clientY, startTop = b.scrollTop;
+  const ratio = (b.scrollHeight - b.clientHeight) / Math.max(1, b.clientHeight - sbar.offsetHeight);
+  sbar.setPointerCapture(e.pointerId);
+  sbar.classList.add('drag');
+  const move = (ev) => { b.scrollTop = startTop + (ev.clientY - startY) * ratio; };
+  const up = () => { sbar.classList.remove('drag'); sbar.removeEventListener('pointermove', move); sbar.removeEventListener('pointerup', up); };
+  sbar.addEventListener('pointermove', move);
+  sbar.addEventListener('pointerup', up);
+  e.preventDefault();
+});
+
 function fit() {
   // Content height (header + main + footer), not body: body is stretched over the whole window for scrolling, and by it
   // the window would never shrink.
@@ -138,6 +177,7 @@ function fit() {
     // Two columns don't fit the screen width — the window stays narrow (main decides), so does the layout.
     if (r && wide && !r.wide) setWide(false);
     stuckTabs();
+    updateSbar(false);
   });
 }
 
