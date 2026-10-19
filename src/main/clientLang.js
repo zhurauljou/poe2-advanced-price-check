@@ -1,7 +1,7 @@
-// Клиент игры не на английском: текст предмета из буфера → английский эквивалент для остального разбора (parser.js).
-// Служебные слова — таблица ниже (по client_strings из Exiled Exchange 2, MIT, github.com/Kvan7/Exiled-Exchange-2);
-// названия баз, уников и камней — items.ndjson того же проекта. Строки модов переводятся по справочнику трейда этого
-// языка (stats.localToEnglish: id статов у всех языков общие); не нашлась строка — остаётся как есть.
+// Game client not in English: item text from the clipboard → English equivalent for the rest of parsing (parser.js).
+// Keywords — the table below (based on client_strings from Exiled Exchange 2, MIT, github.com/Kvan7/Exiled-Exchange-2);
+// base, unique and gem names — items.ndjson from the same project. Mod lines are translated via the trade reference of that
+// language (stats.localToEnglish: stat ids are shared across languages); a line that isn't found stays as is.
 
 const fs = require('fs');
 const path = require('path');
@@ -15,7 +15,7 @@ const LANGS = {
     itemClass: 'Класс предмета: ',
     rarity: 'Редкость: ',
     rarities: { 'Обычный': 'Normal', 'Волшебный': 'Magic', 'Редкий': 'Rare', 'Уникальный': 'Unique', 'Камень': 'Gem', 'Валюта': 'Currency' },
-    // «Ключ: значение» — ключи свойств; длинные раньше коротких («Уровень предмета» до «Уровень»).
+    // "Key: value" — property keys; longer before shorter ("Item Level" before "Level").
     props: [
       ['Уровень предмета', 'Item Level'], ['Качество', 'Quality'], ['Броня', 'Armour'], ['Уклонение', 'Evasion Rating'],
       ['Энергетический щит', 'Energy Shield'], ['Дух', 'Spirit'], ['Физический урон', 'Physical Damage'],
@@ -26,7 +26,7 @@ const LANGS = {
       ['Дарует умение', 'Grants Skill'], ['Время перезарядки', 'Reload Time'], ['Ячейки оберегов', 'Charm Slots'],
       ['Ограничение', 'Limited to'], ['Уровень', 'Level'],
     ],
-    // \b в JS не видит границ кириллических слов — поэтому «полное слово или сокращение».
+    // \b in JS doesn't see Cyrillic word boundaries — hence "full word or abbreviation".
     requires: [[/Уровень/g, 'Level'], [/Сила|Сил(?![а-яё])/g, 'Str'], [/Ловкость|Ловк(?![а-яё])/g, 'Dex'], [/Интеллект|Инт(?![а-яё])/g, 'Int']],
     flags: { 'Осквернено': 'Corrupted', 'Дважды осквернено': 'Twice Corrupted', 'Отражено': 'Mirrored', 'Освящено': 'Sanctified',
       'Неопознано': 'Unidentified', 'Расколотый предмет': 'Fractured Item', 'Очернённый предмет': 'Desecrated Item' },
@@ -34,7 +34,7 @@ const LANGS = {
     unscalable: ' — Неизменяемое значение',
     boost: /— (\d+)% увеличение$/,
     tier: /\((?:Уровень|Ранг): (\d+)\)/,
-    // Вид мода в заголовке { … } → английский заголовок.
+    // Mod kind in the { … } header → English header.
     kind(k) {
       const side = /префикс/i.test(k) ? 'Prefix Modifier' : /суффикс/i.test(k) ? 'Suffix Modifier' : null;
       const pre = /очерн/i.test(k) ? 'Desecrated ' : /расколот/i.test(k) ? 'Fractured ' : /ремесл/i.test(k) ? 'Crafted ' : '';
@@ -48,13 +48,13 @@ const LANGS = {
   },
 };
 
-// Класс вещи по категории базы (как в RePoE: «Body Armour») → как пишет игра в «Item Class:» («Body Armours»).
+// Item class by base category (as in RePoE: "Body Armour") → as the game writes it in "Item Class:" ("Body Armours").
 const CLASS_PLURAL = { Staff: 'Staves', Quarterstaff: 'Quarterstaves', Focus: 'Foci', Gloves: 'Gloves', Boots: 'Boots' };
 const plural = (c) => CLASS_PLURAL[c] || (/s$/.test(c) ? c : `${c}s`);
 
 let data = null; // { lang, items: Map ru → [entry], uniques: Map ru → [entry], bases: [{ ru, en, category }] }
 
-// items.ndjson: строка — предмет { name (на языке клиента), refName (английское), namespace, craftable? }.
+// items.ndjson: one line = one item { name (in the client language), refName (English), namespace, craftable? }.
 function parse(text) {
   const items = new Map();
   const uniques = new Map();
@@ -71,7 +71,7 @@ function parse(text) {
   return { items, uniques, bases };
 }
 
-// Названия предметов на языке клиента (кэш на неделю в папке dir; нет сети — старый кэш).
+// Item names in the client language (cached for a week in folder dir; offline — the old cache).
 async function load(lang, dir, fetchBuffer) {
   if (!LANGS[lang]) { data = null; return; }
   if (data && data.lang === lang) return;
@@ -82,8 +82,8 @@ async function load(lang, dir, fetchBuffer) {
   } catch {}
   if (!parsed) {
     try {
-      // Данные берём из ветки master чужого проекта: сменился формат — новая выгрузка не разберётся (баз почти нет).
-      // Тогда не затираем рабочий кэш, а живём со старым.
+      // Data comes from the master branch of someone else's project: if the format changes, a new dump won't parse (almost no bases).
+      // Then don't overwrite the working cache, keep living with the old one.
       const text = Buffer.from(await fetchBuffer(`${EE2}/${lang}/items.ndjson`)).toString('utf8');
       parsed = parse(text);
       if (parsed.bases.length < 100) throw new Error(`EE2 ${lang}/items.ndjson: unexpected format (${parsed.bases.length} bases)`);
@@ -93,11 +93,11 @@ async function load(lang, dir, fetchBuffer) {
     }
   }
   const { items, uniques, bases } = parsed;
-  bases.sort((a, b) => b.ru.length - a.ru.length); // для магических: самое длинное совпадение внутри строки
+  bases.sort((a, b) => b.ru.length - a.ru.length); // for magic items: the longest match within the line
   data = { lang, items, uniques, bases, byEn: new Map(bases.map((b) => [b.en, b])) };
 }
 
-// Перевод текста предмета. Не узнали формат — возвращаем как есть (parser.js его просто не примет).
+// Item text translation. Unrecognized format — return as is (parser.js simply won't accept it).
 function toEnglish(text, lang) {
   const L = LANGS[lang];
   if (!L || !data || !text) return text;
@@ -110,12 +110,12 @@ function toEnglish(text, lang) {
   const rarity = L.rarities[rarityRu] || rarityRu;
   const names = head.filter((l) => !l.startsWith(L.itemClass) && !l.startsWith(L.rarity));
 
-  // Названия → английские; класс вещи — по категории базы.
+  // Names → English; item class — by base category.
   const baseOf = (ru) => {
     const s = (ru.match(L.superior) || [null, ru])[1];
     const exact = (data.items.get(s) || []).find((x) => x.namespace === 'ITEM');
     if (exact) return data.byEn.get(exact.refName) || { en: exact.refName, category: exact.craftable && exact.craftable.category };
-    return data.bases.find((b) => s.includes(b.ru)) || null; // магическая: «<префикс> база <суффикс>»
+    return data.bases.find((b) => s.includes(b.ru)) || null; // magic: "<prefix> base <suffix>"
   };
   let enNames = names;
   let category = null;
@@ -134,7 +134,7 @@ function toEnglish(text, lang) {
     enNames = [base ? base.en : names[names.length - 1]];
     category = base && base.category;
   } else {
-    // Валюта, камни и прочее — по названию целиком.
+    // Currency, gems and the rest — by the full name.
     enNames = names.map((n) => { const x = (data.items.get(n) || [])[0]; return x ? x.refName : n; });
   }
   const classRu = lines[0].slice(L.itemClass.length).trim();
@@ -147,7 +147,7 @@ function toEnglish(text, lang) {
     if (L.flags[l]) { out.push(L.flags[l]); continue; }
     const h = l.match(/^\{ (.*) \}$/);
     if (h) {
-      // { Очернённый префикс "Имя" (Уровень: 2) — Энергетический щит } → { Desecrated Prefix Modifier "Имя" (Tier: 2) }
+      // { Desecrated Prefix "Name" (Level: 2) — Energy Shield } in Russian → { Desecrated Prefix Modifier "Name" (Tier: 2) }
       const kind = h[1].split(' — ')[0];
       const name = (kind.match(/"([^"]+)"/) || [])[1];
       const tier = kind.match(L.tier);
@@ -159,13 +159,13 @@ function toEnglish(text, lang) {
     if (p) {
       let v = l.slice(p[0].length + 2);
       if (p[1] === 'Requires') for (const [re, en] of L.requires) v = v.replace(re, en);
-      // Пометка в скобках у значения («(увеличено)» и т.п.) — как английская «(augmented)».
+      // A bracketed note on a value (Russian "(increased)", etc.) — like the English "(augmented)".
       v = v.replace(/ \(([^()]*[а-яё][^()]*)\)/gi, ' (augmented)');
       out.push(`${p[1]}: ${v}`);
       continue;
     }
-    // Строка мода → английская (справочник трейда этого языка, stats.localToEnglish). Не нашлась одна — пробуем вместе
-    // со следующей (мод в две строки). Не нашлась и так — остаётся как есть (stats.js сопоставит её по справочнику языка).
+    // Mod line → English (trade reference of this language, stats.localToEnglish). If one isn't found, try it together
+    // with the next one (a two-line mod). Still not found — it stays as is (stats.js matches it via the language reference).
     const mod = modBody(l, L);
     if (mod) {
       let en = stats.localToEnglish(mod.body);
@@ -180,8 +180,8 @@ function toEnglish(text, lang) {
   return out.join('\n');
 }
 
-// Строка, похожая на мод: без пометок «(rune)», « — Неизменяемое значение» — их возвращает wrap. Разделители,
-// заголовки и пустые строки — null.
+// A mod-like line: without markers like "(rune)" or the Russian " — Unscalable Value" — wrap returns those. Separators,
+// headers and empty lines — null.
 const MOD_TAG = / \((implicit|enchant|rune|crafted|fractured|desecrated)\)$/;
 function modBody(l, L) {
   if (!l || l === '--------' || /^\{.*\}$/.test(l)) return null;
