@@ -1,8 +1,8 @@
-// Мост главного окна (оверлей). У окна карточки конкурента и окна «Updates» свои мосты (preload-compare.js,
-// preload-updates.js) — только то, что им нужно: карточку рисуют данные трейда, ей незачем искать или писать в чат.
+// Main window (overlay) bridge. The competitor card window and the "Updates" window have their own bridges (preload-compare.js,
+// preload-updates.js) — only what they need: the card is drawn from trade data, it has no reason to search or write to chat.
 const { contextBridge, ipcRenderer } = require('electron');
 
-// Язык интерфейса: синхронно при загрузке окна (без мигания английским) и событие смены из трея.
+// UI language: synchronously on window load (no flash of English) and a change event from the tray.
 const uiLang = () => ipcRenderer.sendSync('ui-lang-get');
 const onUiLang = (cb) => ipcRenderer.on('ui-lang', (_e, lang) => cb(lang));
 
@@ -37,7 +37,7 @@ contextBridge.exposeInMainWorld('pc', {
   elementVariants: (item, filters) => ipcRenderer.invoke('element-variants', item, filters),
   pin: (on) => ipcRenderer.invoke('pin', on),
   fit: (height, wide) => ipcRenderer.invoke('fit', height, wide),
-  // карточка конкурента в окне сбоку
+  // competitor card in a side window
   compareShow: (html, y) => ipcRenderer.invoke('compare-show', html, y),
   compareHide: () => ipcRenderer.invoke('compare-hide'),
 });
