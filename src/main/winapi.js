@@ -1,6 +1,6 @@
-// Пара функций user32 через koffi: запомнить окно игры и вернуть ему фокус.
-// Electron сам этого не умеет, а без этого после клика по оверлею фокус «повисает» —
-// окно спрятано, игра неактивна, и следующий Ctrl+C уходит в никуда.
+// A couple of user32 functions via koffi: remember the game window and give focus back to it.
+// Electron can't do this itself, and without it focus "hangs" after a click on the overlay —
+// the window is hidden, the game is inactive, and the next Ctrl+C goes nowhere.
 let api = null;
 try {
   const koffi = require('koffi');
@@ -11,7 +11,7 @@ try {
     getText: user32.func('int __stdcall GetWindowTextW(intptr_t hWnd, _Out_ uint16_t *buf, int n)'),
   };
 } catch {
-  // нет koffi / не Windows — работаем без возврата фокуса
+  // no koffi / not Windows — work without restoring focus
 }
 
 function foreground() {
@@ -29,7 +29,7 @@ function title(hwnd) {
   return buf.toString('utf16le', 0, n * 2);
 }
 
-// HWND окна Electron — из буфера getNativeWindowHandle().
+// HWND of the Electron window — from the getNativeWindowHandle() buffer.
 function hwndOf(win) {
   const b = win.getNativeWindowHandle();
   return b.length >= 8 ? Number(b.readBigUInt64LE(0)) : b.readUInt32LE(0);
