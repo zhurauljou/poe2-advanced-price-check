@@ -1,4 +1,4 @@
-// Мост окна карточки конкурента: получить разметку и сообщить высоту — больше ничего.
+// Competitor card window bridge: get the markup and report the height — nothing more.
 const { contextBridge, ipcRenderer } = require('electron');
 
 contextBridge.exposeInMainWorld('pc', {
