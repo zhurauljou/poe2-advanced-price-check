@@ -419,7 +419,10 @@ async function advise(item, demandMods, cached) {
       const good = okC.filter((x) => x >= top).length / okC.length;
       const types = [...lv.keys()];
       const odds = (w) => { const sum = types.reduce((s, type) => s + w(type), 0); return w(c.type) / (sum + extra * sum / types.length) * good; };
-      return { pool: types.length + extra, good, guess: odds(share), chance: nOf && !c.chanceUnknown ? odds((type) => nOf(type) * share(type)) : null };
+      // rough — the frequency-based estimate even for a "valuable" mod whose exact odds are not trusted (chanceUnknown):
+      // used only to decide which step deserves the single Desecrate (the rarer, the more a 1-of-3 choice helps).
+      const rough = nOf ? odds((type) => nOf(type) * share(type)) : null;
+      return { pool: types.length + extra, good, guess: odds(share), rough, chance: nOf && !c.chanceUnknown ? rough : null };
     };
     c.exalt = {};
     for (const [k, L] of Object.entries(EXALT_MIN)) {

@@ -161,7 +161,8 @@
         const cur = [EXALT_NAME[k], ...(rolls === 2 ? ['Omen of Greater Exaltation'] : []), ...(omen ? [s.sideOmen] : [])];
         if (cur.some((n) => p(n) == null)) continue;
         const per = cur.reduce((a, n) => a + p(n), 0) / rolls;
-        const odds = (o) => { const c = lottery ? o.guess : o.chance; return s.otherOpen && !omen ? c / 2 : c; };
+        // Odds unknown (lottery): the rough frequency estimate beats a uniform guess (a rare mod is not as likely as a common one).
+        const odds = (o) => { const c = lottery ? (o.rough ?? o.guess) : o.chance; return s.otherOpen && !omen ? c / 2 : c; };
         const cost = os.reduce((a, o) => a + tries(per, odds(o), removal), 0);
         const rem = bestRemoval(per, odds(os[0]), removal);
         opts.push({ k, currencies: cur, chances: os.map((o) => (lottery ? null : odds(o))), pool: os[0].pool, cost, per: per * rolls, slam: per / odds(os[0]), p: os.reduce((a, o) => a * odds(o), 1), ps: os.map(odds), rem });
@@ -192,7 +193,7 @@
           const boneName = bone.split('|')[0]; // key "bone|lich omen"
           const cur = [boneName, ...(o.extra || []), ...(s.necro ? [s.necro] : []), ...(echo ? ['Omen of Abyssal Echoes'] : [])];
           if (cur.some((n) => p(n) == null)) continue;
-          const one = lottery ? o.guess : o.chance;
+          const one = lottery ? (o.rough ?? o.guess) : o.chance;
           // Matching mods on the side ≤ 3 — the wanted one is guaranteed among the options (only the tier remains).
           // Within a triple the options don't repeat (drawn without replacement), and an Abyssal Echoes reroll is a new independent triple:
           // triple chance 1 − Π (1 − g / (N − i)), g = one·N "matching" of N families; with Echoes — two triples.
@@ -347,7 +348,11 @@
         // Desecrate (6 options to choose from) — to the most valuable mod where it helps; essence — where it's cheaper.
         // Desecrate and the crafted slot — to the most valuable mod where they help (not where the price gain is largest).
         if ((kind === 'desecrate' || kind === 'essence') && (r < 1 || yes.k === kind)) {
-          const v = x.worth || 0;
+          // Desecrate (pick 1 of 3) helps most where Exalted rarely hits: value ÷ rough Exalted chance — a valuable rare
+          // mod (Spirit on body armour) gets it over a valuable common one (a resistance). The essence — by value.
+          const e = x.exalt && x.exalt.base;
+          const pe = e ? (e.chance ?? e.rough ?? e.guess) : null;
+          const v = kind === 'desecrate' && pe ? (x.worth || 0) / Math.max(0.02, pe) : x.worth || 0;
           if (!top || v > top.v || (v === top.v && r < top.r)) top = { i, j, wins: yes.k === kind, v, r, crafted: x.crafted };
         }
         if (r < ratio) { ratio = r; best = { i, j, wins: yes.k === kind }; }

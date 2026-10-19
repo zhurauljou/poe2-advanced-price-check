@@ -83,6 +83,18 @@ test('no method converges (a miss removes a wanted mod more often) — the step 
   assert.equal(c.cost, null);
 });
 
+test('the single Desecrate goes to the valuable mod Exalted rarely hits, not just the most valuable one', () => {
+  const prices = { ...PRICES, 'Preserved Rib': 0.05, 'Omen of Abyssal Echoes': 0.05, 'Omen of Light': 1 };
+  const p = PlanCost.create(() => ({ prices, goalValue: null, est: null }));
+  // Odds unknown for both (lottery); rough frequency: the resistance is common, Spirit is rare. Wanted mods already on the
+  // item — a random Annulment would hit them, so Exalted is a single attempt; Desecrate (targeted Light removal) converges.
+  const step = (mod, worth, rough) => ({ act: 'add', side: 'prefix', mod, worth, onItem: 3, onSide: 1, annulOmen: 'Omen of Sinistral Annulment',
+    exalt: { base: { chance: null, guess: 0.1, rough, pool: 10 } }, desecrate: { 'Preserved Rib': { chance: null, guess: 0.1, rough, pool: 12, good: 1 } } });
+  const plan = p.withDesecrate([step('# to cold resistance', 60, 0.3), step('# to spirit', 50, 0.05)]);
+  const des = plan.find((s) => s.useDes);
+  assert.equal(des && des.mod, '# to spirit');
+});
+
 test('Regal: Greater / Perfect by default only if dirt cheap (≤ 0.1 div or ≤ 3× the regular)', () => {
   const c = planner().stepCost({ act: 'regal' });
   assert.deepEqual(c.currencies, ['Greater Regal Orb']); // 0.02 ≤ 0.1, but Perfect (0.5) is not
