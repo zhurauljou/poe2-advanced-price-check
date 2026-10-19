@@ -36,6 +36,7 @@ contextBridge.exposeInMainWorld('pc', {
   onRefit: (cb) => ipcRenderer.on('refit', (_e, d) => cb(d)),
   elementVariants: (item, filters) => ipcRenderer.invoke('element-variants', item, filters),
   pin: (on) => ipcRenderer.invoke('pin', on),
+  setWide: (on) => ipcRenderer.invoke('set-wide', on),
   fit: (height, wide) => ipcRenderer.invoke('fit', height, wide),
   // competitor card in a side window
   compareShow: (html, y) => ipcRenderer.invoke('compare-show', html, y),

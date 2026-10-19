@@ -26,7 +26,7 @@ const WIDTH = 480;
 const SCALES = [0.8, 0.9, 1, 1.1, 1.25, 1.5];
 const uiScale = () => (SCALES.includes(settings.get().uiScale) ? settings.get().uiScale : 1);
 const W = () => Math.round(WIDTH * uiScale());
-// Wide window (two columns) — when the content doesn't fit the screen height in one column (the window decides itself).
+// Wide window (two columns) — the user's choice (header button or settings), setting wideWindow: 'on' | 'off'.
 const WIDE = 900;
 const WW = () => Math.round(WIDE * uiScale());
 const ICON = path.join(__dirname, '../../assets/icon.png');
@@ -327,7 +327,7 @@ async function priceCheck(text, refresh = false, historyId = null) {
   const entry = { name: item.name, baseType: item.baseType, rarity: item.rarity, league };
   lastHistoryId = historyId || history.add({ ...entry, text: rawText });
   const prev = history.previous(entry, lastHistoryId);
-  send('item', { ...prepared, league, leagues, historyId: lastHistoryId, offline: api.offline.host, previous: prev && { est: prev.est, at: prev.estAt || prev.at }, priceCurrency: settings.get().priceCurrency || 'any', hotkey: hotkeyLabel(), allowWide: settings.get().wideWindow !== 'never' });
+  send('item', { ...prepared, league, leagues, historyId: lastHistoryId, offline: api.offline.host, previous: prev && { est: prev.est, at: prev.estAt || prev.at }, priceCurrency: settings.get().priceCurrency || 'any', hotkey: hotkeyLabel(), wide: settings.get().wideWindow === 'on' });
   if (!refresh || !win.isVisible()) show();
   if (unknownToTrade(item)) refreshTradeData(rawText).catch((e) => log('trade data refresh', e.message));
 }
@@ -568,7 +568,7 @@ function settingsSnapshot() {
   const s = settings.get();
   return { hotkey: curHotkey(), hotkeyLabel: hotkeyLabel(), hotkeyGameOnly: !!s.hotkeyGameOnly, startWithWindows: !!s.startWithWindows,
     packaged: app.isPackaged, uiLang: i18n.getLang(), clientLang: s.clientLang || 'auto', league: s.league, leagues,
-    uiScale: uiScale(), scales: SCALES, windowPos: !!s.windowPos, wideWindow: s.wideWindow === 'never' ? 'never' : 'auto' };
+    uiScale: uiScale(), scales: SCALES, windowPos: !!s.windowPos, wideWindow: s.wideWindow === 'on' ? 'on' : 'off' };
 }
 // → { ok, error? }: an unknown or invalid value isn't saved.
 function applySettings(patch) {
@@ -594,9 +594,9 @@ function applySettings(patch) {
     applyScale();
     if (win && win.isVisible()) win.webContents.send('refit');
   }
-  if (['auto', 'never'].includes(p.wideWindow)) {
+  if (['on', 'off'].includes(p.wideWindow)) {
     settings.set({ wideWindow: p.wideWindow });
-    if (win && win.isVisible()) win.webContents.send('refit', { allowWide: p.wideWindow !== 'never' });
+    if (win && win.isVisible()) win.webContents.send('refit', { wide: p.wideWindow === 'on' });
   }
   if (typeof p.searchOnline === 'boolean') settings.set({ searchOnline: p.searchOnline });
   if (typeof p.searchFlex === 'boolean') settings.set({ searchFlex: p.searchFlex });
@@ -771,6 +771,7 @@ app.whenReady().then(singleInstance).then((ok) => {
   handle('history-open', FROM.overlay, (_e, id) => { const h = history.get(id); return h ? priceCheck(h.text, true, h.id) : null; });
   handle('history-price', FROM.overlay, (_e, id, est) => history.setPrice(id, est));
   handle('pin', FROM.overlay, (_e, on) => { pinned = !!on; syncEsc(); });
+  handle('set-wide', FROM.overlay, (_e, on) => { settings.set({ wideWindow: on ? 'on' : 'off' }); });
   handle('compare-show', FROM.overlay, (_e, html, y) => {
     if (typeof html !== 'string' || !Number.isFinite(y)) return;
     cmpY = win.getBounds().y + y;
@@ -778,7 +779,7 @@ app.whenReady().then(singleInstance).then((ok) => {
   });
   handle('compare-fit', FROM.compare, (_e, h) => { if (Number.isFinite(h) && win.isVisible()) placeCompare(h * uiScale()); });
   handle('compare-hide', FROM.overlay, () => cmpWin.hide());
-  // → { capped }: the window hit the screen height (content scrolls) — a cue for the window to switch to two columns.
+  // → { capped, wide }: the window hit the screen height (content scrolls); wide — two columns fit the screen width.
   handle('fit', FROM.overlay, (_e, h, wide) => {
     if (!Number.isFinite(h)) return null;
     const area = screen.getDisplayMatching(win.getBounds()).workArea;

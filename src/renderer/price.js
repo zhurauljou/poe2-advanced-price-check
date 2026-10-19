@@ -122,6 +122,7 @@ document.addEventListener('click', (e) => {
   if (act === 'live-site' && state.live && state.live.data) window.pc.openUrl(state.live.data.url);
   if (act === 'elements') loadElements(searchSeq, true);
   if (act === 'session') { startSession(); window.pc.pin(true); craftFor = null; loadCraft(); }
+  if (act === 'steps') toggleSteps(b.closest('.plan-steps'));
   if (act === 'session-stop') { craftSession = null; window.pc.pin(userPinned); craftFor = null; loadCraft(); }
 });
 

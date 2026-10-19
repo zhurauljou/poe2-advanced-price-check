@@ -242,22 +242,50 @@ const STEP_LABEL = {
   add2: (s) => t('Add {a} and {b}', { a: s.steps[0].mod, b: s.steps[1].mod }),
 };
 
+// The same steps split for the plan card: a muted verb, then each mod on its own line in the mod colour.
+const STEP_PARTS = {
+  remove: (s) => ({ verb: t('Remove'), mods: s.mod ? [s.mod] : s.mods, or: [] }),
+  add: (s) => ({ verb: t('Add'), mods: [s.mod], or: (s.orMods || []).slice(0, 3) }),
+  add2: (s) => ({ verb: t('Add'), mods: [s.steps[0].mod, s.steps[1].mod], or: [] }),
+};
+
 const oneIn = (c) => oddsText(1 / c);
 const EXALT_WHY = {
   greater: 'low tiers cut off (level 35+; a family without such tiers rolls its best one)',
   perfect: 'low tiers cut off (level 50+; a family without such tiers rolls its best one)',
 };
 
+// Long plans (more than 3 steps) are collapsed: the first two steps in full, the third peeks out under a fade, then
+// "Show all N steps". The choice is remembered; in the two-column window nothing is collapsed (CSS: body.wide).
+const STEPS_SHOWN = 3;
+let stepsOpen = false;
+try { stepsOpen = localStorage.getItem('planStepsOpen') === '1'; } catch { /* storage unavailable — collapsed by default */ }
+function toggleSteps(box) {
+  stepsOpen = !stepsOpen;
+  try { localStorage.setItem('planStepsOpen', stepsOpen ? '1' : '0'); } catch { /* not remembered — fine */ }
+  box.classList.toggle('open', stepsOpen);
+  const b = box.querySelector('.steps-toggle');
+  if (b) b.textContent = stepsLabel(+box.dataset.n);
+  fit();
+}
+const stepsLabel = (n) => (stepsOpen ? `${t('Collapse')} ▴` : `${t('Show all {n} steps', { n })} ▾`);
+
 function planHtml(plan) {
-  return `<ol class="plan">${expandPlan(plan).map((s) => {
+  const steps = expandPlan(plan);
+  const long = steps.length > STEPS_SHOWN;
+  return `<div class="plan-steps${long ? ' collapsible' : ''}${stepsOpen ? ' open' : ''}" data-n="${steps.length}"><ol class="plan">${steps.map((s) => {
     const c = stepCost(s);
-    let odds;
-    if (c.lottery) odds = t('chance unknown — valuable modifier') + (c.hopeless && c.perTry != null ? ` · ${t('one attempt ≈ {cost}', { cost: money(c.perTry) })}` : '');
-    else if (c.hopeless) odds = `${t('{odds} at T1–T2', { odds: (c.chances || [c.chance]).map(oneIn).join(' / ') })} · ${t('one attempt ≈ {cost}', { cost: money(c.perTry) })}`;
+    // Right column of the card: the expected cost of the whole step, or — for a one-attempt step — the price of one attempt
+    // (marked "per attempt": the two are not the same thing). The body keeps only the chance.
+    let odds, side = null;
+    // Unknown chance: the total can't be estimated, but one attempt has a price — shown for repeatable steps too.
+    if (c.lottery) { odds = t('chance unknown — valuable modifier'); if (Number.isFinite(c.perTry)) side = { cost: c.perTry, per: true }; }
+    else if (c.hopeless) { odds = t('{odds} at T1–T2', { odds: (c.chances || [c.chance]).map(oneIn).join(' / ') }); side = { cost: c.perTry, per: true }; }
     else if (c.k === 'essence') odds = c.chance >= 1 ? t('guaranteed') : oneIn(c.chance);
     else if (c.chances) odds = t('{odds} at T1–T2', { odds: c.chances.map(oneIn).join(' / ') });
-    else if (s.mods) odds = t('≈ {n} attempts', { n: fmt(Math.round(c.tries * 10) / 10) });
+    else if (s.mods) odds = '';
     else odds = c.chance >= 1 ? t('guaranteed') : oneIn(c.chance);
+    if (!side && c.cost != null) side = { cost: c.cost, sub: s.mods ? t('≈ {n} attempts', { n: fmt(Math.round(c.tries * 10) / 10) }) : '' };
     const notes = [];
     const key = []; // the step can't be done without these, shown up front; the rest goes under "details"
     if (c.two) notes.push(t('one Exalted Orb adds both modifiers'));
@@ -308,15 +336,24 @@ function planHtml(plan) {
     const more = [...notes.map((n) => `<div class="ps-note">${esc(n)}</div>`),
       ...(alts.length ? [`<div class="ps-note">${esc(t('Instead: {list}', { list: alts.join('; ') }))}</div>`] : []),
       ...(desNote ? [`<div class="ps-note">${esc(desNote)}</div>`] : [])];
-    return `<li><div class="ps-what">${esc(STEP_LABEL[s.act](s))}</div>
+    const parts = STEP_PARTS[s.act] ? STEP_PARTS[s.act](s) : null;
+    const title = parts
+      ? `<span class="ps-verb">${esc(parts.verb)}</span>${parts.mods.map((m) => `<span class="ps-mod">${esc(m)}</span>`).join('')}${parts.or.length ? `<span class="ps-or">${esc(t('or {mods}', { mods: parts.or.join(', ') }))}</span>` : ''}`
+      : esc(STEP_LABEL[s.act](s));
+    const how = [c.k === 'essence' ? '' : curChips(c.currencies), esc(odds)].filter(Boolean).join(' · ');
+    const sideHtml = side ? `<div class="ps-side${side.per ? ' per' : ''}"><b class="ps-cost">≈ ${money(side.cost)}</b>${side.per ? `<small>${esc(t('per attempt'))}</small>` : side.sub ? `<small>${esc(side.sub)}</small>` : ''}</div>` : '';
+    return `<li${side ? ' class="has-side"' : ''}><div class="ps-main"><div class="ps-what">${title}</div>
       ${c.k === 'essence' ? essenceSeq(s, c) : ''}
-      <div class="ps-how">${c.k === 'essence' ? '' : `${curChips(c.currencies)} · `}${esc(odds)}${c.cost != null ? ` · <b>≈ ${money(c.cost)}</b>` : ''}</div>
+      ${how ? `<div class="ps-how">${how}</div>` : ''}
       ${key.length ? `<div class="ps-key">${esc(key.join(' · '))}</div>` : ''}
       ${c.risky && c.chance < 1 && !s.mods ? `<div class="ps-risk">${esc(t('A miss removes a good modifier instead'))}</div>` : ''}
       ${c.k === 'essence' && c.chance < 1 && (s.atRisk || []).length ? keyRisk(s) : ''}
-      ${more.length ? `<details class="ps-more"><summary>${esc(alts.length ? t('details and alternatives') : t('details'))}</summary>${more.join('')}</details>` : ''}</li>`;
-  }).join('')}</ol>`;
+      ${more.length ? `<details class="ps-more"><summary>${esc(alts.length ? t('details and alternatives') : t('details'))}</summary>${more.join('')}</details>` : ''}</div>${sideHtml}</li>`;
+  }).join('')}</ol>${long ? `<button class="link steps-toggle" data-act="steps">${esc(stepsLabel(steps.length))}</button>` : ''}</div>`;
 }
+
+// Verdict explanations: the "≈ N" figures are highlighted so the text reads at a glance (only numbers — more would lose the accent).
+const hlNums = (s) => esc(s).replace(/≈\s?[\d.,]+(?:\s?(?:div|chaos|ex|exalted))?/g, (m) => `<b>${m}</b>`);
 
 // Verdict: sell as is or craft (goal price − currency cost).
 function verdictHtml(plan) {
@@ -333,7 +370,7 @@ function verdictHtml(plan) {
   let verdict = '';
   // Removing extras with Annulments will on average hit needed mods: on such an item it's almost always unprofitable.
   const hits = Math.max(0, ...costs.map((c) => c.hits || 0));
-  const hitNote = hits >= 1 ? `<small>${esc(t('Removing the unwanted modifiers would hit ≈{n} needed ones on average — on an item like this it is rarely worth it', { n: fmt(Math.round(hits * 10) / 10) }))}</small>` : '';
+  const hitNote = hits >= 1 ? `<small>${hlNums(t('Removing the unwanted modifiers would hit ≈{n} needed ones on average — on an item like this it is rarely worth it', { n: fmt(Math.round(hits * 10) / 10) }))}</small>` : '';
   // Currency costs more than the finished goal: crafting won't pay off at any item price (item price may not be computed yet).
   if (goalValue != null && known >= goalValue) {
     verdict = `<div class="verdict bad">✖ ${esc(t(goalBasis === 'partial' ? 'Probably not worth it: the currency alone (≈ {cost}) costs more than the lower bound of the goal (≥ {goal})' : 'Not worth it: the currency alone (≈ {cost}) costs more than the finished goal (≈ {goal})', { cost: money(known), goal: money(goalValue) }))}${hitNote}</div>`;
@@ -348,7 +385,7 @@ function verdictHtml(plan) {
     const sim = planner.simulate(plan, { keep: craftGoal ? craftGoal.keep.length : 0 });
     const gain = goalValue - now - known;
     const good = sim ? sim.profit >= 0.5 : gain > Math.max(now * 0.15, known * 0.5);
-    const simNote = sim ? `<small class="sim">${esc(t('Simulated {n} crafts: the item ends up ≈ {p50} (10–90%: {p10}–{p90}), currency ≈ {spent} on average; better than selling now in {profit}%, the full goal in {full}%',
+    const simNote = sim ? `<small class="sim">${hlNums(t('Simulated {n} crafts: the item ends up ≈ {p50} (10–90%: {p10}–{p90}), currency ≈ {spent} on average; better than selling now in {profit}%, the full goal in {full}%',
       { n: sim.runs, p50: money(sim.value.p50), p10: money(sim.value.p10), p90: money(sim.value.p90), spent: money(sim.spent.mean), profit: Math.round(sim.profit * 100), full: Math.round(sim.full * 100) }))}</small>` : '';
     verdict = `<div class="verdict ${good && (!lottery || sim) ? 'good' : 'bad'}">${good
       ? `✅ ${esc(sim ? t('Craft: better than selling as is in {pct}% of simulated runs', { pct: Math.round(sim.profit * 100) }) : t('Craft: ≈ {gain} more than selling as is', { gain: money(gain) }))}`
@@ -414,7 +451,7 @@ async function computeGoal(g) {
   const box = document.querySelector('#craft .verdict-box');
   if (box) box.innerHTML = verdictHtml(g.plan);
   // Steps too: the cost of hitting a needed mod depends on the goal price.
-  const ol = document.querySelector('#craft .plan-box ol.plan');
+  const ol = document.querySelector('#craft .plan-box .plan-steps');
   if (ol) ol.outerHTML = planHtml(g.plan);
   fit();
 }
@@ -717,7 +754,7 @@ function renderCraft(r) {
       ${r.augments.map((a) => `<div class="craft-how"><span><span class="game">${esc(a.name)}</span>${craftPrices[a.name] != null ? ` ≈ ${money(craftPrices[a.name])}` : ''} — ${esc(a.lines.join(', '))} <span class="dem">· ${esc(t('{pct}% builds', { pct: fmt(a.pct) }))}</span>${a.ancient ? ` <small class="muted">(${esc(t('Ancient Augment: one per item'))})</small>` : ''}</span></div>`).join('')}</div>`);
   }
   if (r.theme && r.theme.length) {
-    top.splice(1, 0, `<div class="craft-theme" title="${t('Demand % below is among {n} builds that wear this item class with these modifiers', { n: r.themeBuilds })}">${t('Demand among builds using')} <b>${r.theme.map(esc).join('</b> + <b>')}</b></div>`);
+    top.splice(1, 0, `<div class="craft-theme" title="${t('Demand % below is among {n} builds that wear this item class with these modifiers', { n: r.themeBuilds })}">${t('Demand among builds using')}${r.theme.map((m, i) => `${i ? '<span class="plus">+</span>' : ''}<b>${esc(m)}</b>`).join('')}</div>`);
   }
   if (chanceNote) parts.push(chanceNote); // there were no tables with odds, but the plan has odds: the line goes at the end
   if (r.gamble && r.goal && r.goal.plan && r.goal.plan.length) parts.push(gambleHtml(r.gamble)); // at the end, after all the safe methods

@@ -268,7 +268,9 @@ body.cmp-page { background: #0a0d12; }
 .craft-slots { text-align: center; color: var(--label); font-size: 14px; }
 .craft-slots b { color: var(--cream); }
 .craft-theme { text-align: center; font-size: 13.5px; color: var(--muted); margin-top: 2px; }
-.craft-theme b { color: var(--g-mod); font-weight: normal; }
+.craft-theme b { display: block; color: var(--g-mod); font-weight: normal; line-height: 1.35; }
+/* Each mod of the build theme on its own line; "+" between them — the builds wear them together, not one or the other. */
+.craft-theme .plus { display: block; font-size: 12px; line-height: 1; color: var(--muted); }
 .craft-sec { margin-top: 6px; }
 .craft-sec .k { font: 700 14px var(--body); letter-spacing: .2px; color: var(--cream); margin-bottom: 3px; }
 .craft-how { display: flex; gap: 6px; font-size: 14px; color: var(--text); margin: 2px 0; }
@@ -526,17 +528,40 @@ footer::before { bottom: 0; top: -12px; -webkit-backdrop-filter: blur(16px); bac
 .slot.free { background: none; border: 1px dashed #6b5a3a; }
 .slot.frac { box-shadow: 0 0 0 2px var(--g-fractured); }
 .plan-box { padding: 8px 10px; border: 1px solid #4a3f2c; border-radius: 3px; background: rgba(218, 193, 142, .04); }
-.profit { display: grid; gap: 2px; font-size: 14px; }
-.profit > div { display: flex; justify-content: space-between; gap: 10px; }
+.profit { display: grid; font-size: 14px; }
+/* Dashed separators lead the eye from the label to its number; rows stay compact (the window height matters). */
+.profit > div { display: flex; justify-content: space-between; gap: 10px; padding: 4px 0; border-bottom: 1px dashed rgba(218, 193, 142, .12); }
+.profit > div:last-child { border-bottom: 0; }
 .profit span { color: var(--muted); }
 .profit b { color: var(--cream); font-variant-numeric: tabular-nums; }
 .verdict { margin: 6px 0 4px; padding: 5px 8px; border-radius: 3px; font-weight: 700; color: var(--cream); background: rgba(255, 255, 255, .03); }
 .verdict.good { color: var(--good); background: rgba(111, 207, 122, .08); }
 .verdict.bad { color: #e6a59c; background: rgba(224, 103, 90, .08); }
 .verdict small { display: block; margin-top: 3px; font-weight: 400; font-size: 14px; color: var(--note); }
-.plan { margin: 6px 0 2px; padding-left: 20px; display: grid; gap: 6px; }
-.plan li::marker { color: var(--label); font-weight: 700; }
+/* Plan steps — cards: each step reads as one action. A warm tone a shade above the plan box (not a cold grey that
+   argues with the gold), the step number inside the card. */
+.plan { margin: 6px 0 2px; padding: 0; list-style: none; counter-reset: step; display: grid; gap: 6px; }
+.plan > li { position: relative; counter-increment: step; padding: 6px 9px 6px 28px; border-radius: 3px; background: rgba(241, 228, 194, .045); }
+.plan > li::before { content: counter(step) "."; position: absolute; left: 10px; top: 6px; color: var(--label); font-weight: 700; }
+/* Cost column on the right: all step costs line up and can be scanned top to bottom. */
+.plan > li.has-side { display: grid; grid-template-columns: minmax(0, 1fr) 88px; column-gap: 10px; }
+.ps-main { min-width: 0; }
+.ps-side { padding-left: 8px; border-left: 1px solid rgba(218, 193, 142, .12); text-align: right; }
+.ps-cost { display: block; white-space: nowrap; color: var(--cream); font-weight: 700; font-variant-numeric: tabular-nums; }
+.ps-side small { display: block; font-size: 12.5px; line-height: 1.3; color: var(--muted); }
+.ps-side.per .ps-cost { color: var(--label); } /* price of one attempt, not of the whole step */
+/* Step title: a muted verb, then each mod on its own line in the mod colour (as in the item tooltip). */
 .ps-what { color: var(--cream); font-weight: 700; }
+.ps-verb { display: block; color: var(--muted); }
+.ps-mod { display: block; color: var(--g-mod); line-height: 1.3; }
+.ps-or { display: block; font-size: 13.5px; font-weight: 400; color: var(--muted); }
+.verdict small b { color: var(--cream); font-weight: 400; }
+/* Collapsed long plan (one column only): steps 1–2 in full, step 3 peeks out under a fade, the rest hidden. */
+body:not(.wide) .plan-steps.collapsible:not(.open) .plan > li:nth-child(n+4) { display: none; }
+body:not(.wide) .plan-steps.collapsible:not(.open) .plan > li:nth-child(3) { max-height: 44px; overflow: hidden; pointer-events: none;
+  -webkit-mask-image: linear-gradient(#000, transparent); mask-image: linear-gradient(#000, transparent); }
+.steps-toggle { display: block; width: 100%; margin: 2px 0 4px; padding: 4px 0; text-align: center; font-size: 13.5px; }
+body.wide .steps-toggle { display: none; }
 .ps-how { font-size: 14px; color: var(--note); }
 .ps-how b { color: var(--cream); white-space: nowrap; }
 .ps-risk { font-size: 14px; color: var(--warn); }
@@ -685,8 +710,24 @@ details.gamble > summary::before { content: '▸ '; } details.gamble[open] > sum
 .pinb.on { color: var(--gold); }
 .pinb.on svg path { fill: rgba(218, 193, 142, .25); }
 .pinb svg { width: 15px; height: 15px; }
+.wideb { right: 58px; }
+.wideb.on svg path { stroke: currentColor; }
+.wideb.on svg rect { fill: rgba(218, 193, 142, .12); }
 /* ---- tabs and "Search" stay put when scrolling ---- */
-.tabs { position: sticky; top: var(--head-h, 96px); z-index: 30; }
+.tabs { position: sticky; top: var(--head-h, 96px); z-index: 30; --shade: 11, 16, 23; }
+/* Tabs pinned under the header: the progressive blur moves from the header's bottom edge to the tabs' (content slides out
+   from under the tabs, not the header). The band spans the main padding too (14px + 1px border), otherwise content shows
+   sharp at the sides of the tabs. */
+body.tabs-stuck .head::before, body.tabs-stuck .head::after { bottom: 0; }
+/* Sides of the tabs — solid (offset shadows over the main padding), below them — blur fading out; the tabs' own frame stays. */
+.tabs.stuck { box-shadow: inset 0 1px 0 rgba(255, 224, 138, .05), -15px 0 0 rgb(var(--shade)), 15px 0 0 rgb(var(--shade)); }
+.tabs::before, .tabs::after { content: ""; position: absolute; left: -15px; right: -15px; pointer-events: none; display: none; }
+.tabs.stuck::before, .tabs.stuck::after { display: block; }
+.tabs::before { top: calc(100% + 1px); height: 16px; -webkit-backdrop-filter: blur(16px); backdrop-filter: blur(16px);
+  background: linear-gradient(rgba(var(--shade), .95) 0%, rgba(var(--shade), .6) 45%, rgba(var(--shade), 0) 100%);
+  -webkit-mask-image: linear-gradient(#000 0%, #000 40%, transparent 100%); mask-image: linear-gradient(#000 0%, #000 40%, transparent 100%); }
+.tabs::after { top: calc(100% + 7px); height: 12px; -webkit-backdrop-filter: blur(5px); backdrop-filter: blur(5px);
+  -webkit-mask-image: linear-gradient(transparent 0%, #000 40%, #000 60%, transparent 100%); mask-image: linear-gradient(transparent 0%, #000 40%, #000 60%, transparent 100%); }
 #search { position: sticky; bottom: var(--foot-h, 32px); z-index: 20; }
 /* ---- wide window: two columns ---- */
 body.wide #tab-price:not([hidden]) { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); column-gap: 16px; align-items: start;

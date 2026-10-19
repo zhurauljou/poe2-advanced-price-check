@@ -9,8 +9,7 @@ window.pc.onItem((data) => {
   if ($('elements')) $('elements').hidden = true;
   state = data;
   rates = data.rates || {};
-  allowWide = data.allowWide !== false;
-  setWide(false); // new item: single column first, fit decides whether a second is needed
+  setWide(data.wide === true); // the layout the user chose with the header button
   openSums.clear();
   openDemand.clear();
   showAllLots = false;
@@ -299,10 +298,16 @@ function applyLang() {
 }
 applyLang();
 
-// Scale or "wide window" changed in settings: the window fits itself to the content.
+// Scale or layout changed in settings: the window fits itself to the content.
 window.pc.onRefit((d) => {
-  if (d && typeof d.allowWide === 'boolean') { allowWide = d.allowWide; if (!allowWide) setWide(false); }
-  if (state) setWide(false);
+  if (d && typeof d.wide === 'boolean') setWide(d.wide);
+  fit();
+});
+
+// One / two columns: the header button switches the layout and remembers it for the next items.
+$('wideBtn').addEventListener('click', () => {
+  setWide(!wide);
+  window.pc.setWide(wide);
   fit();
 });
 

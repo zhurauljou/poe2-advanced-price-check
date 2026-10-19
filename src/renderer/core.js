@@ -101,15 +101,28 @@ function spark(vals, { w = 96, h = 26 } = {}) {
 
 const pct1 = (v) => `${v > 0 ? '+' : ''}${v.toFixed(1)}%`;
 
-// Wide window: the item doesn't fit the screen height in one column — the window widens to two (price: estimate and listings |
-// filters, demand: builds | mods, craft: plan | all methods). Reset with a new item; the "never" setting — allowWide.
+// Wide window: two columns (price: estimate and listings | filters, demand: builds | mods, craft: plan | all methods).
+// Chosen by the user with the header button and remembered (setting wideWindow); never switched automatically.
 let wide = false;
-let allowWide = true;
 function setWide(on) {
   wide = !!on;
   document.body.classList.toggle('wide', wide);
+  const b = $('wideBtn');
+  if (b) { b.classList.toggle('on', wide); b.title = t(wide ? 'One column' : 'Two columns'); }
   if (wide) document.querySelectorAll('#craft .more-ways').forEach((d) => { d.open = true; });
 }
+
+// Tabs pinned under the header (position: sticky) while scrolling: the progressive blur moves from under the header to under
+// the tabs (CSS: .tabs.stuck, body.tabs-stuck), otherwise content slides out from under the tabs sharp.
+function stuckTabs() {
+  const tabs = $('tabs');
+  if (!tabs) return;
+  const head = document.querySelector('.head');
+  const on = !tabs.hidden && tabs.getBoundingClientRect().top <= head.getBoundingClientRect().bottom + 0.5;
+  tabs.classList.toggle('stuck', on);
+  document.body.classList.toggle('tabs-stuck', on);
+}
+document.addEventListener('scroll', stuckTabs, { capture: true, passive: true });
 
 function fit() {
   // Content height (header + main + footer), not body: body is stretched over the whole window for scrolling, and by it
@@ -122,9 +135,9 @@ function fit() {
     const content = [...document.body.children].reduce((s, el) => s + el.offsetHeight, 0) + 2;
     const menus = ['leagueMenu', 'histMenu'].map($).filter((m) => m && !m.hidden);
     const r = await window.pc.fit(Math.max(content, ...menus.map((m) => Math.ceil(m.getBoundingClientRect().bottom) + 8)), wide);
-    // Hit the screen height — try two columns (on a narrow screen the window stays narrow, main handles that itself).
-    if (r && r.capped && !wide && allowWide && state) { setWide(true); fit(); }
-    else if (r && wide && !r.wide) setWide(false);
+    // Two columns don't fit the screen width — the window stays narrow (main decides), so does the layout.
+    if (r && wide && !r.wide) setWide(false);
+    stuckTabs();
   });
 }
 
