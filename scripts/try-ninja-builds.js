@@ -1,9 +1,9 @@
-// Проверка src/main/ninjaBuilds.js из консоли, без Electron:
+// Test src/main/ninjaBuilds.js from the console, without Electron:
 //   node scripts/try-ninja-builds.js Mageblood
-//   node scripts/try-ninja-builds.js                       (все билды)
+//   node scripts/try-ninja-builds.js                       (all builds)
 //   node scripts/try-ninja-builds.js --class Helmets --base "Ancestral Tiara" --mod "+80 to maximum Life"
-//   опции: --league forbiddenrites  --rarity Rare  --filter class=Oracle  --tm day-1  --limit 10
-// Ответы кэшируются на диск (os.tmpdir()/poe2-ninja-builds), чтобы не дёргать poe.ninja при повторах.
+//   options: --league forbiddenrites  --rarity Rare  --filter class=Oracle  --tm day-1  --limit 10
+// Responses are cached on disk (os.tmpdir()/poe2-ninja-builds) so repeats don't hit poe.ninja.
 const fs = require('fs');
 const os = require('os');
 const path = require('path');
@@ -17,7 +17,7 @@ const CACHE = path.join(os.tmpdir(), 'poe2-ninja-builds');
 async function fetchBuffer(url) {
   fs.mkdirSync(CACHE, { recursive: true });
   const file = path.join(CACHE, crypto.createHash('sha1').update(url).digest('hex'));
-  // словари неизменяемые — храним всегда; поиск и index-state — 30 минут, как и сервер
+  // dictionaries are immutable — always kept; search and index-state — 30 minutes, same as the server
   const ttl = url.includes('/dictionary/') ? Infinity : 30 * 60e3;
   try { if (Date.now() - fs.statSync(file).mtimeMs < ttl) return fs.readFileSync(file); } catch {}
   const res = await fetch(url, { headers: { 'User-Agent': UA } });
