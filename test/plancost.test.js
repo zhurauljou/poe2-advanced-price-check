@@ -1,4 +1,4 @@
-// Модель стоимости плана крафта (src/shared/plancost.js) на синтетических шагах и ценах — без данных игры.
+// Craft plan cost model (src/shared/plancost.js) on synthetic steps and prices — no game data.
 const test = require('node:test');
 const assert = require('node:assert');
 const PlanCost = require('../src/shared/plancost');
@@ -10,95 +10,95 @@ const PRICES = {
 };
 const planner = (ctx = {}) => PlanCost.create(() => ({ prices: PRICES, goalValue: null, est: null, ...ctx }));
 const near = (a, b, msg) => assert.ok(Math.abs(a - b) < 1e-9, `${msg}: ${a} ≠ ${b}`);
-// Шаг «добавить мод»: шанс попасть в нужное семейство у обычного / Greater / Perfect Exalted.
+// "Add a mod" step: chance to hit the wanted family with a regular / Greater / Perfect Exalted.
 const add = (chance, extra = {}) => ({ act: 'add', mod: 'X', onItem: 0, onSide: 0,
   exalt: { base: { chance, guess: chance, pool: 10 }, greater: { chance, guess: chance, pool: 10 }, perfect: { chance, guess: chance, pool: 10 } }, ...extra });
 
-test('снятие лишнего Annulment: ожидаемо Σ (j+K)/j попыток, из них Σ K/j заденут нужный мод', () => {
+test('removing an unwanted mod with Annulment: expected Σ (j+K)/j tries, of which Σ K/j hit a wanted mod', () => {
   const p = planner();
-  // Один лишний, нужных нет — ровно одна сфера.
+  // One unwanted, no wanted ones — exactly one orb.
   const one = p.removeCost({ act: 'remove', sides: { prefix: { J: 1, K: 0 } } });
   near(one.tries, 1, 'tries');
   near(one.cost, PRICES['Orb of Annulment'], 'cost');
   assert.equal(one.risky, false);
-  // Два лишних и один нужный: 3/2 + 2/1 = 3.5 попытки, 1/2 + 1/1 = 1.5 задетых.
+  // Two unwanted and one wanted: 3/2 + 2/1 = 3.5 tries, 1/2 + 1/1 = 1.5 hits.
   const two = p.removeCost({ act: 'remove', sides: { prefix: { J: 2, K: 1 } } });
   near(two.tries, 3.5, 'tries');
   near(two.hits, 1.5, 'hits');
   assert.ok(two.risky);
-  // Задетый нужный мод стоит его возврата: при цене цели — четверть её.
+  // A hit wanted mod costs its restoration: with a goal price — a quarter of it.
   const withGoal = planner({ goalValue: 40 }).removeCost({ act: 'remove', sides: { prefix: { J: 2, K: 1 } } });
-  near(withGoal.cost, 3.5 * 0.05 + 1.5 * 10, 'cost с ценой цели');
+  near(withGoal.cost, 3.5 * 0.05 + 1.5 * 10, 'cost with goal price');
 });
 
-test('с оменом стороны снимаем только среди модов стороны — дешевле, когда нужные моды на другой стороне', () => {
+test('with a side omen we remove only among that side\'s mods — cheaper when wanted mods are on the other side', () => {
   const p = planner();
   const r = p.removeCost({ act: 'remove', sides: { prefix: { J: 1, K: 0, omen: 'Omen of Sinistral Annulment' }, suffix: { J: 0, K: 3, omen: 'Omen of Dextral Annulment' } } });
   assert.deepEqual(r.currencies, ['Orb of Annulment', 'Omen of Sinistral Annulment']);
-  near(r.hits, 0, 'с оменом ничего нужного не задеваем');
+  near(r.hits, 0, 'with the omen nothing wanted is hit');
 });
 
-test('снятие через Essence of the Abyss: попытки как у Annulment с оменом стороны, цена — эссенция + Crystallisation + Light + Annulment', () => {
+test('removal via Essence of the Abyss: tries as with Annulment plus side omen, price is essence + Crystallisation + Light + Annulment', () => {
   const prices = { ...PRICES, 'Essence of the Abyss': 0.3, 'Omen of Sinistral Crystallisation': 0.5, 'Omen of Light': 4 };
   const sides = { prefix: { J: 2, K: 1, omen: 'Omen of Sinistral Annulment' }, suffix: { J: 0, K: 3, omen: 'Omen of Dextral Annulment' } };
   const p = PlanCost.create(() => ({ prices, goalValue: null, est: null }));
   const r = p.removeCost({ act: 'remove', sides, abyss: true });
-  // Омен стороны за 0.2 дешевле — цепочка остаётся вариантом «Вместо».
+  // The side omen at 0.2 is cheaper — the chain stays an "Instead" option.
   assert.equal(r.viaAbyss, false);
-  near(r.abyss.tries, 3.5, 'попытки как у омена стороны');
-  near(r.abyss.hits, 1.5, 'задетые нужные');
-  near(r.abyss.spent, 3.5 * (0.3 + 0.5 + 4 + 0.05), 'валюта без кости: Mark снимает Omen of Light');
+  near(r.abyss.tries, 3.5, 'tries as with the side omen');
+  near(r.abyss.hits, 1.5, 'wanted mods hit');
+  near(r.abyss.spent, 3.5 * (0.3 + 0.5 + 4 + 0.05), 'currency without the bone: Omen of Light removes the Mark');
   assert.deepEqual(r.abyss.currencies, ['Essence of the Abyss', 'Omen of Sinistral Crystallisation', 'Omen of Light', 'Orb of Annulment']);
-  assert.notDeepEqual(r.other && r.other.currencies, r.abyss.currencies); // не показываем её дважды
-  // Омен стороны подорожал, а Annulment без омена задевает дорогие нужные суффиксы — план сам выбирает цепочку.
+  assert.notDeepEqual(r.other && r.other.currencies, r.abyss.currencies); // don't show it twice
+  // The side omen got pricier, and Annulment without an omen hits expensive wanted suffixes — the plan picks the chain itself.
   const dear = PlanCost.create(() => ({ prices: { ...prices, 'Omen of Sinistral Annulment': 20 }, goalValue: 40, est: null }));
   const d = dear.removeCost({ act: 'remove', sides, abyss: true });
   assert.equal(d.viaAbyss, true);
   assert.equal(d.currencies[0], 'Essence of the Abyss');
   assert.equal(d.abyss, null);
-  // Эссенцию на вещь не поставить (abyss: false) — варианта нет.
+  // The essence can't be applied to the item (abyss: false) — no option.
   assert.equal(p.removeCost({ act: 'remove', sides }).abyss, null);
 });
 
-test('добавить мод Exalted\'ом до победы: (цена попытки + (1−p)·снятие) / p, выбран самый дешёвый тир сферы', () => {
+test('add a mod with Exalted until success: (try price + (1−p)·removal) / p, cheapest orb tier is chosen', () => {
   const c = planner().stepCost(add(0.5));
-  assert.equal(c.k, 'base'); // у всех тиров шанс одинаковый — обычный дешевле
+  assert.equal(c.k, 'base'); // all tiers have the same chance — the regular one is cheaper
   near(c.cost, (0.01 + 0.5 * 0.05) / 0.5, 'cost');
   assert.deepEqual(c.currencies, ['Exalted Orb']);
-  // Нужные моды на вещи: промах снимается вслепую и может задеть их — знаменатель p − (1−p)·q.
+  // Wanted mods on the item: a miss is removed blindly and may hit them — denominator p − (1−p)·q.
   const risky = planner().stepCost(add(0.5, { onItem: 1 }));
-  near(risky.cost, (0.01 + 0.5 * 0.05) / (0.5 - 0.5 * 0.5), 'cost с риском');
+  near(risky.cost, (0.01 + 0.5 * 0.05) / (0.5 - 0.5 * 0.5), 'cost with risk');
 });
 
-test('Greater Exalted выбирается, когда отсекает низкие тиры и шанс заметно выше', () => {
+test('Greater Exalted is chosen when it cuts off low tiers and the chance is noticeably higher', () => {
   const s = add(0.05);
   s.exalt.greater = { chance: 0.5, guess: 0.5, pool: 4 };
   const c = planner().stepCost(s);
   assert.equal(c.k, 'greater');
 });
 
-test('ни один способ не сходится (промах чаще снимает нужный мод) — шаг безнадёжен, цены нет', () => {
+test('no method converges (a miss removes a wanted mod more often) — the step is hopeless, no price', () => {
   const c = planner().stepCost(add(0.2, { onItem: 5 }));
   assert.ok(c.hopeless);
   assert.equal(c.cost, null);
 });
 
-test('Regal: Greater / Perfect по умолчанию, только если стоят копейки (≤ 0.1 div или ≤ 3× обычного)', () => {
+test('Regal: Greater / Perfect by default only if dirt cheap (≤ 0.1 div or ≤ 3× the regular)', () => {
   const c = planner().stepCost({ act: 'regal' });
-  assert.deepEqual(c.currencies, ['Greater Regal Orb']); // 0.02 ≤ 0.1, а Perfect (0.5) уже нет
+  assert.deepEqual(c.currencies, ['Greater Regal Orb']); // 0.02 ≤ 0.1, but Perfect (0.5) is not
 });
 
-test('пара через Omen of Greater Exaltation разворачивается в два шага, если по отдельности дешевле', () => {
+test('a pair via Omen of Greater Exaltation expands into two steps if separately cheaper', () => {
   const p = planner();
   const a = add(0.5, { sideOmen: null });
   const b = add(0.5, { sideOmen: null });
   const plan = p.expandPlan([{ act: 'add2', steps: [a, b] }]);
-  // Омен (0.5 div) дороже двух лишних Exalted — два отдельных шага.
+  // The omen (0.5 div) costs more than two extra Exalted — two separate steps.
   assert.deepEqual(plan.map((s) => s.act), ['add', 'add']);
 });
 
-test('симуляция плана: с одним генератором результат повторяется; шанс 1 — все моды получены', () => {
-  // Простой генератор с зерном (mulberry32).
+test('plan simulation: with the same generator the result repeats; chance 1 — all mods obtained', () => {
+  // Simple seeded generator (mulberry32).
   const rng = (seed) => () => { seed |= 0; seed = (seed + 0x6D2B79F5) | 0; let t = Math.imul(seed ^ (seed >>> 15), 1 | seed); t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t; return ((t ^ (t >>> 14)) >>> 0) / 4294967296; };
   const p = planner({ goalValue: 10, est: 1 });
   const plan = [add(0.3, { worth: 1 }), add(0.6, { worth: 2 })];
@@ -108,62 +108,62 @@ test('симуляция плана: с одним генератором рез
   assert.ok(a.spent.mean > 0 && a.value.p50 <= 10);
   const sure = p.simulate([add(1, { worth: 1 })], {}, 50, rng(1));
   assert.equal(sure.full, 1);
-  near(sure.value.p50, 10, 'цена цели');
-  // Без цены цели симулировать нечего.
+  near(sure.value.p50, 10, 'goal price');
+  // Without a goal price there is nothing to simulate.
   assert.equal(planner().simulate(plan), null);
 });
 
-test('два Exalted подряд на одну сторону — снова в пару с Omen of Greater Exaltation (если так дешевле)', () => {
+test('two Exalted in a row on one side — paired again with Omen of Greater Exaltation (if cheaper)', () => {
   const step = (mod) => ({ ...add(0.5, { sideOmen: 'Omen of Sinistral Exaltation', otherOpen: true }), side: 'prefix', mod,
     currencies: ['Exalted Orb', 'Omen of Sinistral Exaltation'] });
   const prices = { ...PRICES, 'Omen of Sinistral Exaltation': 0.3 };
-  // Омен Greater Exaltation дёшев — один Exalted на два мода выгоднее двух попыток.
+  // Omen of Greater Exaltation is cheap — one Exalted for two mods beats two tries.
   const cheap = PlanCost.create(() => ({ prices: { ...prices, 'Omen of Greater Exaltation': 0.01 }, goalValue: null, est: null }));
   assert.deepEqual(cheap.expandPlan([step('A'), step('B')]).map((s) => s.act), ['add2']);
-  // Дорогой — остаются два отдельных шага.
+  // Expensive — two separate steps remain.
   const dear = PlanCost.create(() => ({ prices: { ...prices, 'Omen of Greater Exaltation': 50 }, goalValue: null, est: null }));
   assert.deepEqual(dear.expandPlan([step('A'), step('B')]).map((s) => s.act), ['add', 'add']);
 });
 
-test('Desecrate на полную сторону с одним лишним модом — до снятий: заменяет одну попытку Annulment стороны', () => {
+test('Desecrate on a full side with one unwanted mod — before removals: replaces one side Annulment try', () => {
   const prices = { ...PRICES, 'Gnawed Jawbone': 0.01, 'Omen of Sinistral Necromancy': 0.02, 'Omen of Light': 0.3 };
   const p = PlanCost.create(() => ({ prices, goalValue: null, est: null }));
   const sides = { prefix: { J: 1, K: 2, omen: 'Omen of Sinistral Annulment', full: true, necro: 'Omen of Sinistral Necromancy' } };
-  // Exalted мода почти не даёт (1%), Desecrate — 50%: шаг уйдёт в Desecrate.
+  // Exalted barely gives the mod (1%), Desecrate gives 50%: the step goes to Desecrate.
   const des = add(0.01, { side: 'prefix', onSide: 2, onItem: 2, desecrate: { 'Gnawed Jawbone': { chance: 0.5, guess: 0.5, good: 0.5, pool: 10 } } });
   const plan = p.expandPlan([{ act: 'remove', mods: ['junk'], sides }, des]);
-  assert.equal(plan[0].act, 'add', 'Desecrate — первым');
+  assert.equal(plan[0].act, 'add', 'Desecrate first');
   assert.ok(plan[0].desFirst);
   assert.equal(plan[0].necro, 'Omen of Sinistral Necromancy');
   const before = p.removeCost({ act: 'remove', sides });
   const after = p.stepCost(plan[1]);
-  near(after.tries, before.tries - 1, 'на одну попытку меньше');
-  // Нужные моды задеваются так же: Desecrate снимает случайный мод стороны, как Annulment.
+  near(after.tries, before.tries - 1, 'one try fewer');
+  // Wanted mods are hit the same way: Desecrate removes a random mod of the side, like Annulment.
   near(after.hits, before.hits, 'hits');
-  // Два лишних на стороне — не трогаем (после замены одного сторона уже не полная).
+  // Two unwanted on the side — left alone (after replacing one the side is no longer full).
   const two = p.expandPlan([{ act: 'remove', mods: ['a', 'b'], sides: { prefix: { ...sides.prefix, J: 2, K: 1 } } }, des]);
   assert.equal(two[0].act, 'remove');
 });
 
-test('эссенция / Alloy: на стороне ключевой мод вещи — ставится после нужных модов стороны (промах чаще снимет их, а не ключевой)', () => {
+test('essence / Alloy: with a key item mod on the side — placed after the side\'s wanted mods (a miss then removes them more often, not the key one)', () => {
   const prices = { ...PRICES, "The Runebinder's Alloy": 1, 'Omen of Dextral Crystallisation': 0.5, 'Omen of Dextral Exaltation': 0.1 };
   const mk = (goalValue) => PlanCost.create(() => ({ prices, goalValue, est: 10 }));
-  // Суффиксы: ключевой +4 к миньонам; план — Exalted на нужный суффикс, затем Alloy (crafted-слот).
+  // Suffixes: key +4 to minions; plan — Exalted on the wanted suffix, then Alloy (crafted slot).
   const regen = add(0.3, { side: 'suffix', mod: 'regen', onSide: 1, onItem: 1 });
   const alloy = { act: 'add', side: 'suffix', mod: 'puppet', onSide: 2, onItem: 2, craftedOnly: "The Runebinder's Alloy", crafted: ["The Runebinder's Alloy"],
     crystal: 'Omen of Dextral Crystallisation', atRisk: ['+4 to Level of all Minion Skills'], exalt: { base: { chance: null } } };
   const order = (goal) => mk(goal).expandPlan([regen, alloy]).map((s) => s.mod);
-  // Дорогая цель: потеря +4 дорога — Alloy после regen (снимет +4 с шансом 1 из 3, а не 1 из 2).
+  // Expensive goal: losing +4 is costly — Alloy after regen (removes +4 with chance 1 in 3, not 1 in 2).
   assert.deepEqual(order(900), ['regen', 'puppet']);
   const p = mk(900);
-  near(p.stepCost({ ...alloy }).chance, 1 / 3, 'после regen: жертву снимет 1 из 3');
+  near(p.stepCost({ ...alloy }).chance, 1 / 3, 'after regen: the victim is removed 1 in 3');
 });
 
-test('Desecrate: в тройке варианты без повторов, реролл Abyssal Echoes — новая тройка', () => {
+test('Desecrate: options in a triple don\'t repeat, an Abyssal Echoes reroll gives a new triple', () => {
   const prices = { ...PRICES, 'Gnawed Jawbone': 0.01, 'Omen of Abyssal Echoes': 0.01, 'Omen of Light': 0.3 };
   const p = PlanCost.create(() => ({ prices, goalValue: null, est: null }));
   const step = add(0.001, { desecrateOnly: true, useDes: true, desecrate: { 'Gnawed Jawbone': { chance: 0.05, guess: 0.05, good: 1, pool: 20 } } });
   const c = p.addCost(step, 1);
-  // 1 подходящий из 20 равновероятных: тройка — 3/20 (с повторами было бы 1 − 0.95³ ≈ 0.143), две тройки — 1 − (17/20)².
-  near(c.chance, c.echo ? 1 - 0.85 * 0.85 : 0.15, `шанс (echo: ${c.echo})`);
+  // 1 matching out of 20 equally likely: a triple is 3/20 (with repeats it would be 1 − 0.95³ ≈ 0.143), two triples — 1 − (17/20)².
+  near(c.chance, c.echo ? 1 - 0.85 * 0.85 : 0.15, `chance (echo: ${c.echo})`);
 });
