@@ -895,15 +895,23 @@ function planGoal(mine, candidates, max, want, magic, magicFree = [], itemClass 
   // Orb of Augmentation and Regal Orb each add a random mod: it takes a slot (a jewel has only 2 + 2) and is most likely
   // not wanted — counted as junk for the removal step. Augmentation: the free magic side; Regal: the side the plan adds
   // more to (the worst case). An essence adds a wanted mod instead (filled below via essenceMod).
-  const randomSides = [];
-  if (magicFree.length) randomSides.push(['Orb of Augmentation', magicFree[0]]);
-  if (magic && !essenceMod) {
-    const more = (s) => add.filter((c) => c.side === s).length;
-    randomSides.push(['Regal Orb', more('suffix') > more('prefix') ? 'suffix' : 'prefix']);
-  }
-  for (const [orb, side] of randomSides) {
+  // Only when there is no room for it: a side "has room" if, with all goal mods added, one slot is still free there.
+  // Room somewhere (3 + 3 bases usually) — the random mod just takes that slot and stays; the Regal step warns to remove it
+  // if it lands on the tight side. No room anywhere (a jewel filled 2 + 2) — it is junk to remove.
+  const adds = (s) => add.filter((c) => c.side === s && c !== essenceMod).length;
+  const removed = (s) => remove.filter((r) => r.side === s && r.tag !== 'random').length; // junk is removed before the adds
+  const spare = (s) => max[s] - (filled[s] - removed(s)) - adds(s) - (essenceMod && essenceMod.side === s ? 1 : 0);
+  const random = (orb, side) => {
     filled[side]++;
-    remove.push({ side, text: t('the random modifier from {orb}', { orb }), tag: 'random', level: null });
+    if (spare(side) < 0) remove.push({ side, text: t('the random modifier from {orb}', { orb }), tag: 'random', level: null });
+  };
+  if (magicFree.length) random('Orb of Augmentation', magicFree[0]);
+  if (magic && !essenceMod) {
+    const roomy = ['prefix', 'suffix'].filter((s) => spare(s) > 0).sort((a, b) => spare(b) - spare(a))[0];
+    const tight = ['prefix', 'suffix'].find((s) => spare(s) <= 0) || null;
+    const regal = plan.find((s) => s.act === 'regal');
+    if (roomy) { filled[roomy]++; if (regal && tight) regal.tightSide = tight; }
+    else random('Regal Orb', adds('suffix') > adds('prefix') ? 'suffix' : 'prefix');
   }
   // 1. First remove all the junk ("Annul down to the base"), then add. Desecrated — targeted: Annulment + Omen of Light.
   for (const r of remove.filter((x) => x.tag === 'desecrated')) {

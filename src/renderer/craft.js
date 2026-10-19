@@ -308,6 +308,8 @@ function planHtml(plan) {
     if (!side && c.cost != null) side = { cost: c.cost, sub: s.mods ? t('≈ {n} attempts', { n: fmt(Math.round(c.tries * 10) / 10) }) : '' };
     const notes = [];
     const key = []; // the step can't be done without these, shown up front; the rest goes under "details"
+    // Regal's random mod: room on one side only — it stays unless it lands on the tight side (craft.js planGoal).
+    if (s.act === 'regal' && s.tightSide) key.push(t('If the random modifier lands on the {side}es, remove it before adding — there is no room for it there; otherwise it stays', { side: t(s.tightSide) }));
     if (c.two) key.push(t('one Exalted Orb adds both modifiers')); // visible: otherwise two "Add" steps look like four Exalts
     if (s.mods) notes.push(c.hits > 0.05
       ? t('on average ≈{n} needed modifiers get hit too — re-adding them is counted in the price', { n: fmt(Math.round(c.hits * 10) / 10) })

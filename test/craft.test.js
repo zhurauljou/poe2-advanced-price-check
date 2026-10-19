@@ -349,6 +349,16 @@ test('magic jewel: Augmentation and Regal add random mods — the plan counts th
   assert.ok(r.goal.plan.every((s) => !s.sideOmen), r.goal.plan.map((s) => `${s.act}:${s.sideOmen || '-'}`).join(', '));
 });
 
+test('magic helmet (3 + 3): there is room for the Regal mod — the plan does not remove it', { skip }, async () => {
+  await init();
+  const it = parseItem(read('../magic-helmet.txt'));
+  it.baseType = bases.filter((n) => it.name.includes(n)).sort((a, b) => b.length - a.length)[0];
+  const r = await craft.advise(it, [{ name: '# to maximum Life', pct: 70 }], cached);
+  assert.ok(r.goal, r.note || 'plan not built');
+  assert.ok(!r.goal.remove.some((x) => x.tag === 'random'), 'no removal of the random mod');
+  assert.ok(!r.goal.plan.some((s) => s.act === 'remove' && (s.mods || []).some((m) => /random modifier/.test(m))));
+});
+
 test('jewel: Ferocity (Effect of Prefixes / Suffixes) — always in the search and key', { skip }, async () => {
   const f = await filters('rare-jewel-full.txt');
   const fer = f.mods.find((m) => /Effect of Prefixes/.test(m.text));

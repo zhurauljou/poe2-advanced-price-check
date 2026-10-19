@@ -449,6 +449,8 @@
     Add: 'Добавить',
     'per attempt': 'за попытку',
     'the random modifier from {orb}': 'случайный мод от {orb}',
+    'If the random modifier lands on the {side}es, remove it before adding — there is no room for it there; otherwise it stays':
+      'Если случайный мод встанет в {side}ы, снимите его до добавлений — там для него нет места; иначе он остаётся',
     '{n} free': ['{n} свободный', '{n} свободных', '{n} свободных'],
     'Popular here · best tier for this item level': 'Популярные здесь · лучший тир для этого уровня предмета',
     '— chance unknown (valuable modifier, not enough data) · green — likely, orange — a few tries, red — expensive':
