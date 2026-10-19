@@ -1,7 +1,7 @@
-// Контрольные сценарии крафта и цены: вещи, на которых советы ошибались (test/fixtures/craft/*.txt), со снимком
-// спроса poe.ninja и цен валюты (scripts/snapshot-craft-fixtures.js). Проверяем свойства плана, а не точные числа.
-// Данные — снимок RePoE и справочника трейда (test/fixtures/data, scripts/snapshot-test-data.js); CRAFT_LIVE=1 — живой кэш
-// программы (%APPDATA%/PoE 2 Price Checker/cache): проверить сценарии на свежих данных перед обновлением снимка.
+// Craft and price control scenarios: items the advice got wrong (test/fixtures/craft/*.txt), with a snapshot of
+// poe.ninja demand and currency prices (scripts/snapshot-craft-fixtures.js). We check plan properties, not exact numbers.
+// Data is a snapshot of RePoE and the trade reference (test/fixtures/data, scripts/snapshot-test-data.js); CRAFT_LIVE=1 uses
+// the app's live cache (%APPDATA%/PoE 2 Price Checker/cache): check the scenarios on fresh data before updating the snapshot.
 const test = require('node:test');
 const assert = require('node:assert');
 const fs = require('fs');
@@ -16,7 +16,7 @@ const LIVE = process.env.CRAFT_LIVE === '1';
 const CACHE = LIVE ? path.join(process.env.APPDATA || '', 'PoE 2 Price Checker', 'data-cache') : path.join(__dirname, 'fixtures', 'data');
 const file = (n) => path.join(CACHE, LIVE ? n : `${n}.gz`);
 const has = ['repoe-mods.json', 'repoe-base-items.json', 'stats.json'].every((f) => fs.existsSync(file(f)));
-const skip = has ? false : `нет данных (${CACHE})`;
+const skip = has ? false : `no data (${CACHE})`;
 const load = (n) => { const b = fs.readFileSync(file(n)); return JSON.parse(LIVE ? b.toString('utf8') : zlib.gunzipSync(b).toString('utf8')); };
 
 const FIX = path.join(__dirname, 'fixtures', 'craft');
@@ -38,7 +38,7 @@ async function init() {
   bases = Object.values(await cached('repoe-base-items.json')).map((b) => b.name).filter(Boolean);
 }
 
-// Вещь сценария: у магической база — самое длинное название базы внутри имени (как resolveBase в окне).
+// The scenario item: for a magic item the base is the longest base name contained in its name (like resolveBase in the window).
 function item(name) {
   const it = parseItem(read(`${name}.txt`));
   if (it.rarity === 'Magic') it.baseType = bases.filter((n) => it.name.includes(n)).sort((a, b) => b.length - a.length)[0];
@@ -47,7 +47,7 @@ function item(name) {
 async function plan(name, extra = []) {
   await init();
   const r = await craft.advise(item(name), json(`${name}.demand.json`).mods.concat(extra), cached);
-  assert.ok(r.goal, `${name}: план не построен (${r.note || ''})`);
+  assert.ok(r.goal, `${name}: plan not built (${r.note || ''})`);
   const planner = PlanCost.create(() => ({ prices, goalValue: null, est: null }));
   const steps = planner.expandPlan(r.goal.plan);
   return { r, goal: r.goal, steps, cost: steps.map(planner.stepCost) };
@@ -63,70 +63,70 @@ async function filters(name, demandFile) {
 }
 const mod = (f, re) => f.mods.find((m) => re.test(m.text));
 
-test('скипетр под миньонов: цель — уровни миньонов, слабый desecrated снимается Omen of Light, Desecrate — на уровни', { skip }, async () => {
+test('minion sceptre: goal is minion levels, weak desecrated removed with Omen of Light, Desecrate goes to levels', { skip }, async () => {
   const p = await plan('sceptre-minion');
-  assert.ok(p.goal.add.some((a) => /level of all minion skills/.test(a.text)), 'уровни миньонов в цели');
-  assert.ok(p.goal.remove.some((r) => r.tag === 'desecrated'), 'desecrated снимается');
-  assert.ok(p.steps.some((s) => s.act === 'remove' && s.targeted), 'снятие desecrated — прицельно (Omen of Light)');
+  assert.ok(p.goal.add.some((a) => /level of all minion skills/.test(a.text)), 'minion levels in the goal');
+  assert.ok(p.goal.remove.some((r) => r.tag === 'desecrated'), 'desecrated is removed');
+  assert.ok(p.steps.some((s) => s.act === 'remove' && s.targeted), 'desecrated removal is targeted (Omen of Light)');
   const minion = stepFor(p, /level of all minion skills/);
-  assert.ok(minion && minion.c.k === 'desecrate', 'уровни миньонов — через Desecrate');
+  assert.ok(minion && minion.c.k === 'desecrate', 'minion levels via Desecrate');
 });
 
-test('Tiara: Whittling не предлагается — он снял бы +2 к миньонам (самый низкий уровень)', { skip }, async () => {
+test('Tiara: Whittling is not offered — it would remove the +2 to minions (lowest level)', { skip }, async () => {
   const p = await plan('tiara-minion');
   const rm = p.steps.find((s) => s.act === 'remove' && s.mods);
-  assert.ok(rm, 'есть шаг снятия');
+  assert.ok(rm, 'there is a removal step');
   assert.equal(rm.whittle, null);
   assert.ok(rm.whittleWrong && /minion skills/.test(rm.whittleWrong.mod));
 });
 
-test('ботинки без скорости: Movement Speed ставит Essence of Hysteria (crafted-слот) первым из добавлений', { skip }, async () => {
+test('boots without speed: Movement Speed via Essence of Hysteria (crafted slot) is the first addition', { skip }, async () => {
   const p = await plan('boots-no-ms');
   const ms = stepFor(p, /movement speed$/);
-  assert.ok(ms && ms.c.k === 'essence' && /Hysteria/.test(ms.c.currencies[0]), 'Hysteria на скорость');
+  assert.ok(ms && ms.c.k === 'essence' && /Hysteria/.test(ms.c.currencies[0]), 'Hysteria for speed');
   const firstAdd = p.steps.findIndex((s) => s.act === 'add' || s.act === 'add2');
-  assert.equal(p.steps[firstAdd], ms.s, 'эссенция — первая из добавлений');
+  assert.equal(p.steps[firstAdd], ms.s, 'essence is the first addition');
 });
 
-test('палочка: уровни заклинаний — через Perfect Essence (crafted-слот)', { skip }, async () => {
+test('wand: spell levels via Perfect Essence (crafted slot)', { skip }, async () => {
   const p = await plan('wand-open-prefixes');
   const lv = stepFor(p, /level of all spell skills/);
-  assert.ok(lv && lv.c.k === 'essence', 'Perfect Essence на уровни заклинаний');
+  assert.ok(lv && lv.c.k === 'essence', 'Perfect Essence for spell levels');
 });
 
-test('редкое копьё: Celestial Alloy (Accuracy / Attack Speed) через crafted-слот, ненужный Dexterity T2 снимается', { skip }, async () => {
+test('rare spear: Celestial Alloy (Accuracy / Attack Speed) via the crafted slot, unwanted Dexterity T2 is removed', { skip }, async () => {
   const p = await plan('spear-rare-destruction');
-  assert.ok(p.goal.add.some((a) => /accuracy rating \/ #% increased attack speed/.test(a.text)), 'гибрид Alloy в цели');
-  assert.ok(p.goal.remove.some((r) => /dexterity/.test(r.text)), 'Dexterity снимается');
+  assert.ok(p.goal.add.some((a) => /accuracy rating \/ #% increased attack speed/.test(a.text)), 'Alloy hybrid in the goal');
+  assert.ok(p.goal.remove.some((r) => /dexterity/.test(r.text)), 'Dexterity is removed');
   const alloy = stepFor(p, /accuracy rating \/ #% increased attack speed/);
   assert.ok(alloy && alloy.c.k === 'essence' && /Alloy/.test(alloy.c.currencies[0]));
 });
 
-test('магическое копьё: первым шагом руна Thrud\'s Might, мод эссенции не добавляется второй раз', { skip }, async () => {
+test('magic spear: first step is the Thrud\'s Might rune, the essence mod is not added a second time', { skip }, async () => {
   const p = await plan('spear-magic');
   assert.equal(p.steps[0].act, 'rune');
   assert.deepEqual(p.steps[0].currencies, ["Thrud's Might"]);
   const ess = p.steps.find((s) => s.act === 'essence');
-  assert.ok(ess, 'эссенция magic → rare');
+  assert.ok(ess, 'essence magic → rare');
   const adds = p.steps.flatMap((s) => (s.act === 'add2' ? s.steps : s.act === 'add' ? [s] : [])).map((s) => s.mod);
-  assert.ok(!adds.includes(ess.mod), 'мод эссенции не повторяется');
+  assert.ok(!adds.includes(ess.mod), 'essence mod is not repeated');
 });
 
-test('нательник с desecrated: два свободных места на разных сторонах — один Exalted с Omen of Greater Exaltation', { skip }, async () => {
-  // Броня и ES на нательнике нужны (спрос поднят): цель — по одному моду на префикс и суффикс, без снятий.
+test('body armour with desecrated: two open slots on different sides — one Exalted with Omen of Greater Exaltation', { skip }, async () => {
+  // Armour and ES on the body armour are wanted (demand raised): goal is one mod per prefix and suffix, no removals.
   const p = await plan('mantle-desecrated', [{ name: '# to Armour', pct: 90 }, { name: '# to maximum Energy Shield', pct: 90 }]);
-  assert.ok(p.steps.some((s) => s.act === 'add2' && s.cross), 'пара через стороны');
+  assert.ok(p.steps.some((s) => s.act === 'add2' && s.cross), 'cross-side pair');
 });
 
-test('кольцо на миньонов: три минионских мода отмечены и ключевые', { skip }, async () => {
+test('minion ring: three minion mods are checked and key', { skip }, async () => {
   const f = await filters('ring-minion', 'ring-minion.demand.json');
   for (const re of [/Critical Damage Bonus/, /Critical Hit Chance/, /Cooldown Recovery/]) {
     const m = mod(f, re);
-    assert.ok(m && m.enabled && m.key, `${re} отмечен и ключевой`);
+    assert.ok(m && m.enabled && m.key, `${re} checked and key`);
   }
 });
 
-test('ES-ботинки: жизнь (низкий спрос) и Stun Threshold не отмечены, сумма жизни выключена', { skip }, async () => {
+test('ES boots: life (low demand) and Stun Threshold are unchecked, total life is off', { skip }, async () => {
   const f = await filters('boots-es', 'boots-es.demand.json');
   assert.equal(mod(f, /^\+137 to maximum Life/).enabled, false);
   assert.equal(mod(f, /Stun Threshold/).enabled, false);
@@ -134,34 +134,34 @@ test('ES-ботинки: жизнь (низкий спрос) и Stun Threshold 
   assert.equal(mod(f, /Movement Speed/).enabled, true);
 });
 
-test('магическая палочка: уровни умений ищутся ровно своим значением (от 4 до 4)', { skip }, async () => {
+test('magic wand: skill levels are searched at exactly their value (4 to 4)', { skip }, async () => {
   const f = await filters('wand-magic-levels', 'wand-magic-levels.demand.json');
   const lv = mod(f, /Level of all Cold Spell Skills/);
   assert.equal(lv.min, 4);
   assert.equal(lv.max, 4);
 });
 
-test('Heart of the Well: ключевые случайные моды обязательны, ненужный (< 10%) не отмечен', { skip }, async () => {
+test('Heart of the Well: key random mods are required, an unwanted one (< 10%) is unchecked', { skip }, async () => {
   const f = await filters('unique-heart-of-the-well', 'unique-heart-of-the-well.demand.json');
-  for (const re of [/Extra Cold/, /Extra Lightning/]) assert.ok(mod(f, re).enabled && mod(f, re).key, `${re} ключевой`);
+  for (const re of [/Extra Cold/, /Extra Lightning/]) assert.ok(mod(f, re).enabled && mod(f, re).key, `${re} is key`);
   assert.equal(mod(f, /Ailment Threshold/).enabled, false);
 });
 
-test('Controlled Metamorphosis: размер кольца — порядковый ролл (Massive = 8 из 1…8), неизменяемый мод скрыт', { skip }, async () => {
+test('Controlled Metamorphosis: ring size is an ordinal roll (Massive = 8 of 1…8), the fixed mod is hidden', { skip }, async () => {
   const f = await filters('unique-controlled-metamorphosis.txt');
   const ring = mod(f, /Massive Ring/);
   assert.deepEqual([ring.ordinal.idx, ring.ordinal.lo, ring.ordinal.hi], [8, 1, 8]);
   assert.equal(f.hiddenFixed, 1);
 });
 
-test('Mageblood: Legacy — случайный вариант из 14 (Divine перекатит)', { skip }, async () => {
+test('Mageblood: Legacy is a random variant out of 14 (Divine rerolls it)', { skip }, async () => {
   const f = await filters('unique-mageblood.txt');
   const legacies = f.mods.filter((m) => /^Legacy of/.test(m.text));
   assert.equal(legacies.length, 4);
   for (const m of legacies) assert.equal(m.categorical && m.categorical.n, 14);
 });
 
-test('симуляция плана: распределение итога и затрат, шанс выгоды — в разумных границах', { skip }, async () => {
+test('plan simulation: outcome and cost distribution, profit chance — within reasonable bounds', { skip }, async () => {
   await init();
   const r = await craft.advise(item('boots-no-ms'), json('boots-no-ms.demand.json').mods, cached);
   const planner = PlanCost.create(() => ({ prices, goalValue: 20, est: 5 }));
@@ -169,12 +169,12 @@ test('симуляция плана: распределение итога и з
   assert.ok(sim.value.p10 <= sim.value.p50 && sim.value.p50 <= sim.value.p90);
   assert.ok(sim.spent.mean > 0);
   assert.ok(sim.profit >= 0 && sim.profit <= 1 && sim.full >= 0 && sim.full <= 1);
-  assert.equal(PlanCost.create(() => ({ prices, goalValue: null, est: 5 })).simulate(r.goal.plan), null, 'без цены цели — нет симуляции');
+  assert.equal(PlanCost.create(() => ({ prices, goalValue: null, est: 5 })).simulate(r.goal.plan), null, 'no goal price — no simulation');
 });
 
-test('посох со стихией холода: стихийные моды по спросу лучшей стихии (руны Альдура), цена проверяется в огне первым', { skip }, async () => {
+test('cold staff: elemental mods use demand of the best element (Aldur runes), price is checked in fire first', { skip }, async () => {
   const f = await filters('staff-cold', 'staff-cold.demand.json');
-  assert.ok(mod(f, /Extra Cold Damage/).enabled, 'Extra Cold отмечен');
+  assert.ok(mod(f, /Extra Cold Damage/).enabled, 'Extra Cold is checked');
   const it = item('staff-cold');
   pricing.prepare(it, json('staff-cold.demand.json'), () => true);
   const vars = pricing.elementVariants(it, f);
@@ -183,31 +183,31 @@ test('посох со стихией холода: стихийные моды �
   assert.ok(vars[0].filters.mods.some((m) => m.enabled && /Level of all Fire Spell Skills/.test(m.text)));
 });
 
-test('посох со стихией холода в крафте: Cold-моды держатся (спрос по лучшей стихии), совет про Passion of Aldur', { skip }, async () => {
+test('cold staff in crafting: Cold mods are kept (demand of the best element), advice about Passion of Aldur', { skip }, async () => {
   const p = await plan('staff-cold');
   assert.ok(p.goal.keep.some((k) => /extra cold damage/.test(k.text)) && p.goal.keep.some((k) => /cold spell skills/.test(k.text)));
   const cheap = (p.r.sections.find((s) => s.kind === 'cheap') || { how: [] }).how;
   assert.ok(cheap.some((h) => /Passion of Aldur/.test(h)));
 });
 
-test('амулет: мод лича (только Desecrate) — через кость с лич-оменом, не в паре Greater Exaltation', { skip }, async () => {
+test('amulet: lich mod (Desecrate only) — via a bone with a lich omen, not in a Greater Exaltation pair', { skip }, async () => {
   const p = await plan('amulet-lich');
   const step = p.steps.find((s) => s.act === 'add' && s.desecrateOnly);
-  assert.ok(step, 'есть шаг с модом лича');
+  assert.ok(step, 'there is a lich mod step');
   const c = p.cost[p.steps.indexOf(step)];
   assert.equal(c.k, 'desecrate');
-  assert.ok(c.currencies.some((n) => /^Omen of the (Sovereign|Liege|Blackblooded)$/.test(n)), 'лич-омен в валюте');
-  assert.ok(!p.steps.some((s) => s.act === 'add2' && s.steps.some((x) => x.desecrateOnly)), 'не в паре');
+  assert.ok(c.currencies.some((n) => /^Omen of the (Sovereign|Liege|Blackblooded)$/.test(n)), 'lich omen in the currency');
+  assert.ok(!p.steps.some((s) => s.act === 'add2' && s.steps.some((x) => x.desecrateOnly)), 'not in a pair');
 });
 
-test('амулет: одинаковые названия аффиксов («of Kurgal») различаются по тексту, мод эссенции (Essences) узнаётся', { skip }, async () => {
+test('amulet: identical affix names ("of Kurgal") are told apart by text, the essence mod (Essences) is recognized', { skip }, async () => {
   const p = await plan('amulet-minion');
-  assert.ok(p.goal.remove.some((r) => /minions have #% increased cooldown recovery rate/.test(r.text)), 'снимается сам Minions CDR');
-  assert.ok(!p.goal.remove.some((r) => /cold and chaos/.test(r.text)), 'не выдуманный мод с тем же названием');
-  assert.ok(p.goal.keep.some((k) => /global armour, evasion and energy shield/.test(k.text)), 'мод эссенции распознан');
+  assert.ok(p.goal.remove.some((r) => /minions have #% increased cooldown recovery rate/.test(r.text)), 'Minions CDR itself is removed');
+  assert.ok(!p.goal.remove.some((r) => /cold and chaos/.test(r.text)), 'not a made-up mod with the same name');
+  assert.ok(p.goal.keep.some((k) => /global armour, evasion and energy shield/.test(k.text)), 'essence mod recognized');
 });
 
-test('бижутерия: потусторонний мод (Altered Collarbone) — только через Desecrate этой костью', { skip }, async () => {
+test('jewellery: otherworldly mod (Altered Collarbone) — only via Desecrate with that bone', { skip }, async () => {
   await init();
   const demand = json('amulet-lich.demand.json').mods.concat([{ name: 'Gain #% of Physical Damage as Extra Cold Damage', pct: 60 }]);
   const r = await craft.advise(item('amulet-lich'), demand, cached);
@@ -218,91 +218,91 @@ test('бижутерия: потусторонний мод (Altered Collarbone)
   assert.ok(planner.stepCost(s).currencies.includes('Altered Collarbone'));
 });
 
-test('кольцо на миньонов (качество 40%): отработавший +20% Max Quality снимается вместе с Fire Damage, снятие не стоит «четверть цели» за второстепенный мод', { skip }, async () => {
+test('minion ring (quality 40%): the spent +20% Max Quality is removed with Fire Damage, removal does not cost "a quarter of the goal" for a minor mod', { skip }, async () => {
   await init();
   const it = item('ring-minion');
-  assert.equal(it.quality, 40, 'качество «Quality (Minion Modifiers)» распознано');
+  assert.equal(it.quality, 40, '"Quality (Minion Modifiers)" recognized');
   const r = await craft.advise(it, json('ring-minion-themed.demand.json').mods, cached);
   assert.ok(r.goal.remove.some((x) => /maximum quality/.test(x.text)) && r.goal.remove.some((x) => /fire damage/.test(x.text)));
   const planner = PlanCost.create(() => ({ prices, goalValue: 800, est: 380 }));
   const rm = planner.expandPlan(r.goal.plan).find((s) => s.act === 'remove' && s.mods);
   assert.ok(rm.freeQuality);
-  assert.ok(planner.stepCost(rm).cost < 150, 'снятие — десятки div, а не сотни');
+  assert.ok(planner.stepCost(rm).cost < 150, 'removal costs tens of div, not hundreds');
 });
 
-test('палочка с руной Astrid\'s Creativity: два crafted-слота — Perfect Essence of Sorcery и Alloy на разные моды; без руны — один', { skip }, async () => {
+test('wand with Astrid\'s Creativity rune: two crafted slots — Perfect Essence of Sorcery and Alloy on different mods; without the rune — one', { skip }, async () => {
   const two = await plan('wand-astrid');
   const ess2 = two.steps.map((s, i) => (s.act === 'add' && two.cost[i].k === 'essence' ? two.cost[i].currencies[0] : null)).filter(Boolean);
-  assert.equal(ess2.length, 2, 'два шага через crafted-слот');
-  assert.equal(new Set(ess2).size, 2, 'разные источники');
+  assert.equal(ess2.length, 2, 'two steps via the crafted slot');
+  assert.equal(new Set(ess2).size, 2, 'different sources');
   const one = await plan('wand-open-prefixes');
   assert.equal(one.steps.filter((s, i) => s.act === 'add' && one.cost[i].k === 'essence').length, 1);
 });
 
-test('посох огня (Ashen Staff, +Fire Spell Skills): моды других стихий не запрещены — теги no_*_spell_mods игра не применяет (на трейде есть Ashen Staff с increased Cold Damage)', { skip }, async () => {
+test('fire staff (Ashen Staff, +Fire Spell Skills): other element mods are not forbidden — the game ignores no_*_spell_mods tags (trade has Ashen Staff with increased Cold Damage)', { skip }, async () => {
   await init();
-  assert.ok(craft.canAppear('Ashen Staff', '#% increased Cold Damage'), 'increased Cold Damage может быть на Ashen Staff');
+  assert.ok(craft.canAppear('Ashen Staff', '#% increased Cold Damage'), 'increased Cold Damage can be on Ashen Staff');
   const p = await plan('staff-fire');
-  assert.ok(p.goal, 'план есть');
+  assert.ok(p.goal, 'there is a plan');
 });
 
-test('скипетр на миньонов: crafted «maximum stacks of Puppet Master» включён, хотя по всему классу его носят немногие', { skip }, async () => {
+test('minion sceptre: crafted "maximum stacks of Puppet Master" is on, even though few across the whole class have it', { skip }, async () => {
   await init();
   const it = parseItem(['Item Class: Sceptres', 'Rarity: Rare', 'Doom Call', 'Rattling Sceptre', '--------', 'Item Level: 80', '--------',
     '{ Prefix Modifier "Taskmaster\'s" (Tier: 1) — Minion, Gem }', '+3(3-3) to Level of all Minion Skills',
     '{ Prefix Modifier "Prince\'s" (Tier: 2) — }', '58(56-60)% increased Spirit',
     '{ Crafted Suffix Modifier "of the Puppeteer" — Minion }', '+4(4-5) maximum stacks of Puppet Master'].join('\n'));
-  // Спрос по всему классу скипетров (без темы): Puppet Master — 20%, ниже порога «включать по спросу».
+  // Demand across the whole sceptre class (no theme): Puppet Master is 20%, below the "enable by demand" threshold.
   const demand = { mods: json('sceptre-minion.demand.json').mods.map((m) => (/Puppet Master/.test(m.name) && /maximum stacks/.test(m.name) ? { ...m, pct: 20 } : m)) };
   const f = pricing.prepare(it, demand, () => true).filters;
   const m = mod(f, /maximum stacks of Puppet Master/);
-  assert.ok(m && m.enabled, 'Puppet Master включён');
+  assert.ok(m && m.enabled, 'Puppet Master is on');
 });
 
-test('веса палочек и посохов — по базам той же стихии, если таких вещей от 100', { skip }, async () => {
+test('wand and staff weights use bases of the same element if there are 100+ such items', { skip }, async () => {
   await init();
   const d = await craft.load(cached);
   const rows = (n, base) => Array.from({ length: n }, () => ({ base }));
   const items = [...rows(120, 'Volatile Wand'), ...rows(150, 'Attuned Wand'), ...rows(40, 'Frigid Wand'), ...rows(60, null)];
   const bases = ['Volatile Wand', 'Attuned Wand', 'Frigid Wand'];
   const W = { classes: { Wands: { items: items.length, types: ['X'], raw: items.map(() => [[0, 1]]), bases, rowBase: items.map((x) => bases.indexOf(x.base)) } } };
-  assert.equal(craft.classWeights(W, 'Wands', d.bases.get('Volatile Wand'), d).items, 120, 'огненная — только огненные базы');
-  assert.equal(craft.classWeights(W, 'Wands', d.bases.get('Siphoning Wand'), d).items, 150, 'обычная — только обычные');
-  assert.equal(craft.classWeights(W, 'Wands', d.bases.get('Frigid Wand'), d).items, items.length, 'холодных меньше 100 — весь класс');
+  assert.equal(craft.classWeights(W, 'Wands', d.bases.get('Volatile Wand'), d).items, 120, 'fire — only fire bases');
+  assert.equal(craft.classWeights(W, 'Wands', d.bases.get('Siphoning Wand'), d).items, 150, 'plain — only plain ones');
+  assert.equal(craft.classWeights(W, 'Wands', d.bases.get('Frigid Wand'), d).items, items.length, 'fewer than 100 cold — whole class');
 });
 
-test('белая база: ilvl ищется ступенью тиров — от последнего открытого тира до следующего', { skip }, async () => {
+test('normal base: ilvl is searched as a tier band — from the last unlocked tier to the next one', { skip }, async () => {
   await init();
   const b = craft.ilvlBand('Sandsworn Sandals', 70);
-  assert.deepEqual([b.min, b.max, b.next.level], [68, 70, 71], 'на 71 открываются сопротивления');
+  assert.deepEqual([b.min, b.max, b.next.level], [68, 70, 71], 'resistances unlock at 71');
   assert.ok(b.next.mods.some((m) => /fire resistance/.test(m)));
   const top = craft.ilvlBand('Sandsworn Sandals', 84);
-  assert.deepEqual([top.min, top.max, top.next], [82, null, null], 'выше 82 новых тиров нет: 84 = 82');
+  assert.deepEqual([top.min, top.max, top.next], [82, null, null], 'no new tiers above 82: 84 = 82');
   assert.equal(craft.ilvlBand('No Such Base', 80), null);
 });
 
-test('скрижали: все моды находятся на трейде (золото «(Gold Piles)», «2 additional Rare Chests»), использования — фильтр', { skip }, async () => {
+test('tablets: all mods are found on trade (gold "(Gold Piles)", "2 additional Rare Chests"), uses are a filter', { skip }, async () => {
   for (const [file, uses] of [['tablet-rare.txt', 6], ['tablet-irradiated.txt', 10]]) {
     const f = await filters(file);
     const bad = f.mods.filter((m) => !m.statId).map((m) => m.text);
-    assert.deepEqual(bad, [], `${file}: без стата`);
+    assert.deepEqual(bad, [], `${file}: no stat`);
     const u = f.props.find((p) => p.key === 'uses');
-    // Потраченную ищем среди полных (10), окно пересчитает цену по остатку.
-    assert.ok(u && u.enabled && u.value === uses && u.min === Math.max(uses, 10), `${file}: uses ${uses}, поиск ≥ ${u && u.min}`);
+    // A used one is searched among full ones (10); the window recalculates the price by what remains.
+    assert.ok(u && u.enabled && u.value === uses && u.min === Math.max(uses, 10), `${file}: uses ${uses}, search ≥ ${u && u.min}`);
   }
   const chests = (await filters('tablet-irradiated.txt')).mods.find((m) => /Rare Chests/.test(m.text));
   assert.equal(chests.value, 2);
 });
 
-test('белая база: «удачный ilvl» — выше последнего тира нужных модов только тиры ненужных', { skip }, async () => {
+test('normal base: "lucky ilvl" — above the last tier of wanted mods there are only tiers of unwanted ones', { skip }, async () => {
   await init();
   const it = parseItem(read('../normal-boots.txt'));
   const r = await craft.advise(it, json('boots-es.demand.json').mods, cached);
-  assert.ok(r.ilvlHint, 'подсказка есть');
+  assert.ok(r.ilvlHint, 'there is a hint');
   assert.ok(r.ilvlHint.from < 79 && r.ilvlHint.junk.length);
 });
 
-test('скрижаль: непорченая — среди ровно 10 использований, порченая с 13 — не меньше 13, без пересчёта', { skip }, async () => {
+test('tablet: uncorrupted — among exactly 10 uses, corrupted with 13 — at least 13, no recalculation', { skip }, async () => {
   const uses = async (file) => (await filters(file)).props.find((p) => p.key === 'uses');
   const six = await uses('tablet-rare.txt');
   assert.deepEqual([six.value, six.min, six.max], [6, 10, 10]);
@@ -310,7 +310,7 @@ test('скрижаль: непорченая — среди ровно 10 исп
   assert.deepEqual([thirteen.value, thirteen.min, thirteen.max], [13, 13, undefined]);
 });
 
-test('самоцветы: эмоции — варианты по цвету базы (Ancient — только Time-Lost), риск — ключевые из всех модов', { skip }, async () => {
+test('jewels: emotions — variants by base colour (Ancient — Time-Lost only), risk — key mods among all mods', { skip }, async () => {
   await init();
   const demand = [{ name: 'Upgrades Radius to Very Large', pct: 80 }, { name: 'Notable Passive Skills in Radius also grant #% increased Critical Hit Chance for Spells', pct: 41 },
     { name: 'Small Passive Skills in Radius also grant #% increased Spell Damage', pct: 35 }];
@@ -318,21 +318,21 @@ test('самоцветы: эмоции — варианты по цвету ба
   const em = r.sections.find((s) => s.kind === 'emotions');
   const names = em.options.map((o) => o.name);
   assert.ok(names.includes('Ancient Potent Liquid Melancholy') && names.includes('Ancient Liquid Despair'), names.join(', '));
-  assert.ok(!names.some((n) => !/^Ancient /.test(n)), 'на Time-Lost — только Ancient');
-  assert.equal(names.filter((n) => n === 'Ancient Potent Liquid Contempt').length, 1, 'две стороны — одна строка');
-  // Small Spell Damage на вещи есть и нужен (35%) — ключевой; снимет 1 из 3 модов.
+  assert.ok(!names.some((n) => !/^Ancient /.test(n)), 'Time-Lost gets Ancient only');
+  assert.equal(names.filter((n) => n === 'Ancient Potent Liquid Contempt').length, 1, 'two sides — one row');
+  // Small Spell Damage is on the item and wanted (35%) — key; removes 1 of 3 mods.
   assert.deepEqual([em.risk.n, em.risk.keys.length], [3, 1]);
   const basic = await craft.advise(parseItem(read('../rare-jewel-full.txt')), [], cached);
-  assert.ok(basic.sections.find((s) => s.kind === 'emotions').blocked, 'crafted-мод уже есть');
+  assert.ok(basic.sections.find((s) => s.kind === 'emotions').blocked, 'a crafted mod is already present');
 });
 
-test('самоцвет: Ferocity (Effect of Prefixes / Suffixes) — всегда в поиске и ключевая', { skip }, async () => {
+test('jewel: Ferocity (Effect of Prefixes / Suffixes) — always in the search and key', { skip }, async () => {
   const f = await filters('rare-jewel-full.txt');
   const fer = f.mods.find((m) => /Effect of Prefixes/.test(m.text));
   assert.ok(fer && fer.enabled && fer.key);
 });
 
-test('самоцвет со стороной сверх лимита (3 суффикса после снятия «+1»): суффиксы не трогаем, план — только префиксы', { skip }, async () => {
+test('jewel with a side over the limit (3 suffixes after removing "+1"): suffixes are untouched, the plan is prefixes only', { skip }, async () => {
   await init();
   const demand = [{ name: '#% increased Critical Hit Chance for Attacks', pct: 46 }, { name: '#% increased Critical Damage Bonus for Attack Damage', pct: 43 },
     { name: '#% increased Attack Speed', pct: 40 }, { name: '#% increased Projectile Damage', pct: 36 }];
