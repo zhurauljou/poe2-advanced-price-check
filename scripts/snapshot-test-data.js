@@ -1,6 +1,6 @@
-// Снимок данных для тестов крафта (test/fixtures/data/*.json.gz): RePoE (моды, базы, аугменты) и справочник трейда
-// из кэша программы — только то, что читает код, и сжато. С ним тесты крафта идут на любой машине и в CI и не
-// «плывут» от еженедельного обновления RePoE. Обновить после патча игры (сначала запустить программу — она обновит кэш):
+// Data snapshot for craft tests (test/fixtures/data/*.json.gz): RePoE (mods, bases, augments) and the trade reference
+// from the app cache — only what the code reads, compressed. With it, craft tests run on any machine and in CI and don't
+// "drift" with the weekly RePoE update. Update after a game patch (run the app first — it refreshes the cache):
 //   node scripts/snapshot-test-data.js
 const fs = require('fs');
 const path = require('path');
@@ -16,13 +16,13 @@ const bases = read('repoe-base-items.json');
 const augments = read('repoe-augments.json');
 const stats = read('stats.json');
 
-// Базы: предметы (item), самоцветы (misc) и то, что вставляется в гнёзда (аугменты ссылаются на них по id).
+// Bases: items (item), jewels (misc) and what goes into sockets (augments reference them by id).
 const keepBase = (id, b) => b.domain === 'item' || b.domain === 'misc' || augments[id];
 const outBases = {};
 for (const [id, b] of Object.entries(bases)) {
   if (keepBase(id, b)) outBases[id] = pick(b, ['name', 'tags', 'implicits', 'item_class', 'release_state', 'domain']);
 }
-// Моды: пул крафта (item / misc / desecrated) и implicit'ы оставленных баз.
+// Mods: craft pool (item / misc / desecrated) and the implicits of the kept bases.
 const implicitIds = new Set(Object.values(outBases).flatMap((b) => b.implicits || []));
 const outMods = {};
 for (const [id, m] of Object.entries(mods)) {
