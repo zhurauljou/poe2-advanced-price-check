@@ -123,7 +123,7 @@ function compareLeagues(leagues) {
   }
   if (errors.length) out.push('### Не удалось проверить', list(errors), '');
   const head = significant
-    ? '## Данные игры изменились — проверить программу\n\nСнимок для сравнения — `test/fixtures/data`. Что делать: docs/README.md → «Новый патч — чек-лист».\n'
+    ? '## Данные игры изменились — проверить программу\n\nСнимок для сравнения — `test/fixtures/data`. Что делать: docs/README.md → «New patch — checklist».\n'
     : '## Существенных изменений нет\n';
   const report = [head, ...out].join('\n');
   console.log(report);
