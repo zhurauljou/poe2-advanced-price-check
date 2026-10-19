@@ -1,6 +1,6 @@
-// Обновления через GitHub Releases (electron-updater): проверяем при запуске и раз в 6 часов. Скачиваем
-// только по кнопке в окне «Updates» (видно прогресс), ставим по «Restart & install» или сами при выходе.
-// Работает только у установленной программы — при запуске из исходников обновлять нечего.
+// Updates via GitHub Releases (electron-updater): check at startup and every 6 hours. Download
+// only via the button in the "Updates" window (progress is visible), install via "Restart & install" or on exit.
+// Works only in the installed program — when running from source there's nothing to update.
 const { app } = require('electron');
 const { log } = require('./log');
 
@@ -31,7 +31,7 @@ function init(changed) {
     progress: { percent: p.percent, transferred: p.transferred, total: p.total, speed: p.bytesPerSecond } }));
   updater.on('update-downloaded', (i) => set({ state: 'ready', version: i.version, progress: null }));
   updater.on('error', (e) => set({ state: 'error', error: e && e.message, progress: null }));
-  setTimeout(check, 10e3); // не мешаем запуску
+  setTimeout(check, 10e3); // don't get in the way of startup
   setInterval(check, EVERY);
 }
 
@@ -46,7 +46,7 @@ function download() {
   updater.downloadUpdate().catch((e) => set({ state: 'error', error: e.message, progress: null }));
 }
 
-// Перезапуск с установкой: тихо (без окна установщика) и сразу запускаем новую версию.
+// Restart with install: silently (no installer window), then launch the new version right away.
 function install() {
   if (updater && status.state === 'ready') updater.quitAndInstall(true, true);
 }
