@@ -1,5 +1,5 @@
-// История проверок (%APPDATA%\PoE 2 Price Checker\history.json): последние 50 вещей с оценкой — вернуться к вещи без
-// игры и видеть, сколько та же вещь стоила в прошлый раз. Хранится только на этом компьютере.
+// Check history (%APPDATA%\PoE 2 Price Checker\history.json): the last 50 items with a valuation — go back to an item
+// without the game and see what the same item cost last time. Stored only on this computer.
 const { app } = require('electron');
 const fs = require('fs');
 const path = require('path');
@@ -21,7 +21,7 @@ function save() {
   try { writeFileAtomic(file(), JSON.stringify(list)); } catch {}
 }
 
-// entry: { text, name, baseType, rarity, league } → id записи.
+// entry: { text, name, baseType, rarity, league } → record id.
 function add(entry) {
   load();
   const id = `${Date.now().toString(36)}-${(seq++).toString(36)}`;
@@ -31,7 +31,7 @@ function add(entry) {
   return id;
 }
 
-// Оценка вещи (div), когда окно её посчитало.
+// Item valuation (div), once the window has computed it.
 function setPrice(id, est) {
   const e = load().find((x) => x.id === id);
   if (!e || !Number.isFinite(est)) return;
@@ -42,13 +42,13 @@ function setPrice(id, est) {
 
 const get = (id) => load().find((x) => x.id === id) || null;
 
-// Прошлая проверка той же вещи (имя, база, редкость, лига) с оценкой.
+// Previous check of the same item (name, base, rarity, league) with a valuation.
 function previous(entry, exceptId) {
   return load().find((x) => x.id !== exceptId && x.est != null && x.name === entry.name && x.baseType === entry.baseType
     && x.rarity === entry.rarity && x.league === entry.league) || null;
 }
 
-// Для списка в окне — без текста предмета.
+// For the list in the window — without the item text.
 const brief = () => load().map(({ text, ...rest }) => rest);
 
 module.exports = { add, setPrice, get, previous, brief };
