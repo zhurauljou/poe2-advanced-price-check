@@ -1,7 +1,7 @@
-// Вкладка крафта: план, его цена и цель, пошаговый крафт, белые базы, уники, рискованный финал.
-// Части окна — обычные скрипты с общей областью видимости (index.html подключает их по порядку).
+// Craft tab: plan, its cost and goal, step-by-step crafting, white bases, uniques, risky finish.
+// Window parts are plain scripts sharing one scope (index.html loads them in order).
 
-// ---- вкладка Craft: что и чем добавить/заменить. Грузим по открытию вкладки, один раз на предмет. ----
+// ---- Craft tab: what to add/replace and with what. Loaded when the tab opens, once per item. ----
 let craftFor = null;
 async function loadCraft() {
   if (craftFor === state) return;
@@ -9,7 +9,7 @@ async function loadCraft() {
   const box = $('craft');
   box.innerHTML = `<div class="sect"><span>${t('Craft')}</span></div><div class="muted center">${t('Loading mod pool…')}</div>`;
   fit();
-  // Ответ для прежней вещи (пришла новая, пока считали) — не рисуем, ни советы, ни ошибку.
+  // Response for the previous item (a new one arrived while computing): render nothing, neither advice nor error.
   try {
     const r = await window.pc.craft();
     if (craftFor === mine && state === mine) renderCraft(r);
@@ -20,24 +20,24 @@ async function loadCraft() {
   fit();
 }
 
-// Кандидаты крафта по ключу кнопки «price?»: сколько будет стоить вещь, если этот мод встанет (нижний ролл тира).
+// Craft candidates by the "price?" button key: what the item would cost if this mod lands (lowest roll of the tier).
 const craftCands = new Map();
-let chanceNote = ''; // строка «откуда шансы» — ставится под первую таблицу с шансами
-// Доля билдов для показа: у гибрида из Alloy / эссенции pct — ценность (лучшая строка + половина второй, бывает больше
-// 100%), показываем долю лучшей строки, а по строкам — в подсказке.
+let chanceNote = ''; // "where the odds come from" line, placed under the first table with odds
+// Build share to display: for a hybrid from Alloy / essence, pct is the value (best line + half of the second, can exceed
+// 100%); we show the best line's share, per-line shares go in the tooltip.
 const demPct = (c) => (c.shownPct != null ? c.shownPct : c.pct);
 const demTitle = (c) => (c.pctParts && c.pctParts.length > 1 ? c.pctParts.map(([l, p]) => `${l} — ${fmt(p)}%`).join('\n') : '');
 
-// Кандидаты крафта — таблица с подписанными колонками: мод (тир, диапазон; способ получить — строкой ниже) | сколько
-// билдов его носят | шанс за попытку Exalted | цена вещи с ним. Раньше в одной строке без подписей были и спрос (крупно
-// справа, с полосой на фоне), и шанс, и эссенция — спрос легко было принять за шанс.
+// Craft candidates as a table with labeled columns: mod (tier, range; how to get it on the line below) | how many
+// builds use it | chance per Exalted attempt | item price with it. Previously one unlabeled line held demand (large,
+// on the right, with a background bar), chance and essence, so demand was easy to mistake for chance.
 function craftRows(list) {
   const head = `<div class="crow chead"><span>${esc(t('Modifier'))}</span><span>${esc(t('builds'))}</span><span title="${esc(t('Chance per try: Exalted Orb + omen of its side'))}">${esc(t('chance'))}</span><span>${esc(t('price with it'))}</span></div>`;
   const rows = head + list.map((c) => {
     const key = String(craftCands.size);
     craftCands.set(key, c);
     const btn = c.stats ? `<button class="link cprice" data-ck="${key}" title="${t('Search for your item with this modifier added (lowest roll of the tier)')}">${t('estimate')}</button>` : '';
-    // Обычная эссенция делает редкой магическую вещь — на редкой этот путь не работает.
+    // A regular essence turns a magic item rare; this path doesn't work on a rare.
     const via = c.fromNormal ? `<span class="cvia" title="${esc(t('Guides: when the desecrated modifier is revealed, normal modifiers of the pool are offered too — not verified in game'))}">${esc(t('normal modifier — can be offered on reveal'))}</span>`
       : c.essence && state.item.rarity === 'Magic' ? `<span class="cvia" title="${esc(t('{essence} makes a magic item rare with this modifier: {tiers}', { essence: c.essence.name, tiers: c.essence.tiers.join(' · ') }))}">${esc(t('guaranteed: {how}', { how: c.essence.name }))}</span>` : '';
     return `
@@ -47,9 +47,9 @@ function craftRows(list) {
       <span class="cch">${chanceTag(c.chance, c.chanceUnknown)}</span>
       <span class="cpx">${btn}</span></div>`;
   }).join('');
-  // «Оценить все»: по короткому поиску на строку, потом список — по приросту цены, лучший помечен.
+  // "Price all": one short search per row, then the list sorted by price gain, best one marked.
   const priceable = list.filter((c) => c.stats).length;
-  // Откуда шансы — одной строкой под первой таблицей с ними (подробно — в подсказке).
+  // Where the odds come from: one line under the first table with them (details in the tooltip).
   let note = '';
   if (chanceNote && list.some((c) => c.chance != null)) { note = chanceNote; chanceNote = ''; }
   return `<div class="clist">${priceable > 1 ? `<button class="link cprice-all" data-priceall title="${esc(t('One trade search per row, then the list is sorted by how much each modifier adds to the price'))}">⇅ ${esc(t('Price all and sort'))}</button>` : ''}${rows}${note}</div>`;
@@ -59,12 +59,12 @@ async function priceAll(btn) {
   const list = btn.closest('.clist');
   btn.disabled = true;
   btn.textContent = t('pricing…');
-  // Сменили вещь посреди оценки — дальше не ищем (кнопки уже от старой вещи, лимит трейда не тратим).
+  // Item changed mid-pricing: stop searching (buttons belong to the old item, don't spend the trade limit).
   const mine = state;
   for (const b of [...list.querySelectorAll('[data-ck]')]) {
     if (state !== mine || !list.isConnected) return;
     if (await priceCraft(b) === 'limit') {
-      // Лимит трейда: сортировать нечего — возвращаем кнопку, можно повторить позже.
+      // Trade rate limit: nothing to sort, restore the button so it can be retried later.
       btn.disabled = false;
       btn.textContent = `⇅ ${t('Price all and sort')}`;
       return;
@@ -80,7 +80,7 @@ async function priceAll(btn) {
   fit();
 }
 
-// Цена после крафта: текущие фильтры + мод-кандидат. Тот же стат уже есть (сумма) — минимум растёт на ролл кандидата.
+// Price after crafting: current filters + candidate mod. Same stat already present (sum): the minimum grows by the candidate's roll.
 async function priceCraft(b) {
   const c = craftCands.get(b.dataset.ck);
   if (!c || !state) return;
@@ -89,23 +89,23 @@ async function priceCraft(b) {
   b.textContent = '…';
   const f = withMods(JSON.parse(JSON.stringify(state.filters)), [c]);
   try {
-    // Магическая вещь после Regal Orb — уже редкая: ищем среди редких.
+    // A magic item after Regal Orb is already rare: search among rares.
     const it = state.item.rarity === 'Magic' ? { ...state.item, rarity: 'Rare' } : state.item;
     const q = await quickPrice(it, f);
-    if (state !== mine) return; // пока искали, проверили другую вещь — её оценку не трогаем
+    if (state !== mine) return; // another item was checked while searching: don't touch its pricing
     const v = estimate(q.lots);
     let html;
     const row = b.closest('.brow');
     if (v == null) html = `<span class="cpr" title="${t('Nothing like it is listed — could be rare and pricey')}">${t('none listed')}</span>`;
     else if (q.total < MIN_LOTS) {
-      // 1–2 лота — не оценка: показываем серым, в сортировке «Оценить всё» — внизу.
+      // 1–2 listings is not an estimate: show greyed out, at the bottom when sorting with "Price all".
       html = `<span class="cpr thin" title="${esc(t('Too few listings to price it — one or two prices can be anything'))} · ${esc(t('{n} listings', { n: q.total }))}">${money(v)}?</span>`;
     } else {
       const d = state.est != null ? v - state.est : null;
       const cls = d == null ? '' : d > state.est * 0.1 ? ' up' : d < -state.est * 0.1 ? ' down' : '';
-      // Прирост — главное: крупно «+2.1 div», рядом итоговая цена вещи с модом.
+      // The gain is what matters: large "+2.1 div", next to it the item's total price with the mod.
       const delta = d == null ? '' : Math.abs(d) < state.est * 0.1 ? t('same') : `${d > 0 ? '+' : '−'}${money(Math.abs(d))}`;
-      // В таблице кандидатов колонка узкая — прирост, итоговая цена — в подсказке.
+      // In the candidates table the column is narrow: gain shown, total price in the tooltip.
       html = row && row.classList.contains('crow')
         ? `<span class="cpr${cls}" title="${t('{n} listed with it · vs your current estimate', { n: q.total })} · ≈ ${money(v)}">${delta ? `<b>${delta}</b>` : `≈ ${money(v)}`}</span>`
         : `<span class="cpr${cls}" title="${t('{n} listed with it · vs your current estimate', { n: q.total })}">${delta ? `<b>${delta}</b> · ` : ''}≈ ${money(v)}</span>`;
@@ -122,7 +122,7 @@ async function priceCraft(b) {
   fit();
 }
 
-// Цель крафта: что оставить / убрать / добавить и по шагам; кнопка — оценка готовой вещи.
+// Craft goal: what to keep / remove / add and the steps; the button prices the finished item.
 let craftGoal = null;
 function goalHtml(g) {
   const row = (cls, mark, x, extra = '') => `<div class="g ${cls}"><i>${mark}</i>${esc(x.text)}${x.tier ? ` <span class="craft-tier">T${x.tier}</span>` : ''}${extra}</div>`;
@@ -133,7 +133,7 @@ function goalHtml(g) {
 </div>`;
 }
 
-// Фильтры «как у готовой вещи»: убранные моды — выключены, добавленные — с нижним роллом тира, их исключение «без мода» — снято.
+// Filters "as for the finished item": removed mods off, added ones at the tier's lowest roll, their "without mod" exclusion cleared.
 const tplKey = (s) => String(s || '').replace(/ \(local\)$/i, '').replace(/\+#/g, '#').toLowerCase();
 function withMods(f, adds) {
   for (const c of adds) {
@@ -148,25 +148,25 @@ function withMods(f, adds) {
 }
 
 
-// Примерный шанс мода при Exalted с оменом его стороны: метка «частый / средний / редкий» и «≈ 1 из N».
-// Шанс за попытку — «1 из 6», цветом по редкости (частый / средний / редкий); неизвестен — «—» с пояснением.
+// Approximate chance of a mod with Exalted plus the omen for its side: "common / medium / rare" label and "≈ 1 in N".
+// Chance per attempt as "1 in 6", colored by rarity (common / medium / rare); unknown: "—" with an explanation.
 function chanceTag(p, unknown) {
   if (unknown) return ` <span class="chance unknown" title="${esc(t('Valuable modifiers cannot be estimated from trade listings — items with them are priced and listed differently'))}">${esc(t('unknown'))}</span>`;
   if (p == null) return '';
   const cls = p >= 0.12 ? 'common' : p >= 0.04 ? 'uncommon' : 'rare';
   const n = Math.max(1, Math.round(1 / p));
-  const text = p >= 0.5 ? `~${Math.round(p * 100)}%` : t('1 in {n}', { n: String(n) }); // «1 из 1.7» читается плохо
+  const text = p >= 0.5 ? `~${Math.round(p * 100)}%` : t('1 in {n}', { n: String(n) }); // "1 in 1.7" reads poorly
   return ` <span class="chance ${cls}" title="${esc(t('Rough estimate: Exalted Orb + omen of its side gives this modifier about 1 in {n} times', { n }))}">${esc(text)}</span>`;
 }
 
-// ---- Крафт для новичка: места на вещи, «продать или крафтить», план с затратами ----
-let craftPrices = {}; // div за штуку валюты из плана (poe.ninja)
-let goalValue; // цена цели: undefined — считаем, null — не нашлось
-let goalBasis = 'exact'; // по чему цена цели: exact — точно такие, similar — похожие, partial — нижняя граница
-// Цена цели по слишком малому числу лотов (меньше MIN_LOTS, core.js): показываем, но вердикт по ней не строим.
-let goalThin = null; // { value, n } — цена по слишком малому числу лотов
+// ---- Crafting for beginners: slots on the item, "sell or craft", plan with costs ----
+let craftPrices = {}; // div per unit of each currency in the plan (poe.ninja)
+let goalValue; // goal price: undefined = computing, null = not found
+let goalBasis = 'exact'; // what the goal price is based on: exact = identical items, similar = similar ones, partial = lower bound
+// Goal price from too few listings (fewer than MIN_LOTS, core.js): shown, but no verdict is based on it.
+let goalThin = null; // { value, n }: price from too few listings
 
-// Места на вещи кружками: занят (цвет по тиру), свободен; fractured — с рамкой.
+// Slots on the item as circles: occupied (colored by tier), free; fractured has a ring.
 function slotsHtml(r) {
   const affixes = state.item.affixes || [];
   const side = (s) => {
@@ -181,11 +181,11 @@ function slotsHtml(r) {
   return `<div class="slots">${side('prefix')}${side('suffix')}</div>`;
 }
 
-// Модель стоимости плана — в src/shared/plancost.js (её же используют тесты и симуляция).
+// The plan cost model lives in src/shared/plancost.js (also used by tests and the simulation).
 const planner = PlanCost.create(() => ({ prices: craftPrices, goalValue, est: state.est }));
 const { stepCost, expandPlan, EXALT_NAME } = planner;
 
-// Валюта в шагах — цветными метками (сферы, омены, кости, эссенции): рецепт читается с одного взгляда.
+// Currency in steps as colored tags (orbs, omens, bones, essences): the recipe reads at a glance.
 function curKind(n) {
   if (/^Omen of /.test(n)) return 'omen';
   if (/(Rib|Jawbone|Collarbone|Cranium|Vertebrae)$/.test(n)) return 'bone';
@@ -194,22 +194,22 @@ function curKind(n) {
 }
 const curChips = (list) => list.map((n) => `<span class="cur ${curKind(n)}">${esc(n)}</span>`).join('<span class="plus">+</span>');
 
-// Эссенция / Alloy на редкую: порядок важен — сначала жертвенный мод Exalted'ом на эту сторону, потом омен
-// Crystallisation + эссенция (снимает случайный мод стороны). Без жертвы снимется один из ваших модов — по шагам, с номерами.
-// c.currencies: [эссенция, омен Crystallisation, Exalted Orb, омен стороны?].
-// Шанс, что эссенция снимет ключевой мод вещи (а не жертвенный или добавленный по плану): ключевых на стороне / все моды
-// стороны с жертвой.
+// Essence / Alloy on a rare: order matters. First a sacrificial mod via Exalted on that side, then the omen
+// Crystallisation + essence (removes a random mod of that side). Without a sacrifice one of your mods goes: steps, numbered.
+// c.currencies: [essence, Crystallisation omen, Exalted Orb, side omen?].
+// Chance the essence removes a key mod of the item (not the sacrificial or plan-added one): key mods on the side / all mods
+// of the side including the sacrifice.
 function keyRisk(s) {
   const n = (s.onSide || 0) + 1;
   const r = Math.min(s.atRisk.length, n - 1) / n;
   const fmtOdds = (x) => (x >= 0.5 ? `~${Math.round(x * 100)}%` : oneIn(x));
-  // Сторона к этому шагу не полная: больше модов на ней (нужных или жертвенных) — ниже шанс задеть ключевой.
+  // The side isn't full at this step: more mods on it (needed or sacrificial) means a lower chance to hit a key one.
   const full = s.cap && n < s.cap ? ` ${t('· with all {n} {side}es filled — {odds}', { n: s.cap, side: t(s.side), odds: fmtOdds(Math.min(s.atRisk.length, s.cap - 1) / s.cap) })}` : '';
   return `<div class="ps-risk">⚠ ${esc(t('{odds}: it removes {mods} instead of the sacrificial modifier', { odds: fmtOdds(r), mods: s.atRisk.map((m) => `«${m}»`).join(t(' or ')) }) + full)}</div>`;
 }
 
-// Liquid Emotions на самоцвете: варианты для этой базы — какой мод даст, сколько билдов носят, цена эмоции; риск снять
-// ключевой мод (эмоция снимает случайный).
+// Liquid Emotions on a jewel: options for this base: which mod it gives, how many builds use it, emotion price; risk of
+// removing a key mod (the emotion removes a random one).
 function emotionsHtml(s, how) {
   const head = `<div class="k">${esc(t('Liquid Emotions (Delirium) — the main jewel craft'))}</div>`;
   if (s.blocked || !s.options.length) return `<div class="craft-sec">${head}${how(s.how)}</div>`;
@@ -259,7 +259,7 @@ function planHtml(plan) {
     else if (s.mods) odds = t('≈ {n} attempts', { n: fmt(Math.round(c.tries * 10) / 10) });
     else odds = c.chance >= 1 ? t('guaranteed') : oneIn(c.chance);
     const notes = [];
-    const key = []; // без этого шаг не сделать — видно сразу; остальное — под «подробнее»
+    const key = []; // the step can't be done without these, shown up front; the rest goes under "details"
     if (c.two) notes.push(t('one Exalted Orb adds both modifiers'));
     if (s.mods) notes.push(c.hits > 0.05
       ? t('on average ≈{n} needed modifiers get hit too — re-adding them is counted in the price', { n: fmt(Math.round(c.hits * 10) / 10) })
@@ -295,7 +295,7 @@ function planHtml(plan) {
     if (s.whittleWrong) notes.push(t('Chaos Orb + Omen of Whittling would not help: it removes the lowest-level modifier, and that is «{mod}» (level {level})', { mod: s.whittleWrong.mod, level: s.whittleWrong.level }));
     if (c.whittle) alts.push(t('{mod}: Chaos Orb + Omen of Whittling removes it for sure (lowest-level modifier), a random modifier takes its place — {list}', { mod: s.whittle,
       list: c.whittle.map((o) => `${o.orb}${o.level ? ` (${t('new one {n}+', { n: o.level })})` : ''} ≈ ${money(o.cost)}`).join('; ') }));
-    // Цепочка Essence of the Abyss: выбрана — объясняем порядок; дешевле есть другой способ — показываем её среди «Вместо».
+    // Essence of the Abyss chain: if chosen, explain the order; if another way is cheaper, show it under "Instead".
     if (c.viaAbyss) key.push(t('Essence of the Abyss with the Crystallisation omen removes a random modifier of that side and leaves a desecrated Mark — Omen of Light + Orb of Annulment remove it'));
     if (c.abyss) {
       const how = t('{chain}: removes a random modifier of the side like an Annulment omen; the Mark it leaves is desecrated and Omen of Light removes it', { chain: c.abyss.currencies.join(' → ') });
@@ -304,7 +304,7 @@ function planHtml(plan) {
     for (const e of c.erasure || []) alts.push(t('{orb} + {omen}: removes a random {side} ({odds} hits an unwanted one) and adds a random modifier, ≈ {cost} per try', { orb: e.orb, omen: e.omen, side: t(e.side), odds: e.chance >= 0.5 ? `~${Math.round(e.chance * 100)}%` : t('1 in {n}', { n: Math.round(1 / e.chance * 10) / 10 }), cost: money(e.cost) }));
     if (c.regal && c.regal.length) notes.push(t('Greater / Perfect Regal Orb: the random modifier is level 35+ / 50+ — instead: {list}', { list: c.regal.map((o) => `${o.orb} ≈ ${money(o.cost)}`).join('; ') }));
     const desNote = (c.desAlt || []).some((o) => o.k === 'desecrate') ? t('Desecrate: pick 1 of 3 offered modifiers at the Well of Souls, but a miss costs Orb of Annulment + Omen of Light ({cost})', { cost: money((craftPrices['Orb of Annulment'] || 0) + (craftPrices['Omen of Light'] || 0)) }) : '';
-    // Пояснения и другие способы — свёрнуты: в шаге на виду только что сделать, чем, шанс и цена.
+    // Explanations and alternatives are collapsed: the step shows only what to do, with what, the chance and the cost.
     const more = [...notes.map((n) => `<div class="ps-note">${esc(n)}</div>`),
       ...(alts.length ? [`<div class="ps-note">${esc(t('Instead: {list}', { list: alts.join('; ') }))}</div>`] : []),
       ...(desNote ? [`<div class="ps-note">${esc(desNote)}</div>`] : [])];
@@ -318,7 +318,7 @@ function planHtml(plan) {
   }).join('')}</ol>`;
 }
 
-// Вердикт: продать как есть или крафтить (цена цели − затраты на валюту).
+// Verdict: sell as is or craft (goal price − currency cost).
 function verdictHtml(plan) {
   const costs = expandPlan(plan).map(stepCost);
   const known = costs.filter((c) => c.cost != null).reduce((a, c) => a + c.cost, 0);
@@ -331,20 +331,20 @@ function verdictHtml(plan) {
     `<div><span>${esc(t('Currency, on average'))}</span><b>${lottery ? `${esc(t('from'))} ` : ''}${money(known)}</b></div>`,
   ];
   let verdict = '';
-  // Снятие лишнего Annulment'ами в среднем заденет нужные моды — на такой вещи это почти всегда невыгодно.
+  // Removing extras with Annulments will on average hit needed mods: on such an item it's almost always unprofitable.
   const hits = Math.max(0, ...costs.map((c) => c.hits || 0));
   const hitNote = hits >= 1 ? `<small>${esc(t('Removing the unwanted modifiers would hit ≈{n} needed ones on average — on an item like this it is rarely worth it', { n: fmt(Math.round(hits * 10) / 10) }))}</small>` : '';
-  // Валюта дороже готовой цели — крафт не окупится при любой цене вещи (цена вещи может быть ещё не посчитана).
+  // Currency costs more than the finished goal: crafting won't pay off at any item price (item price may not be computed yet).
   if (goalValue != null && known >= goalValue) {
     verdict = `<div class="verdict bad">✖ ${esc(t(goalBasis === 'partial' ? 'Probably not worth it: the currency alone (≈ {cost}) costs more than the lower bound of the goal (≥ {goal})' : 'Not worth it: the currency alone (≈ {cost}) costs more than the finished goal (≈ {goal})', { cost: money(known), goal: money(goalValue) }))}${hitNote}</div>`;
   } else if (goalValue === null && now != null) {
-    // Готовых аналогов на трейде нет (или их 1–2) — цена цели неизвестна. Затраты уже не меньше цены вещи — проще продать.
+    // No finished equivalents on trade (or only 1–2): goal price unknown. Costs already reach the item price: simpler to sell.
     const why = goalThin ? t('Only {n} listings like the goal — too few to judge the craft by', { n: goalThin.n }) : t('No finished items like the goal are listed — its price is unknown');
     verdict = known >= now * 0.5
       ? `<div class="verdict bad">✖ ${esc(t('Selling as is is better: the currency alone costs ≈ {cost}, the item sells for ≈ {now}', { cost: money(known), now: money(now) }))}<small>${esc(why)}</small>${hitNote}</div>`
       : `<div class="verdict">${esc(why)}${hitNote}</div>`;
   } else if (goalValue != null && now != null) {
-    // Симуляция всего плана: распределение итога и шанс, что крафт выгоднее продажи сейчас (src/shared/plancost.js).
+    // Whole-plan simulation: outcome distribution and the chance crafting beats selling now (src/shared/plancost.js).
     const sim = planner.simulate(plan, { keep: craftGoal ? craftGoal.keep.length : 0 });
     const gain = goalValue - now - known;
     const good = sim ? sim.profit >= 0.5 : gain > Math.max(now * 0.15, known * 0.5);
@@ -359,7 +359,7 @@ function verdictHtml(plan) {
   return `<div class="profit">${rows.join('')}</div>${verdict}`;
 }
 
-// Цена цели — сразу при открытии вкладки (один поиск на трейде), затем перерисовываем вердикт.
+// Goal price right when the tab opens (one trade search), then redraw the verdict.
 async function computeGoal(g) {
   const mine = state;
   goalValue = undefined;
@@ -369,7 +369,7 @@ async function computeGoal(g) {
   withMods(f, g.add);
   goalBasis = 'exact';
   goalThin = null;
-  // Цена по ответу поиска: лотов мало — запоминаем как «редкие лоты» и ищем шире.
+  // Price from the search response: too few listings, remember as "thin listings" and search wider.
   const take = (q) => {
     const v = estimate(q.lots);
     if (v != null && q.total >= MIN_LOTS) return v;
@@ -381,7 +381,7 @@ async function computeGoal(g) {
     const q = await quickPrice(it, f);
     if (mine !== state) return;
     goalValue = take(q);
-    // Точно таких нет — похожие: добавленные моды обязательны, у оставшихся — нижняя граница тира, второстепенные выключены.
+    // No exact matches: similar ones. Added mods required, remaining ones at the tier's lower bound, minor ones off.
     if (goalValue == null) {
       const added = new Set(g.add.flatMap((a) => (a.stats || []).map((s) => s.statId)));
       const loose = JSON.parse(JSON.stringify(f));
@@ -394,7 +394,7 @@ async function computeGoal(g) {
       if (mine !== state) return;
       goalValue = take(q2);
       if (goalValue != null) goalBasis = 'similar';
-      // И так нет — нижняя граница: вещь только с самым ценным добавленным модом (остальное как у похожих).
+      // Still nothing: lower bound, the item with only the most valuable added mod (the rest as for similar).
       if (goalValue == null && g.add.length > 1) {
         const top = [...g.add].sort((a, b) => b.pct - a.pct)[0];
         const keep = new Set((top.stats || []).map((s) => s.statId));
@@ -413,17 +413,17 @@ async function computeGoal(g) {
   }
   const box = document.querySelector('#craft .verdict-box');
   if (box) box.innerHTML = verdictHtml(g.plan);
-  // Шаги тоже: цена задетого нужного мода зависит от цены цели.
+  // Steps too: the cost of hitting a needed mod depends on the goal price.
   const ol = document.querySelector('#craft .plan-box ol.plan');
   if (ol) ol.outerHTML = planHtml(g.plan);
   fit();
 }
 
-// ---- пошаговое ведение крафта: запомнили вещь и цель; каждое новое копирование той же вещи — что получилось и что дальше ----
+// ---- step-by-step crafting: item and goal remembered; each new copy of the same item shows what happened and what's next ----
 let craftSession = null; // { base, ilvl, name, rarity, goal: { add, remove }, start, before, current, seen }
-// Моды вещи шаблонами (как в цели крафта: нижний регистр, # вместо чисел, без «+»).
+// Item mods as templates (as in the craft goal: lowercase, # instead of numbers, no "+").
 const modKeys = () => new Set(((state.filters && state.filters.mods) || []).filter((m) => m.template && m.tag !== 'pseudo').map((m) => tplKey(m.template)));
-// Та же вещь: база и item level, имя редкой не меняется (магическая → редкая — меняется).
+// Same item: base and item level; a rare's name doesn't change (magic → rare does change it).
 function sessionMatches() {
   const s = craftSession, it = state && state.item;
   return !!(s && it && it.baseType === s.base && it.ilvl === s.ilvl && (it.name === s.name || s.rarity !== 'Rare' || it.rarity !== s.rarity));
@@ -439,7 +439,7 @@ function startSession() {
 function sessionHtml(r) {
   const s = craftSession;
   const keys = modKeys();
-  if (s.seen !== state) { s.before = s.current; s.current = keys; s.seen = state; } // новая копия вещи — сравниваем с прошлой
+  if (s.seen !== state) { s.before = s.current; s.current = keys; s.seen = state; } // new copy of the item: compare with the previous one
   const has = (text) => text.split(' / ').every((l) => keys.has(l));
   const goalLines = new Set(s.goal.add.flatMap((a) => a.text.split(' / ')));
   const added = [...keys].filter((k) => !s.before.has(k));
@@ -463,24 +463,24 @@ function sessionHtml(r) {
 }
 
 
-// Шансы — оценка по лотам трейда (собраны в другой лиге — пишем в какой: после патча веса могли измениться): коротко
-// строкой под таблицей шансов, полный текст — в подсказке.
+// Odds are an estimate from trade listings (collected in another league: we say which, weights may have changed after a patch):
+// briefly on a line under the odds table, full text in the tooltip.
 function chanceLine(m) {
   const date = m.league && state && m.league !== state.league ? `${m.collected}, ${m.league}` : m.collected;
   return `<div class="craft-chance-note" title="${esc(t('Chances are rough estimates from {n} cheap trade listings ({date}) — PoE 2 game files have no modifier weights. Treat them as "common / rare", not exact odds.', { n: m.items, date }))}">ⓘ ${esc(t('Chances: a rough estimate from {n} trade listings ({date})', { n: fmt(m.items), date }))}</div>`;
 }
 
-// «Удачный ilvl»: выше уровня последнего нужного тира — только тиры ненужных модов (craft.js ilvlHint).
+// "Lucky ilvl": above the level of the last needed tier only unwanted mods' tiers remain (craft.js ilvlHint).
 function ilvlHintHtml(h) {
   if (!h) return '';
   const junk = h.junk.join(', ') + (h.more ? ` ${t('and {n} more', { n: h.more })}` : '');
   return `<div class="craft-chance-note" title="${esc(t('A modifier family weighs more with each tier it has — extra tiers of unwanted modifiers slightly lower the odds of the wanted ones (community observation, not exact)'))}">ⓘ ${esc(t('Item level {ilvl}: for the wanted modifiers no better than {from} — above it only unwanted ones got new tiers ({junk})', { ilvl: h.ilvl, from: h.from, junk }))}</div>`;
 }
 
-// ---- белая база: Transmutation (обычная / Greater 44+ / Perfect 70+) → магическая с одним модом ----
-// Промах — нужна новая база (или Orb of Annulment, если база дороже). Рекомендуем вариант с меньшей ожидаемой
-// стоимостью до популярного мода в одном из двух лучших тиров.
-const BASE_PRICEY = 0.5; // div: база дороже — сама по себе товар, промах ощутим
+// ---- white base: Transmutation (regular / Greater 44+ / Perfect 70+) → magic with one mod ----
+// A miss needs a new base (or Orb of Annulment if the base is pricier). We recommend the option with the lower expected
+// cost to reach a popular mod in one of its two best tiers.
+const BASE_PRICEY = 0.5; // div: a pricier base is a product in itself, a miss hurts
 function renderNormalCraft(r, head) {
   craftGoal = null;
   craftPrices = r.prices || {};
@@ -516,23 +516,23 @@ function renderNormalCraft(r, head) {
     ${r.chanceMeta ? chanceLine(r.chanceMeta) : ''}`;
 }
 
-// ---- уник: Divine перекатывает значения всех модов разом (сами моды не меняются) ----
-const TOP_Q = 0.75; // «хорошие роллы» — верхняя четверть диапазона
-let uniqueTop; // цена с хорошими роллами: undefined — считаем, null — не нашли
+// ---- unique: Divine rerolls the values of all mods at once (the mods themselves don't change) ----
+const TOP_Q = 0.75; // "good rolls" = top quarter of the range
+let uniqueTop; // price with good rolls: undefined = computing, null = not found
 const rollOf = (m) => (m.ordinal ? (m.ordinal.idx - m.ordinal.lo) / (m.ordinal.hi - m.ordinal.lo) : m.roll);
 const uniqueRolls = () => (state.filters.mods || []).filter((m) => (m.tag === 'explicit' || m.tag === 'desecrated')
   && (m.ordinal || (m.categorical && m.categorical.n > 1) || (m.range && m.range.hi > m.range.lo && m.roll != null)));
-// Шанс после Divine попасть в верхнюю четверть: у порядкового варианта — доля вариантов сверху, у числа — 1/4.
+// Chance to land in the top quarter after Divine: for an ordinal option, the share of options above; for a number, 1/4.
 const topShare = (m) => {
-  if (m.categorical) return 1 / m.categorical.n; // сохранить тот же вариант
+  if (m.categorical) return 1 / m.categorical.n; // keep the same option
   if (!m.ordinal) return 1 - TOP_Q;
   const { lo, hi } = m.ordinal;
   const from = Math.ceil(lo + TOP_Q * (hi - lo));
   return (hi - from + 1) / (hi - lo + 1);
 };
 
-// Моды, ради которых уник берут: по poe.ninja их носят ≥ 10% билдов с этим уником (нет данных — все).
-// Роллы остальных на цену почти не влияют — «хорошие роллы» требуем только у ключевых.
+// Mods the unique is bought for: per poe.ninja, ≥ 10% of builds with this unique use them (no data: all).
+// Other mods' rolls barely affect the price, so "good rolls" are required only on the key ones.
 function keyRolls(rolls) {
   const pct = new Map(((lastBuilds && lastBuilds.mods) || []).map((r) => [modKey(r.name), r.pct]));
   const of = (m) => Math.max(pct.get(modKey(m.template)) || 0, ...String(m.text).split('\n').map((l) => pct.get(modKey(l)) || 0));
@@ -540,7 +540,7 @@ function keyRolls(rolls) {
   return pct.size && key.length ? key : rolls;
 }
 
-// Шанс, что после Divine сумма роллов станет больше нынешней (значения независимы и равномерны в диапазоне).
+// Chance that after Divine the roll sum exceeds the current one (values independent and uniform within the range).
 function betterOdds(qs) {
   const N = 20000;
   const now = qs.reduce((a, q) => a + q, 0);
@@ -569,7 +569,7 @@ function renderUniqueCraft(r, head) {
     const key = keyRolls(rolls);
     const cats = rolls.filter((m) => m.categorical);
     const low = key.filter((m) => m.categorical || rollOf(m) < TOP_Q).length;
-    // Divine перекатывает ВСЕ значения: «удача» — все ключевые роллы разом в верхней четверти, а не только низкие.
+    // Divine rerolls ALL values: "luck" means all key rolls in the top quarter at once, not just the low ones.
     const tries = Math.round(1 / key.reduce((a, m) => a * topShare(m), 1));
     const rangeText = (m) => (m.ordinal ? `${m.ordinal.loText}–${m.ordinal.hiText}` : `${fmt(m.range.lo)}–${fmt(m.range.hi)}`);
     const rows = rolls.filter((m) => !m.categorical).map((m) => `<div class="brow${key.includes(m) ? '' : ' cold'}"${key.includes(m) ? '' : ` title="${esc(t('Few builds use it — its roll barely affects the price'))}"`}><span class="bname">${esc(m.text.split('\n')[0])} <span class="craft-tier">${esc(rangeText(m))}</span></span><span class="bpct">${Math.round(rollOf(m) * 100)}%</span>
@@ -611,7 +611,7 @@ function uniqueVerdictHtml(tries) {
   return `<div class="profit">${rows.join('')}</div>${verdict}`;
 }
 
-// Цена такого же уника с роллами в верхней четверти (не ниже наших) — один поиск на трейде.
+// Price of the same unique with rolls in the top quarter (no lower than ours): one trade search.
 async function computeUniqueTop(rolls) {
   const mine = state;
   uniqueTop = undefined;
@@ -637,8 +637,8 @@ async function computeUniqueTop(rolls) {
   if (box) { box.innerHTML = uniqueVerdictHtml(Math.round(1 / rolls.reduce((a, m) => a * topShare(m), 1))); fit(); }
 }
 
-// «Рискованный финал»: порча и освящение — необратимо, шансы — оценки сообщества.
-// Свёрнут: последний шаг, до него доходят редко. Улучшать нечего (open) — раскрыт.
+// "Risky finish": corruption and sanctification are irreversible, odds are community estimates.
+// Collapsed: the last step, rarely reached. Nothing to improve (open): expanded.
 function gambleHtml(g, open = false) {
   const p = (n) => (craftPrices[n] != null && (n !== 'Omen of Sanctification' || state.item.rarity === 'Rare') ? ` · ${n} ≈ ${money(craftPrices[n])}` : '');
   const list = (xs) => xs.map((h) => `<div class="craft-how">${esc(h)}</div>`).join('');
@@ -662,8 +662,8 @@ function renderCraft(r) {
   if (r.unique) { renderUniqueCraft(r, head); return; }
   if (r.normal) { renderNormalCraft(r, head); return; }
   const how = (list) => list.map((h) => `<div class="craft-how">${esc(h)}</div>`).join('');
-  // Сверху — коротко для новичка: места на вещи, «продать или крафтить», план по шагам с затратами.
-  // Всё остальное (все способы, варианты модов) — свёрнуто ниже.
+  // On top, brief for beginners: slots on the item, "sell or craft", step-by-step plan with costs.
+  // Everything else (all methods, mod options) is collapsed below.
   const top = [slotsHtml(r) + (state.item.rarity === 'Magic' ? ilvlHintHtml(r.ilvlHint) : '')];
   const inSession = craftSession && sessionMatches();
   if (inSession) top.unshift(sessionHtml(r));
@@ -672,7 +672,7 @@ function renderCraft(r) {
       ${planHtml(r.goal.plan)}<details class="why"><summary>${t('Why this plan')}</summary>${goalHtml(r.goal)}</details></div>`);
   } else {
     top.push(`<div class="craft-sec plan-box"><div class="verdict">${esc(t('No clear upgrade for this item — selling as is is the simple choice'))}</div></div>`);
-    if (r.gamble) top.push(gambleHtml(r.gamble, true)); // улучшать нечего — рискованный финал на виду
+    if (r.gamble) top.push(gambleHtml(r.gamble, true)); // nothing to improve: risky finish in view
   }
   const parts = [];
   for (const s of r.sections) {
@@ -719,11 +719,11 @@ function renderCraft(r) {
   if (r.theme && r.theme.length) {
     top.splice(1, 0, `<div class="craft-theme" title="${t('Demand % below is among {n} builds that wear this item class with these modifiers', { n: r.themeBuilds })}">${t('Demand among builds using')} <b>${r.theme.map(esc).join('</b> + <b>')}</b></div>`);
   }
-  if (chanceNote) parts.push(chanceNote); // таблиц с шансами не было, а шансы в плане — строка в конце
-  if (r.gamble && r.goal && r.goal.plan && r.goal.plan.length) parts.push(gambleHtml(r.gamble)); // в конце, после всех безопасных способов
-  // Источники — справка, а не решение: значком с подсказкой.
+  if (chanceNote) parts.push(chanceNote); // there were no tables with odds, but the plan has odds: the line goes at the end
+  if (r.gamble && r.goal && r.goal.plan && r.goal.plan.length) parts.push(gambleHtml(r.gamble)); // at the end, after all the safe methods
+  // Sources are reference, not a decision: an icon with a tooltip.
   parts.push(`<div class="craft-foot"><span class="ages-i" title="${esc(t(r.chanceMeta ? 'Mod pool: game files (RePoE).' : "Mod pool: game files (RePoE). Roll chances aren't shown — PoE 2 files have no modifier weights."))} ${esc(t('Demand: builds on poe.ninja. Prices: poe.ninja and the trade site.'))}">ⓘ ${esc(t('Sources'))}</span></div>`);
-  // Широкое окно: план слева, все способы справа (раскрыты).
+  // Wide window: plan on the left, all methods on the right (expanded).
   $('craft').innerHTML = head + `<div class="craft-cols"><div class="craft-l">${top.join('')}</div>`
     + `<details class="more-ways"${wide ? ' open' : ''}><summary>${t('All methods and modifier options')}</summary>${parts.join('')}</details></div>`;
   if (r.goal && r.goal.plan && r.goal.plan.length) computeGoal(r.goal);
