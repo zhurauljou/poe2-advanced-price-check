@@ -539,6 +539,14 @@
     "on average ≈{n} needed modifiers get hit too — re-adding them is counted in the price": "в среднем заденет ≈{n} нужных мода — их повторное добавление учтено в цене",
     "only unwanted modifiers can be hit": "задеть можно только лишние моды",
     "{how}: ≈{n} attempts, ≈{hits} needed modifiers hit, {cost} in currency": "{how}: ≈{n} попыток, заденет ≈{hits} нужных мода, валюты на {cost}",
+    'Rolls ≈ {avg}% of max — better-rolled listings sell first': 'Роллы ≈ {avg}% от максимума — лоты с роллами лучше покупают первыми',
+    'Divine: all key rolls in the top quarter {odds} ≈ {cost}': 'Divine: все ключевые роллы в верхней четверти — {odds} ≈ {cost}',
+    'Below the top quarter: {list}': 'Ниже верхней четверти: {list}',
+    'Divine Orb rerolls the values of all modifiers at once — the modifiers stay': 'Divine Orb перекатывает значения всех модов разом — сами моды остаются',
+    '{chain}: removes a random modifier of the side like an Annulment omen; the Mark it leaves is desecrated and Omen of Light removes it':
+      '{chain}: снимает случайный мод стороны, как Annulment с оменом; оставленный Mark — desecrated, его снимает Omen of Light',
+    'Essence of the Abyss with the Crystallisation omen removes a random modifier of that side and leaves a desecrated Mark — Omen of Light + Orb of Annulment remove it':
+      'Essence of the Abyss с оменом Crystallisation снимает случайный мод этой стороны и оставляет desecrated-Mark — его снимают Omen of Light + Orb of Annulment',
     "Fracturing Orb — locks a random modifier forever: {odds} to lock a key one ({mods})": "Fracturing Orb — навсегда фиксирует случайный мод: {odds}, что зафиксирует ключевой ({mods})",
     "Better odds: remove one unwanted modifier, then desecrate and do not reveal — 3 regular + 1 unrevealed gives {odds}": "Шанс лучше: снимите один лишний мод, затем Desecrate без раскрытия — 3 обычных + 1 нераскрытый дают {odds}",
     "Fracturing Orb needs 4 modifiers: desecrate first and do not reveal — an unrevealed desecrated modifier counts but cannot be locked: {odds} to lock {mods}": "Fracturing Orb нужно 4 мода: сначала Desecrate без раскрытия — нераскрытый desecrated-мод в счёт входит, но не фиксируется: {odds}, что зафиксирует {mods}",

@@ -38,6 +38,28 @@ test('с оменом стороны снимаем только среди мо
   near(r.hits, 0, 'с оменом ничего нужного не задеваем');
 });
 
+test('снятие через Essence of the Abyss: попытки как у Annulment с оменом стороны, цена — эссенция + Crystallisation + Light + Annulment', () => {
+  const prices = { ...PRICES, 'Essence of the Abyss': 0.3, 'Omen of Sinistral Crystallisation': 0.5, 'Omen of Light': 4 };
+  const sides = { prefix: { J: 2, K: 1, omen: 'Omen of Sinistral Annulment' }, suffix: { J: 0, K: 3, omen: 'Omen of Dextral Annulment' } };
+  const p = PlanCost.create(() => ({ prices, goalValue: null, est: null }));
+  const r = p.removeCost({ act: 'remove', sides, abyss: true });
+  // Омен стороны за 0.2 дешевле — цепочка остаётся вариантом «Вместо».
+  assert.equal(r.viaAbyss, false);
+  near(r.abyss.tries, 3.5, 'попытки как у омена стороны');
+  near(r.abyss.hits, 1.5, 'задетые нужные');
+  near(r.abyss.spent, 3.5 * (0.3 + 0.5 + 4 + 0.05), 'валюта без кости: Mark снимает Omen of Light');
+  assert.deepEqual(r.abyss.currencies, ['Essence of the Abyss', 'Omen of Sinistral Crystallisation', 'Omen of Light', 'Orb of Annulment']);
+  assert.notDeepEqual(r.other && r.other.currencies, r.abyss.currencies); // не показываем её дважды
+  // Омен стороны подорожал, а Annulment без омена задевает дорогие нужные суффиксы — план сам выбирает цепочку.
+  const dear = PlanCost.create(() => ({ prices: { ...prices, 'Omen of Sinistral Annulment': 20 }, goalValue: 40, est: null }));
+  const d = dear.removeCost({ act: 'remove', sides, abyss: true });
+  assert.equal(d.viaAbyss, true);
+  assert.equal(d.currencies[0], 'Essence of the Abyss');
+  assert.equal(d.abyss, null);
+  // Эссенцию на вещь не поставить (abyss: false) — варианта нет.
+  assert.equal(p.removeCost({ act: 'remove', sides }).abyss, null);
+});
+
 test('добавить мод Exalted\'ом до победы: (цена попытки + (1−p)·снятие) / p, выбран самый дешёвый тир сферы', () => {
   const c = planner().stepCost(add(0.5));
   assert.equal(c.k, 'base'); // у всех тиров шанс одинаковый — обычный дешевле

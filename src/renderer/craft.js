@@ -295,6 +295,12 @@ function planHtml(plan) {
     if (s.whittleWrong) notes.push(t('Chaos Orb + Omen of Whittling would not help: it removes the lowest-level modifier, and that is «{mod}» (level {level})', { mod: s.whittleWrong.mod, level: s.whittleWrong.level }));
     if (c.whittle) alts.push(t('{mod}: Chaos Orb + Omen of Whittling removes it for sure (lowest-level modifier), a random modifier takes its place — {list}', { mod: s.whittle,
       list: c.whittle.map((o) => `${o.orb}${o.level ? ` (${t('new one {n}+', { n: o.level })})` : ''} ≈ ${money(o.cost)}`).join('; ') }));
+    // Цепочка Essence of the Abyss: выбрана — объясняем порядок; дешевле есть другой способ — показываем её среди «Вместо».
+    if (c.viaAbyss) key.push(t('Essence of the Abyss with the Crystallisation omen removes a random modifier of that side and leaves a desecrated Mark — Omen of Light + Orb of Annulment remove it'));
+    if (c.abyss) {
+      const how = t('{chain}: removes a random modifier of the side like an Annulment omen; the Mark it leaves is desecrated and Omen of Light removes it', { chain: c.abyss.currencies.join(' → ') });
+      alts.push(t('{how}: ≈{n} attempts, ≈{hits} needed modifiers hit, {cost} in currency', { how, n: fmt(Math.round(c.abyss.tries * 10) / 10), hits: fmt(Math.round(c.abyss.hits * 10) / 10), cost: money(c.abyss.spent) }));
+    }
     for (const e of c.erasure || []) alts.push(t('{orb} + {omen}: removes a random {side} ({odds} hits an unwanted one) and adds a random modifier, ≈ {cost} per try', { orb: e.orb, omen: e.omen, side: t(e.side), odds: e.chance >= 0.5 ? `~${Math.round(e.chance * 100)}%` : t('1 in {n}', { n: Math.round(1 / e.chance * 10) / 10 }), cost: money(e.cost) }));
     if (c.regal && c.regal.length) notes.push(t('Greater / Perfect Regal Orb: the random modifier is level 35+ / 50+ — instead: {list}', { list: c.regal.map((o) => `${o.orb} ≈ ${money(o.cost)}`).join('; ') }));
     const desNote = (c.desAlt || []).some((o) => o.k === 'desecrate') ? t('Desecrate: pick 1 of 3 offered modifiers at the Well of Souls, but a miss costs Orb of Annulment + Omen of Light ({cost})', { cost: money((craftPrices['Orb of Annulment'] || 0) + (craftPrices['Omen of Light'] || 0)) }) : '';

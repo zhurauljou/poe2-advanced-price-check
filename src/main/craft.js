@@ -928,8 +928,13 @@ function planGoal(mine, candidates, max, want, magic, magicFree = [], itemClass 
     const lowest = mine.filter((a) => a.tag !== 'fractured' && a.tag !== 'desecrated' && a.mod && a.mod.required_level === low);
     const whittleWrong = known && !whittle && lowest.length && !lowJunk.length ? { mod: lowest.map((a) => a.mod.lines.join(' / ')).join(', '), level: low } : null;
     const freeQuality = (junk.find((x) => x.spentQuality) || {}).text || null;
-    plan.push({ act: 'remove', mods: junk.map((x) => x.text), sides, whittle, whittleWrong, freeQuality,
-      currencies: ['Orb of Annulment', 'Omen of Sinistral Annulment', 'Omen of Dextral Annulment', ...(whittle ? ['Chaos Orb', 'Omen of Whittling'] : [])] });
+    // Essence of the Abyss + Crystallisation стороны снимает случайный мод этой стороны (как Annulment с оменом) и ставит
+    // Mark of the Abyssal Lord — desecrated-мод, его снимает Omen of Light + Annulment (игрок, 2026-10-19; ролики Ame).
+    // Нужен свободный desecrated-слот; crafted-слот тоже требуем (эссенция не ставится на вещь с crafted-модом — data notes).
+    const abyss = desFree && craftedFree && craftedSources.some((x) => x.name === 'Essence of the Abyss');
+    plan.push({ act: 'remove', mods: junk.map((x) => x.text), sides, whittle, whittleWrong, freeQuality, abyss,
+      currencies: ['Orb of Annulment', 'Omen of Sinistral Annulment', 'Omen of Dextral Annulment', ...(whittle ? ['Chaos Orb', 'Omen of Whittling'] : []),
+        ...(abyss ? ['Essence of the Abyss', 'Omen of Sinistral Crystallisation', 'Omen of Dextral Crystallisation', 'Omen of Light'] : [])] });
     for (const x of junk) filled[x.side]--;
   }
   if (essenceMod) filled[essenceMod.side]++; // эссенция уже заняла место на своей стороне

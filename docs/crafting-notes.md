@@ -90,6 +90,7 @@
 - Применяется к Rare: добавляет Unrevealed desecrated-мод; **если вещь полная — ещё и удаляет случайный мод** [S13]. Раскрытие — у Well of Souls, выбор из вариантов (3 — по [S12], не проверено). Вещь с desecrated-модом нельзя desecrate повторно [S13].
 - Омены: Abyssal Echoes — один реролл вариантов; Sinistral/Dextral Necromancy — только prefix/suffix; the Sovereign (Ulaman) / the Liege (Amanamu) / the Blackblooded (Kurgal) — гарантированный мод пула лича, **только на Weapon или Jewellery**; Putrefaction — заменяет все моды до 6 Unrevealed и коррумпирует (как работает с лимитом 1 desecrated — не проверено); **Omen of Light** — Annulment удаляет только desecrated-моды [S13][S15].
 - **Essence of the Abyss** даёт Mark of the Abyssal Lord (crafted-слот!); desecrate такой вещи всегда удаляет Mark и добавляет Unrevealed desecrated-мод **более высокого тира** [S13].
+  **Mark — desecrated-мод:** его сразу снимает Omen of Light + Annulment, без Desecrate (игрок, 2026-10-19, 0.5.5, H). Отсюда дешёвое снятие мода с нужной стороны: Essence of the Abyss + Omen of Sinistral/Dextral Crystallisation → Omen of Light + Annulment. В `plancost.js` `removeCost` это вариант снятия наравне с Annulment с оменом стороны.
 
 ### 2.6 Эссенции [S13b]
 - Lesser / обычная / Greater: Magic → Rare + гарантированный мод (тир фиксирован эссенцией и классом вещи).

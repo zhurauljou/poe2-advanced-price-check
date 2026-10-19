@@ -270,8 +270,9 @@ function renderTradeHero(r) {
       ${t('Any roll in tier:')} <b>${money(fest)}</b> · ${t('{n} listed', { n: fl.total })}
       ${premium >= 15 ? `<span class="prem">${t('your rolls ≈ +{n}%', { n: premium })}</span>` : ''}</div>`;
   }
+  floorHtml += rollsHint();
   state.est = est;
-  const drivable = state.filters.mods.some((m) => m.enabled && m.statId && !m.option && !m.inSum);
+  const drivable =state.filters.mods.some((m) => m.enabled && m.statId && !m.option && !m.inSum);
   $('hero').innerHTML = `
     <div class="k">${fl ? t('Like yours') : t('Estimated price')}</div>
     <div class="big">${money(est)}</div>
@@ -284,6 +285,29 @@ function renderTradeHero(r) {
     ${ageHtml}
     ${sellHtml(priced, est, divs[0], median, divs.length)}
     ${drivable ? `<button class="link drive-btn" data-act="impact" title="${t('Searches again without each key modifier (a few trade requests)')}">${t('What drives the price?')}</button>` : ''}`;
+}
+
+// Rare: насколько роллы далеки от максимума и во что обойдётся их поднять. Divine перекатывает значения всех модов
+// разом (моды остаются), поэтому «удача» — все ключевые роллы в верхней четверти сразу (TOP_Q, betterOdds — craft.js).
+// Ключевые — включённые в поиск явные / desecrated моды с диапазоном: fractured Divine не меняет, crafted не считаем.
+// Одиваненные лоты покупают первыми — неидеальная вещь продаётся медленнее (ролик Ame, research/youtube/ame).
+function rollsHint() {
+  const it = state.item;
+  if (!it || it.rarity !== 'Rare' || it.corrupted || it.sanctified || it.mirrored) return '';
+  const key = (state.filters.mods || []).filter((m) => m.enabled && !m.option && !m.merged
+    && (m.tag === 'explicit' || m.tag === 'desecrated') && m.range && m.range.hi > m.range.lo && m.roll != null);
+  const low = key.filter((m) => m.roll < TOP_Q);
+  if (!low.length) return '';
+  const avg = Math.round((key.reduce((a, m) => a + m.roll, 0) / key.length) * 100);
+  const tries = Math.round(Math.pow(1 / (1 - TOP_Q), key.length));
+  const tip = [
+    t('Divine Orb rerolls the values of all modifiers at once — the modifiers stay'),
+    t('Chance the rolls get better overall: {pct}%', { pct: Math.round(betterOdds(key.map((m) => m.roll)) * 100) }),
+    t('Below the top quarter: {list}', { list: low.map((m) => `${m.text.split('\n')[0]} — ${Math.round(m.roll * 100)}%`).join('; ') }),
+    t('Each Divine can also make the rolls worse — this is the average over many tries'),
+  ].join('\n');
+  return `<div class="floor" title="${esc(tip)}">${esc(t('Rolls ≈ {avg}% of max — better-rolled listings sell first', { avg }))}<br>
+    ${esc(t('Divine: all key rolls in the top quarter {odds} ≈ {cost}', { odds: oddsText(tries), cost: money(tries) }))}</div>`;
 }
 
 // Цена уника на poe.ninja — одна на название + базу, без роллов: опора «за самую простую копию».

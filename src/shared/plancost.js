@@ -87,6 +87,24 @@
         o.tries -= 1; o.spent -= one; o.cost -= one;
       }
     }
+    // Essence of the Abyss + Crystallisation стороны снимает случайный мод этой стороны (как Annulment с оменом — те же
+    // попытки и задетые нужные) и ставит Mark of the Abyssal Lord; Mark — desecrated, его сразу снимает Omen of Light +
+    // Annulment (игрок, 2026-10-19). Полноценный вариант: выбирается, если дешевле всех.
+    let abyss = null;
+    const crystal = (side) => `Omen of ${side === 'prefix' ? 'Sinistral' : 'Dextral'} Crystallisation`;
+    const sideJ = Object.entries(s.sides || {}).filter(([, x]) => x.J);
+    if (s.abyss && p('Essence of the Abyss') != null && p('Omen of Light') != null && sideJ.length && sideJ.every(([side]) => p(crystal(side)) != null)) {
+      let tries = 0, hits = 0, spent = 0, lost = 0;
+      for (const [side, x] of sideJ) {
+        const per = p('Essence of the Abyss') + p(crystal(side)) + p('Omen of Light') + ann;
+        const r = run(x.J, x.K);
+        const n = r.tries - (s.desMerge && s.desMerge.side === side ? 1 : 0);
+        tries += n; hits += r.hits; spent += n * per; lost += r.hits * sideRestore(x);
+      }
+      abyss = { currencies: ['Essence of the Abyss', ...sideJ.map(([side]) => crystal(side)), 'Omen of Light', 'Orb of Annulment'],
+        tries, hits, spent, cost: spent + lost };
+      opts.push(abyss);
+    }
     opts.sort((a, b) => a.cost - b.cost);
     const best = opts[0];
     const chaos = M.tiers('chaos').filter(([n]) => p(n) != null);
@@ -100,7 +118,8 @@
       erasure.push({ side, orb: n, omen, chance: x.J / (x.J + x.K), cost: p(n) + p(omen) });
     }
     return { cost: best.cost, spent: best.spent, tries: best.tries, hits: best.hits, currencies: best.currencies,
-      chance: best.hits > 0.05 ? 0.5 : 1, risky: best.hits > 0.05, whittle: wh.length ? wh : null, erasure, other: opts[1] || null, desMerge: s.desMerge || null };
+      chance: best.hits > 0.05 ? 0.5 : 1, risky: best.hits > 0.05, whittle: wh.length ? wh : null, erasure,
+      viaAbyss: best === abyss, abyss: abyss && abyss !== best ? abyss : null, other: opts.find((o) => o !== best && o !== abyss) || null, desMerge: s.desMerge || null };
   }
 
   // Средняя стоимость до удачи с учётом того, чем снимать промах: per — цена попытки, pc — шанс,
