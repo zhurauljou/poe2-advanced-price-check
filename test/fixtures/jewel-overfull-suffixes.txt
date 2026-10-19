@@ -1,0 +1,17 @@
+Item Class: Jewels
+Rarity: Rare
+Test Overfull
+Emerald
+--------
+Item Level: 80
+--------
+{ Prefix Modifier "Sharpened" (Tier: 1) — Damage, Attack }
+12(10-15)% increased Attack Damage
+{ Suffix Modifier "of Fury" (Tier: 1) — Attack, Critical }
+14(10-15)% increased Critical Hit Chance for Attacks
+{ Suffix Modifier "of Ferocity" (Tier: 1) — Attack, Critical }
+20(15-25)% increased Critical Damage Bonus for Attack Damage
+{ Suffix Modifier "of Haste" (Tier: 1) — Attack, Speed }
+4(2-4)% increased Attack Speed
+--------
+Place into an allocated Jewel Socket on the Passive Skill Tree. Right click to remove from the Socket.

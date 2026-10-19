@@ -204,6 +204,9 @@ async function advise(item, demandMods, cached) {
   }
   const used = { prefix: mine.filter((a) => a.side === 'prefix').length, suffix: mine.filter((a) => a.side === 'suffix').length };
   const open = { prefix: Math.max(0, max.prefix - used.prefix), suffix: Math.max(0, max.suffix - used.suffix) };
+  // Сторона сверх лимита (после снятия crafted «+1 … Modifier allowed»): Chaos и Annulment её не трогают, а снятый
+  // мод не вернуть. Проверено сообществом в 0.5 (docs/jewels-crafting.md), в 0.5.5 — не проверено.
+  const overfull = ['prefix', 'suffix'].filter((s) => used[s] > max[s]);
 
   // Востребованные моды (≥ 15% билдов), которые могут встать: лучший доступный по ilvl тир.
   // Ключ мода для сравнения: нижний регистр, без «+» перед числом — как строки модов RePoE (templates); у poe.ninja
@@ -591,6 +594,16 @@ async function advise(item, demandMods, cached) {
   const hasCrafted = mine.some((a) => a.tag === 'crafted');
   // Всё, что заменяет случайный мод гарантированным crafted-модом: Perfect-эссенции, порченые эссенции, Alloy (data/crafting-currency.json).
   const perfect = item.rarity === 'Rare' ? [...perfectFor(item.itemClass), ...guaranteedFor(item.itemClass)] : [];
+  if (overfull.length) {
+    const s = t(overfull[0]);
+    sections.push({ kind: 'overfull', side: overfull[0], how: [
+      t('{n} {side}es with room for {max}: the extra slot stays after the crafted «+1 Modifier allowed» was removed', { n: used[overfull[0]], side: s, max: max[overfull[0]] }),
+      t('Chaos Orb and Exalted Orb cannot touch this side — its modifiers are safe; work on the other side'),
+      t('A removed {side} cannot be added back — the slot is lost', { side: s }),
+      t('The crafted-modifier slot is free again — a second emotion (Ferocity, Very Large radius) can go in'),
+      t('Community finding from 0.5 — not verified in 0.5.5'),
+    ] });
+  }
   if (jewel && item.rarity === 'Rare') {
     const timeLost = tags.includes('radius_jewel');
     // Варианты для этой базы (обычные эмоции — basic jewels, Ancient — Time-Lost): какой мод даст, сколько билдов его
@@ -815,6 +828,9 @@ function planGoal(mine, candidates, max, want, magic, magicFree = [], itemClass 
   const value = (pct, tier) => pct * tierFactor(tier || null);
   const keep = [], remove = [], add = [];
   for (const side of ['prefix', 'suffix']) {
+    // Сторона сверх лимита (самоцвет: сняли crafted «+1 Suffix Modifier allowed» после Potent Contempt — три суффикса
+    // остаются): снятый мод не вернуть, место пропадёт — моды такой стороны не трогаем.
+    const over = mine.filter((a) => a.side === side).length > max[side];
     const cur = mine.filter((a) => a.side === side).map((a) => {
       const pct = a.mod ? Math.max(0, ...a.mod.lines.map((l) => want.get(l) || 0)) : 0;
       // Fractured и хорошие тиры (T1–T2) не трогаем: даже не самый ходовой T1 дороже лотереи Annulment + Exalted.
@@ -823,7 +839,7 @@ function planGoal(mine, candidates, max, want, magic, magicFree = [], itemClass 
       // Хороший тир держим, только если мод хоть кому-то нужен (+28 Dexterity T2 при 0% билдов — не повод).
       const spentQuality = a.mod && a.mod.lines.some((l) => /to maximum quality$/.test(l)) && itemQuality > 20;
       if (spentQuality) return { kind: 'cur', a, pct: 0, v: 0, spentQuality: true };
-      const locked = a.tag === 'fractured' || a.tag === 'crafted' || !a.mod || (a.tier && a.tier <= 2 && !weak && pct >= 5) || pct >= KEY_PCT;
+      const locked = over || a.tag === 'fractured' || a.tag === 'crafted' || !a.mod || (a.tier && a.tier <= 2 && !weak && pct >= 5) || pct >= KEY_PCT;
       // Неключевой desecrated-мод держит единственный desecrate-слот; снять его можно наверняка (Omen of Light) и
       // раскрыть вместо него выбор 1 из 3–6 для нужного мода — поэтому держим его вдвое слабее.
       const desSlot = a.tag === 'desecrated' ? 0.5 : 1;
@@ -832,7 +848,7 @@ function planGoal(mine, candidates, max, want, magic, magicFree = [], itemClass 
     // Гибрид с мусорной половиной («Light Radius / Mana Regeneration») ценнее пустого места, но хуже чистого мода.
     const worth = (c) => value(c.pct, 2) * (keyOf(c.text.split(' / ')) ? KEY_BONUS : 1) * (c.text.split(' / ').some((l) => isWeak(l) && !((want.get(l) || 0) >= WANT_PCT)) ? 0.6 : 1);
     const cand = candidates.filter((c) => c.side === side).map((c) => ({ kind: 'add', c, pct: c.pct, v: worth(c) }));
-    const chosen = [...cur, ...cand].sort((x, y) => y.v - x.v).slice(0, max[side]);
+    const chosen = over ? cur : [...cur, ...cand].sort((x, y) => y.v - x.v).slice(0, max[side]);
     for (const x of cur) {
       const info = { side, tag: x.a.tag, text: x.a.mod ? x.a.mod.lines.join(' / ') : x.a.name, templates: x.a.mod ? x.a.mod.lines : [], tier: x.a.tier, pct: x.pct,
         level: x.a.mod ? x.a.mod.required_level : null, // для Whittling (снимает мод с наименьшим уровнем)

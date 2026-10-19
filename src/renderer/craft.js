@@ -690,6 +690,8 @@ function renderCraft(r) {
     } else if (s.kind === 'tierup') {
       parts.push(`<div class="craft-sec"><div class="k">${t('Key modifier, weak tier — keep it')}</div>${s.mods.map((m) => `
         <div class="craft-weak">${esc(m.text)} <span class="craft-tier">T${m.tier} → T${m.best}${m.range ? ` (${esc(m.range)})` : ''} · ${esc(t('{pct}% builds', { pct: fmt(m.pct) }))}</span></div>${how(m.how)}`).join('')}</div>`);
+    } else if (s.kind === 'overfull') {
+      parts.push(`<div class="craft-sec"><div class="k">${esc(t('Over the limit'))}</div>${how(s.how)}</div>`);
     } else if (s.kind === 'emotions') {
       parts.push(emotionsHtml(s, how));
     } else if (s.kind === 'magicfill') {

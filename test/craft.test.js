@@ -331,3 +331,12 @@ test('самоцвет: Ferocity (Effect of Prefixes / Suffixes) — всегд�
   const fer = f.mods.find((m) => /Effect of Prefixes/.test(m.text));
   assert.ok(fer && fer.enabled && fer.key);
 });
+
+test('самоцвет со стороной сверх лимита (3 суффикса после снятия «+1»): суффиксы не трогаем, план — только префиксы', { skip }, async () => {
+  await init();
+  const demand = [{ name: '#% increased Critical Hit Chance for Attacks', pct: 46 }, { name: '#% increased Critical Damage Bonus for Attack Damage', pct: 43 },
+    { name: '#% increased Attack Speed', pct: 40 }, { name: '#% increased Projectile Damage', pct: 36 }];
+  const r = await craft.advise(parseItem(read('../jewel-overfull-suffixes.txt')), demand, cached);
+  assert.ok(r.sections.some((s) => s.kind === 'overfull' && s.side === 'suffix'));
+  assert.ok(r.goal.plan.every((s) => s.side !== 'suffix' && !(s.sides && s.sides.suffix && s.sides.suffix.J)), JSON.stringify(r.goal.plan));
+});

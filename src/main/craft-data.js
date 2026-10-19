@@ -5,7 +5,7 @@ const fsW = require('fs');
 const pathW = require('path');
 const { t } = require('../shared/i18n');
 
-// Оценка весов модов (scripts/collect-weights.js — по дешёвым лотам трейда, не данные игры). Нет файла — без шансов.
+// Оценка весов модов (локальная утилита сбора — по дешёвым лотам трейда, не данные игры). Нет файла — без шансов.
 let weightsData;
 function weights() {
   if (weightsData === undefined) {
