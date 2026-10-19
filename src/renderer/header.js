@@ -1,9 +1,9 @@
-// Шапка (название и база — переключатели поиска), список лиг, история проверок, подсказка предмета как в игре.
-// Части окна — обычные скрипты с общей областью видимости (index.html подключает их по порядку).
+// Header (name and base — search toggles), league list, check history, in-game style item tooltip.
+// The window parts are plain scripts sharing one global scope (index.html loads them in order).
 
-// ---- шапка и подсказка, как в игре ----
-// Название и база в шапке — переключатели поиска: «именно этот уник» и «именно эта база»
-// (дорогие базы), иначе ищем по всей категории.
+// ---- header and tooltip, as in the game ----
+// Name and base in the header are search toggles: "this exact unique" and "this exact base"
+// (expensive bases), otherwise we search the whole category.
 function renderBanner() {
   const { item, filters: f } = state;
   const b = $('banner');
@@ -30,10 +30,10 @@ function renderBanner() {
   }
 }
 
-// Выбор лиги — своя выпадашка: обычные лиги сверху, хардкор (HC / Hardcore) — ниже, с красным тегом.
+// League picker — a custom dropdown: regular leagues on top, hardcore (HC / Hardcore) below, with a red tag.
 const isHC = (l) => /^(HC |Hardcore)/.test(l);
 
-// Обрезанное многоточием имя или база в шапке — полный текст в подсказке (впереди подсказки про клик).
+// A name or base cut off with an ellipsis in the header — full text in the tooltip (ahead of the click hint).
 function fullNameTitles() {
   requestAnimationFrame(() => {
     for (const el of [$('name'), $('base')]) {
@@ -45,7 +45,7 @@ function fullNameTitles() {
 
 function renderLeagues() {
   $('leagueName').textContent = state.league;
-  // Текущий сезон: трейд отдаёт лиги от новой к старой — первая не Standard и не хардкор.
+  // Current season: trade returns leagues newest to oldest — the first one that isn't Standard and isn't hardcore.
   const season = state.leagues.find((l) => !isHC(l) && l !== 'Standard');
   const isSeason = (l) => season && (l === season || l === `HC ${season}`);
   const item = (l) => `<button data-league="${esc(l)}"${l === state.league ? ' class="on"' : ''}>${esc(l.replace(/^HC /, ''))}${isHC(l) ? '<span class="hc">HC</span>' : ''}${isSeason(l) ? `<span class="cur" title="${t('Current league')}">${t('current')}</span>` : ''}${l === state.league ? '<span class="chk">✓</span>' : ''}</button>`;
@@ -61,7 +61,7 @@ function toggleLeagueMenu(open) {
   if (on) { toggleHistory(false); fit(); }
 }
 
-// ---- история проверок: последние вещи с оценкой; клик — проверить снова (окно остаётся на месте) ----
+// ---- check history: recent items with their estimate; click — check again (the window stays in place) ----
 async function toggleHistory(open) {
   const on = open != null ? open : $('histMenu').hidden;
   $('histMenu').hidden = !on;
@@ -84,7 +84,7 @@ $('histMenu').addEventListener('click', (e) => {
   window.pc.historyOpen(b.dataset.hist);
 });
 
-// Оценку — в историю, и строка «в прошлый раз» (та же вещь, та же лига) под оценкой.
+// The estimate goes to history, plus a "last time" line (same item, same league) under the estimate.
 function recordPrice(est) {
   if (state && state.historyId && est != null) window.pc.historyPrice(state.historyId, est).catch(() => {});
 }
@@ -94,18 +94,18 @@ function prevCheckHtml() {
   return `<div class="prev-check">${esc(t('Last check {ago} ago:', { ago: ago(p.at) }))} <b>≈ ${money(p.est)}</b></div>`;
 }
 
-// Свойство подсказки → фильтр защиты (state.filters.props по key).
-// Строка свойства → фильтр трейда. Урон по типам ищется как DPS: физический — pDPS, стихийный — eDPS.
+// Tooltip property → defence filter (state.filters.props by key).
+// Property line → trade filter. Damage by type is searched as DPS: physical — pDPS, elemental — eDPS.
 const PROP_KEY = { Armour: 'ar', 'Evasion Rating': 'ev', 'Energy Shield': 'es', Spirit: 'spirit',
   'Physical Damage': 'pdps', 'Fire Damage': 'edps', 'Cold Damage': 'edps', 'Lightning Damage': 'edps',
   'Critical Hit Chance': 'crit', 'Attacks per Second': 'aps', 'Uses Remaining': 'uses' };
 const PROP_OP = { pdps: 'pDPS ≥', edps: 'eDPS ≥', map_tier: '=' };
-// Скрижаль, найденная среди полных (ровно 10 использований), — «= 10», а не «≥».
+// A tablet priced among full ones (exactly 10 uses) — "= 10", not "≥".
 const propOp = (p) => (p.key === 'uses' && p.max != null && Number(p.max) === Number(p.min) ? '=' : PROP_OP[p.key] || '≥');
-// Потраченная скрижаль, оцененная по полным: «6 из 10 · цена по полным» вместо непонятного «6 = 10».
+// A used tablet priced by full ones: "6 of 10 · priced from full ones" instead of a confusing "6 = 10".
 const usesFromFull = (p) => p.key === 'uses' && p.enabled && p.full && p.value < p.full && Number(p.min) === p.full && state.searchable;
 const usesHtml = (i, p) => `<span class="tp on" data-ref="p:${i}" title="${esc(t('Partly used tablets are rarely listed — priced as a full one, scaled by the uses left (an assumption)'))} · ${esc(t('Searching by this — click to ignore'))}">${esc(p.label)}: <b>${p.value}</b> ${esc(t('of {n}', { n: p.full }))} <span class="tp-op">· ${esc(t('priced from full ones'))}</span></span>`;
-// Моды путевого камня, опасные для многих билдов.
+// Waystone mods dangerous for many builds.
 const WAYSTONE_DANGER = [
   [/cannot Regenerate/i, 'No regeneration'],
   [/(less|reduced) Recovery Rate/i, 'Less recovery'],
@@ -116,8 +116,8 @@ const WAYSTONE_DANGER = [
   [/additional Projectiles/i, 'Extra monster projectiles'],
 ];
 
-// Значение в подсказке, по которому можно искать: клик включает, рядом — граница поиска.
-// ref: 'p:<i>' — фильтр защиты/DPS, 'm:<key>' — уровень/ilvl/гнёзда.
+// A tooltip value you can search by: a click enables it, next to it — the search bound.
+// ref: 'p:<i>' — defence/DPS filter, 'm:<key>' — level/ilvl/sockets.
 function pick(ref, label, valueHtml, filter, op, field) {
   if (!filter || !state.searchable) return `${label}: ${valueHtml}`;
   const bound = filter.enabled
@@ -126,7 +126,7 @@ function pick(ref, label, valueHtml, filter, op, field) {
   return `<span class="tp${filter.enabled ? ' on' : ''}" data-ref="${ref}" title="${filter.enabled ? t('Searching by this — click to ignore') : t('Click to search by this')}">${label}: ${valueHtml}${bound}</span>`;
 }
 
-// Строка подсказки: значения рядом, переносятся целиком (без «·» в конце строки).
+// Tooltip line: values side by side, wrapped as whole units (no "·" at the end of a line).
 const row = (items) => `<div class="row">${items.map((x) => `<span>${x}</span>`).join('')}</div>`;
 
 function renderTooltip() {
@@ -140,13 +140,13 @@ function renderTooltip() {
       const v = `<b class="${p.aug ? 'aug' : ''}">${esc(p.v)}</b>`;
       if (p.k === 'Quality') return pick('m:quality', 'Quality', v, f.quality, '≥', 'min');
       if (p.k === 'Grants Skill') return pick('m:skill', 'Grants Skill', v, f.skill, t('level ≥'), 'min');
-      // Свойства путевого камня — по подписи из игры (pricing.propFilters кладёт её в label).
+      // Waystone properties — by the in-game label (pricing.propFilters puts it in label).
       let i = propIdx(PROP_KEY[p.k]);
       if (i < 0) i = props.findIndex((x) => x.group === 'map' && x.label === p.k);
       return i < 0 ? `${esc(p.k)}: ${v}` : pick(`p:${i}`, esc(p.k), v, props[i], propOp(props[i]), 'min');
     });
-    // DPS в игровой подсказке нет — показываем отдельной строкой, чтобы по нему тоже можно было искать. Использования
-    // скрижали — тоже: в игре это строка implicit'а («6 uses remaining»), а не свойство.
+    // DPS isn't in the in-game tooltip — shown as a separate line so it can be searched by too. Tablet
+    // uses — likewise: in the game it's an implicit line ("6 uses remaining"), not a property.
     const dps = ['dps', 'uses'].map(propIdx).filter((i) => i >= 0)
       .map((i) => (usesFromFull(props[i]) ? usesHtml(i, props[i]) : pick(`p:${i}`, props[i].label, `<b>${fmt(props[i].value)}</b>`, props[i], propOp(props[i]), 'min')));
     plines.push(...dps);
@@ -160,7 +160,7 @@ function renderTooltip() {
         : `Requires: <b>${esc(item.requires)}</b>`);
     }
     if (item.ilvl) {
-      // База под крафт: границы — ступени тиров (main: craft.ilvlBand); подсказка — что откроется на следующей.
+      // Crafting base: bounds are tier steps (main: craft.ilvlBand); the hint — what unlocks at the next one.
       let il = pick('m:ilvl', 'Item Level', `<b>${item.ilvl}</b>`, f.ilvl, '≥', 'min');
       if (f.ilvl && f.ilvl.enabled && state.searchable && f.ilvl.max) il += ` <span class="tp-op">≤</span><input type="number" class="tp-in" data-ref="m:ilvl" data-f="max" value="${f.ilvl.max}">`;
       if (f.ilvl && f.ilvl.next) il = `<span title="${esc(t('Same modifier tiers up to {max}; at {level} unlocks: {mods}', { max: f.ilvl.next.level - 1, level: f.ilvl.next.level, mods: f.ilvl.next.mods.slice(0, 4).join(', ') }))}">${il}</span>`;
@@ -171,10 +171,10 @@ function renderTooltip() {
     if (meta.length) lines.push(row(meta));
   }
   const flags = [];
-  // Состояния (Corrupted, Sanctified, Mirrored…) — переключатели: включённое требует то же у лота.
+  // States (Corrupted, Sanctified, Mirrored…) are toggles: an enabled one requires the same on the listing.
   const fl = (state.searchable && f.flags) || [];
   if (item.unidentified && !fl.some((x) => x.key === 'identified')) flags.push('<span class="corrupt">Unidentified</span>');
-  // Состояние — три положения по клику: только как у вашей вещи → только противоположное → неважно.
+  // State — three positions by click: only as on your item → only the opposite → doesn't matter.
   fl.forEach((x, i) => {
     const v = x.enabled ? x.value : x.own;
     const not = t('Not {lname}', { name: x.name, lname: x.name.toLowerCase() });
@@ -188,7 +188,7 @@ function renderTooltip() {
     if (item.mirrored) flags.push('<span class="cls">Mirrored</span>');
   }
   if (flags.length) lines.push(row(flags));
-  // Путевой камень: моды, опасные для многих билдов, — заметно, до того как его купить или пройти.
+  // Waystone: mods dangerous for many builds — visible before buying or running it.
   if (item.itemClass === 'Waystones') {
     const danger = WAYSTONE_DANGER.filter(([re]) => (item.modLines || []).some((l) => re.test(l.text))).map(([, label]) => `<span class="danger">⚠ ${esc(t(label))}</span>`);
     if (danger.length) lines.push(row(danger));
