@@ -370,11 +370,11 @@ function estimate(lots) {
 // Listing price: round, in the currency it's traded in: from 1 div, div; cheaper, chaos; very cheap, ex.
 function listPrice(div) {
   const round = (v, step) => Math.max(step, Math.round(v / step) * step);
-  if (div >= 1) {
+  if (div >= UNIT_EPS) {
     const amount = round(div, div < 10 ? 0.5 : div < 50 ? 1 : 5);
     return { amount, cur: 'divine', label: `${fmt(amount)} div` };
   }
-  if (rates.chaos && div * rates.chaos >= 1) {
+  if (rates.chaos && div * rates.chaos >= UNIT_EPS) {
     const amount = round(div * rates.chaos, 1);
     return { amount, cur: 'chaos', label: `${amount} chaos` };
   }

@@ -60,9 +60,12 @@ function oddsText(n) {
 }
 
 // Price in the currency where the number is at least 1: from 1 div — div, from 1 chaos — chaos, cheaper — exalted.
+// With a rounding tolerance: a 1-chaos listing converted to div and back is 0.9996 chaos, and without it every
+// 1-chaos item showed as "≈ 71.7 ex".
+const UNIT_EPS = 0.995;
 function moneyUnit(div) {
-  if (div >= 1 || !rates.chaos) return 'div';
-  if (div * rates.chaos >= 1 || !rates.exalted) return 'chaos';
+  if (div >= UNIT_EPS || !rates.chaos) return 'div';
+  if (div * rates.chaos >= UNIT_EPS || !rates.exalted) return 'chaos';
   return 'ex';
 }
 function money(div) {
