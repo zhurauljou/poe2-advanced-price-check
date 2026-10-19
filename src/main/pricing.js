@@ -1,11 +1,11 @@
-// Оценка предмета: биржевые предметы — по poe.ninja, остальное — поиском на трейде.
+// Item pricing: exchange items via poe.ninja, everything else via a trade search.
 const api = require('./api');
 const stats = require('./stats');
 const { weight, ENABLE_FROM, KEEP_FROM } = require('./weights');
 const { log } = require('./log');
 
-let types = null; // Set базовых типов с трейда — чтобы вытащить базу из имени магического предмета
-let currencyInfo = null; // id валюты трейда -> { text, image }
+let types = null; // Set of base types from trade — to pull the base out of a magic item's name
+let currencyInfo = null; // trade currency id -> { text, image }
 
 async function init() {
   const [st, items, stat] = await Promise.all([api.tradeStats(), api.tradeItems(), api.tradeStatic()]);
@@ -22,8 +22,8 @@ async function init() {
   }
 }
 
-// База для трейда. Название может нести лишнее: аффиксы магической вещи («Mirage's … of the Proficient»), приставки
-// «Superior» / «Exceptional» у белых. Нет такой базы на трейде — берём самую длинную базу, которая есть в названии.
+// Base for trade. The name may carry extras: a magic item's affixes («Mirage's … of the Proficient»), the
+// «Superior» / «Exceptional» prefixes on normal items. No such base on trade — take the longest base found in the name.
 function resolveBase(item) {
   if (!types || types.has(item.baseType)) return item.baseType;
   const text = item.rarity === 'Magic' ? item.name : item.baseType;
@@ -35,7 +35,7 @@ function resolveBase(item) {
   return best;
 }
 
-// Класс предмета → категория трейда: ищем «любые нательные доспехи», когда база не важна.
+// Item class → trade category: search for "any body armour" when the base doesn't matter.
 const CATEGORY = {
   'One Hand Maces': 'weapon.onemace', 'Two Hand Maces': 'weapon.twomace', Quarterstaves: 'weapon.warstaff', Bows: 'weapon.bow',
   Crossbows: 'weapon.crossbow', Spears: 'weapon.spear', Flails: 'weapon.flail', Claws: 'weapon.claw', Daggers: 'weapon.dagger',
@@ -47,28 +47,28 @@ const CATEGORY = {
   'Life Flasks': 'flask.life', 'Mana Flasks': 'flask.mana', Waystones: 'map.waystone', Relics: 'sanctum.relic',
 };
 
-// 80% от значения на предмете. Небольшие целые (+2 к уровню навыков, +1 снаряд) ищем точно,
-// дробь оставляем только для мелких дробных чисел (0.5% регена и т.п.).
+// 80% of the value on the item. Small integers (+2 to skill levels, +1 projectile) are searched exactly,
+// fractions are kept only for small fractional numbers (0.5% regen, etc.).
 function minOf(v) {
   if (v == null || v <= 0) return null;
   if (Number.isInteger(v) && v <= 5) return v;
   return v >= 5 ? Math.floor(v * 0.8) : Math.floor(v * 8) / 10;
 }
 
-// Качество ролла внутри тира: 0 — низ диапазона, 1 — максимум. Без диапазона (простой формат копирования) — null.
+// Roll quality within the tier: 0 — bottom of the range, 1 — max. No range (simple copy format) — null.
 function rollQuality(v, r) {
   if (!r || v == null || r.hi <= r.lo) return null;
   return Math.max(0, Math.min(1, (v - r.lo) / (r.hi - r.lo)));
 }
 
-// Минимум для поиска по качеству ролла: не ниже нижней границы тира (иначе сравниваем с тиром хуже) и тем
-// ближе к нашему значению, чем важнее мод; почти максимальный ролл — почти точно, за него и платят.
-// Без диапазона — прежние 80% от значения.
+// Minimum for a roll-quality search: not below the tier floor (else we compare with a worse tier), and the
+// more important the mod, the closer to our value; a near-max roll — almost exact, that is what people pay for.
+// No range — the old 80% of the value.
 function minFor(v, range, importance) {
   const q = rollQuality(v, range);
-  // С диапазоном считаем и отрицательные («-11(-20--5)% to all Elemental Resistances»: лучше — ближе к -5).
+  // With a range we also handle negatives («-11(-20--5)% to all Elemental Resistances»: better — closer to -5).
   if (q == null) return minOf(v);
-  // Короткий целый диапазон («Allocates 3(2-4) Sinister Jewel sockets», «+(1-3) Level») — каждая единица важна: ищем ровно своё.
+  // Short integer range («Allocates 3(2-4) Sinister Jewel sockets», «+(1-3) Level») — every unit matters: search exactly ours.
   if (Number.isInteger(v) && Number.isInteger(range.lo) && Number.isInteger(range.hi) && range.hi - range.lo <= 3) return v;
   let share = importance >= 2.4 ? 0.75 : importance >= 1.2 ? 0.5 : 0.25;
   if (q >= 0.75) share = Math.max(share, 0.8);
@@ -76,11 +76,11 @@ function minFor(v, range, importance) {
   return Number.isInteger(v) ? Math.floor(m) : Math.floor(m * 10) / 10;
 }
 
-// Моды, которые уже учтены в итоговой защите/уроне предмета. Фильтр по свойству есть только у брони/оружия,
-// а там эти моды всегда локальные — даже если трейд не пометил их «(Local)» (у % ES, например, не пометил).
+// Mods already counted in the item's total defence/damage. The property filter exists only for armour/weapons,
+// and there these mods are always local — even if trade didn't mark them «(Local)» (e.g. % ES isn't marked).
 const LOCAL_COVERED = {
   // «#% increased Energy Shield», «# to maximum Energy Shield», «#% increased Armour, Evasion and Energy Shield»…
-  // но не «#% increased Energy Shield Recharge Rate».
+  // but not «#% increased Energy Shield Recharge Rate».
   defence: /^(#% increased|# to) (maximum )?(Armour|Evasion Rating|Evasion|Energy Shield)((,| and) (Armour|Evasion|Energy Shield))*( \(Local\))?$/,
   damage: /^(Adds # to # (Physical|Fire|Cold|Lightning|Chaos) Damage|#% increased (Physical Damage|Attack Speed))( \(Local\))?$/,
 };
@@ -95,7 +95,7 @@ const PROPS = [
   { key: 'edps', label: 'Elemental DPS', covers: 'damage' },
   { key: 'crit', label: 'Critical Chance', covers: null },
   { key: 'aps', label: 'Attacks per Second', covers: null },
-  // Путевой камень (map_filters): тир — точно, «сочность» (редкость, размер групп, шанс камня) — от −10%.
+  // Waystone (map_filters): tier — exact, "juiciness" (rarity, pack size, waystone chance) — from −10%.
   { key: 'map_tier', label: 'Waystone Tier', covers: null, group: 'map', exact: true },
   { key: 'map_bonus', label: 'Waystone Drop Chance', covers: null, group: 'map', juice: true },
   { key: 'map_iir', label: 'Item Rarity', covers: null, group: 'map', juice: true },
@@ -105,26 +105,26 @@ const PROPS = [
   { key: 'map_revives', label: 'Revives', covers: null, group: 'map' },
   { key: 'map_gold', label: 'Gold', covers: null, group: 'map' },
   { key: 'map_experience', label: 'Experience', covers: null, group: 'map' },
-  // Скрижаль: сколько использований осталось — у трейда это псевдо-стат.
+  // Tablet: how many uses are left — a pseudo stat on trade.
   { key: 'uses', label: 'Uses Remaining', covers: null, group: 'pseudo', statId: 'pseudo.pseudo_number_of_uses_remaining' },
 ];
 
 const PROP_MIN = 0.97;
-const TABLET_USES = 10; // использований у новой скрижали
+const TABLET_USES = 10; // uses on a new tablet
 const PROP_LOOSE = 0.85;
 
-// Порог от значения: дробные (крит 8.00%, 1.01 атаки в секунду) — с точностью до сотых, а не до целых.
+// Threshold from the value: fractional ones (crit 8.00%, 1.01 attacks per second) — to hundredths, not integers.
 const propMin = (v, k) => (v < 20 ? Math.floor(v * k * 100) / 100 : Math.floor(v * k));
 
 function propFilters(item) {
   if (!['Rare', 'Magic', 'Normal', 'Unique'].includes(item.rarity)) return [];
-  // У уников защиту/урон задают сами моды (и они в поиске) — свойства можно включить вручную, по умолчанию выключены.
+  // On uniques defence/damage come from the mods themselves (which are in the search) — properties can be enabled manually, off by default.
   const unique = item.rarity === 'Unique';
-  // Магическая вещь — заготовка: её покупают ради модов и их тиров, а не ради DPS/защиты — свойства по желанию.
+  // A magic item is a craft base: bought for its mods and their tiers, not for DPS/defence — properties optional.
   const magic = item.rarity === 'Magic';
-  // Скрижаль: новая — на TABLET_USES использований, на трейде почти все такие. Потраченную ищем среди полных (по ним цена
-  // надёжнее — неполных мало), окно пересчитывает оценку пропорционально остатку (6 из 10 — 60%). Порча может дать больше
-  // TABLET_USES: такие дороже — непорченую ищем ровно с TABLET_USES, порченую с запасом — не меньше, чем у неё.
+  // Tablet: a new one has TABLET_USES uses, almost all on trade are like that. A used one is searched among full ones (prices
+  // are more reliable — few partial ones), the window scales the estimate by what's left (6 of 10 — 60%). Corruption can give more than
+  // TABLET_USES: those cost more — uncorrupted is searched with exactly TABLET_USES, corrupted with a margin — no less than its own.
   if (item.itemClass === 'Tablet') {
     return PROPS.filter((p) => p.key === 'uses' && item.props.uses > 0).map((p) => {
       const extra = item.props.uses > TABLET_USES;
@@ -134,7 +134,7 @@ function propFilters(item) {
   if (item.itemClass === 'Waystones') {
     return PROPS.filter((p) => p.group === 'map' && item.props[p.key] > 0).map((p) => ({
       ...p,
-      label: (item.mapLabels && item.mapLabels[p.key]) || p.label, // как в подсказке игры — по ней окно находит фильтр
+      label: (item.mapLabels && item.mapLabels[p.key]) || p.label, // as in the game tooltip — the window finds the filter by it
       value: item.props[p.key],
       min: p.exact ? item.props[p.key] : Math.floor(item.props[p.key] * 0.9),
       max: p.exact ? item.props[p.key] : undefined,
@@ -144,15 +144,15 @@ function propFilters(item) {
   return PROPS.filter((p) => !p.group && item.props[p.key] > 0).map((p) => ({
     ...p,
     value: item.props[p.key],
-    // Защита/DPS — главное в цене брони и оружия: ищем почти такие же (−3%); при нехватке лотов ослабление опустит до −15%.
+    // Defence/DPS is the main price factor for armour and weapons: search near-identical (−3%); with too few listings relaxing lowers it to −15%.
     min: propMin(item.props[p.key], PROP_MIN),
-    // У оружия ищем по общему DPS, физ/элем — по желанию.
+    // For weapons we search by total DPS, phys/elemental — optional.
     enabled: !unique && !magic && !['pdps', 'edps', 'spirit', 'crit', 'aps'].includes(p.key),
   }));
 }
 
-// Сопротивления и жизнь трейд умеет суммировать со всех модов (pseudo) — так находится больше
-// похожих предметов, чем при поиске каждого мода по отдельности.
+// Trade can sum resistances and life across all mods (pseudo) — this finds more
+// similar items than searching each mod separately.
 function pseudoFilters(mods) {
   const ele = { Fire: 0, Cold: 0, Lightning: 0 };
   let chaos = 0, life = 0;
@@ -173,7 +173,7 @@ function pseudoFilters(mods) {
     }
   }
   const out = [];
-  // Диапазон суммы — сумма диапазонов частей (сколько раз мод входит в сумму: «ко всем элементальным» — трижды).
+  // Range of the sum — sum of the parts' ranges (how many times a mod counts in the sum: «to all Elemental» — three times).
   const times = (m) => {
     const t = m.template.replace(/ \(Local\)$/, '');
     const r = t.match(/^#% to (.+) Resistances?$/);
@@ -182,9 +182,9 @@ function pseudoFilters(mods) {
   };
   const add = (id, text, value, group, perMod = () => 1) => {
     if (!group.length) return;
-    // Сумма включена, если включилась бы хоть одна её часть (по важности и спросу) — иначе это мод, за который не платят.
+    // The sum is enabled if at least one of its parts would be (by importance and demand) — otherwise it's a mod nobody pays for.
     const on = group.some((m) => m.enabled);
-    // Части суммы выключаем (их заменяет сумма) и помечаем — в окне они прячутся под «▸ N mods» у суммы.
+    // Disable the sum's parts (the sum replaces them) and mark them — in the window they hide under «▸ N mods» of the sum.
     group.forEach((m) => { m.enabled = false; m.inSum = id; });
     const range = group.every((m) => m.range)
       ? group.reduce((s, m) => ({ lo: s.lo + m.range.lo * perMod(m), hi: s.hi + m.range.hi * perMod(m) }), { lo: 0, hi: 0 })
@@ -199,7 +199,7 @@ function pseudoFilters(mods) {
   return out;
 }
 
-// «Grants Skill: Level 16 Wolf Pack (Max Level 17)» → фильтр skill.wolf_pack ≥ 16.
+// «Grants Skill: Level 16 Wolf Pack (Max Level 17)» → filter skill.wolf_pack ≥ 16.
 function grantedSkill(item) {
   const p = item.properties.find((x) => x.k === 'Grants Skill');
   if (!p) return null;
@@ -207,13 +207,13 @@ function grantedSkill(item) {
   return s ? { enabled: false, statId: s.statId, min: s.value } : null;
 }
 
-// Что показать в оверлее сразу после копирования: разобранный предмет и фильтры по умолчанию.
-// demand — спрос по классу вещей с poe.ninja ({ mods: [{ name: '#% increased Spirit', pct }] }) или null.
-// rollsOn(template) — может ли мод встать на эту базу (true / false / null — неизвестно).
-const UNIQUE_KEY = 40; // % билдов с уником — его случайный мод ключевой
-// Руны Альдура (Passion / Ire / Breath / Betrayal) навсегда переводят стихийные моды редкого оружия в другую стихию
-// («Gain #% as Extra Cold» → «… Extra Fire», «+# to Level of all Cold Spell Skills» → «… Fire …»). Пока руна не
-// вставлена, стихия на оружии — не окончательная: спрос считаем по лучшей стихии, а цену проверяем и в других.
+// What to show in the overlay right after copying: the parsed item and default filters.
+// demand — demand for the item class from poe.ninja ({ mods: [{ name: '#% increased Spirit', pct }] }) or null.
+// rollsOn(template) — whether the mod can roll on this base (true / false / null — unknown).
+const UNIQUE_KEY = 40; // % of builds with the unique — its random mod is key
+// Runes of Aldur (Passion / Ire / Breath / Betrayal) permanently convert a rare weapon's elemental mods to another element
+// («Gain #% as Extra Cold» → «… Extra Fire», «+# to Level of all Cold Spell Skills» → «… Fire …»). Until the rune is
+// socketed, the weapon's element isn't final: demand is taken for the best element, and the price is checked in the others too.
 const ALDUR = { Fire: 'Passion of Aldur', Cold: 'Breath of Aldur', Lightning: 'Ire of Aldur', Chaos: 'Betrayal of Aldur' };
 const ELEMENT = /\b(Fire|Cold|Lightning)\b/;
 const RUNE_WEAPONS = new Set(require('../shared/item-classes').ALDUR_WEAPONS);
@@ -222,7 +222,7 @@ const convertible = (item) => item.rarity === 'Rare' && RUNE_WEAPONS.has(item.it
 const swapElement = (s, to) => String(s).replace(new RegExp(ELEMENT.source, 'g'), to);
 let lastDemand = new Map();
 
-// Те же фильтры, но со стихийными модами в другой стихии — по одному набору на руну. → [{ element, rune, filters, score }]
+// Same filters, but with elemental mods in another element — one set per rune. → [{ element, rune, filters, score }]
 function elementVariants(item, filters) {
   if (!convertible(item) || !filters) return [];
   const mods = filters.mods.filter((m) => m.enabled && m.statId && m.template && m.tag !== 'pseudo' && ELEMENT.test(m.template));
@@ -240,7 +240,7 @@ function elementVariants(item, filters) {
       m.statId = s.statId;
       m.text = text;
       m.template = swapElement(m.template, to);
-      if (/^Adds /.test(text)) m.min = null; // у «Adds # to #» диапазоны стихий разные — любой ролл
+      if (/^Adds /.test(text)) m.min = null; // «Adds # to #» has different ranges per element — any roll
       score += lastDemand.get(m.template.toLowerCase().replace(/\+#/g, '#')) || 0;
       changed++;
     }
@@ -254,8 +254,8 @@ function prepare(item, demand, rollsOn) {
   const demandOf = (tpl) => {
     if (!tpl) return undefined;
     const k = tpl.replace(/ \(Local\)$/, '').toLowerCase();
-    const one = (x) => demandPct.get(x) ?? demandPct.get(x.replace(/\+#/g, '#')); // у poe.ninja шаблоны без «+»
-    // Стихию на оружии меняет руна Альдура — спрос по лучшей стихии.
+    const one = (x) => demandPct.get(x) ?? demandPct.get(x.replace(/\+#/g, '#')); // poe.ninja templates have no «+»
+    // The weapon's element is changed by a Rune of Aldur — demand for the best element.
     if (conv && ELEMENT.test(tpl)) {
       const base = tpl.replace(/ \(Local\)$/, '');
       const all = ['Fire', 'Cold', 'Lightning', 'Chaos'].map((e) => one(swapElement(base, e).toLowerCase())).filter((v) => v != null);
@@ -267,12 +267,12 @@ function prepare(item, demand, rollsOn) {
   item.mods = stats.matchMods(item);
   const conv = convertible(item);
   lastDemand = demandPct;
-  // У уников несопоставленные строки — это флейвор-текст, его не показываем.
+  // On uniques unmatched lines are flavour text, we don't show them.
   if (item.rarity === 'Unique') item.mods = item.mods.filter((m) => m.statId);
-  // Скрижаль: implicit «Adds Ritual Altars to a Map» на трейде не ищется — тип скрижали задаёт база.
+  // Tablet: the implicit «Adds Ritual Altars to a Map» isn't searchable on trade — the base sets the tablet type.
   if (item.itemClass === 'Tablet') item.mods = item.mods.filter((m) => m.statId || m.tag !== 'implicit');
-  // Неизменяемые моды уника («Passives in Radius can be Allocated…») есть у каждого экземпляра — на цену не влияют.
-  // Отличить можно только в расширенном формате: там у изменяемых модов есть диапазон или варианты.
+  // A unique's fixed mods («Passives in Radius can be Allocated…») are on every copy — they don't affect the price.
+  // They can only be told apart in the advanced format: there variable mods have a range or variants.
   let hiddenFixed = 0;
   if (item.rarity === 'Unique' && item.advanced) {
     const fixed = (m) => m.tag === 'explicit' && !m.range && !m.textRange && !(m.statId || '').includes('|');
@@ -280,38 +280,38 @@ function prepare(item, demand, rollsOn) {
     item.mods = item.mods.filter((m) => !fixed(m));
   }
   const ninjaRow = api.ninja.byName.get(item.name) || (item.rarity === 'Currency' && api.ninja.byName.get(item.baseType));
-  // onExchange — есть на живой бирже трейда (id poe.ninja совпадает с id валюты трейда): окно покажет её предложения.
+  // onExchange — listed on the live trade exchange (poe.ninja id matches the trade currency id): the window shows its offers.
   const exchange = ninjaRow ? { ...ninjaRow, onExchange: !!(currencyInfo && currencyInfo.has(ninjaRow.id)) } : null;
 
   const searchMods = item.rarity === 'Rare' || item.rarity === 'Magic';
   const props = propFilters(item);
   const covered = props.filter((p) => p.enabled).map((p) => LOCAL_COVERED[p.covers]).filter(Boolean);
-  // Ниша вещи: 2+ мода одной темы — они ключевые независимо от спроса по всему классу.
-  // Puppet Master и Command Skills — механика миньонов, хотя слова «Minion» в тексте нет.
+  // Item niche: 2+ mods of one theme — they're key regardless of demand across the whole class.
+  // Puppet Master and Command Skills are minion mechanics, even though the word «Minion» isn't in the text.
   const NICHES = [/\bMinions?\b|\bPuppet Master\b|\bCommand Skills?\b/, /\bTotems?\b/, /\bCompanions?\b/];
   const niche = searchMods ? NICHES.find((re) => item.mods.filter((m) => m.statId && m.tag !== 'implicit' && re.test(m.text)).length >= 2) || null : null;
   const mods = item.mods.map((m) => {
     const dp = demandOf(m.template);
-    // Спрос загружен (топ-80 модов класса), а этого мода в нём нет — почти никто не носит: для важности это 0%.
+    // Demand is loaded (top 80 mods of the class) and this mod isn't in it — almost nobody wears it: 0% for importance.
     const searchable = ['explicit', 'fractured', 'desecrated', 'crafted'].includes(m.tag);
-    // У модов самоцвета один тир («T1» у всех) — тир не делает мод важнее, важность только по спросу.
+    // Jewel mods have one tier («T1» for all) — tier doesn't make a mod more important, importance is by demand only.
     const jewel = item.itemClass === 'Jewels';
     const w = weight(item.itemClass, m.template, jewel ? null : m.tier, dp ?? (searchMods && searchable && demandPct.size >= 40 ? 0 : undefined));
-    // Эмоции Potent Ferocity («Effect of Suffixes / Prefixes») и Contempt («+1 … Modifier allowed») на самоцвете — главные
-    // множители цены (docs/jewels-crafting.md §4): ищем по ним всегда, ослабление их не снимает.
+    // The Potent Ferocity («Effect of Suffixes / Prefixes») and Contempt («+1 … Modifier allowed») emotions on a jewel are the main
+    // price multipliers (docs/jewels-crafting.md §4): always search by them, relaxing doesn't remove them.
     if (jewel && /increased Effect of (Suffixes|Prefixes)$|(Suffix|Prefix) Modifiers? allowed$/.test(m.template || '')) { w.key = true; w.importance = Math.max(w.importance, 2.6); }
-    // Случайный мод уника, который носит заметная часть билдов с этим уником, — ключевой: без него вещь другая.
+    // A unique's random mod worn by a notable share of builds using that unique is key: without it it's a different item.
     if (niche && niche.test(m.text) && ['explicit', 'fractured', 'desecrated', 'crafted'].includes(m.tag)) { w.key = true; w.importance = Math.max(w.importance, 2.4); }
-    if (item.rarity === 'Unique' && m.tag === 'desecrated' && dp >= UNIQUE_KEY) { w.key = true; w.importance = Math.max(w.importance, 2.4); } // и не снимается ослаблением
-    // Мод-вариант (Legacy of … у Mageblood) у уника и есть то, за что платят, — ищем по нему сразу.
+    if (item.rarity === 'Unique' && m.tag === 'desecrated' && dp >= UNIQUE_KEY) { w.key = true; w.importance = Math.max(w.importance, 2.4); } // and relaxing doesn't remove it
+    // A variant mod (Legacy of … on Mageblood) is exactly what people pay for on a unique — search by it right away.
     const option = !!m.statId && m.statId.includes('|');
-    // У уника цену делают роллы: мод с разбросом значений («(60-80)%») — сразу в поиске, иначе ищем просто по названию.
-    // Горячий implicit (≥ 60% билдов: Spirit на скипетре) — тоже сразу, с любым роллом: при точной базе он и так есть у всех,
-    // а когда ослабление снимет базу и ищет по категории — не потеряется.
+    // A unique's price comes from its rolls: a mod with a value spread («(60-80)%») — in the search right away, else search just by name.
+    // A hot implicit (≥ 60% of builds: Spirit on a sceptre) — also right away, any roll: with the exact base everyone has it anyway,
+    // and when relaxing drops the base and searches by category — it won't get lost.
     const hotImplicit = m.tag === 'implicit' && !!m.statId && dp >= 60 && searchMods;
-    // Минусовые строки (весь диапазон ≤ 0: «-11(-20--5)% to all Elemental Resistances») — недостаток, за него не платят.
-    // Desecrated у уника (Heart of the Well) — случайные моды из пула: какие выпали и как — и есть цена.
-    // Почти никому не нужный (< 10% билдов с этим уником) — не включаем: лоты с другим таким же бесполезным модом — те же аналоги.
+    // Negative lines (whole range ≤ 0: «-11(-20--5)% to all Elemental Resistances») are a drawback, nobody pays for them.
+    // Desecrated on a unique (Heart of the Well) — random mods from a pool: which ones rolled and how is the price.
+    // Wanted by almost no one (< 10% of builds with this unique) — not included: listings with another equally useless mod are the same comparables.
     const unwanted = item.rarity === 'Unique' && m.tag === 'desecrated' && demandPct.size > 0 && (dp == null || dp < 10);
     const infRune = m.tag === 'rune' && /^Can roll \w+ modifiers$/.test(m.text || '');
     const uniqueRandom = item.rarity === 'Unique' && m.tag === 'desecrated' && !!m.statId && !unwanted;
@@ -326,29 +326,29 @@ function prepare(item, demand, rollsOn) {
       value: m.value,
       template: m.template,
       importance: w.importance,
-      demand: dp != null ? dp : null, // % билдов с этим модом на вещах этого класса
+      demand: dp != null ? dp : null, // % of builds with this mod on items of this class
       key: w.key,
-      // Руна Альдура (не вынуть) — сравниваем с такими же вещами.
-      // Руна влияния в гнезде («Can roll Destruction modifiers») — навсегда; как и руна Альдура, сравниваем с такими же.
+      // A Rune of Aldur (can't be removed) — compare with the same kind of items.
+      // An influence rune in a socket («Can roll Destruction modifiers») is permanent; like a Rune of Aldur, compare with the same.
       enabled: !!m.forged || infRune || (option && m.tag === 'explicit') || rolls || uniqueRandom || hotImplicit || (!!m.statId && searchMods
         && ['explicit', 'fractured', 'desecrated', 'crafted'].includes(m.tag)
         && w.importance >= ENABLE_FROM && !covered.some((re) => re.test(m.template))),
       option,
-      // «до»: уровни умений — ровно своё значение (+5 и +4 — разные товары, особенно на магической базе).
+      // max ("up to") filter: skill levels — exactly our value (+5 and +4 are different goods, especially on a magic base).
       max: !option && m.value != null && Number.isInteger(m.value) && LEVELS.test(m.template || '') ? m.value : null,
       forged: !!m.forged || infRune,
-      // Вариант с текстовым диапазоном (размер кольца) — порядковый «ролл»: окно учитывает его при Divine.
+      // A variant with a text range (ring size) — an ordinal "roll": the window accounts for it with Divine.
       ...((o) => (o ? { ordinal: o } : {}))(option ? stats.ordinal(m.statId, m.template, m.textRange) : null),
       ...(option && item.rarity === 'Unique' && !stats.ordinal(m.statId, m.template, m.textRange) ? { categorical: { n: stats.optionCount(m.statId) } } : {}),
       range: m.range || null,
       roll: rollQuality(m.value, m.range),
-      // Вариант с числом («Glorifying … # souls» — сид timeless, «+# to Level of all X Skills») ищем и по числу.
+      // A variant with a number («Glorifying … # souls» — timeless seed, «+# to Level of all X Skills») is searched by the number too.
       min: m.forged || infRune ? null : option ? (m.value != null && /#/.test(m.template || '') ? m.value : null) : hotImplicit ? (m.range ? Math.ceil(m.range.lo) : minOf(m.value)) : minFor(m.value, m.range, rolls ? Math.max(w.importance, 1.2) : w.importance),
     };
   });
   const pseudo = searchMods ? pseudoFilters(mods) : [];
-  // Ключевой мод, которого нет: его носят почти все билды (≥ KEY_MISSING%), он может встать на эту базу, а на вещи его нет.
-  // Похожие лоты с ним стоят в разы дороже — поэтому по умолчанию ищем вещи БЕЗ него (честное сравнение).
+  // Missing key mod: almost all builds wear it (≥ KEY_MISSING%), it can roll on this base, but the item doesn't have it.
+  // Similar listings with it cost many times more — so by default we search for items WITHOUT it (a fair comparison).
   const key = stats.templateKey;
   const have = new Set(item.mods.map((m) => key(m.template)));
   const exclude = !searchMods ? [] : (demand && demand.mods || [])
@@ -356,30 +356,30 @@ function prepare(item, demand, rollsOn) {
     .map((r) => { const s = stats.statFor(r.name, 'explicit', item.itemClass); return s && { statId: s.statId, text: r.name, pct: r.pct, enabled: true }; })
     .filter(Boolean).slice(0, 2);
   const filters = {
-    // Переключатели в шапке: искать именно эту базу (дорогие базы!) / именно этот уник.
+    // Header toggles: search exactly this base (expensive bases!) / exactly this unique.
     useType: true,
     useName: item.rarity === 'Unique' && !item.unidentified,
     category: CATEGORY[item.itemClass] || null,
     mods: [...pseudo, ...mods],
-    hiddenFixed, // сколько неизменяемых модов уника скрыто
+    hiddenFixed, // how many fixed unique mods are hidden
     props,
-    // ilvl важен для баз под крафт (обычные/магические) — там включён сразу; у остальных — по желанию.
-    // У скрижалей ilvl на цену почти не влияет — покупают ради модов и использований.
+    // ilvl matters for craft bases (normal/magic) — enabled right away there; for the rest — optional.
+    // For tablets ilvl barely affects the price — they're bought for mods and uses.
     ilvl: item.ilvl ? { enabled: (item.rarity === 'Normal' || item.rarity === 'Magic') && item.itemClass !== 'Tablet', min: item.ilvl } : null,
     reqLevel: item.reqLevel ? { enabled: false, max: item.reqLevel } : null,
-    sockets: item.sockets ? { enabled: true, min: item.sockets } : null, // гнёзда сильно влияют на цену — сразу
+    sockets: item.sockets ? { enabled: true, min: item.sockets } : null, // sockets strongly affect the price — enabled right away
     gemLevel: item.gemLevel ? { enabled: true, min: item.gemLevel } : null,
     quality: item.quality ? { enabled: false, min: item.quality } : null,
     skill: grantedSkill(item),
-    // Состояния предмета — переключатели в подсказке: включённое требует то же состояние у лота.
-    // У неосквернённой вещи можно потребовать «не осквернён» (такие дороже — их ещё можно осквернить).
+    // Item states are toggles in the tooltip: an enabled one requires the same state on the listing.
+    // An undesecrated item can require "not desecrated" (those cost more — they can still be desecrated).
     flags: flagFilters(item),
-    exclude, // «без ключевого мода»: [{ statId, text, pct, enabled }]
+    exclude, // "without key mod": [{ statId, text, pct, enabled }]
     online: true,
     flex: true, // «Allow 1 minor mod missing»
   };
-  // Путевой камень покупают за тир и «сочность» (редкость, размер групп, шанс камня), а не за конкретные моды —
-  // моды по желанию (опасные окно помечает в подсказке).
+  // Waystones are bought for tier and "juiciness" (rarity, pack size, waystone chance), not specific mods —
+  // mods optional (the window flags dangerous ones in the tooltip).
   if (item.itemClass === 'Waystones') for (const m of filters.mods) m.enabled = false;
   return { item, exchange, filters, searchable: !exchange, rates: api.ninja.rates };
 }
@@ -390,8 +390,8 @@ const TIMELESS = /stat_3418580811\|/;
 
 function buildQuery(item, f) {
   const query = {
-    // 'available' — «Instant Buyout and In Person», как по умолчанию на сайте. 'online' был бы только
-    // «In Person (Online)» и отбрасывал все лоты с мгновенным выкупом — а это большая часть рынка PoE 2.
+    // 'available' — «Instant Buyout and In Person», the site's default. 'online' would be only
+    // «In Person (Online)» and drop all instant-buyout listings — which is most of the PoE 2 market.
     status: { option: f.online ? 'available' : 'any' },
     stats: [{ type: 'and', filters: [] }],
     filters: {},
@@ -413,21 +413,21 @@ function buildQuery(item, f) {
   if (f.reqLevel && f.reqLevel.enabled) query.filters.req_filters = { filters: { lvl: { max: Number(f.reqLevel.max) } } };
   if (Object.keys(type).length) query.filters.type_filters = { filters: type };
 
-  // Моды-варианты («explicit.stat_264262054|3» — Legacy of Bismuth) трейд ищет по id целиком, без значения.
-  // Их — группой «count»: f.optionMin из N — «любые 3 из ваших 4 Legacy» (по умолчанию все N).
+  // Variant mods («explicit.stat_264262054|3» — Legacy of Bismuth) are searched on trade by the full id, without a value.
+  // They go in a «count» group: f.optionMin of N — "any 3 of your 4 Legacies" (all N by default).
   const options = f.mods.filter((m) => m.enabled && m.option);
   if (options.length) {
     const min = Math.min(options.length, f.optionMin || options.length);
-    // У timeless-самоцвета сид — точное число (min = max), у остальных вариантов — «не меньше».
+    // For a timeless jewel the seed is an exact number (min = max), for other variants — "at least".
     const val = (m) => (m.min == null ? {} : { value: TIMELESS.test(m.statId) ? { min: m.min, max: m.min } : { min: Number(m.min) } });
     query.stats.push({ type: 'count', value: { min }, filters: options.map((m) => ({ id: m.statId, ...val(m) })) });
   }
-  // Второстепенные моды (не важные и не суммы) при трёх и больше — группой «любые N−1 из N»: находятся вещи,
-  // где одного такого мода нет, а остальные не хуже. Взвешенную сумму трейд без входа в аккаунт не принимает.
+  // Minor mods (not important and not sums), when three or more — in an "any N−1 of N" group: finds items
+  // missing one such mod with the rest no worse. Trade doesn't accept a weighted sum without logging in.
   const flt = (m) => {
     const v = {};
     if (m.min != null && m.min !== '') v.min = Number(m.min);
-    // «+# to Level of all … Skills»: +1 меняет цену в разы — ищем ровно своё значение, а не «и выше».
+    // «+# to Level of all … Skills»: +1 changes the price many times over — search exactly our value, not "and higher".
     if (m.max != null && m.max !== '') v.max = Number(m.max);
     return { id: m.statId, value: v };
   };
@@ -435,7 +435,7 @@ function buildQuery(item, f) {
   const minor = f.flex ? regular.filter(isMinor) : [];
   for (const m of regular) if (minor.length < 3 || !minor.includes(m)) query.stats[0].filters.push(flt(m));
   if (minor.length >= 3) query.stats.push({ type: 'count', value: { min: minor.length - 1 }, filters: minor.map(flt) });
-  // Валюта цены: 'any' — любая в пересчёте (по умолчанию у трейда), иначе только лоты в этой валюте.
+  // Price currency: 'any' — any, converted (trade's default), else only listings in this currency.
   if (f.priceCurrency && f.priceCurrency !== 'any') {
     query.filters.trade_filters = { filters: { price: { option: f.priceCurrency } } };
   }
@@ -454,17 +454,17 @@ function buildQuery(item, f) {
   if (f.gemLevel && f.gemLevel.enabled) misc.gem_level = { min: Number(f.gemLevel.min) };
   for (const fl of f.flags || []) if (fl.enabled) misc[fl.key] = { option: fl.value ? 'true' : 'false' };
   if (Object.keys(misc).length) query.filters.misc_filters = { filters: misc };
-  // anyKind — исключить стат во всех видах мода (вклад мода в цену: сравнение с вещами, где его нет вовсе).
+  // anyKind — exclude the stat in every kind of mod (the mod's price contribution: compare with items that lack it entirely).
   const not = (f.exclude || []).filter((x) => x.enabled).flatMap((x) => (x.anyKind ? stats.variantsOf(x.statId) : [x.statId]));
   if (not.length) query.stats.push({ type: 'not', filters: [...new Set(not)].map((id) => ({ id })) });
   return { query, sort: { price: 'asc' } };
 }
 
-// Разметка трейда «[EnergyShield|Energy Shield]» → «Energy Shield».
+// Trade markup «[EnergyShield|Energy Shield]» → «Energy Shield».
 const clean = (s) => String(s || '').replace(/\[(?:[^|\]]*\|)?([^\]]*)\]/g, '$1');
 
-// Вещь конкурента для карточки при наведении на лот: шапка, свойства и моды с id статов
-// (по ним сравниваем с нашей вещью — те же id, что в наших фильтрах).
+// A competitor's item for the hover card on a listing: header, properties and mods with stat ids
+// (used to compare with our item — the same ids as in our filters).
 function itemTip(it) {
   const mods = [];
   for (const [key, list] of Object.entries(it)) {
@@ -487,11 +487,11 @@ function itemTip(it) {
     rarity: it.rarity || '',
     ilvl: it.ilvl,
     corrupted: !!it.corrupted,
-    // Гнёзда (рун / Soul Core) и что в них вставлено — их в свойствах трейд не присылает.
+    // Sockets (rune / Soul Core) and what's in them — trade doesn't send these in properties.
     sockets: (it.sockets || []).length,
     socketed: (it.socketedItems || []).map((s) => s.typeLine || s.baseType).filter(Boolean),
-    // Состояния лота, после которых вещь уже не изменить (поля трейда): окно выделит их в строке лота и в карточке.
-    // fractured / desecrated трейд ставит любой вещи с таким модом — это частое и не меняет, что с вещью можно делать.
+    // Listing states after which the item can no longer be changed (trade fields): the window highlights them in the listing row and card.
+    // Trade sets fractured / desecrated on any item with such a mod — that's common and doesn't change what can be done with it.
     states: [['corrupted', 'Corrupted'], ['sanctified', 'Sanctified'], ['duplicated', 'Mirrored']].filter(([k]) => it[k]).map(([, name]) => name)
       .concat(it.identified === false ? ['Unidentified'] : []),
     props: (it.properties || []).filter((p) => p.values && p.values[0])
@@ -500,29 +500,29 @@ function itemTip(it) {
   };
 }
 
-// Состояния предмета и их фильтры трейда (misc_filters).
+// Item states and their trade filters (misc_filters).
 function flagFilters(item) {
   const out = [];
-  // name — само состояние («Corrupted»), own — есть ли оно у вещи; value — что требовать, когда включено
-  // (переключатель в окне: own → противоположное → неважно).
+  // name — the state itself («Corrupted»), own — whether the item has it; value — what to require when enabled
+  // (toggle in the window: own → the opposite → don't care).
   const add = (key, name, own) => out.push({ key, name, own, value: own, enabled: false });
-  // Непорченый уник — ищем непорченые: испорченные копии (часто «кирпичи») иначе занижают цену.
+  // Uncorrupted unique — search uncorrupted: corrupted copies (often "bricked") would otherwise drag the price down.
   const pinClean = item.rarity === 'Unique' && !item.corrupted;
   if (item.rarity === 'Currency') return out;
   add('corrupted', 'Corrupted', !!item.corrupted);
   if (pinClean) out[0].enabled = true;
-  // «Twice Corrupted» — у трейда свой фильтр: две порчи — другая цена, чем у одной.
+  // «Twice Corrupted» has its own trade filter: two corruptions — a different price than one.
   if (item.twiceCorrupted) { add('twice_corrupted', 'Twice Corrupted', true); out[out.length - 1].enabled = true; }
   if (item.sanctified) add('sanctified', 'Sanctified', true);
   if (item.mirrored) add('mirrored', 'Mirrored', true);
   if (item.fracturedItem) add('fractured_item', 'Fractured Item', true);
   if (item.desecratedItem) add('desecrated', 'Desecrated Item', true);
-  // Неопознанная вещь — среди неопознанных: опознанные с хорошими модами иначе завышают цену «кота в мешке».
+  // Unidentified item — among unidentified: identified ones with good mods would otherwise inflate the "pig in a poke" price.
   if (item.unidentified) { add('identified', 'Identified', false); out[out.length - 1].enabled = true; }
   return out;
 }
 
-// Второстепенный мод: не сумма, не вариант и не важный (ключевой хорошего тира держим обязательным).
+// Minor mod: not a sum, not a variant and not important (a key mod of a good tier is kept mandatory).
 const LEVELS = /^\+?# to Level of all .*Skills$/i;
 
 function isMinor(m) {
@@ -535,23 +535,23 @@ function toDivine(amount, currency) {
   return row ? amount * row.divine : null;
 }
 
-// Сколько лотов нужно, чтобы цене можно было верить. Меньше — автоослабление снимает самый слабый фильтр.
+// How many listings are needed to trust the price. Fewer — auto-relax drops the weakest filter.
 const MIN_RESULTS = 5;
-const MAX_RELAX = 3; // каждый шаг — отдельный поиск, а их у трейда мало (≈30 за 5 минут)
+const MAX_RELAX = 3; // each step is a separate search, and trade allows few of them (≈30 per 5 minutes)
 
-// Чем меньше — тем раньше снимаем. Важные моды (ключевые хорошего тира) не снимаем вовсе.
+// The lower, the earlier we drop it. Important mods (key, of a good tier) are never dropped.
 function strength(f) {
-  if (f.kind === 'rolls') return 0.2; // сначала — любой ролл того же тира, ничего не снимая
-  if (f.kind === 'cheap') return 0.3; // гнездо и качество докупаются за копейки — снимаем первыми
-  if (f.kind === 'proploose') return 1.7; // защита/DPS −3% → −15%: раньше, чем снимать суммы и саму защиту
-  if (f.kind === 'base') return 1.75; // точная база → вся категория: после слабых модов, до сумм и защиты/DPS
-  if (f.kind === 'prop') return f.exact ? Infinity : 2.5; // тир путевого камня не снимаем — это другой товар
+  if (f.kind === 'rolls') return 0.2; // first — any roll of the same tier, dropping nothing
+  if (f.kind === 'cheap') return 0.3; // socket and quality are dirt cheap to add — drop them first
+  if (f.kind === 'proploose') return 1.7; // defence/DPS −3% → −15%: before dropping sums and the defence itself
+  if (f.kind === 'base') return 1.75; // exact base → whole category: after weak mods, before sums and defence/DPS
+  if (f.kind === 'prop') return f.exact ? Infinity : 2.5; // waystone tier is never dropped — that's a different product
   if (f.kind === 'options') return 2.8;
   if (f.tag === 'pseudo') return 1.8;
   return f.importance >= KEEP_FROM ? Infinity : f.importance;
 }
 
-// «Legacy of Gold», «Legacy of Ruby» → «Legacies»: общее начало вариантов для подписи.
+// «Legacy of Gold», «Legacy of Ruby» → «Legacies»: common start of the variants for the label.
 function optionName(filters) {
   const t = filters.mods.filter((m) => m.enabled && m.option).map((m) => m.text);
   const first = (t[0] || '').split(' of ')[0];
@@ -565,7 +565,7 @@ function weakest(filters) {
     ...[['sockets', 'Sockets'], ['quality', 'Quality']].filter(([k]) => filters[k] && filters[k].enabled)
       .map(([k, label]) => Object.assign(filters[k], { kind: 'cheap', label })),
   ];
-  // Самый мягкий шаг: минимумы модов — до нижней границы тира («любой ролл того же тира»), моды не снимаем.
+  // The mildest step: mod minimums down to the tier floor ("any roll of the same tier"), mods aren't dropped.
   const tight = filters.mods.filter((m) => m.enabled && m.range && m.min != null && m.min > Math.ceil(m.range.lo));
   if (tight.length && !filters.rollsLoosened) {
     const saved = tight.map((m) => m.min);
@@ -574,7 +574,7 @@ function weakest(filters) {
       filters.rollsLoosened = !v;
     } });
   }
-  // Защита/DPS: сперва опускаем порог до −15%, снимать фильтр — только потом.
+  // Defence/DPS: first lower the threshold to −15%, drop the filter only after that.
   const strict = (filters.props || []).filter((p) => p.enabled && !p.exact && p.min > propMin(p.value, PROP_LOOSE));
   if (strict.length && !filters.propsLoosened) {
     const saved = strict.map((p) => p.min);
@@ -583,11 +583,11 @@ function weakest(filters) {
       filters.propsLoosened = !v;
     } });
   }
-  // Точная база (не уник по имени) — тоже фильтр: редких баз на рынке бывает 1–2 штуки.
+  // The exact base (not a unique by name) is a filter too: rare bases may have only 1–2 on the market.
   if (filters.useType && !filters.useName && filters.category) {
     all.push({ kind: 'base', set enabled(v) { filters.useType = v; } });
   }
-  // Варианты (Legacy у Mageblood): не снимаем конкретный, а требуем «любые на один меньше».
+  // Variants (Legacy on Mageblood): don't drop a specific one, require "any one fewer" instead.
   const n = filters.mods.filter((m) => m.enabled && m.option).length;
   const cur = Math.min(n, filters.optionMin || n);
   if (n > 1 && cur > 1) {
@@ -599,15 +599,15 @@ function weakest(filters) {
   return cands[0] || null;
 }
 
-// relax — автоматический первый поиск: если лотов мало, по одному снимаем самые слабые фильтры.
-// Ручной поиск (пользователь сам настроил галочки) ничего не трогает.
+// relax — automatic first search: if there are few listings, drop the weakest filters one at a time.
+// A manual search (the user set the checkboxes) touches nothing.
 async function search(league, item, filters, relax = false) {
   const f = JSON.parse(JSON.stringify(filters));
   const L = encodeURIComponent(league);
   const dropped = [];
   let s = null;
-  let last = null; // фильтр, снятый перед текущей попыткой
-  let relaxStopped = null; // почему не смогли ослабить дальше (лимит трейда)
+  let last = null; // filter dropped before the current attempt
+  let relaxStopped = null; // why we couldn't relax further (trade rate limit)
   for (let attempt = 0; ; attempt++) {
     try {
       s = await api.tradeRequest('search', `${api.TRADE}/api/trade2/search/poe2/${L}`, buildQuery(item, f));
@@ -615,7 +615,7 @@ async function search(league, item, filters, relax = false) {
       if (!s || e.message.startsWith('⊘')) throw e;
       log('relax stopped:', e.message);
       relaxStopped = e.message;
-      // Лимит кончился посреди ослабления — показываем то, что уже нашли, со старыми фильтрами.
+      // Rate limit ran out mid-relax — show what we already found, with the previous filters.
       last.enabled = true;
       dropped.pop();
       break;
@@ -624,7 +624,7 @@ async function search(league, item, filters, relax = false) {
     last = weakest(f);
     if (!last) break;
     last.enabled = false;
-    // Подпись для пометки «ослабили»: строка (название стата / текст мода) или { t, v } — переводит окно.
+    // Label for the "relaxed" note: a string (stat name / mod text) or { t, v } — the window translates it.
     dropped.push(last.kind === 'rolls' ? { t: 'roll minimums → tier floor' }
       : last.kind === 'proploose' ? `${last.label} −15%`
       : last.kind === 'base' ? { t: 'exact base {base}', v: { base: item.baseType } }
@@ -634,7 +634,7 @@ async function search(league, item, filters, relax = false) {
   const url = `${api.TRADE}/trade2/search/poe2/${L}/${s.id}`;
   const ids = (s.result || []).slice(0, 10);
   let listings = [];
-  let listingsError = null; // поиск прошёл, а лоты не скачались (лимит) — показываем, сколько нашли, и ссылку
+  let listingsError = null; // search succeeded but listings didn't download (rate limit) — show how many were found, and the link
   let fr = null;
   if (ids.length) {
     try {
@@ -666,8 +666,8 @@ async function search(league, item, filters, relax = false) {
       };
     });
   }
-  // Вторая цена — «любой ролл того же тира»: насколько рынок ценит именно ваши роллы. Не нужна, если роллы
-  // уже опущены автоослаблением или их нечего опускать. Ошибка (лимит) — просто без неё.
+  // Second price — "any roll of the same tier": how much the market values your particular rolls. Not needed if rolls
+  // were already lowered by auto-relax or there's nothing to lower. An error (rate limit) — simply go without it.
   let floor = null;
   const loose = JSON.parse(JSON.stringify(f));
   const tight = loose.mods.filter((m) => m.enabled && m.range && m.min != null && m.min > Math.ceil(m.range.lo));
@@ -680,20 +680,20 @@ async function search(league, item, filters, relax = false) {
       log('floor price skipped:', e.message);
     }
   }
-  // Лоты в валюте без курса (нет цен poe.ninja для лиги) в оценку не попадают — окно об этом скажет.
+  // Listings in a currency with no rate (no poe.ninja prices for the league) aren't included in the estimate — the window says so.
   const unpriced = listings.filter((l) => l.amount != null && l.divine == null).length;
   return { total: s.total, url, listings, listingsError, unpriced, rates: api.ninja.rates, filters: f, dropped,
     relaxStopped, floor };
 }
 
-// Короткий поиск ради цены: сколько лотов и цены 5 самых дешёвых (в div).
+// Short search for the price: number of listings and prices of the 5 cheapest (in div).
 async function quickPrices(L, item, f) {
   const s = await api.tradeRequest('search', `${api.TRADE}/api/trade2/search/poe2/${L}`, buildQuery(item, f));
   const ids = (s.result || []).slice(0, 5);
   let lots = [];
   if (ids.length) {
     const fr = await api.tradeRequest('fetch', `${api.TRADE}/api/trade2/fetch/${ids.join(',')}?query=${s.id}`);
-    // С возрастом лота — чтобы и вторую цену считать по свежим лотам, как основную.
+    // With listing age — so the second price is also computed from fresh listings, like the main one.
     lots = (fr.result || []).filter(Boolean).map((r) => ({ p: r.listing.price || {}, indexed: r.listing.indexed }))
       .map(({ p, indexed }) => ({ div: p.amount != null ? toDivine(p.amount, p.currency) : null, indexed }))
       .filter((l) => l.div != null).sort((a, b) => a.div - b.div);
@@ -701,10 +701,10 @@ async function quickPrices(L, item, f) {
   return { total: s.total, divs: lots.map((l) => l.div), lots, url: `${api.TRADE}/trade2/search/poe2/${L}/${s.id}` };
 }
 
-// Цена по изменённым фильтрам (без мода — «вклад мода», с модом из крафта — «цена после крафта»).
+// Price with modified filters (without a mod — "mod contribution", with a crafted mod — "price after craft").
 const quick = (league, item, filters) => quickPrices(encodeURIComponent(league), item, filters);
 
-// Ссылка на трейд, где виден именно этот лот: те же фильтры + аккаунт продавца.
+// Link to trade showing exactly this listing: the same filters + the seller's account.
 async function listingUrl(league, item, filters, account) {
   const L = encodeURIComponent(league);
   const q = buildQuery(item, filters);
@@ -714,8 +714,8 @@ async function listingUrl(league, item, filters, account) {
   return `${api.TRADE}/trade2/search/poe2/${L}/${s.id}`;
 }
 
-// Живая биржа (trade2/exchange): лучшие предложения «продать want за have». Лимит у биржи свой и строгий — только по
-// кнопке в окне. → { offers: [{ pay, get, rate (have за 1 want), stock, seller, online, whisper, indexed }], total, url }.
+// Live exchange (trade2/exchange): best offers "sell want for have". The exchange has its own strict rate limit — only on
+// a button in the window. → { offers: [{ pay, get, rate (have per 1 want), stock, seller, online, whisper, indexed }], total, url }.
 const isExchangeable = (id) => !!(currencyInfo && currencyInfo.has(id));
 async function exchangeOffers(league, want, have) {
   const L = encodeURIComponent(league);
@@ -726,7 +726,7 @@ async function exchangeOffers(league, want, have) {
     const l = x && x.listing;
     const o = l && (l.offers || [])[0];
     if (!o || !o.exchange || !o.item || !o.item.amount) continue;
-    // Шёпот: «{0}» — их товар, «{1}» — наша оплата (у каждого — свой шаблон с «{0}» для количества).
+    // Whisper: «{0}» — their goods, «{1}» — our payment (each has its own template with «{0}» for the quantity).
     const whisper = l.whisper ? l.whisper.replace('{0}', o.item.whisper.replace('{0}', o.item.amount))
       .replace('{1}', o.exchange.whisper.replace('{0}', o.exchange.amount)) : null;
     offers.push({ pay: o.exchange.amount, get: o.item.amount, rate: o.exchange.amount / o.item.amount, stock: o.item.stock,
@@ -737,7 +737,7 @@ async function exchangeOffers(league, want, have) {
   return { offers: offers.slice(0, 6), total: r.total || offers.length, url: `${api.TRADE}/trade2/exchange/poe2/${L}/${r.id}` };
 }
 
-// База есть в справочнике трейда (справочник не загружен — не знаем, считаем, что есть).
+// The base is in the trade dictionary (dictionary not loaded — unknown, assume it is).
 const knownBase = (b) => !types || !b || types.has(b);
 
 module.exports = { init, knownBase, prepare, search, quick, listingUrl, elementVariants, exchangeOffers, isExchangeable };
