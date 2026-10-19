@@ -89,6 +89,7 @@ function renderDemand(d) {
   const baseRank = d.bases.findIndex((b) => b.name === item.baseType);
   $('demand').innerHTML = `
     <div class="sect"><span>${t('Demand')} · ${esc(d.category)}</span></div>
+    ${d.onBase ? `<div class="bwhat" title="${esc(t('Jewel demand differs a lot by color and between regular and Time-Lost jewels'))}">${t('Only builds with {base}', { base: `<b class="theme">${esc(d.onBase)}</b>` })}</div>` : ''}
     ${d.themed && d.themed.length
       ? `<div class="bwhat">${t('Among builds wearing it with')} <b class="theme">${d.themed.map(esc).join(' + ')}</b> · <button class="link" data-dall="1">${t('all builds')}</button></div>`
       : `<div class="bwhat muted">${demandAll ? `${t('All builds')} · <button class="link" data-dall="0">${t('builds like your item')}</button>` : t("Too few builds with your item's modifiers — showing all builds")}</div>`}

@@ -200,6 +200,14 @@ function hide() {
 // попадают палочки, посохи, копья — до 44% надеваний (аудит по всем классам). Броня и бижутерия — чистые.
 // Оставляем базы того же класса; мод убираем, только если на этой базе его быть не может, а на чужой базе из списка — может
 // (анойнты, энчанты, руны не трогаем — их нет в пуле ни у кого). Всё, что есть на самой вещи, — всегда.
+// Самоцветы: спрос — среди билдов с той же базой. Общий «Rare Jewel» смешивает цвета и Time-Lost: моды Time-Lost в нём
+// 10–14% билдов (ниже порога спроса), а среди носящих Time-Lost Sapphire «Notable … Crit Damage Bonus» — 58%.
+// Апгрейд радиуса — не тема (его носят все Time-Lost), спрос по нему не сужаем.
+function demandScope(item, withMods = []) {
+  const jewel = item && item.itemClass === 'Jewels';
+  return { withBase: jewel ? item.baseType : null, withMods: (withMods || []).filter((m) => !/^Upgrades Radius/i.test(m)) };
+}
+
 function forBase(d, item) {
   if (!d || !item) return d;
   const key = stats.templateKey;
@@ -293,7 +301,7 @@ async function priceCheck(text, refresh = false, historyId = null) {
   if (!league) {
     // список лиг не загрузился — спрос не по чему считать
   } else if (['Rare', 'Magic', 'Normal'].includes(item.rarity)) {
-    const q = categoryDemand({ league, itemClass: item.itemClass, rarity: 'Rare', limit: 80, minLevel: demandLevel() },
+    const q = categoryDemand({ league, itemClass: item.itemClass, rarity: 'Rare', limit: 80, minLevel: demandLevel(), ...demandScope(item) },
       api.fetchBuffer).catch((e) => { log('demand', e.message); return null; });
     demand = await Promise.race([q, new Promise((r) => setTimeout(() => r(null), 1500))]);
   } else if (item.rarity === 'Unique' && item.name) {
@@ -686,7 +694,7 @@ app.whenReady().then(singleInstance).then((ok) => {
     if (!lastItem) return { note: t('No item') };
     const league = curLeague();
     const rarity = 'Rare'; // белые и магические — заготовки под крафт: смотрим спрос на редкие такого класса
-    const d = await categoryDemand({ league, itemClass: lastItem.itemClass, rarity, limit: 80, withMods: lastThemeMods, minLevel: demandLevel() },
+    const d = await categoryDemand({ league, itemClass: lastItem.itemClass, rarity, limit: 80, minLevel: demandLevel(), ...demandScope(lastItem, lastThemeMods) },
       api.fetchBuffer).catch(() => null);
     const r = await craft.advise(lastItem, d && d.mods, api.cached);
     // Цены валюты для расчёта затрат на крафт (div за штуку; нет на poe.ninja — null).
@@ -701,7 +709,7 @@ app.whenReady().then(singleInstance).then((ok) => {
     }
     return { ...r, prices, theme: d ? d.themed : [], themeBuilds: d ? d.total : null };
   });
-  handle('demand', FROM.overlay, async (_e, opts) => forBase(await categoryDemand({ ...opts, league: curLeague(), limit: 80, minLevel: demandLevel() }, api.fetchBuffer), lastItem)); // 80 — чтобы найти и моды вещи вне топ-10
+  handle('demand', FROM.overlay, async (_e, opts) => forBase(await categoryDemand({ ...opts, league: curLeague(), limit: 80, minLevel: demandLevel(), ...demandScope(lastItem, opts && opts.withMods) }, api.fetchBuffer), lastItem)); // 80 — чтобы найти и моды вещи вне топ-10
   handle('set-price-currency', FROM.overlay, (_e, c) => { if (PRICE_CURRENCIES.includes(c)) settings.set({ priceCurrency: c }); });
   handle('copy', FROM.overlay, (_e, t) => clipboard.writeText(String(t).slice(0, 4000)));
   handle('demand-level', FROM.overlay, () => settings.get().demandLevel || 90);

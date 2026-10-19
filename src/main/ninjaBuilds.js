@@ -286,7 +286,9 @@ async function popularBuilds(opts, fetchBuffer) {
 async function categoryDemand(opts, fetchBuffer) {
   // withMods — моды предмета: спрос считаем среди билдов, которые носят такую вещь С ЭТИМИ модами
   // (тема вещи: миньоны, заклинания…). Мало таких билдов (< minBuilds) — откатываемся к общему спросу по классу.
-  const { league, itemClass, rarity = 'Rare', limit = 12, timeMachine, withMods = [], minBuilds = 150, minLevel } = opts || {};
+  // withBase — только билды, которые носят эту базу (Time-Lost: их моды есть только у радиусных самоцветов, а общий спрос
+  // по классу «Rare Jewel» размывает их долю всеми самоцветами).
+  const { league, itemClass, rarity = 'Rare', limit = 12, timeMachine, withMods = [], withBase = null, minBuilds = 150, minLevel } = opts || {};
   const snap = await snapshot(league, fetchBuffer);
   const lvl = levelParams(minLevel);
   const base = await search(snap, lvl, timeMachine, fetchBuffer);
@@ -296,10 +298,20 @@ async function categoryDemand(opts, fetchBuffer) {
   const type = ((base.props.item || {}).type || [])[itemNames.indexOf(cat)] || null;
   let res = await search(snap, [['items', cat], ...lvl], timeMachine, fetchBuffer);
   let themed = [];
+  let onBase = null; // сузили до билдов с этой базой
+  const baseKey = subKey(res.dims, 'itembasetypes', type);
+  const scope = [['items', cat], ...lvl];
+  if (withBase && baseKey) {
+    const b = findCi(res.dims[baseKey].map((r) => r.name), withBase);
+    if (b) {
+      const narrow = await search(snap, [...scope, [baseKey, b]], timeMachine, fetchBuffer);
+      if (narrow.total >= minBuilds) { res = narrow; onBase = b; scope.push([baseKey, b]); }
+    }
+  }
   const modKey = subKey(res.dims, 'itemmods', type);
   if (withMods.length && modKey) {
     const names = res.dims[modKey].map((r) => r.name);
-    const params = [['items', cat], ...lvl];
+    const params = [...scope];
     for (const m of withMods) {
       const t = findCi(names, modTemplate(m));
       if (t && !themed.includes(t)) { params.push([modKey, t]); themed.push(t); }
@@ -310,11 +322,13 @@ async function categoryDemand(opts, fetchBuffer) {
     }
   }
   const page = `https://poe.ninja/poe2/builds/${snap.url}?items=${encodeURIComponent(cat)}${minLevel ? `&min-level=${minLevel}` : ''}`
+    + (onBase ? `&${encodeURIComponent(baseKey)}=${encodeURIComponent(onBase)}` : '')
     + themed.map((t) => `&${encodeURIComponent(modKey)}=${encodeURIComponent(t)}`).join('');
   return {
     league: snap.name,
     category: cat,
     themed, // по каким модам сузили (пусто — общий спрос по классу)
+    onBase, // по какой базе сузили (самоцветы), null — по всему классу
     total: res.total,
     allTotal: base.total,
     bases: top(res.dims[subKey(res.dims, 'itembasetypes', type)] || [], res.total, limit),
