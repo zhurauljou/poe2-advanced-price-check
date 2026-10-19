@@ -1,14 +1,14 @@
-/* Тема GGG из poe2-flip (в стиле pathofexile2.com) + игровая подсказка предмета. */
+/* GGG theme from poe2-flip (pathofexile2.com style) + in-game item tooltip. */
 :root {
-  /* --g-mod чуть светлее игрового #8888ff: на тёмно-синем фоне оригинал читается плохо */
+  /* --g-mod slightly lighter than the in-game #8888ff: the original reads poorly on the dark blue background */
   color-scheme: dark;
   --bg: #0b1017; --line2: #1c222c; --hover: #161d28;
-  --text: #b6b6b6; --muted: #8c8c8c; --note: #a6a6a6; /* note — пояснения, от которых зависит решение (риск, шанс, «не оценка») */ --gold: #dac18e; --cream: #f1e4c2; --bronze: #837053; --label: #a99a7c;
-  /* Зелёный — «хорошо для вас / есть у вашей вещи», красный — «плохо / не хватает»; рост и падение цены — тоже
-     зелёный и красный (так привычно читать графики цен); свежесть лота — просто ярче. */
+  --text: #b6b6b6; --muted: #8c8c8c; --note: #a6a6a6; /* note — explanations a decision depends on (risk, chance, "not an estimate") */ --gold: #dac18e; --cream: #f1e4c2; --bronze: #837053; --label: #a99a7c;
+  /* Green — "good for you / your item has it", red — "bad / missing"; price rise and fall — also
+     green and red (the usual way to read price charts); listing freshness — just brighter. */
   --good: #6fcf7a; --bad: #e0675a; --warn: #e0b35a; --rise: var(--good); --fall: var(--bad);
   --input: #07090d; --input-line: #2c2f35;
-  /* цвета игры */
+  /* game colours */
   --r-normal: #c8c8c8; --r-magic: #8888ff; --r-rare: #ffff77; --r-unique: #af6025; --r-gem: #1ba29b; --r-currency: #aa9e82;
   --g-mod: #9a9aff; --g-rune: #9dc2e6; --g-crafted: #b4b4ff; --g-desecrated: #5fd16a; --g-fractured: #c9a85c;
   --g-enchant: #6fd0d8; --g-corrupted: #e0584a;
@@ -16,15 +16,15 @@
   --body: "Alegreya Sans", "Segoe UI", sans-serif;
   --game: "Fontin SmallCaps", "Cormorant SC", Georgia, serif;
   --sc: "Cormorant SC", Georgia, serif;
-  /* Строки модов (фильтры, карточка конкурента, крафт) — обычным шрифтом: длинные строки капителью читаются тяжело.
-     Капитель игры — для названий и подсказки предмета. */
+  /* Mod lines (filters, competitor card, craft) — in the regular font: long lines in small caps are hard to read.
+     The game's small caps — for names and the item tooltip. */
   --mod-font: 15px/1.3 var(--body);
 }
 
 * { box-sizing: border-box; }
 html, body { margin: 0; height: 100%; }
 html { overflow: hidden; }
-/* Сверху — лёгкое затемнение (под всем содержимым, тексты не трогает), под ним — прежнее синее свечение. */
+/* On top — a light darkening (under all content, doesn't touch text), below it — the former blue glow. */
 body { background: linear-gradient(rgba(0, 0, 0, .45), rgba(0, 0, 0, .18) 70px, transparent 140px) no-repeat,
                    radial-gradient(ellipse 600px 260px at 50% -120px, #1d2836, transparent 70%) no-repeat, var(--bg);
        color: var(--text); font: 15px/1.45 var(--body); border: 1px solid #5a4d36; user-select: none; }
@@ -32,10 +32,10 @@ body { background: linear-gradient(rgba(0, 0, 0, .45), rgba(0, 0, 0, .18) 70px, 
 ::-webkit-scrollbar { width: 8px; }
 ::-webkit-scrollbar-thumb { background: #3d3a33; }
 
-/* ---- полоска для перетаскивания ---- */
+/* ---- drag strip ---- */
 .topbar { position: relative; display: flex; justify-content: center; align-items: center; height: 32px; -webkit-app-region: drag; }
 .topbar .ldrop, .topbar .close, .topbar .hdrop { -webkit-app-region: no-drag; }
-/* История проверок — часы слева в шапке, список — та же панель, что у лиг, от левого края. */
+/* Check history — a clock on the left of the header, the list — the same panel as for leagues, from the left edge. */
 .hdrop { position: absolute; left: 6px; top: 50%; transform: translateY(-50%); z-index: 70; }
 .hdrop > button { display: flex; padding: 3px 4px; background: none; border: 0; box-shadow: none; color: var(--bronze); }
 .hdrop > button:hover, .hdrop.open > button { background: none; color: var(--cream); }
@@ -50,7 +50,7 @@ body { background: linear-gradient(rgba(0, 0, 0, .45), rgba(0, 0, 0, .18) 70px, 
 .hmenu .h-empty { padding: 8px 14px; color: var(--muted); }
 .prev-check { margin-top: 6px; color: var(--muted); font-size: 13px; }
 .prev-check b { color: var(--label); }
-/* Лига — золотой текст по центру со стрелкой; список — своя панель в стиле окна (системный не стилизуется). */
+/* League — gold centred text with an arrow; the list — a custom panel in the window style (the native one can't be styled). */
 .ldrop { position: relative; }
 .ldrop > button { display: inline-flex; align-items: center; gap: 6px; padding: 2px 6px; background: none; border: 0; box-shadow: none;
                   font: 700 15px var(--sc); letter-spacing: .4px; color: var(--cream); }
@@ -79,7 +79,7 @@ body { background: linear-gradient(rgba(0, 0, 0, .45), rgba(0, 0, 0, .18) 70px, 
          color: var(--bronze); cursor: pointer; }
 .close:hover { color: var(--cream); }
 
-/* ---- шапка предмета на игровом баннере ---- */
+/* ---- item header on the in-game banner ---- */
 .banner { position: relative; isolation: isolate; height: 64px; margin: 0 6px; padding: 0 62px;
           display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; }
 .banner::before { content: ""; position: absolute; inset: 0; z-index: -1;
@@ -87,10 +87,10 @@ body { background: linear-gradient(rgba(0, 0, 0, .45), rgba(0, 0, 0, .18) 70px, 
                               url(img/header-right.png) right center / auto 100% no-repeat,
                               url(img/header-middle.png) center / auto 100% repeat-x;
                   filter: var(--hdr-filter, none);
-                  /* С середины шапки вниз — плавно в полную прозрачность, перетекает в фон окна. */
+                  /* From the middle of the header down — a smooth fade to full transparency, blending into the window background. */
                   -webkit-mask-image: linear-gradient(#000 50%, transparent 100%); mask-image: linear-gradient(#000 50%, transparent 100%); }
-/* Шапка слегка «утопает» в фон: от левого и правого верхних углов и сверху — тень цвета фона. Слой между
-   картинкой шапки (::before) и текстом, поэтому название не затемняется. */
+/* The header slightly "sinks" into the background: a background-coloured shadow from the top corners and the top. The layer
+   sits between the header image (::before) and the text, so the name isn't darkened. */
 .banner::after { content: ""; position: absolute; inset: -1px; z-index: -1; pointer-events: none;
                  background: radial-gradient(ellipse 22% 140% at 0% 0%, rgba(11, 16, 23, .7), transparent 75%),
                              radial-gradient(ellipse 22% 140% at 100% 0%, rgba(11, 16, 23, .7), transparent 75%),
@@ -99,12 +99,12 @@ body { background: linear-gradient(rgba(0, 0, 0, .45), rgba(0, 0, 0, .18) 70px, 
 .bn-name, .bn-base { font: 19px/1.15 var(--game); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 100%;
                      text-shadow: 0 1px 2px #000; }
 .bn-base:empty { display: none; }
-/* Название/база — переключатели поиска: выбранное светится, снятое приглушено и зачёркнуто пунктиром. */
+/* Name/base are search toggles: the selected one glows, the deselected one is dimmed with a dashed strike-through. */
 .pick { cursor: pointer; padding: 0 6px; border-radius: 2px; opacity: .45; text-decoration: line-through 1px; transition: opacity .12s; }
 .pick:hover { opacity: .8; }
 .pick.on { opacity: 1; text-decoration: none; text-shadow: 0 1px 2px #000, 0 0 10px currentColor; }
 .pick.on:hover { background: rgba(255, 255, 255, .05); }
-/* Рамку редкости перекрашиваем из жёлтой (rare) фильтром — текст при этом не трогаем. */
+/* The rarity frame is recoloured from yellow (rare) with a filter — the text is left untouched. */
 .banner.Rare { color: var(--r-rare); }
 .banner.Unique { color: var(--r-unique); --hdr-filter: hue-rotate(-28deg) saturate(1.5) brightness(.95); }
 .banner.Magic { color: var(--r-magic); --hdr-filter: hue-rotate(185deg) saturate(.9); }
@@ -112,7 +112,7 @@ body { background: linear-gradient(rgba(0, 0, 0, .45), rgba(0, 0, 0, .18) 70px, 
 .banner.Gem { color: var(--r-gem); --hdr-filter: hue-rotate(115deg) saturate(.9); }
 .banner.Currency { color: var(--r-currency); --hdr-filter: grayscale(.75) sepia(.35); }
 
-/* ---- поля и кнопки ---- */
+/* ---- inputs and buttons ---- */
 input, button { font: inherit; font-size: 15px; color: var(--cream); background: var(--input); border: 1px solid var(--input-line);
                         border-radius: 2px; padding: 4px 8px; }
 input:focus { outline: none; border-color: #b08a45; }
@@ -122,7 +122,7 @@ button:hover { background: linear-gradient(#3a2a14, #20170b); border-color: #b08
 button:disabled { opacity: .5; cursor: default; }
 button.link { background: none; border: 0; box-shadow: none; padding: 0; color: var(--label); font: 700 13px var(--body); }
 button.link:hover { background: none; color: #fff4b4; text-decoration: underline; }
-/* Выбор — маленькая галочка вместо системного чекбокса: снятая — едва видная серая, выбранная — золотая. */
+/* Selection — a small checkmark instead of the native checkbox: unchecked — barely visible grey, checked — gold. */
 input[type=checkbox] { appearance: none; flex: none; width: 12px; height: 12px; margin: 0; padding: 0; border: 0; border-radius: 0;
                        box-shadow: none; cursor: pointer; background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 12 12'%3E%3Cpath d='M1.5 6.5l3 3 6-7' fill='none' stroke='%233a3d45' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E") center / 12px no-repeat; }
 input[type=checkbox]:hover { background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 12 12'%3E%3Cpath d='M1.5 6.5l3 3 6-7' fill='none' stroke='%23837053' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E"); }
@@ -130,7 +130,7 @@ input[type=checkbox]:checked { background-image: url("data:image/svg+xml,%3Csvg 
                                filter: drop-shadow(0 0 3px rgba(255, 190, 80, .55)); }
 input[type=checkbox]:focus-visible { outline: 1px solid var(--gold); outline-offset: 2px; }
 input[type=number] { font-variant-numeric: tabular-nums; text-align: center; appearance: textfield; }
-/* Без стрелок-счётчиков: они съедают место по-разному, и цифры «гуляют». */
+/* No spinner arrows: they take up space differently, and the digits "wander". */
 input[type=number]::-webkit-inner-spin-button, input[type=number]::-webkit-outer-spin-button { -webkit-appearance: none; margin: 0; }
 
 main { padding: 8px 14px 12px; display: flex; flex-direction: column; gap: 10px; }
@@ -139,31 +139,31 @@ footer { display: flex; justify-content: space-between; gap: 8px; padding: 6px 1
 #status { font-size: 14px; color: var(--muted); text-align: center; }
 #status.error { color: var(--bad); }
 
-/* Заголовок секции: капитель между двумя золотыми линиями. */
+/* Section heading: small caps between two gold lines. */
 .sect { display: flex; align-items: center; gap: 10px; margin: 2px 0 6px; font: 700 14px var(--sc); letter-spacing: .6px; color: var(--label); }
 .sect::before, .sect::after { content: ""; flex: 1; height: 1px; background: linear-gradient(90deg, transparent, #4a3a22 30%, #6b5228 50%, #4a3a22 70%, transparent); }
 
-/* ---- игровая подсказка ---- */
+/* ---- in-game tooltip ---- */
 .tt { text-align: center; font: 15px/1.4 var(--game); color: var(--g-prop); }
 .tt:empty { display: none; }
 .tt .cls { color: var(--g-prop); }
 .tt b { font-weight: normal; color: #fff; }
 .tt b.aug { color: var(--g-mod); }
 .tt .corrupt { color: var(--g-corrupt); }
-/* Значение, по которому можно искать: пунктир при наведении, выбранное — в золотой рамке с полем границы. */
+/* A value you can search by: dashed on hover, the selected one — in a gold frame with a bound field. */
 .tp { display: inline-block; padding: 0 5px; margin: 1px 0; border: 1px solid transparent; border-radius: 2px; cursor: pointer; }
-/* Выключенное — пунктирное подчёркивание: видно, что по значению можно кликнуть. */
+/* Disabled — dashed underline: shows the value can be clicked. */
 .tp:not(.on) { text-decoration: underline dotted #6b5a3a; text-underline-offset: 3px; }
 .tp:hover { border-color: #3d3a33; background: rgba(255, 255, 255, .03); }
 .tp.on { border-color: #6b5a3a; background: rgba(218, 193, 142, .08); box-shadow: 0 0 8px rgba(218, 193, 142, .12); }
 .tp-op { color: var(--label); }
 .tt .flag.corrupt { color: var(--g-corrupt); }
-.tt .flag.neg:not(.on) { color: #7d7d8a; } /* «Not corrupted» — подсказка, пока не включена */
+.tt .flag.neg:not(.on) { color: #7d7d8a; } /* "Not corrupted" — a hint until enabled */
 .tp-in { width: 54px; height: 22px; margin-left: 2px; padding: 0 4px; font: 700 14px var(--body); vertical-align: 1px; }
 .tt .sep { height: 9px; margin: 3px auto; width: 70%;
            background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='200' height='9' viewBox='0 0 200 9'%3E%3Cpath d='M0 4.5H92M108 4.5H200' stroke='%23584a30'/%3E%3Cpath d='M100 .5l4 4-4 4-4-4z' fill='%239a7a3e'/%3E%3C/svg%3E") center / 100% 9px no-repeat; }
 
-/* ---- блок цены (как «Аддай / Атрымаеш» во флиппере) ---- */
+/* ---- price block (like "Give / Get" in the flipper) ---- */
 .hero { text-align: center; padding: 12px 10px 10px; border: 1px solid #2c2a25; border-radius: 4px;
         background: radial-gradient(ellipse 80% 70% at 50% 0%, rgba(218, 193, 142, .07), transparent 70%), linear-gradient(#13161b, #0c0e12); }
 .hero .k { font: 700 14px var(--sc); letter-spacing: .6px; color: var(--label); }
@@ -172,16 +172,16 @@ footer { display: flex; justify-content: space-between; gap: 8px; padding: 6px 1
 .hero .big img { width: 40px; height: 40px; filter: drop-shadow(0 0 8px rgba(255, 200, 90, .25)); }
 @keyframes pulse { 50% { opacity: .4; } }
 .hero .alt { color: var(--muted); font-size: 14px; }
-/* Надёжность оценки: ●●● Reliable / ●●○ Some data / ●○○ Few listings */
+/* Estimate reliability: ●●● Reliable / ●●○ Some data / ●○○ Few listings */
 .conf { display: inline-block; margin-top: 4px; font: 700 13.5px var(--body); letter-spacing: .5px; cursor: help; }
 .conf.c3 { color: var(--good); } .conf.c2 { color: var(--warn); } .conf.c1 { color: var(--bad); }
 .hero .floor { margin-top: 6px; font-size: 14px; color: var(--label); }
 .hero .ages { margin-top: 4px; font-size: 14px; color: var(--note); }
 .hero .ages b { color: var(--cream); }
 .hero .ages .stale { color: var(--warn); }
-/* Лоты: 5 сразу, остальные по кнопке; залежавшиеся приглушены, свежие — с зелёным возрастом */
+/* Listings: 5 right away, the rest via a button; stale ones dimmed, fresh ones — with a green age */
 .lots:not(.all) .lot.more { display: none; }
-.lots.all { max-height: 280px; overflow-y: auto; } /* все лоты — прокрутка внутри списка, окно не растёт за экран */
+.lots.all { max-height: 280px; overflow-y: auto; } /* all listings — scroll inside the list, the window doesn't grow past the screen */
 .lot.stale { opacity: .55; }
 .lot.fresh .age { color: var(--cream); font-weight: 700; }
 .lots-more { display: block; margin: 6px auto 0; }
@@ -195,7 +195,7 @@ footer { display: flex; justify-content: space-between; gap: 8px; padding: 6px 1
 .grid .k { display: block; font: 400 13.5px var(--body); color: var(--muted); letter-spacing: 0; }
 .grid .v { display: flex; align-items: center; gap: 6px; color: var(--cream); font-weight: 700; font-variant-numeric: tabular-nums; white-space: nowrap; }
 .up { color: var(--rise); } .down { color: var(--fall); }
-/* График тренда — как во флиппере: пунктир нуля, выше зелёный, ниже красный. */
+/* Trend chart — as in the flipper: dashed zero line, green above, red below. */
 .spark { display: block; overflow: visible; }
 .spark polyline { fill: none; stroke-width: 1.5; stroke-linejoin: round; stroke-linecap: round; }
 .spark line.z { stroke: var(--muted); stroke-width: 1; stroke-dasharray: 2 2; opacity: .6; }
@@ -203,9 +203,9 @@ footer { display: flex; justify-content: space-between; gap: 8px; padding: 6px 1
 .spark circle.pos { fill: var(--rise); } .spark circle.neg { fill: var(--fall); }
 .grid .trend .tr { display: block; font-size: 13px; font-weight: 700; font-variant-numeric: tabular-nums; white-space: nowrap; }
 
-/* ---- вкладки Price / Demand (как «Flip cycles · Pairs» во флиппере) ---- */
+/* ---- Price / Demand tabs (like "Flip cycles · Pairs" in the flipper) ---- */
 .tab { display: flex; flex-direction: column; gap: 10px; }
-/* Две равные вкладки на всю ширину: активная — с подложкой и золотой чертой снизу, чтобы Demand было видно. */
+/* Two equal full-width tabs: the active one — with a backing and a gold line below, so Demand is visible. */
 .tabs { display: grid; grid-template-columns: 1fr 1fr 1fr; border: 1px solid #3d3a33; background: #0a0d12;
         box-shadow: inset 0 1px 0 rgba(255, 224, 138, .05); }
 .tabs button { position: relative; display: flex; align-items: center; justify-content: center; gap: 8px; height: 40px;
@@ -216,8 +216,8 @@ footer { display: flex; justify-content: space-between; gap: 8px; padding: 6px 1
 .tabs button.on { color: var(--cream); text-shadow: 0 0 14px rgba(241, 228, 194, .25);
                   background: linear-gradient(#2a2620, #15130f); box-shadow: inset 0 -2px 0 var(--cream), inset 0 1px 0 rgba(255, 224, 138, .12); }
 .tabs .ticon { width: 16px; height: 16px; opacity: .85; }
-/* Бейдж на вкладке Demand: доля билдов, носящих такой предмет (🔥 — если что-то почти у всех). */
-/* Контуром, без заливки: High — золотой, Med — бронзовый, Low — серый. */
+/* Badge on the Demand tab: share of builds wearing such an item (🔥 — if something is on almost everyone). */
+/* Outlined, no fill: High — gold, Med — bronze, Low — grey. */
 .tabs .badge { padding: 0 7px; border: 1px solid var(--label); border-radius: 9px; font: 700 13px/1.4 var(--body); letter-spacing: 0; white-space: nowrap;
                color: var(--cream); background: none; }
 .tabs .badge:empty { display: none; }
@@ -225,12 +225,12 @@ footer { display: flex; justify-content: space-between; gap: 8px; padding: 6px 1
 .tabs .badge.low { color: var(--muted); border-color: #3a3f48; text-shadow: none; box-shadow: none; }
 .tabs button.on::after { content: ""; position: absolute; left: 50%; bottom: -4px; width: 22px; height: 7px; margin-left: -11px;
   background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='22' height='7' viewBox='0 0 22 7'%3E%3Cpath d='M0 3.5h7M15 3.5h7' stroke='%23dac18e'/%3E%3Cpath d='M11 0l3.5 3.5L11 7 7.5 3.5z' fill='%23dac18e'/%3E%3C/svg%3E") no-repeat; }
-/* Подзаголовки списков — обычный регистр основным шрифтом; капитель остаётся за заголовками секций. */
+/* List subheadings — normal case in the body font; small caps stay for section headings. */
 .dcol .k, .bcols .k { font: 700 13px var(--body); letter-spacing: .2px; color: var(--label); margin: 6px 0 3px; }
 .brow.more { display: none; }
 .dcol.all .brow.more { display: grid; }
 .brow.mine .bname { color: var(--good); }
-/* Востребованность: редкое — приглушено, массовое — горит. */
+/* Popularity: rare — dimmed, widespread — glowing. */
 .brow.cold { opacity: .6; }
 .brow.hot .bname { color: #ffe3a3; font-weight: 700; text-shadow: 0 0 10px rgba(255, 190, 80, .35); }
 .brow.hot .bpct { color: #ffd27a; text-shadow: 0 0 10px rgba(255, 190, 80, .5); }
@@ -239,15 +239,15 @@ footer { display: flex; justify-content: space-between; gap: 8px; padding: 6px 1
 .flame { font-size: 12px; margin-right: 3px; }
 .brow.mine .bbar i { border-right-color: var(--good); background: linear-gradient(90deg, rgba(47, 107, 58, .15), rgba(111, 207, 122, .28)); }
 
-/* ---- карточка конкурента при наведении на лот ---- */
-/* Отдельное окно сбоку (compare.html): рамка как у оверлея. */
+/* ---- competitor card on listing hover ---- */
+/* A separate window on the side (compare.html): frame like the overlay's. */
 body.cmp-page { background: #0a0d12; }
 .cmp { padding-bottom: 8px; }
 .cmp .banner.mini { height: 48px; margin: 0; padding: 0 50px; }
 .cmp .banner.mini.single { height: 36px; }
 .cmp .banner.mini .bn-name, .cmp .banner.mini .bn-base { font-size: 16px; }
 .cmp-body { padding: 6px 12px 0; text-align: left; font: var(--mod-font); color: var(--g-mod); }
-/* Значок ▲▼+ — в левом поле строки; моды по левому краю, как в фильтрах. */
+/* The ▲▼+ marker — in the row's left margin; mods left-aligned, as in the filters. */
 .cm { position: relative; padding: 0 0 0 18px; }
 .cm i { position: absolute; left: 0; top: 0; width: 14px; text-align: center; font-style: normal; font: 700 13px/1.6 var(--body); }
 .cm b { font-weight: normal; color: var(--cream); }
@@ -264,7 +264,7 @@ body.cmp-page { background: #0a0d12; }
 .cmp-miss { margin-top: 6px; font: 700 13.5px var(--body); letter-spacing: .2px; color: var(--label); }
 .cmp-legend { margin-top: 6px; font: 13.5px var(--body); color: var(--muted); }
 
-/* ---- вкладка Craft ---- */
+/* ---- Craft tab ---- */
 .craft-slots { text-align: center; color: var(--label); font-size: 14px; }
 .craft-slots b { color: var(--cream); }
 .craft-theme { text-align: center; font-size: 13.5px; color: var(--muted); margin-top: 2px; }
@@ -278,7 +278,7 @@ body.cmp-page { background: #0a0d12; }
 .craft-tier { color: #a39f96; font-size: 13.5px; white-space: nowrap; margin-left: 6px; }
 .craft-foot { margin-top: 8px; font-size: 13px; color: var(--muted); text-align: center; }
 
-/* ---- популярные билды ---- */
+/* ---- popular builds ---- */
 .center { text-align: center; }
 .small { font-size: 13px; }
 .builds { display: flex; flex-direction: column; gap: 4px; }
@@ -287,7 +287,7 @@ body.cmp-page { background: #0a0d12; }
 .bshare b { color: var(--cream); }
 .bwhat { text-align: center; font-size: 13px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .bcols { display: grid; grid-template-columns: 1fr 1fr; gap: 4px 16px; margin-top: 4px; }
-/* Строка с долей: полоса — заливка за текстом (как столбик графика), процент справа. */
+/* Row with a share: the bar is a fill behind the text (like a chart column), the percentage on the right. */
 .brow { position: relative; isolation: isolate; display: grid; grid-template-columns: 1fr auto; column-gap: 6px; align-items: center;
         margin-bottom: 2px; padding: 2px 6px; font-size: 14px; }
 .bname { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: var(--cream); }
@@ -298,12 +298,12 @@ body.cmp-page { background: #0a0d12; }
 .bmore { display: block; margin: 2px auto 0; }
 .bopen { align-self: center; }
 
-/* ---- фильтры ---- */
+/* ---- filters ---- */
 .mod { display: flex; gap: 8px; align-items: center; padding: 1px 6px; border-radius: 2px; }
 .mod:hover { background: var(--hover); }
 .mod label { flex: 1; display: flex; gap: 7px; align-items: center; cursor: pointer; min-width: 0;
              font: var(--mod-font); color: var(--g-mod); }
-/* Колонки фиксированной ширины — текст модов начинается ровно на одной вертикали. */
+/* Fixed-width columns — mod text starts on exactly one vertical line. */
 .mod .cb { width: 12px; flex: none; }
 .mod .imp { width: 16px; }
 .mod .tcol { width: 26px; flex: none; text-align: center; }
@@ -331,7 +331,7 @@ body.cmp-page { background: #0a0d12; }
        border-radius: 2px; padding: 0 4px; flex: none; }
 .tag.tier { min-width: 23px; text-align: center; }
 .tag.tier.top { color: var(--cream); border-color: #6b5a3a; }
-/* Тег — в цвет своего мода, с лёгкой подложкой того же цвета. */
+/* Tag — in its mod's colour, with a light backing of the same colour. */
 .tag.implicit { --c: var(--g-mod); } .tag.crafted { --c: var(--g-crafted); } .tag.enchant { --c: var(--g-enchant); }
 .tag.rune { --c: var(--g-rune); } .tag.desecrated { --c: var(--g-desecrated); } .tag.fractured { --c: var(--g-fractured); }
 .tag.corrupted { --c: var(--g-corrupted); }
@@ -350,7 +350,7 @@ body.cmp-page { background: #0a0d12; }
 .misc { display: flex; flex-wrap: wrap; justify-content: center; gap: 6px 16px; margin: 6px 0 4px; padding-top: 8px; border-top: 1px solid var(--line2); }
 .misc .opt { display: flex; gap: 6px; align-items: center; color: var(--cream); cursor: pointer; }
 .misc .opt.off { color: var(--muted); }
-/* Переключатель валюты — сегменты, как «Safe / Fast / Profit» во флиппере. */
+/* Currency switch — segments, like "Safe / Fast / Profit" in the flipper. */
 .seg { display: inline-flex; }
 .seg button { padding: 2px 10px; font: 700 13.5px var(--sc); letter-spacing: .3px; color: var(--muted); background: var(--input);
               border-color: var(--input-line); box-shadow: none; border-radius: 0; margin-left: -1px; }
@@ -361,7 +361,7 @@ body.cmp-page { background: #0a0d12; }
 #search { width: 100%; height: 36px; margin: 8px 0 0; font: 700 17px var(--sc); letter-spacing: .6px; color: var(--gold); }
 .note { white-space: pre-line; padding: 6px 10px; border-left: 2px solid #b08a45; background: rgba(218, 193, 142, .06); color: var(--label); font-size: 14px; }
 
-/* ---- лоты ---- */
+/* ---- listings ---- */
 .lots { border: 1px solid #3d3a33; background: rgba(10, 13, 18, .92); }
 .lot { display: grid; grid-template-columns: 74px 1fr minmax(0, 130px) 34px 56px; align-items: center; gap: 8px; padding: 5px 8px;
        border-bottom: 1px solid var(--line2); cursor: pointer; }
@@ -372,14 +372,14 @@ body.cmp-page { background: #0a0d12; }
 .lot .seller { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .lot .age { color: var(--muted); font-size: 14px; text-align: right; }
 
-/* Цена лота — просто иконка валюты и число, без рамки. */
+/* Listing price — just a currency icon and a number, no frame. */
 .chip { display: inline-flex; gap: 5px; align-items: center; height: 28px;
         color: var(--cream); font-weight: 700; font-variant-numeric: tabular-nums; white-space: nowrap; }
 .chip img { width: 22px; height: 22px; }
 .dot { display: inline-block; width: 6px; height: 6px; border-radius: 50%; background: var(--muted); margin-right: 6px; vertical-align: 2px; }
 .dot.on { background: var(--good); box-shadow: 0 0 4px var(--good); }
 
-/* ---- окно «Updates» ---- */
+/* ---- "Updates" window ---- */
 body.upd-page { height: auto; }
 .upd-title { font: 700 15px var(--sc); letter-spacing: .5px; color: var(--label); }
 .upd { padding: 6px 18px 16px; text-align: center; gap: 8px; }
@@ -399,19 +399,19 @@ body.upd-page { height: auto; }
         border-top-color: var(--gold); border-radius: 50%; animation: spin .8s linear infinite; }
 @keyframes spin { to { transform: rotate(360deg); } }
 
-/* «Level: 65, 78 Int» — без лишнего пробела перед запятой (у значения-переключателя есть поля) */
+/* "Level: 65, 78 Int" — no extra space before the comma (a toggle value has padding) */
 .tt .req-rest { margin-left: -5px; }
-/* ▲▼ в строке лота: сколько модов у конкурента лучше и хуже ваших */
+/* ▲▼ in a listing row: how many of the competitor's mods are better and worse than yours */
 .cmpc { margin-right: 6px; font: 700 13px var(--body); }
 .cmpc i { font-style: normal; margin-left: 3px; }
 .cmpc .b { color: var(--good); } .cmpc .w { color: var(--bad); }
-/* Фильтры поменяли после поиска — Search подсвечен */
+/* Filters changed after the search — Search is highlighted */
 #search.dirty { color: #1a1408; background: linear-gradient(#f1d79a, #c9a45c); border-color: #f1d79a;
                 box-shadow: 0 0 12px rgba(255, 190, 80, .35); }
-/* Строки подсказки: значения переносятся целиком, без висящих «·» — разделитель только отступ. */
+/* Tooltip lines: values wrap as whole units, no dangling "·" — the separator is just spacing. */
 .tt .row { display: flex; flex-wrap: wrap; justify-content: center; align-items: center; gap: 0 14px; }
 
-/* Заглушки, пока идёт поиск: серые пульсирующие плашки на месте цены и лотов — окно не прыгает по высоте. */
+/* Placeholders while searching: grey pulsing bars in place of the price and listings — the window doesn't jump in height. */
 .sk { display: inline-block; height: 12px; border-radius: 2px; background: linear-gradient(90deg, #1a1f27, #252b35, #1a1f27);
       background-size: 200% 100%; animation: sk 1.3s ease-in-out infinite; vertical-align: middle; }
 @keyframes sk { from { background-position: 100% 0; } to { background-position: -100% 0; } }
@@ -420,7 +420,7 @@ body.upd-page { height: auto; }
 .lot.sk-row { cursor: default; }
 .lot.sk-row:hover { background: none; }
 
-/* Пустое состояние: значок, что случилось и что можно сделать. */
+/* Empty state: an icon, what happened and what can be done. */
 .void { display: flex; flex-direction: column; align-items: center; gap: 4px; padding: 10px 12px 6px; text-align: center; }
 .void .vi { font-size: 22px; line-height: 1; color: var(--bronze); opacity: .8; }
 .void .vt { color: var(--cream); font-weight: 700; }
@@ -428,7 +428,7 @@ body.upd-page { height: auto; }
 .void .va { display: flex; gap: 8px; margin-top: 6px; }
 .void .va button { padding: 3px 12px; font-size: 13.5px; }
 
-/* Цены для выставления — в сетке под оценкой; цифра кликабельна (копирует «~price N currency»), без рамок */
+/* Listing prices — in a grid under the estimate; the number is clickable (copies "~price N currency"), no frames */
 .grid.sell { text-align: center; }
 .grid.sell .v.copy { position: relative; margin: 0 auto; cursor: pointer; width: fit-content; text-decoration: underline dotted #6b5a3a; text-underline-offset: 3px; }
 .grid.sell .v.copy:hover { color: #fff4b4; text-decoration-color: var(--gold); }
@@ -437,40 +437,40 @@ body.upd-page { height: auto; }
 .sect .cnt { margin-left: 6px; padding: 0 6px; border: 1px solid #3d3a33; border-radius: 8px; font: 700 12.5px/1.5 var(--body);
              letter-spacing: 0; color: var(--cream); vertical-align: 1px; }
 .drive-btn { display: block; margin: 10px auto 0; }
-/* Вклад мода в цену — после поиска без него */
+/* A mod's contribution to the price — after a search without it */
 .drive { margin-left: 6px; padding: 0 5px; border: 1px solid #6b5a3a; border-radius: 2px; font: 700 13px/1.5 var(--body);
          letter-spacing: 0; color: var(--label); white-space: nowrap; vertical-align: 1px; }
 .drive.big { border-color: var(--label); color: var(--cream); box-shadow: 0 0 8px rgba(255, 190, 80, .25); }
 .drive.low { border-color: #2c2f35; color: var(--muted); }
 .drive.wait { border-color: #2c2f35; color: var(--muted); animation: pulse 1.2s ease-in-out infinite; }
-/* Цена после крафта у кандидата */
+/* Price after the craft for a candidate */
 .cprice { margin-left: 8px; font-size: 13px; }
 .cpr { margin-left: 8px; font: 700 13px var(--body); color: var(--cream); }
 .cpr.up { color: var(--good); } .cpr.down { color: var(--bad); }
-#craft .bname { white-space: normal; } /* у кандидатов крафта текст + тир + цена — переносим, а не обрезаем */
-/* Цены для выставления — по центру своих колонок */
-/* Карточка конкурента — моды по левому краю, как в фильтрах: так проще сопоставлять построчно */
+#craft .bname { white-space: normal; } /* craft candidates have text + tier + price — wrap rather than truncate */
+/* Listing prices — centred in their columns */
+/* Competitor card — mods left-aligned, as in the filters: easier to compare line by line */
 .cmp-body .tt, .cmp-miss, .cmp-legend { text-align: center; }
 .cm .yours { margin-left: 6px; font: 13px var(--body); color: var(--muted); white-space: nowrap; }
-.ess { margin-left: 6px; font: 700 12.5px var(--body); color: #c9a0e8; white-space: nowrap; } /* эссенция гарантирует мод */
+.ess { margin-left: 6px; font: 700 12.5px var(--body); color: #c9a0e8; white-space: nowrap; } /* the essence guarantees the mod */
 .hero .ninja-u { margin-top: 4px; font-size: 13.5px; color: var(--label); } .hero .ninja-u b { color: var(--cream); } .hero .ninja-u:empty { display: none; }
-/* Действия у лота: шёпот в игре и переход на трейд — проявляются при наведении */
+/* Listing actions: in-game whisper and going to trade — appear on hover */
 .lot .acts { display: flex; justify-content: flex-end; gap: 6px; opacity: 0; transition: opacity .12s; }
 .lot:hover .acts { opacity: 1; }
 .lot .acts i { font-style: normal; font-size: 13px; color: var(--bronze); cursor: pointer; }
 .lot .acts i:hover { color: #fff4b4; }
 .lot .acts svg { width: 13px; height: 13px; vertical-align: -2px; }
-.lot .ib { margin-right: 5px; font-size: 12px; color: #ffd27a; font-weight: normal; } /* мгновенный выкуп */
+.lot .ib { margin-right: 5px; font-size: 12px; color: #ffd27a; font-weight: normal; } /* instant buyout */
 .lvl-row { display: flex; justify-content: center; align-items: center; gap: 8px; margin: 2px 0 4px; } .seg.lvl button { padding: 1px 8px; font-size: 13.5px; }
 .tt .flag small { font-size: 12px; color: var(--muted); }
-/* Нет ключевого мода — предупреждение в оценке и строка-исключение в фильтрах */
+/* No key mod — a warning in the estimate and an exclusion row in the filters */
 .hero .miss-key { margin: 6px auto 2px; max-width: 92%; padding: 5px 8px; border: 1px solid rgba(224, 179, 90, .45); border-radius: 3px;
                   background: rgba(224, 179, 90, .07); color: #f0c674; font-size: 13.5px; line-height: 1.35; }
 .hero .miss-key small { display: block; margin-top: 2px; color: var(--note); font-size: 14px; }
 .mod.excl label { color: #f0c674; }
 .mod.excl.off label { color: #7d7d8a; }
 .mod.excl .tcol { color: var(--warn); font: 700 14px var(--body); }
-/* Цель крафта */
+/* Craft target */
 .craft-sec.goal { padding: 6px 8px; border: 1px solid #4a3f2c; border-radius: 3px; background: rgba(218, 193, 142, .04); }
 .goal .g { position: relative; padding-left: 16px; font: var(--mod-font); }
 .goal .g i { position: absolute; left: 0; font: 700 13px/1.6 var(--body); font-style: normal; }
@@ -481,19 +481,19 @@ body.upd-page { height: auto; }
 .goal-steps li { margin: 2px 0; }
 .goal .goal-price { font-size: 13.5px; }
 .goal .tierup { margin-left: 4px; font: 700 12.5px var(--body); color: var(--warn); }
-/* Примерный шанс мода (оценка по трейду) и предупреждение о точности */
+/* Approximate mod chance (estimated from trade) and an accuracy warning */
 .chance { margin-left: 6px; font: 700 12px var(--body); white-space: nowrap; letter-spacing: 0; }
 .chance.common { color: var(--good); } .chance.uncommon { color: var(--warn); } .chance.rare { color: var(--bad); }
 .craft-warn { margin-top: 8px; padding: 5px 8px; border-left: 2px solid var(--warn); background: rgba(224, 179, 90, .06);
               font-size: 13.5px; color: #e6c98a; }
 .chance.unknown { color: var(--muted); font-weight: 400; }
 
-/* ---- окно выше экрана: прокрутка, шапка и футер закреплены (как во флиппере — прогрессивное размытие) ---- */
+/* ---- window taller than the screen: scrolling, header and footer pinned (as in the flipper — progressive blur) ---- */
 body { overflow-x: hidden; overflow-y: auto; }
 .head, footer { position: sticky; z-index: 40; isolation: isolate; --shade: 11, 16, 23; }
 .head { top: 0; }
 footer { bottom: 0; background: none; }
-/* Сильное размытие с градиентом в прозрачность + узкая полоса лёгкого размытия на краю: содержимое плавно «уходит» под шапку. */
+/* Strong blur with a gradient to transparent + a narrow strip of light blur at the edge: content smoothly "slides" under the header. */
 .head::before, .head::after, footer::before { content: ""; position: absolute; left: 0; right: 0; z-index: -2; pointer-events: none; }
 .head::before { top: 0; bottom: -14px; -webkit-backdrop-filter: blur(16px); backdrop-filter: blur(16px);
   background: linear-gradient(rgba(var(--shade), .97) 0%, rgba(var(--shade), .9) 60%, rgba(var(--shade), .55) 85%, rgba(var(--shade), 0) 100%);
@@ -503,7 +503,7 @@ footer { bottom: 0; background: none; }
 footer::before { bottom: 0; top: -12px; -webkit-backdrop-filter: blur(16px); backdrop-filter: blur(16px);
   background: linear-gradient(rgba(var(--shade), 0) 0%, rgba(var(--shade), .7) 25%, rgba(var(--shade), .97) 55%);
   -webkit-mask-image: linear-gradient(transparent 0%, #000 35%); mask-image: linear-gradient(transparent 0%, #000 35%); }
-/* Варианты крафта по приросту цены */
+/* Craft options by price gain */
 .cprice-all { display: block; margin: 2px 0 4px auto; font-size: 13.5px; }
 .cpr b { font-size: 13px; }
 .brow.best { box-shadow: inset 2px 0 var(--good); }
@@ -512,9 +512,9 @@ footer::before { bottom: 0; top: -12px; -webkit-backdrop-filter: blur(16px); bac
 .hero .ages .warn-t { color: var(--warn); }
 .brow .rank { font: 600 12.5px var(--body); color: var(--muted); }
 .bwhat .theme { color: var(--g-mod); font-weight: normal; }
-.bwhat:has(.theme) { white-space: normal; } /* тема спроса — переносится, а не обрезается */
+.bwhat:has(.theme) { white-space: normal; } /* demand theme — wraps rather than gets truncated */
 
-/* ---- Крафт: места кружками, «продать или крафтить», план по шагам, остальное свёрнуто ---- */
+/* ---- Craft: places as circles, "sell or craft", step-by-step plan, the rest collapsed ---- */
 .slots { display: flex; justify-content: center; gap: 18px; flex-wrap: wrap; margin: 2px 0 6px; font-size: 13px; color: var(--label); }
 .slots-side { display: inline-flex; align-items: center; gap: 5px; }
 .slots-side > span { margin-right: 3px; }
@@ -578,7 +578,7 @@ kbd { display: inline-block; padding: 0 6px; border: 1px solid var(--label); bor
 #elements .el-row small { color: var(--muted); margin-left: 4px; }
 #elements .el-row.better b { color: var(--good); }
 
-/* ---- окно настроек ---- */
+/* ---- settings window ---- */
 body.set-page { height: auto; user-select: text; }
 .set { padding: 4px 18px 16px; display: flex; flex-direction: column; gap: 14px; }
 .set section { display: flex; flex-direction: column; gap: 6px; }
@@ -599,7 +599,7 @@ body.set-page { height: auto; user-select: text; }
 .set-actions button:not(.link) { height: 32px; }
 .set-actions button.link { align-self: center; }
 
-/* ---- живая биржа в блоке цены валюты ---- */
+/* ---- live exchange in the currency price block ---- */
 .live { margin-top: 10px; display: flex; flex-direction: column; gap: 2px; align-items: stretch; text-align: left; }
 .live > button.link { align-self: center; }
 .live .bad { color: var(--bad); }
@@ -610,23 +610,23 @@ body.set-page { height: auto; user-select: text; }
 .live-row .seller { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: var(--text); }
 .tt .danger { color: var(--bad); font-weight: 700; }
 
-/* Закреплённая карточка конкурента: значок виден и подсвечен */
+/* Pinned competitor card: the icon is visible and highlighted */
 .lot.pinned .acts { opacity: 1; }
 .lot.pinned .acts [data-a="pin"] { color: var(--cream); }
-/* Подвал: ссылки справа */
+/* Footer: links on the right */
 .foot-links { display: flex; gap: 12px; white-space: nowrap; }
-/* Текст, который полезно скопировать (ник продавца, моды, ошибки), выделяется мышью; перетаскивание окна — за шапку */
+/* Text worth copying (seller name, mods, errors) is mouse-selectable; the window is dragged by the header */
 .tt, #status, .seller, .void .vd, .craft-how, .note, .cm { user-select: text; }
 footer > span:first-child { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-/* Первый запуск: карточка «что нужно знать» в окне настроек */
+/* First run: "what you need to know" card in the settings window */
 .welcome { padding: 10px 12px; border: 1px solid var(--label); border-radius: 4px; background: rgba(218, 193, 142, .05); }
 .welcome-title { font: 700 16px var(--sc); letter-spacing: .4px; color: var(--cream); }
 .welcome ol { margin: 4px 0 6px 18px; padding: 0; display: flex; flex-direction: column; gap: 6px; color: var(--text); }
 .welcome .primary-go { align-self: center; min-width: 140px; height: 32px; color: #1a1408; background: linear-gradient(#f1d79a, #c9a45c); border-color: #f1d79a; }
-/* Свежесть лотов — значок ⓘ у надёжности оценки, подробности в подсказке */
+/* Listing freshness — an ⓘ icon by the estimate reliability, details in the tooltip */
 .ages-i { margin-left: 8px; color: var(--label); font-weight: 400; cursor: help; }
 .ages-i.warn { color: var(--warn); }
-/* Состояние лота (Corrupted, Sanctified…), которого нет у вашей вещи — метка в строке и строка в карточке */
+/* A listing state (Corrupted, Sanctified…) your item lacks — a tag in the row and a line in the card */
 .lstate { margin-right: 6px; padding: 0 4px; border: 1px solid rgba(224, 88, 74, .5); border-radius: 2px;
           font: 700 11px/1.4 var(--body); letter-spacing: .3px; text-transform: uppercase; color: var(--g-corrupted); }
 .cm.state { color: var(--g-corrupted); text-align: center; }
@@ -634,10 +634,10 @@ footer > span:first-child { min-width: 0; overflow: hidden; text-overflow: ellip
 .cstate { padding: 2px 8px; border: 1px solid var(--g-corrupted); border-radius: 3px; background: rgba(224, 88, 74, .12);
           font: 700 13px var(--body); letter-spacing: .3px; text-transform: uppercase; color: var(--g-corrupted); }
 .cstate.same { border-color: #3a3f48; background: none; color: var(--muted); }
-/* Освящённый лот — золотистая метка (не красная, как осквернение): их легко различить с одного взгляда */
+/* Sanctified listing — a golden tag (not red, like desecration): easy to tell apart at a glance */
 .lstate.s-sanctified, .cstate.s-sanctified { border-color: rgba(241, 215, 154, .7); color: #f1d79a; background: rgba(241, 215, 154, .1); }
 
-/* Строка лота — постоянные колонки: цена лота | состояние | ▲ | ▼ | «≈ цена» справа */
+/* Listing row — fixed columns: listing price | state | ▲ | ▼ | "≈ price" on the right */
 .lot .chip { min-width: 0; overflow: hidden; }
 .lot .eq { display: grid; grid-template-columns: 18px 26px 26px 1fr; align-items: center; column-gap: 2px; }
 .lot .eq .ap { text-align: right; }
@@ -647,7 +647,7 @@ footer > span:first-child { min-width: 0; overflow: hidden; text-overflow: ellip
 .lot.st-sanctified { box-shadow: inset 3px 0 #f1d79a; }
 .lot.st-corrupted { box-shadow: inset 3px 0 var(--g-corrupted); }
 .lot.st-mirrored, .lot.st-unidentified { box-shadow: inset 3px 0 var(--muted); }
-/* Кандидаты крафта — таблица: мод | нужен билдам | шанс за попытку | цена с ним */
+/* Craft candidates — a table: mod | wanted by builds | chance per attempt | price with it */
 .crow { display: grid; grid-template-columns: 1fr 66px 70px 76px; column-gap: 8px; align-items: center; padding: 4px 6px; }
 .crow .bname { white-space: normal; }
 .crow .cdem { text-align: right; color: var(--text); font-variant-numeric: tabular-nums; white-space: nowrap; }
@@ -659,36 +659,36 @@ footer > span:first-child { min-width: 0; overflow: hidden; text-overflow: ellip
 .crow.chead { padding: 0 6px 2px; border-bottom: 1px solid var(--line2); font: 700 12px/1.2 var(--body); letter-spacing: .3px;
               text-transform: uppercase; color: var(--muted); }
 .crow.chead span:not(:first-child) { text-align: right; }
-/* Кнопки «оценить» — серые, пока не нажаты: золотом выделяется уже найденная цена, а не четыре одинаковые ссылки */
+/* "Evaluate" buttons — grey until pressed: gold highlights a price already found, not four identical links */
 .crow .cpx .cprice { color: var(--muted); font-weight: 400; }
 .crow .cpx .cprice:hover { color: var(--gold); }
 .craft-chance-note { margin-top: 4px; padding: 0 6px; font-size: 13px; color: var(--muted); cursor: help; }
-/* Альтернативы основному плану — заголовки тише */
+/* Alternatives to the main plan — quieter headings */
 .craft-sec.alt > .k { color: var(--muted); font-size: 14px; }
 details.gamble > summary { cursor: pointer; list-style: none; }
 details.gamble > summary::before { content: '▸ '; } details.gamble[open] > summary::before { content: '▾ '; }
-/* Шаг плана: пояснения и другие способы — под «подробнее» */
+/* Plan step: explanations and other methods — under "more" */
 .ps-key { font-size: 14px; color: var(--text); }
 .ps-more > summary { cursor: pointer; list-style: none; font-size: 13px; color: var(--label); }
 .ps-more > summary::before { content: '▸ '; } .ps-more[open] > summary::before { content: '▾ '; }
 .ps-more[open] { margin-bottom: 2px; }
-/* Эссенция / Alloy: порядок действий — пронумерованные строки */
+/* Essence / Alloy: the order of actions — numbered rows */
 .ps-seq > div { font-size: 13px; color: var(--text); margin: 2px 0; }
 .ps-seq b { display: inline-block; width: 16px; height: 16px; margin-right: 4px; border-radius: 50%; background: var(--line2); color: var(--cream);
             font-size: 11px; line-height: 16px; text-align: center; }
 .craft-how .dem { color: var(--muted); font-size: 13px; white-space: nowrap; }
 .cpr.thin { color: var(--muted); font-weight: 400; }
-/* ---- кнопка «закрепить окно» (слева от крестика) ---- */
+/* ---- "pin window" button (left of the close cross) ---- */
 .pinb { position: absolute; right: 34px; top: 50%; transform: translateY(-50%); display: flex; padding: 3px 4px; background: none; border: 0;
         box-shadow: none; color: var(--bronze); -webkit-app-region: no-drag; }
 .pinb:hover { background: none; color: var(--cream); }
 .pinb.on { color: var(--gold); }
 .pinb.on svg path { fill: rgba(218, 193, 142, .25); }
 .pinb svg { width: 15px; height: 15px; }
-/* ---- вкладки и «Поиск» не уезжают при прокрутке ---- */
+/* ---- tabs and "Search" stay put when scrolling ---- */
 .tabs { position: sticky; top: var(--head-h, 96px); z-index: 30; }
 #search { position: sticky; bottom: var(--foot-h, 32px); z-index: 20; }
-/* ---- широкое окно: две колонки ---- */
+/* ---- wide window: two columns ---- */
 body.wide #tab-price:not([hidden]) { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); column-gap: 16px; align-items: start;
   grid-template-areas: "hero filters" "results filters" "results note"; }
 body.wide #hero { grid-area: hero; } body.wide #filters { grid-area: filters; } body.wide #results { grid-area: results; } body.wide #note { grid-area: note; }
@@ -696,9 +696,9 @@ body.wide #tab-demand:not([hidden]) { display: grid; grid-template-columns: minm
 body.wide .craft-cols { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); column-gap: 16px; align-items: start; }
 body.wide .craft-cols > .more-ways > summary { pointer-events: none; }
 .set-hint { margin-top: 4px; font-size: 13px; color: var(--muted); }
-/* Колонки крафта — те же отступы, что у .builds (в обычном блоке отступы схлопывались бы) */
+/* Craft columns — same padding as .builds (in a normal block the margins would collapse) */
 .craft-cols, .craft-l { display: flex; flex-direction: column; gap: 4px; }
-/* Эмоции на самоцвете: эмоция | мод | нужен билдам | цена */
+/* Emotions on a jewel: emotion | mod | wanted by builds | price */
 .erows { margin: 4px 0; }
 .erow { display: grid; grid-template-columns: 150px 1fr 56px 64px; column-gap: 8px; align-items: center; padding: 3px 6px; font-size: 13.5px; }
 .erow + .erow { border-top: 1px solid var(--line2); }
