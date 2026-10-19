@@ -188,7 +188,8 @@ async function advise(item, demandMods, cached) {
   const basePool = d.pool.filter((m) => canRoll(m, [...tags, ...hasInf]));
   const addedTags = new Set(item.affixes.flatMap((a) => ((findMod(a, basePool) || {}).adds_tags || [])));
   const onBase = addedTags.size ? d.pool.filter((m) => canRoll(m, [...tags, ...hasInf, ...addedTags])) : basePool;
-  const mine = item.affixes.map((a) => ({ ...a, mod: findMod(a, onBase) }));
+  // У модов самоцвета один тир — «T1» у всех, это не признак ценного мода: ключевой на самоцвете только по спросу.
+  const mine = item.affixes.map((a) => ({ ...a, tier: jewel ? null : a.tier, mod: findMod(a, onBase) }));
   const present = new Set(mine.flatMap((a) => (a.mod ? a.mod.groups || [] : [])));
 
   // Сколько мест: у редкой 3+3 (у самоцветов 2+2 — всего 4 мода), у магической 1+1;

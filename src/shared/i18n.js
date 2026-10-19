@@ -312,6 +312,7 @@
     chance: 'шанс',
     'details and alternatives': 'подробнее и другие способы',
     details: 'подробнее',
+    'One tier — only Divine Orb improves the roll': 'Один тир — ролл улучшает только Divine Orb',
     'Only builds with {base}': 'Только билды с {base}',
     'Jewel demand differs a lot by color and between regular and Time-Lost jewels': 'Спрос на самоцветы сильно разный по цвету и у обычных и Time-Lost',
     'Pin the window: it stays open when you click the game': 'Закрепить окно: не прячется при клике в игру',

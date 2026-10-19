@@ -41,7 +41,7 @@ function craftRows(list) {
     const via = c.essence && state.item.rarity === 'Magic' ? `<span class="cvia" title="${esc(t('{essence} makes a magic item rare with this modifier: {tiers}', { essence: c.essence.name, tiers: c.essence.tiers.join(' · ') }))}">${esc(t('guaranteed: {how}', { how: c.essence.name }))}</span>` : '';
     return `
     <div class="brow crow" data-row="${key}">
-      <span class="bname">${esc(c.text)} <span class="craft-tier" title="${esc(t('Tier {n} of {m} — the best one this item level allows', { n: c.tier, m: c.tiers }))}">T${c.tier}${c.range ? ` · ${esc(c.range)}` : ''}</span>${via}</span>
+      <span class="bname">${esc(c.text)} ${c.tiers > 1 ? `<span class="craft-tier" title="${esc(t('Tier {n} of {m} — the best one this item level allows', { n: c.tier, m: c.tiers }))}">T${c.tier}${c.range ? ` · ${esc(c.range)}` : ''}</span>` : c.range ? `<span class="craft-tier" title="${esc(t('One tier — only Divine Orb improves the roll'))}">${esc(c.range)}</span>` : ''}${via}</span>
       <span class="cdem" title="${esc(demTitle(c) || t('Share of builds that wear this modifier on this item class (poe.ninja)'))}">${hot(demPct(c))}${fmt(demPct(c))}%</span>
       <span class="cch">${chanceTag(c.chance, c.chanceUnknown)}</span>
       <span class="cpx">${btn}</span></div>`;
