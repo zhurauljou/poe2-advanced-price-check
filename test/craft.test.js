@@ -325,3 +325,9 @@ test('самоцветы: эмоции — варианты по цвету ба
   const basic = await craft.advise(parseItem(read('../rare-jewel-full.txt')), [], cached);
   assert.ok(basic.sections.find((s) => s.kind === 'emotions').blocked, 'crafted-мод уже есть');
 });
+
+test('самоцвет: Ferocity (Effect of Prefixes / Suffixes) — всегда в поиске и ключевая', { skip }, async () => {
+  const f = await filters('rare-jewel-full.txt');
+  const fer = f.mods.find((m) => /Effect of Prefixes/.test(m.text));
+  assert.ok(fer && fer.enabled && fer.key);
+});

@@ -294,7 +294,12 @@ function prepare(item, demand, rollsOn) {
     const dp = demandOf(m.template);
     // Спрос загружен (топ-80 модов класса), а этого мода в нём нет — почти никто не носит: для важности это 0%.
     const searchable = ['explicit', 'fractured', 'desecrated', 'crafted'].includes(m.tag);
-    const w = weight(item.itemClass, m.template, m.tier, dp ?? (searchMods && searchable && demandPct.size >= 40 ? 0 : undefined));
+    // У модов самоцвета один тир («T1» у всех) — тир не делает мод важнее, важность только по спросу.
+    const jewel = item.itemClass === 'Jewels';
+    const w = weight(item.itemClass, m.template, jewel ? null : m.tier, dp ?? (searchMods && searchable && demandPct.size >= 40 ? 0 : undefined));
+    // Эмоции Potent Ferocity («Effect of Suffixes / Prefixes») и Contempt («+1 … Modifier allowed») на самоцвете — главные
+    // множители цены (docs/jewels-crafting.md §4): ищем по ним всегда, ослабление их не снимает.
+    if (jewel && /increased Effect of (Suffixes|Prefixes)$|(Suffix|Prefix) Modifiers? allowed$/.test(m.template || '')) { w.key = true; w.importance = Math.max(w.importance, 2.6); }
     // Случайный мод уника, который носит заметная часть билдов с этим уником, — ключевой: без него вещь другая.
     if (niche && niche.test(m.text) && ['explicit', 'fractured', 'desecrated', 'crafted'].includes(m.tag)) { w.key = true; w.importance = Math.max(w.importance, 2.4); }
     if (item.rarity === 'Unique' && m.tag === 'desecrated' && dp >= UNIQUE_KEY) { w.key = true; w.importance = Math.max(w.importance, 2.4); } // и не снимается ослаблением
