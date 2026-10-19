@@ -1,8 +1,8 @@
-// Важность мода для цены — число 0…3: «насколько мод ценен в этом слоте» × «насколько хорош его тир».
-//   основа: ключевой для слота 3, обычный 2, малоценный 0.5;
-//   тир: T1 ×1 … T7+ ×0.15 (тир неизвестен — простой формат копирования или уник — ×0.8).
-// По важности выбираются галочки по умолчанию и порядок снятия фильтров при автоослаблении.
-// Шаблоны — тексты статов трейда (# вместо чисел).
+// Mod importance for price — a number 0…3: "how valuable the mod is in this slot" × "how good its tier is".
+//   base: key for the slot 3, regular 2, low-value 0.5;
+//   tier: T1 ×1 … T7+ ×0.15 (tier unknown — simple copy format or unique — ×0.8).
+// Importance decides the default checkboxes and the order in which auto-relaxation removes filters.
+// Templates are trade stat texts (# instead of numbers).
 
 const { MARTIAL_WEAPONS } = require('../shared/item-classes');
 const WEAPONS = new Set(MARTIAL_WEAPONS);
@@ -27,10 +27,10 @@ const SLOT_KEY = {
 
 const WEAK = /Attribute Requirements|Light Radius|Stun Threshold|Thorns|Mana Regeneration Rate|^# to Accuracy Rating$|Flask Charges|Charm Charges|Duration on you$/;
 
-const TIER_FACTOR = [1, 1, 0.85, 0.7, 0.5, 0.35, 0.25]; // индекс — номер тира; T7 и хуже — 0.15
+const TIER_FACTOR = [1, 1, 0.85, 0.7, 0.5, 0.35, 0.25]; // index is the tier number; T7 and worse — 0.15
 const UNKNOWN_TIER = 0.8;
 
-// С какой важности мод включаем по умолчанию и какую автоослабление уже не снимает.
+// Importance from which a mod is enabled by default and which auto-relaxation no longer removes.
 const ENABLE_FROM = 1.2;
 const KEEP_FROM = 2;
 
@@ -45,12 +45,12 @@ function tierFactor(tier) {
   return tier < TIER_FACTOR.length ? TIER_FACTOR[tier] : 0.15;
 }
 
-// Спрос (poe.ninja): какая доля билдов носит этот мод на вещах этого класса. Массовый мод важен для цены
-// даже слабого тира — поднимаем основу и смягчаем штраф за тир.
-const DEMAND_KEY = 60; // % — мод «как ключевой»
+// Demand (poe.ninja): what share of builds wear this mod on items of this class. A widespread mod matters for price
+// even at a weak tier — raise the base and soften the tier penalty.
+const DEMAND_KEY = 60; // % — the mod counts "as key"
 const DEMAND_HIGH = 30;
 
-// → { importance: 0…3, key: ключевой ли мод для слота (без учёта тира) }
+// → { importance: 0…3, key: whether the mod is key for the slot (ignoring tier) }
 function weight(itemClass, template, tier, demandPct) {
   if (!template) return { importance: 0, key: false };
   const t = template.replace(/ \(Local\)$/, '');
@@ -62,17 +62,17 @@ function weight(itemClass, template, tier, demandPct) {
     base = 3;
     factor = Math.max(factor, 0.6);
   } else if (demandPct >= DEMAND_HIGH && !WEAK.test(t)) {
-    // Малоценные (Stun Threshold на ботинках — 33%) часто есть «за компанию», за них не платят — их поднимает только DEMAND_KEY.
+    // Low-value ones (Stun Threshold on boots — 33%) often come "along for the ride", nobody pays for them — only DEMAND_KEY raises them.
     base = Math.max(base, 2.5);
     factor = Math.max(factor, 0.5);
   } else if (demandPct != null && !key) {
-    // Спрос известен и невысок (жизнь на ботинках — 26% билдов против 50% у сопротивлений): по умолчанию не включаем.
+    // Demand is known and low (life on boots — 26% of builds vs 50% for resistances): not enabled by default.
     base = Math.min(base, 1);
   }
   return { importance: Math.round(base * factor * 100) / 100, key };
 }
 
-// Для шаблонов из RePoE (крафт): без учёта регистра.
+// For RePoE templates (crafting): case-insensitive.
 const ci = (re) => new RegExp(re.source, 'i');
 const isKey = (itemClass, template) => [...ANY_KEY, ...slotKey(itemClass)].some((re) => ci(re).test(template));
 const isWeak = (template) => ci(WEAK).test(template);
