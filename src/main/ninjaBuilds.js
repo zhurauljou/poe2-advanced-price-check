@@ -1,18 +1,18 @@
-// poe.ninja: какие билды (класс + главный скилл) носят предмет.
-// API недокументированное, схема снята с JS-бандла сайта (poe.ninja/poe2/builds):
-//   GET /poe2/api/builds/<version>/search?<фильтры>&overview=<snapshotName>  → protobuf NinjaSearchResult
-//   GET /poe2/api/builds/dictionary/<hash>                                   → NDIC / NOVL (строки для ключей)
-// Фильтр — это параметр с id измерения (items, class, skills, itemmods-Helmet, ...) и значением-строкой.
-// Повтор параметра = И, префикс «!» = исключить. Неизвестное значение сервер молча игнорирует,
-// поэтому всё, что передаём, сверяем со словарями и возвращаем в ignored то, чего там нет.
-// Сеть подставляется снаружи: fetchBuffer(url) → Buffer (в приложении — Electron net, в скрипте — fetch).
+// poe.ninja: which builds (class + main skill) wear an item.
+// The API is undocumented, the schema was taken from the site's JS bundle (poe.ninja/poe2/builds):
+//   GET /poe2/api/builds/<version>/search?<filters>&overview=<snapshotName>  → protobuf NinjaSearchResult
+//   GET /poe2/api/builds/dictionary/<hash>                                   → NDIC / NOVL (strings for keys)
+// A filter is a parameter with a dimension id (items, class, skills, itemmods-Helmet, ...) and a string value.
+// A repeated parameter = AND, a "!" prefix = exclude. The server silently ignores unknown values,
+// so everything we pass is checked against the dictionaries, and whatever is missing there is returned in ignored.
+// The network is injected from outside: fetchBuffer(url) → Buffer (in the app — Electron net, in a script — fetch).
 
 const NINJA = 'https://poe.ninja/poe2/api';
-const SEARCH_TTL = 30 * 60e3; // сервер сам отдаёт max-age=1800
+const SEARCH_TTL = 30 * 60e3; // the server itself sends max-age=1800
 const INDEX_TTL = 30 * 60e3;
 
 // ---------- protobuf ----------
-// Хватает varint и length-delimited; fixed64/fixed32 (double в гистограммах) просто пропускаем.
+// varint and length-delimited are enough; fixed64/fixed32 (doubles in histograms) are just skipped.
 function readFields(buf) {
   const out = [];
   let p = 0;
@@ -36,7 +36,7 @@ const str = (v) => Buffer.from(v).toString('utf8');
 const first = (fields, no, def) => { const f = fields.find((x) => x[0] === no); return f ? f[1] : def; };
 const all = (fields, no) => fields.filter((x) => x[0] === no).map((x) => x[1]);
 
-// NinjaSearchResult { 1: SearchResult }. Берём только нужное: total, измерения со счётчиками, ссылки на словари.
+// NinjaSearchResult { 1: SearchResult }. Take only what's needed: total, dimensions with counts, dictionary references.
 function decodeSearch(buf) {
   const r = readFields(first(readFields(buf), 1, Buffer.alloc(0)));
   const dimensions = all(r, 2).map((d) => {
@@ -44,7 +44,7 @@ function decodeSearch(buf) {
     return {
       id: str(first(f, 1, '')),
       dictionaryId: str(first(f, 2, '')),
-      // ключ = индекс строки в словаре; нулевые поля protobuf не пишет, отсюда дефолты
+      // key = string index in the dictionary; protobuf doesn't write zero fields, hence the defaults
       counts: all(f, 3).map((c) => { const cf = readFields(c); return { key: first(cf, 1, 0), count: first(cf, 2, 0) }; }),
     };
   });
@@ -55,9 +55,9 @@ function decodeSearch(buf) {
   return { total: first(r, 1, 0), dimensions, dictionaries };
 }
 
-// ---------- словари ----------
-// NDIC v2: 'NDIC', u32 версия, u32 —, u32 число строк, u64 xxhash64 (от байта 24), u32 —, u32 записей sync-таблицы,
-// u32 длина блока длин; с байта 36: sync-таблица (8 байт на запись), затем varint-длины, затем строки подряд.
+// ---------- dictionaries ----------
+// NDIC v2: 'NDIC', u32 version, u32 —, u32 string count, u64 xxhash64 (from byte 24), u32 —, u32 sync-table entries,
+// u32 length-block size; from byte 36: sync table (8 bytes per entry), then varint lengths, then the strings back to back.
 function decodeNdic(b) {
   const dv = new DataView(b.buffer, b.byteOffset, b.byteLength);
   const version = dv.getUint32(4, true);
@@ -75,9 +75,9 @@ function decodeNdic(b) {
   return values;
 }
 
-// NOVL v1 — свойства словаря (у items: type = Helmet/Weapon/..., color = редкость псевдо-предметов «Rare Helmet»).
-// 'NOVL', u32 версия, u32 —, u32 число свойств, u32 число значений, u64 хэш; дальше строки с u32-длиной
-// (id, valuesHash), затем на каждое свойство: имя, таблица из n+1 u32-смещений и сами строки.
+// NOVL v1 — dictionary properties (for items: type = Helmet/Weapon/..., color = rarity of pseudo-items "Rare Helmet").
+// 'NOVL', u32 version, u32 —, u32 property count, u32 value count, u64 hash; then u32-length strings
+// (id, valuesHash), then for each property: name, a table of n+1 u32 offsets and the strings themselves.
 function decodeNovl(b) {
   const dv = new DataView(b.buffer, b.byteOffset, b.byteLength);
   const nProps = dv.getUint32(12, true), nValues = dv.getUint32(16, true);
@@ -97,7 +97,7 @@ function decodeNovl(b) {
   return props;
 }
 
-// На случай, если сервер отдаст словарь не в «нативном» виде, а protobuf-сообщением (сайт умеет оба).
+// In case the server sends the dictionary not in the "native" form but as a protobuf message (the site handles both).
 function decodeDictPb(b) { return all(readFields(b), 2).map(str); }
 function decodePropsPb(b) {
   const props = {};
@@ -105,8 +105,8 @@ function decodePropsPb(b) {
   return props;
 }
 
-// ---------- кэш ----------
-const dictCache = new Map(); // hash → values | props; словари неизменяемые (immutable, max-age год)
+// ---------- cache ----------
+const dictCache = new Map(); // hash → values | props; dictionaries are immutable (immutable, max-age one year)
 const searchCache = new Map(); // url → { at, data }
 let indexCache = null;
 
@@ -136,7 +136,7 @@ async function snapshot(league, fetchBuffer) {
   return s;
 }
 
-// Ответ поиска + раскрытые словари: dims[id] = [{ name, count }] (по убыванию), props[dictId] = свойства.
+// Search response + expanded dictionaries: dims[id] = [{ name, count }] (descending), props[dictId] = properties.
 async function search(snap, params, timeMachine, fetchBuffer) {
   const q = new URLSearchParams();
   for (const [k, v] of params) q.append(k, v);
@@ -164,8 +164,8 @@ async function search(snap, params, timeMachine, fetchBuffer) {
   return data;
 }
 
-// ---------- сопоставление наших названий с ninja ----------
-// «+45 to maximum Life» → «# to maximum Life»: в словаре модов числа заменены на #, плюсы убраны.
+// ---------- matching our names to ninja ----------
+// "+45 to maximum Life" → "# to maximum Life": in the mod dictionary numbers are replaced with # and pluses removed.
 function modTemplate(text) {
   return String(text)
     .replace(/\s*\((implicit|enchant|rune|crafted|fractured|desecrated|augmented)\)\s*$/i, '')
@@ -174,7 +174,7 @@ function modTemplate(text) {
     .replace(/\s+/g, ' ').trim();
 }
 
-// Класс предмета из буфера обмена («Body Armours», «One Hand Maces», «Quarterstaves», «Foci») → «Rare Body Armour» и т.п.
+// Item class from the clipboard ("Body Armours", "One Hand Maces", "Quarterstaves", "Foci") → "Rare Body Armour" etc.
 const normClass = (s) => s.toLowerCase()
   .replace(/one hand(ed)?/, 'onehanded').replace(/two hand(ed)?/, 'twohanded')
   .replace(/staves$/, 'staff').replace(/foci$/, 'focus').replace(/[^a-z]/g, '').replace(/s$/, '');
@@ -193,7 +193,7 @@ const findCi = (list, name) => {
   return (list || []).find((x) => x.toLowerCase() === l) || null;
 };
 
-// Подраздел по родителю: в словаре тип «Body Armour», а подраздел — «itembasetypes-BodyArmour» (без пробелов).
+// Subsection by parent: the dictionary type is "Body Armour", and the subsection is "itembasetypes-BodyArmour" (no spaces).
 function subKey(dims, kind, parent) {
   if (!parent) return null;
   const exact = `${kind}-${parent}`;
@@ -206,14 +206,14 @@ function top(rows, total, n) {
 }
 
 // opts:
-//   league      — url («forbiddenrites») или имя лиги («Forbidden Rites»); по умолчанию — текущая (первая в index-state)
-//   uniqueName  — уникальный предмет по имени
-//   itemClass + rarity ('Rare' | 'Magic' | 'Normal') — псевдо-предмет «Rare Helmet» (все редкие шлемы)
-//   baseType    — база (работает вместе с itemClass: подраздел itembasetypes-<тип>)
-//   mods        — строки модов (как в игре или уже шаблоном с #); все должны быть на предмете (И)
-//   filters     — сырые [[dimensionId, value], ...] для чего угодно ещё (class, skills, keypassives, min-level ...)
-//   timeMachine — 'day-1', 'week-2' и т.п. из snapshotVersions[].timeMachineLabels
-//   limit       — сколько строк классов/скиллов вернуть
+//   league      — url ("forbiddenrites") or league name ("Forbidden Rites"); default — current (first in index-state)
+//   uniqueName  — unique item by name
+//   itemClass + rarity ('Rare' | 'Magic' | 'Normal') — pseudo-item "Rare Helmet" (all rare helmets)
+//   baseType    — base (works together with itemClass: subsection itembasetypes-<type>)
+//   mods        — mod lines (as in game or already a template with #); all must be on the item (AND)
+//   filters     — raw [[dimensionId, value], ...] for anything else (class, skills, keypassives, min-level ...)
+//   timeMachine — 'day-1', 'week-2', etc. from snapshotVersions[].timeMachineLabels
+//   limit       — how many class/skill rows to return
 async function popularBuilds(opts, fetchBuffer) {
   const { league, uniqueName, itemClass, rarity = 'Rare', baseType, mods = [], filters = [], timeMachine, limit = 10, minLevel } = opts || {};
   const snap = await snapshot(league, fetchBuffer);
@@ -221,14 +221,14 @@ async function popularBuilds(opts, fetchBuffer) {
   const lvl = levelParams(minLevel);
   const params = [...lvl];
 
-  // Нужен словарь items, чтобы проверить имя уника и найти «Rare <класс>»; первый поиск без фильтров
-  // его даёт, а заодно кэшируется и пригодится как «все билды».
+  // The items dictionary is needed to check the unique name and find "Rare <class>"; the first search without filters
+  // provides it, and it's also cached and comes in handy as "all builds".
   const needItems = uniqueName || itemClass;
   const base = needItems ? await search(snap, lvl, timeMachine, fetchBuffer) : null;
   const itemNames = base ? base.values.item || [] : [];
   const itemProps = base ? base.props.item || {} : {};
 
-  let parentKey = null; // от чего строится подраздел модов: имя уника или тип (Helmet, Weapon, ...)
+  let parentKey = null; // what the mods subsection is built from: unique name or type (Helmet, Weapon, ...)
   if (uniqueName) {
     const name = findCi(itemNames, uniqueName);
     if (name) { params.push(['items', name]); parentKey = name; } else ignored.push({ items: uniqueName });
@@ -240,8 +240,8 @@ async function popularBuilds(opts, fetchBuffer) {
     } else ignored.push({ items: `${rarity} ${itemClass}` });
   }
 
-  // Базы и моды: словари itembasetypes/itemmods приходят только в ответе с выбранным предметом,
-  // поэтому сначала спрашиваем без них (тоже полезный кэш), потом сверяем и добавляем.
+  // Bases and mods: the itembasetypes/itemmods dictionaries come only in a response with a selected item,
+  // so first we ask without them (also a useful cache), then check and add them.
   if (parentKey && (baseType || mods.length)) {
     const pre = await search(snap, params, timeMachine, fetchBuffer);
     const baseKey = subKey(pre.dims, 'itembasetypes', parentKey);
@@ -267,27 +267,27 @@ async function popularBuilds(opts, fetchBuffer) {
   return {
     league: snap.name,
     url: res.url,
-    // страница poe.ninja с теми же фильтрами — открыть в браузере
+    // poe.ninja page with the same filters — to open in a browser
     page: `https://poe.ninja/poe2/builds/${snap.url}?${params.map(([k, v]) => `${encodeURIComponent(k)}=${encodeURIComponent(v)}`).join('&')}`,
     filters: params,
     ignored,
     total: res.total,
-    // class — ассенданси (или базовый класс, если не выбрано); skills — главные скиллы, у билда их бывает несколько
+    // class — ascendancy (or base class if none chosen); skills — main skills, a build may have several
     classes: top(res.dims.class || [], res.total, limit),
     skills: top(res.dims.skills || [], res.total, limit),
-    // У уника — какие его моды носят (важно для уников со случайными модами: Heart of the Well, Megalomaniac…)
+    // For a unique — which of its mods are worn (important for uniques with random mods: Heart of the Well, Megalomaniac…)
     mods: uniqueName && parentKey ? top(res.dims[subKey(res.dims, 'itemmods', parentKey)] || [], res.total, 40) : [],
     allTotal: base ? base.total : null,
   };
 }
 
-// Спрос по категории: какие базы и моды носят на редких (магических…) вещах этого класса.
-// Один фильтр «Rare Helmet» — в ответе приходят подразделы itembasetypes-<тип> и itemmods-<тип> со счётчиками.
+// Demand by category: which bases and mods are worn on rare (magic…) items of this class.
+// A single "Rare Helmet" filter — the response contains itembasetypes-<type> and itemmods-<type> subsections with counts.
 async function categoryDemand(opts, fetchBuffer) {
-  // withMods — моды предмета: спрос считаем среди билдов, которые носят такую вещь С ЭТИМИ модами
-  // (тема вещи: миньоны, заклинания…). Мало таких билдов (< minBuilds) — откатываемся к общему спросу по классу.
-  // withBase — только билды, которые носят эту базу (Time-Lost: их моды есть только у радиусных самоцветов, а общий спрос
-  // по классу «Rare Jewel» размывает их долю всеми самоцветами).
+  // withMods — the item's mods: demand is counted among builds that wear such an item WITH THESE mods
+  // (item theme: minions, spells…). Too few such builds (< minBuilds) — fall back to the general demand for the class.
+  // withBase — only builds that wear this base (Time-Lost: their mods exist only on radius jewels, while the general demand
+  // for the "Rare Jewel" class dilutes their share with all jewels).
   const { league, itemClass, rarity = 'Rare', limit = 12, timeMachine, withMods = [], withBase = null, minBuilds = 150, minLevel } = opts || {};
   const snap = await snapshot(league, fetchBuffer);
   const lvl = levelParams(minLevel);
@@ -298,7 +298,7 @@ async function categoryDemand(opts, fetchBuffer) {
   const type = ((base.props.item || {}).type || [])[itemNames.indexOf(cat)] || null;
   let res = await search(snap, [['items', cat], ...lvl], timeMachine, fetchBuffer);
   let themed = [];
-  let onBase = null; // сузили до билдов с этой базой
+  let onBase = null; // narrowed to builds with this base
   const baseKey = subKey(res.dims, 'itembasetypes', type);
   const scope = [['items', cat], ...lvl];
   if (withBase && baseKey) {
@@ -327,8 +327,8 @@ async function categoryDemand(opts, fetchBuffer) {
   return {
     league: snap.name,
     category: cat,
-    themed, // по каким модам сузили (пусто — общий спрос по классу)
-    onBase, // по какой базе сузили (самоцветы), null — по всему классу
+    themed, // which mods it was narrowed by (empty — general demand for the class)
+    onBase, // which base it was narrowed by (jewels), null — the whole class
     total: res.total,
     allTotal: base.total,
     bases: top(res.dims[subKey(res.dims, 'itembasetypes', type)] || [], res.total, limit),
@@ -337,7 +337,7 @@ async function categoryDemand(opts, fetchBuffer) {
   };
 }
 
-// Только персонажи от этого уровня: на 90+ вещи докупают ради точных модов — спрос «премиальнее», чем у тех, кто качается.
+// Only characters from this level: at 90+ items are bought for exact mods — demand is "more premium" than among levelers.
 function levelParams(minLevel) {
   return minLevel ? [['min-level', String(minLevel)]] : [];
 }
