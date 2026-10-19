@@ -1,4 +1,4 @@
-// Мост окна «Updates»: статус обновления и кнопки.
+// "Updates" window bridge: update status and buttons.
 const { contextBridge, ipcRenderer } = require('electron');
 
 contextBridge.exposeInMainWorld('upd', {
