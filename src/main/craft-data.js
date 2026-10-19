@@ -1,11 +1,11 @@
-// Данные игры для советов по крафту: пул модов RePoE (какие моды и тиры могут встать на базу), шаблоны строк,
-// статы трейда для мода, оценка весов (data/weights.json), порченые эссенции и Alloys (data/crafting-currency.json).
+// Game data for crafting advice: RePoE mod pool (which mods and tiers can roll on a base), line templates,
+// trade stats for a mod, weight estimates (data/weights.json), corrupted essences and Alloys (data/crafting-currency.json).
 const stats = require('./stats');
 const fsW = require('fs');
 const pathW = require('path');
 const { t } = require('../shared/i18n');
 
-// Оценка весов модов (локальная утилита сбора — по дешёвым лотам трейда, не данные игры). Нет файла — без шансов.
+// Mod weight estimates (local collection tool — from cheap trade listings, not game data). No file — no odds.
 let weightsData;
 function weights() {
   if (weightsData === undefined) {
@@ -19,16 +19,16 @@ const REPOE = 'https://repoe-fork.github.io/poe2';
 let data = null; // { bases: Map name→base, pool: [...] }
 let loadedAt = 0;
 
-// Пул модов грузим один раз: initData и первый запрос Craft не должны разбирать RePoE параллельно. Программа живёт в
-// трее неделями — раз в сутки перечитываем (сам файл RePoE обновляется раз в неделю, после патча — «Обновить данные»).
+// The mod pool is loaded once: initData and the first Craft request must not parse RePoE in parallel. The program lives
+// in the tray for weeks — reread once a day (the RePoE file itself updates weekly; after a patch — "Refresh game data").
 let loading = null;
 function load(cached) {
   if (data && Date.now() - loadedAt < 24 * 3600e3) return Promise.resolve(data);
   if (!loading) loading = loadData(cached).then((d) => { reset(); data = d; loadedAt = Date.now(); return d; }).finally(() => { loading = null; });
   return loading;
 }
-// Забыть загруженный пул и всё, что из него посчитано (новые данные после патча): посчитанное держат другие модули —
-// они подписываются через onReset.
+// Forget the loaded pool and everything computed from it (new data after a patch): computed results live in other modules —
+// they subscribe via onReset.
 const resetHooks = [];
 const onReset = (fn) => resetHooks.push(fn);
 function reset() {
@@ -44,28 +44,28 @@ async function loadData(cached) {
   ]);
   const byName = new Map();
   for (const b of Object.values(bases)) if (b.name && !byName.has(b.name)) byName.set(b.name, b);
-  // Теги no_fire/cold/lightning/chaos/physical_spell_mods (на базах посохов и палочек и в adds_tags модов стихий) игра
-  // не применяет: на трейде есть Ashen Staff (база огня) с increased Cold Damage. Убираем — иначе советы теряют моды.
+  // Tags no_fire/cold/lightning/chaos/physical_spell_mods (on staff and wand bases and in adds_tags of elemental mods) are
+  // not applied by the game: trade has an Ashen Staff (fire base) with increased Cold Damage. Strip them, or advice loses mods.
   const NO_SPELL = /^no_\w+_spell_mods$/;
-  // Сами теги в пул не пускаем, но запоминаем как «стихию базы»: шансы модов своей стихии на ней выше (Craft of Exile:
-  // 5550 против 3000) — статистику весов программа берёт по базам той же стихии (craft.js classWeights).
+  // The tags themselves stay out of the pool but are remembered as the "base element": its element's mods are likelier (Craft of Exile:
+  // 5550 vs 3000) — the program takes weight statistics from bases of the same element (craft.js classWeights).
   for (const b of byName.values()) {
     b.spellAffinity = (b.tags || []).filter((t) => NO_SPELL.test(t)).sort().join(',');
     b.tags = (b.tags || []).filter((t) => !NO_SPELL.test(t));
   }
   for (const m of Object.values(mods)) if (m.adds_tags) m.adds_tags = m.adds_tags.filter((t) => !NO_SPELL.test(t));
-  // Строки implicit'ов базы (Spirit у скипетра и т.п.) — их нет в пуле крафта, но в спросе poe.ninja они бывают.
+  // Base implicit lines (Spirit on a sceptre, etc.) — not in the crafting pool, but they do appear in poe.ninja demand.
   for (const b of byName.values()) b.implicitLines = (b.implicits || []).flatMap((id) => (mods[id] ? templates(radiusText(mods[id])) : []));
-  // Моды самоцветов лежат в домене 'misc' — для крафта это те же «обычные» моды, что и 'item'.
+  // Jewel mods live in the 'misc' domain — for crafting they are the same "regular" mods as 'item'.
   const pool = Object.entries(mods)
     .filter(([, m]) => (m.domain === 'item' || m.domain === 'misc' || m.domain === 'desecrated')
       && (m.generation_type === 'prefix' || m.generation_type === 'suffix'))
     .map(([id, m]) => { const text = radiusText(m); return { id, ...m, text, domain: m.domain === 'misc' ? 'item' : m.domain, lines: templates(text) }; });
-  // Строки модов по семейству — чтобы знать спрос семейства (для «причины продажи» в оценке шансов).
+  // Mod lines by family — to know the family's demand (for the "reason to sell" in the odds estimate).
   const typeLines = new Map();
   for (const m of pool) if (!typeLines.has(m.type)) typeLines.set(m.type, m.lines);
-  // Аугменты (руны, Soul Cores, Abyssal Eye, Thesis): имя, лимит, для каких классов какие статы (bonded — только с
-  // пассивкой Шамана, не учитываем).
+  // Augments (runes, Soul Cores, Abyssal Eye, Thesis): name, limit, which stats for which classes (bonded — only with
+  // the Shaman passive, ignored).
   const augs = Object.entries(augments || {}).map(([key, a]) => ({
     name: bases[key] && bases[key].name, limit: a.limit || null, level: a.required_level || 0,
     cats: Object.values(a.categories || {}).filter((c) => (c.stat_text || []).length).map((c) => ({ target: c.target, lines: c.stat_text.flatMap((tx) => templates(tx)) })),
@@ -73,9 +73,9 @@ async function loadData(cached) {
   return { bases: byName, pool, typeLines, augs };
 }
 
-// Моды Time-Lost самоцветов (radius_jewel) в RePoE записаны без «Small/Notable Passive Skills in Radius also grant» —
-// только эффект («(2-3)% increased [Armour]»), и по такому тексту находится обычный глобальный стат. Подставляем ту
-// формулировку, которая есть на трейде (у каждого мода подходит ровно одна).
+// Time-Lost jewel mods (radius_jewel) are stored in RePoE without "Small/Notable Passive Skills in Radius also grant" —
+// only the effect ("(2-3)% increased [Armour]"), and that text matches a regular global stat. Substitute the
+// wording used on trade (exactly one fits each mod).
 function radiusText(m) {
   const radius = (m.spawn_weights || []).some((w) => w.weight > 0 && /radius_jewel$/.test(w.tag));
   if (!radius || !m.text || /^Upgrades Radius/.test(m.text)) return m.text;
@@ -87,7 +87,7 @@ function radiusText(m) {
   return m.text;
 }
 
-// «(39-42)% increased [EnergyShield|Energy Shield]» → «#% increased energy shield» — как моды у poe.ninja.
+// "(39-42)% increased [EnergyShield|Energy Shield]" → "#% increased energy shield" — like mods on poe.ninja.
 function templates(text) {
   return String(text || '').split('\n').map((l) => l
     .replace(/\[(?:[^|\]]*\|)?([^\]]*)\]/g, '$1')
@@ -97,8 +97,8 @@ function templates(text) {
     .trim().toLowerCase()).filter(Boolean);
 }
 
-// Фильтры трейда для мода с нижним роллом тира: «(39-42)% increased [EnergyShield|Energy Shield]» → 39% … → стат.
-// null — если хоть одну строку не сопоставили (тогда цену после крафта не считаем).
+// Trade filters for a mod at the tier's lowest roll: "(39-42)% increased [EnergyShield|Energy Shield]" → 39% … → stat.
+// null — if even one line wasn't matched (then the price after crafting isn't computed).
 function tradeStats(mod, domain, itemClass) {
   const lines = String(mod.text || '').split('\n').map((l) => l
     .replace(/\[(?:[^|\]]*\|)?([^\]]*)\]/g, '$1')
@@ -107,7 +107,7 @@ function tradeStats(mod, domain, itemClass) {
   return out.every(Boolean) ? out.map((s) => ({ statId: s.statId, min: s.value })) : null;
 }
 
-// Порченые эссенции и Alloy (собрано с poe2db, data/crafting-currency.json): что добавят на этот класс вещей.
+// Corrupted essences and Alloy (collected from poe2db, data/crafting-currency.json): what they add on this item class.
 let currencyData;
 function guaranteedFor(itemClass) {
   if (currencyData === undefined) {
@@ -124,9 +124,9 @@ function guaranteedFor(itemClass) {
   return out;
 }
 
-// Порченые эссенции и Alloys (оба — «снимают случайный мод и ставят свой», crafted-слот) с модами для класса.
+// Corrupted essences and Alloys (both "remove a random mod and add their own", crafted slot) with mods for the class.
 function corruptedFor(itemClass) {
-  guaranteedFor(itemClass); // загрузит данные
+  guaranteedFor(itemClass); // loads the data
   const out = [];
   for (const list of [currencyData && currencyData.corruptedEssences, currencyData && currencyData.alloys]) {
     for (const x of list || []) {
@@ -136,9 +136,9 @@ function corruptedFor(itemClass) {
   return out;
 }
 
-// Liquid Emotions (Delirium) на самоцветах: эмоция снимает случайный мод и ставит свой crafted-мод — по цвету базы
-// (data/liquid-emotions.json, poe2db). Обычные — на Ruby / Sapphire / Emerald / Diamond, Ancient — только на Time-Lost.
-// → [{ name, side, text, lines }]; у Ferocity / Contempt две записи (сторона — по стороне снятого мода).
+// Liquid Emotions (Delirium) on jewels: an emotion removes a random mod and adds its own crafted mod — by base colour
+// (data/liquid-emotions.json, poe2db). Regular ones — on Ruby / Sapphire / Emerald / Diamond, Ancient — only on Time-Lost.
+// → [{ name, side, text, lines }]; Ferocity / Contempt have two entries (side — by the side of the removed mod).
 let emotionData;
 function emotionsFor(baseType) {
   if (emotionData === undefined) {
@@ -154,13 +154,13 @@ function emotionsFor(baseType) {
   return out;
 }
 
-// Вес мода на базе: первый тег из spawn_weights, который есть у базы (в PoE 2 — только 0 или 1).
+// Mod weight on a base: the first tag from spawn_weights that the base has (in PoE 2 — only 0 or 1).
 function canRoll(mod, tags) {
   for (const sw of mod.spawn_weights || []) if (tags.includes(sw.tag)) return sw.weight > 0;
   return false;
 }
 
-// Загруженный пул (или null, пока не загружен) — для быстрых проверок без await.
+// Loaded pool (or null until loaded) — for quick checks without await.
 const current = () => data;
 
 module.exports = { load, reset, onReset, current, templates, tradeStats, weights, guaranteedFor, corruptedFor, emotionsFor, canRoll };
