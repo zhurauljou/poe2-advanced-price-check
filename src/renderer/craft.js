@@ -324,7 +324,7 @@ function removeRisk(s, c) {
   if (!K || !names.length) return '';
   const odds = K / (J + K);
   const fmtOdds = odds >= 0.5 ? `~${Math.round(odds * 100)}%` : oneIn(odds);
-  return `<div class="ps-risk">⚠ ${esc(t('{odds} per attempt: it removes {mods} instead of the junk · on average ≈{hits} of them are lost before it is done', { odds: fmtOdds, mods: names.map((m) => `«${m}»`).join(t(' or ')), hits: fmt(Math.round(c.hits * 10) / 10) }))}</div>`;
+  return `<div class="ps-risk">⚠ ${esc(t('{odds} on the first attempt: it removes {mods} instead of the junk (then fewer mods are left) · on average ≈{hits} of them are lost before it is done', { odds: fmtOdds, mods: names.map((m) => `«${m}»`).join(t(' or ')), hits: fmt(Math.round(c.hits * 10) / 10) }))}</div>`;
 }
 
 function planHtml(plan) {

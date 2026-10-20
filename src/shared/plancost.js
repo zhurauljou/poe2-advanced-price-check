@@ -36,8 +36,8 @@
   // (then s2 is the pair's second mod). Chance unknown (valuable mod) — pick by guess (all families equally likely), no price shown.
   const M = typeof module !== 'undefined' && module.exports ? require('./methods') : root.CraftMethods;
   const EXALT_NAME = Object.fromEntries(M.tiers('exalt').map(([n], i) => [['base', 'greater', 'perfect'][i], n]));
-  // Remove J extra mods while K wanted ones sit next to them (Annulment takes a random one of J + K): expected Σ (j+K)/j attempts,
-  // of which Σ K/j hit a wanted mod — it has to be added again (restoreCost — the price of one such addition).
+  // Remove J extra mods while K wanted ones sit next to them (Annulment takes a random one of what is left): expected J + K·J/(J+1)
+  // attempts, of which K·J/(J+1) hit a wanted mod — it has to be added again afterwards (restoreCost — the price of one such addition).
   // Hitting another extra mod is not a miss but progress. Compare: Annulment over the whole item or with a side omen.
   // Cost of losing a wanted mod: re-adding it, but no less than a quarter of the goal price — without a key mod the item is worth almost nothing.
   // Losing a key mod — a quarter of the item price (without it the item is worth much less); if there are no prices — re-adding it.
@@ -55,7 +55,9 @@
     const p = (n) => C().prices[n];
     const ann = p('Orb of Annulment');
     if (ann == null) return { cost: null, chance: null, currencies: ['Orb of Annulment'], lottery: true };
-    const run = (J, K) => { let tries = 0, hits = 0; for (let j = J; j >= 1; j--) { tries += (j + K) / j; hits += K / j; } return { tries, hits }; };
+    // Annulment removes the side's mods in a random order until the last junk one is gone; a hit wanted mod is restored after
+    // that, not in between (the side shrinks: 1 in 3, then 1 in 2…). Wanted ones removed before the last of J junk: K·J/(J+1).
+    const run = (J, K) => { const hits = J ? (K * J) / (J + 1) : 0; return { tries: J + hits, hits }; };
     // A wanted mod that got hit: restoring it costs as much as adding it, but no less than a quarter of the goal price — without a key mod
     // the item is worth almost nothing.
     const restore = restoreValue();

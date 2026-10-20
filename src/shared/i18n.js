@@ -461,7 +461,7 @@
     'Balanced': 'Средне',
     'Ideal': 'Идеал',
     'up to': 'до',
-    '{odds} per attempt: it removes {mods} instead of the junk · on average ≈{hits} of them are lost before it is done': '{odds} на попытку: снимет {mods} вместо мусорного · в среднем пропадёт ≈{hits} таких, пока не получится',
+    '{odds} on the first attempt: it removes {mods} instead of the junk (then fewer mods are left) · on average ≈{hits} of them are lost before it is done': '{odds} на первой попытке: снимет {mods} вместо мусорного (дальше модов меньше — шанс растёт) · в среднем пропадёт ≈{hits} таких, пока не получится',
     'Replace': 'Заменить',
     'Replace {junk} with {mod}': 'Заменить {junk} на {mod}',
     'Omen of Whittling makes the {orb} remove the lowest-level modifier — {junk}; a random modifier takes its place: repeat until it is {mod}': 'Omen of Whittling заставляет {orb} снять мод самого низкого уровня — {junk}; на его место встаёт случайный: повторять, пока не выпадет {mod}',

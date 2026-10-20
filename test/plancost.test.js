@@ -14,21 +14,25 @@ const near = (a, b, msg) => assert.ok(Math.abs(a - b) < 1e-9, `${msg}: ${a} ≠ 
 const add = (chance, extra = {}) => ({ act: 'add', mod: 'X', onItem: 0, onSide: 0,
   exalt: { base: { chance, guess: chance, pool: 10 }, greater: { chance, guess: chance, pool: 10 }, perfect: { chance, guess: chance, pool: 10 } }, ...extra });
 
-test('removing an unwanted mod with Annulment: expected Σ (j+K)/j tries, of which Σ K/j hit a wanted mod', () => {
+test('removing an unwanted mod with Annulment: the side shrinks after a miss — J + K·J/(J+1) tries, K·J/(J+1) wanted mods hit', () => {
   const p = planner();
   // One unwanted, no wanted ones — exactly one orb.
   const one = p.removeCost({ act: 'remove', sides: { prefix: { J: 1, K: 0 } } });
   near(one.tries, 1, 'tries');
   near(one.cost, PRICES['Orb of Annulment'], 'cost');
   assert.equal(one.risky, false);
-  // Two unwanted and one wanted: 3/2 + 2/1 = 3.5 tries, 1/2 + 1/1 = 1.5 hits.
+  // Two unwanted and one wanted: the wanted one goes before the last junk one in 2 of 3 orders — 2/3 hits, 2 + 2/3 tries.
   const two = p.removeCost({ act: 'remove', sides: { prefix: { J: 2, K: 1 } } });
-  near(two.tries, 3.5, 'tries');
-  near(two.hits, 1.5, 'hits');
+  near(two.tries, 8 / 3, 'tries');
+  near(two.hits, 2 / 3, 'hits');
+  // One unwanted next to two wanted (1 in 3, then 1 in 2, then sure): 2 tries, 1 wanted mod lost — not 3 and 2.
+  const gloves = p.removeCost({ act: 'remove', sides: { suffix: { J: 1, K: 2 } } });
+  near(gloves.tries, 2, 'tries');
+  near(gloves.hits, 1, 'hits');
   assert.ok(two.risky);
   // A hit wanted mod costs its restoration: with a goal price — a quarter of it.
   const withGoal = planner({ goalValue: 40 }).removeCost({ act: 'remove', sides: { prefix: { J: 2, K: 1 } } });
-  near(withGoal.cost, 3.5 * 0.05 + 1.5 * 10, 'cost with goal price');
+  near(withGoal.cost, (8 / 3) * 0.05 + (2 / 3) * 10, 'cost with goal price');
 });
 
 test('with a side omen we remove only among that side\'s mods — cheaper when wanted mods are on the other side', () => {
@@ -45,9 +49,9 @@ test('removal via Essence of the Abyss: tries as with Annulment plus side omen, 
   const r = p.removeCost({ act: 'remove', sides, abyss: true });
   // The side omen at 0.2 is cheaper — the chain stays an "Instead" option.
   assert.equal(r.viaAbyss, false);
-  near(r.abyss.tries, 3.5, 'tries as with the side omen');
-  near(r.abyss.hits, 1.5, 'wanted mods hit');
-  near(r.abyss.spent, 3.5 * (0.3 + 0.5 + 4 + 0.05), 'currency without the bone: Omen of Light removes the Mark');
+  near(r.abyss.tries, 8 / 3, 'tries as with the side omen');
+  near(r.abyss.hits, 2 / 3, 'wanted mods hit');
+  near(r.abyss.spent, (8 / 3) * (0.3 + 0.5 + 4 + 0.05), 'currency without the bone: Omen of Light removes the Mark');
   assert.deepEqual(r.abyss.currencies, ['Essence of the Abyss', 'Omen of Sinistral Crystallisation', 'Omen of Light', 'Orb of Annulment']);
   assert.notDeepEqual(r.other && r.other.currencies, r.abyss.currencies); // don't show it twice
   // The side omen got pricier, and Annulment without an omen hits expensive wanted suffixes — the plan picks the chain itself.
