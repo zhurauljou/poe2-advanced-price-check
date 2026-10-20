@@ -15,3 +15,6 @@ data/drop-samples/
 scripts/collect-drops.js
 scripts/compare-weights.js
 Collect drops.bat
+scripts/dashboard.js
+scripts/dashboard-server.js
+scripts/dashboard.html
