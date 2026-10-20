@@ -454,3 +454,16 @@ test('ES gloves: the theme is the ES archetype, not «Rarity + Dexterity» — t
   assert.ok(!p.goal.remove.some((r) => /lightning resistance/.test(r.text)), 'lightning resistance stays');
   assert.ok(p.goal.remove.some((r) => /dexterity/.test(r.text)), 'Dexterity is the junk');
 });
+
+test('minion sceptre: the crafted Puppet Master counts for the theme; the plan goes for minion levels, not a caster mod', { skip }, async () => {
+  await init();
+  const { themeMods } = require('../src/main/weights');
+  const it = item('sceptre-omen-minion');
+  const theme = themeMods(pricing.prepare(it, null, () => true).filters.mods, it.itemClass);
+  assert.ok(theme.some((m) => /Puppet Master/.test(m)), `theme: ${theme.join(', ')}`);
+  assert.ok(theme.length <= 2, 'two mods: three narrow the builds down to a niche');
+  const p = await plan('sceptre-omen-minion');
+  assert.ok(p.goal.add.some((a) => /level of all minion skills/.test(a.text)), 'minion levels in the goal');
+  // «Minions deal #% increased Damage with Command Skills» is a Genesis Tree mod — not in the Exalted / Chaos pool.
+  assert.ok(!p.goal.add.some((a) => /command skills/.test(a.text)), 'no Genesis Tree mod');
+});

@@ -28,7 +28,8 @@ const SCENARIOS = [
   { name: 'staff-cold', class: 'Staves', theme: [] },
   { name: 'shield-armour-ele', class: 'Shields', theme: ['+42% of Armour also applies to Elemental Damage'] },
   { name: 'jewel-bow-attack', class: 'Jewels', theme: ['11% increased Attack Damage'] },
-  { name: 'gloves-es-fractured', class: 'Gloves', theme: ['+57 to maximum Energy Shield', '42% increased Energy Shield', '82% increased Energy Shield'] },
+  { name: 'gloves-es-fractured', class: 'Gloves', theme: ['+57 to maximum Energy Shield', '42% increased Energy Shield'] },
+  { name: 'sceptre-omen-minion', class: 'Sceptres', theme: ['Minions have 31% increased maximum Life', '+4 maximum stacks of Puppet Master'] },
 ];
 const UNIQUES = ['Heart of the Well'];
 const PRICE_TYPES = ['Currency', 'Ritual', 'Abyss', 'Essences', 'Runes', 'Verisium', 'Delirium', 'Breach', 'SoulCores'];

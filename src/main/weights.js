@@ -83,9 +83,9 @@ const isWeak = (template) => ci(WEAK).test(template);
 // (Dexterity on ES gloves is not an archer's sign) and are skipped. → up to n mod texts (first lines).
 const DEFENCE = /(increased (Energy Shield|Armour|Evasion Rating)|to maximum Energy Shield|to Armour|to Evasion Rating)/i;
 const ATTRIBUTE = /to (Strength|Dexterity|Intelligence|all Attributes)\b/i;
-function themeMods(mods, itemClass, n = 3) {
+function themeMods(mods, itemClass, n = 2) {
   const rank = (m) => (isKey(itemClass, m.template || m.text) ? 2 : 0) + (DEFENCE.test(m.text) ? 1 : 0);
-  return mods.filter((m) => m.statId && !['pseudo', 'implicit', 'rune', 'crafted', 'enchant'].includes(m.tag) && !m.option && !ATTRIBUTE.test(m.text))
+  return mods.filter((m) => m.statId && !['pseudo', 'implicit', 'rune', 'enchant'].includes(m.tag) && !m.option && !ATTRIBUTE.test(m.text))
     .sort((a, b) => rank(b) - rank(a) || (b.importance || 0) - (a.importance || 0)).slice(0, n).map((m) => m.text.split('\n')[0]);
 }
 

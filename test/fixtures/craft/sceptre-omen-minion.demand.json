@@ -1,0 +1,427 @@
+{
+ "league": "Forbidden Rites",
+ "class": "Sceptres",
+ "themed": [
+  "Minions have #% increased maximum Life",
+  "# maximum stacks of Puppet Master"
+ ],
+ "mods": [
+  {
+   "name": "# maximum stacks of Puppet Master",
+   "count": 222,
+   "pct": 100
+  },
+  {
+   "name": "Minions have #% increased maximum Life",
+   "count": 222,
+   "pct": 100
+  },
+  {
+   "name": "# to Level of all Minion Skills",
+   "count": 220,
+   "pct": 99.1
+  },
+  {
+   "name": "#% increased Spirit",
+   "count": 214,
+   "pct": 96.4
+  },
+  {
+   "name": "Allies in your Presence deal #% increased Damage",
+   "count": 195,
+   "pct": 87.8
+  },
+  {
+   "name": "# to maximum Mana",
+   "count": 157,
+   "pct": 70.7
+  },
+  {
+   "name": "Minions deal #% increased Damage with Command Skills",
+   "count": 156,
+   "pct": 70.3
+  },
+  {
+   "name": "#% reduced Mana Cost Efficiency of Command Skills",
+   "count": 88,
+   "pct": 39.6
+  },
+  {
+   "name": "Allies in your Presence deal # to # added Attack Lightning Damage",
+   "count": 42,
+   "pct": 18.9
+  },
+  {
+   "name": "#% Surpassing Chance to gain a Puppet Master stack whenever you use a Command Skill",
+   "count": 40,
+   "pct": 18
+  },
+  {
+   "name": "Allies in your Presence deal # to # added Attack Fire Damage",
+   "count": 34,
+   "pct": 15.3
+  },
+  {
+   "name": "Allies in your Presence deal # to # added Attack Cold Damage",
+   "count": 30,
+   "pct": 13.5
+  },
+  {
+   "name": "Allies in your Presence deal # to # added Attack Physical Damage",
+   "count": 27,
+   "pct": 12.2
+  },
+  {
+   "name": "# to Intelligence",
+   "count": 23,
+   "pct": 10.4
+  },
+  {
+   "name": "Allies in your Presence have #% increased Critical Damage Bonus",
+   "count": 22,
+   "pct": 9.9
+  },
+  {
+   "name": "Allies in your Presence Regenerate # Life per second",
+   "count": 19,
+   "pct": 8.6
+  },
+  {
+   "name": "#% increased Mana Regeneration Rate",
+   "count": 18,
+   "pct": 8.1
+  },
+  {
+   "name": "Allies in your Presence have #% increased Critical Hit Chance",
+   "count": 16,
+   "pct": 7.2
+  },
+  {
+   "name": "#% increased Presence Area of Effect",
+   "count": 14,
+   "pct": 6.3
+  },
+  {
+   "name": "Allies in your Presence have #% to all Elemental Resistances",
+   "count": 14,
+   "pct": 6.3
+  },
+  {
+   "name": "Allies in your Presence have #% increased Attack Speed",
+   "count": 12,
+   "pct": 5.4
+  },
+  {
+   "name": "#% reduced Attribute Requirements",
+   "count": 10,
+   "pct": 4.5
+  },
+  {
+   "name": "Allies in your Presence have #% increased Cast Speed",
+   "count": 8,
+   "pct": 3.6
+  },
+  {
+   "name": "#% increased Light Radius",
+   "count": 7,
+   "pct": 3.2
+  },
+  {
+   "name": "# to Accuracy Rating",
+   "count": 6,
+   "pct": 2.7
+  },
+  {
+   "name": "#% increased Cast Speed",
+   "count": 6,
+   "pct": 2.7
+  },
+  {
+   "name": "# to Strength",
+   "count": 5,
+   "pct": 2.3
+  },
+  {
+   "name": "# Suffix Modifier allowed",
+   "count": 4,
+   "pct": 1.8
+  },
+  {
+   "name": "Gain # Life per enemy killed",
+   "count": 4,
+   "pct": 1.8
+  },
+  {
+   "name": "# to Level of all Spell Skills",
+   "count": 3,
+   "pct": 1.4
+  },
+  {
+   "name": "#% increased Physical Damage",
+   "count": 3,
+   "pct": 1.4
+  },
+  {
+   "name": "#% increased Spell Damage",
+   "count": 3,
+   "pct": 1.4
+  },
+  {
+   "name": "Adds # to # Lightning Damage",
+   "count": 3,
+   "pct": 1.4
+  },
+  {
+   "name": "Gain #% of Damage as Extra Cold Damage",
+   "count": 3,
+   "pct": 1.4
+  },
+  {
+   "name": "#% increased Attack Speed",
+   "count": 2,
+   "pct": 0.9
+  },
+  {
+   "name": "#% increased Chaos Damage",
+   "count": 2,
+   "pct": 0.9
+  },
+  {
+   "name": "#% increased Fire Damage",
+   "count": 2,
+   "pct": 0.9
+  },
+  {
+   "name": "#% increased Spell Physical Damage",
+   "count": 2,
+   "pct": 0.9
+  },
+  {
+   "name": "#% to Critical Hit Chance",
+   "count": 2,
+   "pct": 0.9
+  },
+  {
+   "name": "Adds # to # Cold Damage",
+   "count": 2,
+   "pct": 0.9
+  },
+  {
+   "name": "Can have # additional Crafted Modifier",
+   "count": 2,
+   "pct": 0.9
+  },
+  {
+   "name": "Gain #% of Damage as Extra Fire Damage",
+   "count": 2,
+   "pct": 0.9
+  },
+  {
+   "name": "Gain #% of Elemental Damage as Extra Cold Damage",
+   "count": 2,
+   "pct": 0.9
+  },
+  {
+   "name": "# to Dexterity",
+   "count": 1,
+   "pct": 0.5
+  },
+  {
+   "name": "# to Level of all Cold Spell Skills",
+   "count": 1,
+   "pct": 0.5
+  },
+  {
+   "name": "# to Level of all Fire Spell Skills",
+   "count": 1,
+   "pct": 0.5
+  },
+  {
+   "name": "# to Level of all Lightning Spell Skills",
+   "count": 1,
+   "pct": 0.5
+  },
+  {
+   "name": "# to Level of all Melee Skills",
+   "count": 1,
+   "pct": 0.5
+  },
+  {
+   "name": "# to Level of all Physical Spell Skills",
+   "count": 1,
+   "pct": 0.5
+  },
+  {
+   "name": "# to Maximum Rage",
+   "count": 1,
+   "pct": 0.5
+  },
+  {
+   "name": "#% increased Armour, Evasion and Energy Shield while your Companion is in your Presence",
+   "count": 1,
+   "pct": 0.5
+  },
+  {
+   "name": "#% increased Critical Spell Damage Bonus",
+   "count": 1,
+   "pct": 0.5
+  },
+  {
+   "name": "#% increased Elemental Damage with Attacks",
+   "count": 1,
+   "pct": 0.5
+  },
+  {
+   "name": "#% increased Explicit Speed Modifier magnitudes",
+   "count": 1,
+   "pct": 0.5
+  },
+  {
+   "name": "#% increased effect of Socketed Augment Items",
+   "count": 1,
+   "pct": 0.5
+  },
+  {
+   "name": "#% less Mana Regeneration Rate",
+   "count": 1,
+   "pct": 0.5
+  },
+  {
+   "name": "#% to Block chance",
+   "count": 1,
+   "pct": 0.5
+  },
+  {
+   "name": "Allies in your Presence Regenerate #% of your Maximum Life per second",
+   "count": 1,
+   "pct": 0.5
+  },
+  {
+   "name": "Can roll Destruction modifiers",
+   "count": 1,
+   "pct": 0.5
+  },
+  {
+   "name": "Causes #% increased Stun Buildup",
+   "count": 1,
+   "pct": 0.5
+  },
+  {
+   "name": "Companions deal #% increased Damage",
+   "count": 1,
+   "pct": 0.5
+  },
+  {
+   "name": "Companions have #% increased Attack Speed",
+   "count": 1,
+   "pct": 0.5
+  },
+  {
+   "name": "Leeches #% of Physical Damage as Mana",
+   "count": 1,
+   "pct": 0.5
+  },
+  {
+   "name": "Mana Recovery from Regeneration is also applied to Runic Ward",
+   "count": 1,
+   "pct": 0.5
+  },
+  {
+   "name": "Minions deal #% increased Damage",
+   "count": 1,
+   "pct": 0.5
+  },
+  {
+   "name": "Minions in your Presence have Onslaught while you are on Low Runic Ward",
+   "count": 1,
+   "pct": 0.5
+  },
+  {
+   "name": "Recover #% of maximum Runic Ward when one of your Reviving Minions is Killed",
+   "count": 1,
+   "pct": 0.5
+  }
+ ],
+ "bases": [
+  {
+   "name": "Rattling Sceptre",
+   "count": 131,
+   "pct": 59
+  },
+  {
+   "name": "Shrine Sceptre",
+   "count": 84,
+   "pct": 37.8
+  },
+  {
+   "name": "Omen Sceptre",
+   "count": 18,
+   "pct": 8.1
+  },
+  {
+   "name": "Stoic Sceptre",
+   "count": 17,
+   "pct": 7.7
+  },
+  {
+   "name": "Wrath Sceptre",
+   "count": 10,
+   "pct": 4.5
+  },
+  {
+   "name": "Chiming Staff",
+   "count": 5,
+   "pct": 2.3
+  },
+  {
+   "name": "Frenzied Talisman",
+   "count": 2,
+   "pct": 0.9
+  },
+  {
+   "name": "Changeling Talisman",
+   "count": 1,
+   "pct": 0.5
+  },
+  {
+   "name": "Dueling Wand",
+   "count": 1,
+   "pct": 0.5
+  },
+  {
+   "name": "Familial Talisman",
+   "count": 1,
+   "pct": 0.5
+  },
+  {
+   "name": "Fury Talisman",
+   "count": 1,
+   "pct": 0.5
+  },
+  {
+   "name": "Howling Talisman",
+   "count": 1,
+   "pct": 0.5
+  },
+  {
+   "name": "Roaring Staff",
+   "count": 1,
+   "pct": 0.5
+  },
+  {
+   "name": "Siphoning Wand",
+   "count": 1,
+   "pct": 0.5
+  },
+  {
+   "name": "Soaring Spear",
+   "count": 1,
+   "pct": 0.5
+  },
+  {
+   "name": "Spiny Talisman",
+   "count": 1,
+   "pct": 0.5
+  }
+ ]
+}

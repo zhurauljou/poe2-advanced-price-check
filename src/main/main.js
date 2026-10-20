@@ -328,7 +328,7 @@ async function priceCheck(text, refresh = false, historyId = null) {
   const entry = { name: item.name, baseType: item.baseType, rarity: item.rarity, league };
   lastHistoryId = historyId || history.add({ ...entry, text: rawText });
   const prev = history.previous(entry, lastHistoryId);
-  send('item', { ...prepared, league, leagues, historyId: lastHistoryId, offline: api.offline.host, previous: prev && { est: prev.est, at: prev.estAt || prev.at }, priceCurrency: settings.get().priceCurrency || 'any', hotkey: hotkeyLabel(), wide: settings.get().wideWindow === 'on' });
+  send('item', { ...prepared, theme: lastThemeMods, league, leagues, historyId: lastHistoryId, offline: api.offline.host, previous: prev && { est: prev.est, at: prev.estAt || prev.at }, priceCurrency: settings.get().priceCurrency || 'any', hotkey: hotkeyLabel(), wide: settings.get().wideWindow === 'on' });
   if (!refresh || !win.isVisible()) show();
   if (unknownToTrade(item)) refreshTradeData(rawText).catch((e) => log('trade data refresh', e.message));
 }
@@ -637,7 +637,7 @@ function handle(channel, allowed, fn) {
   });
 }
 const PRICE_CURRENCIES = ['any', 'divine', 'chaos', 'exalted'];
-const DEMAND_LEVELS = [80, 90, 95];
+const DEMAND_LEVELS = [80, 90, 95, 98];
 
 app.whenReady().then(singleInstance).then((ok) => {
   if (!ok) { app.quit(); return; }

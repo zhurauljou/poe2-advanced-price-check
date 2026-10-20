@@ -52,9 +52,10 @@ async function loadDemand() {
   lastDemand = null;
   box.innerHTML = `<div class="sect"><span>${t('Demand')}</span></div><div class="muted center">${t('Loading from poe.ninja…')}</div>`;
   try {
-    // By default — among builds wearing such an item with your item's key mods (the same theme as in "Popular builds").
+    // By default — among builds wearing such an item with the mods that define its archetype: the same theme the craft
+    // advice uses (main.js themeMods), so both tabs talk about the same builds; older payloads — the key filter mods.
     const q = buildsQuery();
-    const withMods = demandAll || !q ? [] : (q.mods || []).slice(0, 2);
+    const withMods = demandAll || !q ? [] : (state.theme && state.theme.length ? state.theme : (q.mods || []).slice(0, 2));
     const d = await window.pc.demand({ itemClass: item.itemClass, rarity: 'Rare', withMods });
     if (seq !== demandSeq) return;
     lastDemand = d;
@@ -131,10 +132,11 @@ function buildRows(rows) {
       <span class="bbar"><i data-w="${Math.min(100, r.pct)}%"></i></span></div>`).join('');
 }
 
-// Whose demand we count: characters 80+ (everyone poe.ninja sees), 90+ or 95+ — the higher, the more "premium" the mods.
+// Whose demand we count: characters 80+ (everyone poe.ninja sees), 90+, 95+ or 98+ (the high end: ~18k characters) — the higher,
+// the more "premium" the mods.
 let demandLevel = 90;
 window.pc.demandLevel().then((l) => { demandLevel = l; }).catch(() => {});
-const levelSeg = () => `<div class="lvl-row"><span class="muted small">${t('Characters')}</span><div class="seg lvl" title="${t('Whose gear counts: higher level = players who pay for exact modifiers')}">${[80, 90, 95].map((l) =>
+const levelSeg = () => `<div class="lvl-row"><span class="muted small">${t('Characters')}</span><div class="seg lvl" title="${t('Whose gear counts: higher level = players who pay for exact modifiers')}">${[80, 90, 95, 98].map((l) =>
   `<button data-lvl="${l}"${l === demandLevel ? ' class="on"' : ''}>${l}+</button>`).join('')}</div></div>`;
 
 function renderBuilds(b) {
