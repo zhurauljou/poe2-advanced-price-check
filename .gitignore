@@ -14,3 +14,4 @@ Collect weights.bat
 data/drop-samples/
 scripts/collect-drops.js
 scripts/compare-weights.js
+Collect drops.bat
