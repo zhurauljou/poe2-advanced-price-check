@@ -73,9 +73,15 @@ function weight(itemClass, template, tier, demandPct) {
 }
 
 // For RePoE templates (crafting): case-insensitive.
+// Compiled once per item class: crafting checks every candidate line against them.
 const ci = (re) => new RegExp(re.source, 'i');
-const isKey = (itemClass, template) => [...ANY_KEY, ...slotKey(itemClass)].some((re) => ci(re).test(template));
-const isWeak = (template) => ci(WEAK).test(template);
+const keyCi = new Map(); // item class → case-insensitive key patterns
+const WEAK_CI = ci(WEAK);
+function isKey(itemClass, template) {
+  if (!keyCi.has(itemClass)) keyCi.set(itemClass, [...ANY_KEY, ...slotKey(itemClass)].map(ci));
+  return keyCi.get(itemClass).some((re) => re.test(template));
+}
+const isWeak = (template) => WEAK_CI.test(template);
 
 // Item theme (archetype) for the demand behind the craft advice: the mods that say which builds wear such an item.
 // Key mods first (skill levels, Spirit…), then local defences (ES / armour / evasion — they decide caster vs attacker,

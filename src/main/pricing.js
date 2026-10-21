@@ -635,6 +635,16 @@ async function search(league, item, filters, relax = false) {
   const ids = (s.result || []).slice(0, 10);
   let listings = [];
   let listingsError = null; // search succeeded but listings didn't download (rate limit) — show how many were found, and the link
+  // Second price — "any roll of the same tier": how much the market values your particular rolls. Not needed if rolls
+  // were already lowered by auto-relax or there's nothing to lower. Runs alongside the listings fetch (its search uses
+  // another rate bucket). An error (rate limit) — simply go without it.
+  let floorP = null;
+  const loose = JSON.parse(JSON.stringify(f));
+  const tight = loose.mods.filter((m) => m.enabled && m.range && m.min != null && m.min > Math.ceil(m.range.lo));
+  if (!f.rollsLoosened && tight.length) {
+    tight.forEach((m) => { m.min = Math.ceil(m.range.lo); });
+    floorP = quickPrices(L, item, loose).then((v) => ({ v }), (e) => ({ e }));
+  }
   let fr = null;
   if (ids.length) {
     try {
@@ -666,19 +676,13 @@ async function search(league, item, filters, relax = false) {
       };
     });
   }
-  // Second price — "any roll of the same tier": how much the market values your particular rolls. Not needed if rolls
-  // were already lowered by auto-relax or there's nothing to lower. An error (rate limit) — simply go without it.
   let floor = null;
-  const loose = JSON.parse(JSON.stringify(f));
-  const tight = loose.mods.filter((m) => m.enabled && m.range && m.min != null && m.min > Math.ceil(m.range.lo));
-  if (!f.rollsLoosened && tight.length && !listingsError) {
-    tight.forEach((m) => { m.min = Math.ceil(m.range.lo); });
-    try {
-      floor = await quickPrices(L, item, loose);
-    } catch (e) {
-      if (e.message.startsWith('⊘')) throw e;
-      log('floor price skipped:', e.message);
-    }
+  const fl = floorP && await floorP;
+  if (fl && fl.e) {
+    if (fl.e.message.startsWith('⊘')) throw fl.e;
+    log('floor price skipped:', fl.e.message);
+  } else if (fl && !listingsError) {
+    floor = fl.v;
   }
   // Listings in a currency with no rate (no poe.ninja prices for the league) aren't included in the estimate — the window says so.
   const unpriced = listings.filter((l) => l.amount != null && l.divine == null).length;

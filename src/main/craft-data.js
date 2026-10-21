@@ -25,6 +25,8 @@ let loading = null;
 function load(cached) {
   if (data && Date.now() - loadedAt < 24 * 3600e3) return Promise.resolve(data);
   if (!loading) loading = loadData(cached).then((d) => { reset(); data = d; loadedAt = Date.now(); return d; }).finally(() => { loading = null; });
+  // The daily reread: keep answering from the current pool while the new one loads (a Craft request mustn't wait for it).
+  if (data) { loading.catch(() => {}); return Promise.resolve(data); }
   return loading;
 }
 // Forget the loaded pool and everything computed from it (new data after a patch): computed results live in other modules —

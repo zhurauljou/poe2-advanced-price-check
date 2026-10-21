@@ -467,7 +467,7 @@ function verdictHtml(plan) {
       : `<div class="verdict">${esc(why)}${hitNote}</div>`;
   } else if (goalValue != null && now != null) {
     // Whole-plan simulation: outcome distribution and the chance crafting beats selling now (src/shared/plancost.js).
-    const sim = planner.simulate(plan, { keep: craftGoal ? craftGoal.keep.length : 0 });
+    const sim = verdictSim(plan, goalValue, now);
     const gain = goalValue - now - known;
     const good = sim ? sim.profit >= 0.5 : gain > Math.max(now * 0.15, known * 0.5);
     const simNote = sim ? `<small class="sim">${hlNums(t('Simulated {n} crafts: the item ends up ≈ {p50} (10–90%: {p10}–{p90}), currency ≈ {spent} on average; better than selling now in {profit}%, the full goal in {full}%',
@@ -601,6 +601,19 @@ function planVariants(g) {
     else v.value = undefined;
   }
   return out;
+}
+
+// The verdict's 2000-run simulation, redone only when its inputs change: the verdict is redrawn on every price that
+// arrives, on variant clicks and on language change — and a fresh random run would make the numbers jitter each time.
+let simMemo = null;
+function verdictSim(plan, goal, est) {
+  const keep = craftGoal ? craftGoal.keep.length : 0;
+  let key = null;
+  try { key = JSON.stringify([plan, goal, est, keep]); } catch { /* not plain data — just don't memoize */ }
+  if (!simMemo || key == null || simMemo.key !== key || simMemo.prices !== craftPrices) {
+    simMemo = { key, prices: craftPrices, sim: planner.simulate(plan, { keep }) };
+  }
+  return simMemo.sim;
 }
 
 const VARIANT_NAME = { cheap: 'Cheap', balanced: 'Balanced', ideal: 'Ideal' };

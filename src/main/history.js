@@ -17,9 +17,17 @@ function load() {
   }
   return list;
 }
-function save() {
+// Written a moment later, not per change: a check adds a record and then its price — one write instead of two, off the hotkey.
+let saveTimer = null;
+function flush() {
+  clearTimeout(saveTimer);
+  saveTimer = null;
   try { writeFileAtomic(file(), JSON.stringify(list)); } catch {}
 }
+function save() {
+  if (!saveTimer) saveTimer = setTimeout(flush, 2000);
+}
+app.on('will-quit', () => { if (saveTimer) flush(); });
 
 // entry: { text, name, baseType, rarity, league } → record id.
 function add(entry) {

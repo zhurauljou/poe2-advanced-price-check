@@ -10,7 +10,7 @@ const pricing = require('./pricing');
 const { log } = require('./log');
 const winapi = require('./winapi');
 const updater = require('./updater');
-const { popularBuilds, categoryDemand } = require('./ninjaBuilds');
+const { popularBuilds, categoryDemand, prewarm: prewarmDemand } = require('./ninjaBuilds');
 const craft = require('./craft');
 const { themeMods } = require('./weights');
 const history = require('./history');
@@ -137,6 +137,8 @@ let positioning = false;
 let anchorY = 0; // window top we want to keep; move up only if the window doesn't fit vertically
 
 function place(bounds) {
+  const b = win.getBounds();
+  if (b.x === bounds.x && b.y === bounds.y && b.width === bounds.width && b.height === bounds.height) return;
   positioning = true;
   win.setBounds(bounds);
   setTimeout(() => { positioning = false; }, 150);
@@ -284,7 +286,7 @@ async function priceCheck(text, refresh = false, historyId = null) {
   }
   api.newGeneration(); // new item — not-yet-sent requests for the previous one are cancelled
   // Text of the last item — for debugging parser errors.
-  try { require('fs').writeFileSync(path.join(app.getPath('userData'), 'last-item.txt'), text); } catch {}
+  require('fs').promises.writeFile(path.join(app.getPath('userData'), 'last-item.txt'), text).catch(() => {});
   try {
     await ensureReady();
   } catch (e) {
@@ -430,9 +432,11 @@ async function refreshData(quiet = false) {
 }
 
 async function initData() {
-  await refreshLeagues();
-  await pricing.init();
-  api.loadNinja(settings.get().league).catch(() => {});
+  await Promise.all([refreshLeagues(), pricing.init()]); // independent: one round trip instead of two on a cold cache
+  const league = settings.get().league;
+  api.loadNinja(league).catch(() => {});
+  // Demand for the first hotkey: without it the window waits for poe.ninja (or shows the item without demand).
+  prewarmDemand(league, demandLevel(), api.fetchBuffer).catch((e) => log('demand prewarm', e.message));
   craft.load(api.cached).catch((e) => log('craft data', e.message)); // mod pool — also for "missing key mod"
 }
 

@@ -341,6 +341,14 @@ window.pc.onUiLang((lang) => {
 });
 
 // The window's CSP forbids inline styles (style="…"), so bar and placeholder widths are set via data-w after insertion.
-new MutationObserver(() => {
-  document.querySelectorAll('[data-w]').forEach((el) => { el.style.width = el.dataset.w; el.removeAttribute('data-w'); });
+// Only the inserted elements are scanned: the countdown's text nodes (every 500 ms) and the rest of the page are skipped.
+const applyW = (el) => { el.style.width = el.dataset.w; el.removeAttribute('data-w'); };
+new MutationObserver((muts) => {
+  for (const m of muts) {
+    for (const n of m.addedNodes) {
+      if (n.nodeType !== 1) continue;
+      if (n.dataset.w) applyW(n);
+      n.querySelectorAll('[data-w]').forEach(applyW);
+    }
+  }
 }).observe(document.body, { childList: true, subtree: true });

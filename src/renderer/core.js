@@ -140,6 +140,7 @@ function updateSbar(show) {
   const b = document.body;
   const h = b.clientHeight, sh = b.scrollHeight;
   sbar.hidden = sh <= h + 1;
+  b.classList.toggle('scrolls', !sbar.hidden);
   if (sbar.hidden) return;
   const thumb = Math.max(28, (h * h) / sh);
   sbar.style.height = `${thumb}px`;
@@ -150,9 +151,16 @@ function updateSbar(show) {
     sbarTimer = setTimeout(() => sbar.classList.remove('on'), 900);
   }
 }
-document.body.addEventListener('scroll', () => updateSbar(true), { passive: true });
+// Scroll and mousemove fire many times per frame: measure and move the thumb once per frame.
+let sbarQueued = false;
+function sbarSoon() {
+  if (sbarQueued) return;
+  sbarQueued = true;
+  requestAnimationFrame(() => { sbarQueued = false; updateSbar(true); });
+}
+document.body.addEventListener('scroll', sbarSoon, { passive: true });
 window.addEventListener('resize', () => updateSbar(false));
-document.addEventListener('mousemove', (e) => { if (e.clientX > window.innerWidth - 16) updateSbar(true); }, { passive: true });
+document.addEventListener('mousemove', (e) => { if (e.clientX > window.innerWidth - 16) sbarSoon(); }, { passive: true });
 sbar.addEventListener('pointerdown', (e) => {
   const b = document.body;
   const startY = e.clientY, startTop = b.scrollTop;
@@ -166,11 +174,16 @@ sbar.addEventListener('pointerdown', (e) => {
   e.preventDefault();
 });
 
+let fitQueued = false;
 function fit() {
   // Content height (header + main + footer), not body: body is stretched over the whole window for scrolling, and by it
   // the window would never shrink.
   // An open league list sits over the content (position: absolute) and isn't in the sum: the window is no shorter than its bottom.
+  // One measurement and one resize per frame: a hotkey press calls fit() from a dozen places.
+  if (fitQueued) return;
+  fitQueued = true;
   requestAnimationFrame(async () => {
+    fitQueued = false;
     // Header and footer height — for the pinned tabs and the "Search" button (position: sticky).
     document.body.style.setProperty('--head-h', `${document.querySelector('.head').offsetHeight}px`);
     document.body.style.setProperty('--foot-h', `${document.querySelector('footer').offsetHeight}px`);

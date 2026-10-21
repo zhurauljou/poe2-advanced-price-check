@@ -106,27 +106,48 @@ function decodePropsPb(b) {
 }
 
 // ---------- cache ----------
-const dictCache = new Map(); // hash → values | props; dictionaries are immutable (immutable, max-age one year)
+// Dictionaries are immutable (max-age one year) and keyed by content hash, but every snapshot brings new hashes:
+// keep the most recently used ones only, else a tray app running for weeks piles up MBs of stale dictionaries.
+const DICT_MAX = 60;
+const dictCache = new Map(); // hash → promise of values | props (oldest first)
 const searchCache = new Map(); // url → { at, data }
 let indexCache = null;
+const pending = new Map(); // key → request in flight: the hotkey and the Demand/Builds/Craft tabs ask for the same URLs at once
 
-async function getDict(hash, fetchBuffer, props) {
-  if (!hash) return props ? {} : [];
-  if (!dictCache.has(hash)) {
-    const b = Buffer.from(await fetchBuffer(`${NINJA}/builds/dictionary/${hash}`));
-    const magic = b.toString('latin1', 0, 4);
-    const v = props ? (magic === 'NOVL' ? decodeNovl(b) : decodePropsPb(b))
-      : (magic === 'NDIC' ? decodeNdic(b) : decodeDictPb(b));
-    dictCache.set(hash, v);
+function once(key, load) {
+  if (!pending.has(key)) pending.set(key, load().finally(() => pending.delete(key)));
+  return pending.get(key);
+}
+
+function getDict(hash, fetchBuffer, props) {
+  if (!hash) return Promise.resolve(props ? {} : []);
+  let p = dictCache.get(hash);
+  if (p) {
+    dictCache.delete(hash); // refresh its place in the LRU order
+  } else {
+    p = fetchBuffer(`${NINJA}/builds/dictionary/${hash}`).then((buf) => {
+      const b = Buffer.from(buf);
+      const magic = b.toString('latin1', 0, 4);
+      return props ? (magic === 'NOVL' ? decodeNovl(b) : decodePropsPb(b))
+        : (magic === 'NDIC' ? decodeNdic(b) : decodeDictPb(b));
+    });
+    p.catch(() => { if (dictCache.get(hash) === p) dictCache.delete(hash); }); // a failed download isn't cached
   }
-  return dictCache.get(hash);
+  dictCache.set(hash, p);
+  if (dictCache.size > DICT_MAX) dictCache.delete(dictCache.keys().next().value);
+  return p;
+}
+
+function loadIndex(fetchBuffer) {
+  return once('index', async () => {
+    const d = JSON.parse(Buffer.from(await fetchBuffer(`${NINJA}/data/index-state`)).toString('utf8'));
+    indexCache = { at: Date.now(), list: d.snapshotVersions || [] };
+  });
 }
 
 async function snapshot(league, fetchBuffer) {
-  if (!indexCache || Date.now() - indexCache.at > INDEX_TTL) {
-    const d = JSON.parse(Buffer.from(await fetchBuffer(`${NINJA}/data/index-state`)).toString('utf8'));
-    indexCache = { at: Date.now(), list: d.snapshotVersions || [] };
-  }
+  if (!indexCache) await loadIndex(fetchBuffer);
+  else if (Date.now() - indexCache.at > INDEX_TTL) loadIndex(fetchBuffer).catch(() => {}); // stale — answer now, refresh in the background
   const list = indexCache.list;
   if (!list.length) throw new Error('poe.ninja: no build snapshots');
   if (!league) return list[0];
@@ -143,14 +164,19 @@ async function search(snap, params, timeMachine, fetchBuffer) {
   q.append('overview', snap.snapshotName);
   if (timeMachine) q.append('timemachine', timeMachine);
   const url = `${NINJA}/builds/${encodeURIComponent(snap.version)}/search?${q}`;
+  // Expired — still answer at once and refresh in the background: the hotkey waits for demand before showing the window.
   const hit = searchCache.get(url);
-  if (hit && Date.now() - hit.at < SEARCH_TTL) return hit.data;
+  const load = () => once(url, () => loadSearch(url, fetchBuffer));
+  if (!hit) return load();
+  if (Date.now() - hit.at >= SEARCH_TTL) load().catch(() => {});
+  return hit.data;
+}
 
+async function loadSearch(url, fetchBuffer) {
   const res = decodeSearch(Buffer.from(await fetchBuffer(url)));
   const values = {}, props = {};
   await Promise.all(res.dictionaries.map(async (d) => {
-    values[d.id] = await getDict(d.hash, fetchBuffer, false);
-    props[d.id] = await getDict(d.propertiesHash, fetchBuffer, true);
+    [values[d.id], props[d.id]] = await Promise.all([getDict(d.hash, fetchBuffer, false), getDict(d.propertiesHash, fetchBuffer, true)]);
   }));
   const dims = {};
   for (const d of res.dimensions) {
@@ -346,4 +372,11 @@ function levelParams(minLevel) {
   return minLevel ? [['min-level', String(minLevel)]] : [];
 }
 
-module.exports = { popularBuilds, categoryDemand };
+// Fetch the snapshot list and the unfiltered search with its dictionaries ahead of the first hotkey:
+// every categoryDemand starts with them.
+async function prewarm(league, minLevel, fetchBuffer) {
+  const snap = await snapshot(league, fetchBuffer);
+  await search(snap, levelParams(minLevel), undefined, fetchBuffer);
+}
+
+module.exports = { popularBuilds, categoryDemand, prewarm };

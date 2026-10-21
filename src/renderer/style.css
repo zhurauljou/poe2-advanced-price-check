@@ -422,9 +422,10 @@ body.upd-page { height: auto; }
 .tt .row { display: flex; flex-wrap: wrap; justify-content: center; align-items: center; gap: 0 14px; }
 
 /* Placeholders while searching: grey pulsing bars in place of the price and listings — the window doesn't jump in height. */
-.sk { display: inline-block; height: 12px; border-radius: 2px; background: linear-gradient(90deg, #1a1f27, #252b35, #1a1f27);
-      background-size: 200% 100%; animation: sk 1.3s ease-in-out infinite; vertical-align: middle; }
-@keyframes sk { from { background-position: 100% 0; } to { background-position: -100% 0; } }
+/* Opacity pulse, not a moving gradient: opacity animates on the compositor, background-position repaints every frame. */
+.sk { display: inline-block; height: 12px; border-radius: 2px; background: #222830;
+      animation: sk .65s ease-in-out infinite alternate; vertical-align: middle; }
+@keyframes sk { from { opacity: .55; } to { opacity: 1; } }
 .hero .sk.big { width: 120px; height: 30px; margin: 6px 0 4px; }
 .hero .th .sk.big { display: block; margin: 4px 0; }
 .hero .th-top > .sk { margin-top: 4px; }
@@ -537,6 +538,10 @@ footer { bottom: 0; background: none; }
 footer::before { bottom: 0; top: -12px; -webkit-backdrop-filter: blur(16px); backdrop-filter: blur(16px);
   background: linear-gradient(rgba(var(--shade), 0) 0%, rgba(var(--shade), .7) 25%, rgba(var(--shade), .97) 55%);
   -webkit-mask-image: linear-gradient(transparent 0%, #000 35%); mask-image: linear-gradient(transparent 0%, #000 35%); }
+/* Nothing scrolls under the header and footer — skip the blur: every backdrop-filter is re-rendered with each repaint,
+   competing with the game for the GPU (body.scrolls — set in updateSbar). */
+body:not(.scrolls) .head::before, body:not(.scrolls) .head::after, body:not(.scrolls) footer::before {
+  -webkit-backdrop-filter: none; backdrop-filter: none; }
 /* Craft options by price gain */
 .cprice-all { display: block; margin: 2px 0 4px auto; font-size: 13.5px; }
 .cpr b { font-size: 13px; }

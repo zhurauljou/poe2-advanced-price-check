@@ -64,7 +64,7 @@ function renderResults(r) {
   }));
   box.querySelectorAll('.lot').forEach((row) => {
     row.addEventListener('mouseenter', () => showCompare(r.listings[+row.dataset.i], row));
-    row.addEventListener('mouseleave', () => (pinnedLot && pinnedLot.row.isConnected ? showCompare(pinnedLot.l, pinnedLot.row) : hideCompare()));
+    row.addEventListener('mouseleave', () => leaveLot());
   });
 }
 
@@ -183,6 +183,7 @@ function compareClass(theirs, ours) {
 function showCompare(l, row) {
   const tip = l.tip;
   if (!tip) return;
+  clearTimeout(leaveTimer);
   const { item } = state;
   const { classify, missing: miss, key, ours, order } = compareModel(tip);
   const mark = { better: '▲', worse: '▼', extra: '+', same: '', diff: '±' };
@@ -229,8 +230,15 @@ function showCompare(l, row) {
 }
 
 let pinnedLot = null; // { l, row }: the pinned competitor card
+let leaveTimer = null;
 function hideCompare() {
+  clearTimeout(leaveTimer);
   window.pc.compareHide();
+}
+// Left a row: wait a moment before hiding — moving to the next row would otherwise hide and re-show the side window per row.
+function leaveLot() {
+  clearTimeout(leaveTimer);
+  leaveTimer = setTimeout(() => (pinnedLot && pinnedLot.row.isConnected ? showCompare(pinnedLot.l, pinnedLot.row) : hideCompare()), 120);
 }
 
 // Filters changed after the search: the Search button is highlighted, the result on screen no longer matches them.

@@ -9,12 +9,16 @@ function file() {
   return path.join(app.getPath('userData'), 'app.log');
 }
 
+let size = null; // file size, read once — not a stat on every line
+
 function log(...args) {
   const line = `${new Date().toISOString()} ${args.map((a) => (a instanceof Error ? a.stack : typeof a === 'string' ? a : JSON.stringify(a))).join(' ')}\n`;
   try {
     const f = file();
-    if (fs.existsSync(f) && fs.statSync(f).size > MAX) fs.renameSync(f, f + '.old');
+    if (size == null) { try { size = fs.statSync(f).size; } catch { size = 0; } }
+    if (size > MAX) { fs.renameSync(f, f + '.old'); size = 0; }
     fs.appendFileSync(f, line);
+    size += Buffer.byteLength(line);
   } catch {}
 }
 

@@ -182,7 +182,7 @@ const offline = { host: null, at: 0 };
 async function cached(name, url, maxAgeH = 24) {
   const f = cacheFile(name);
   try {
-    if (Date.now() - fs.statSync(f).mtimeMs < maxAgeH * 3600e3) return JSON.parse(fs.readFileSync(f, 'utf8'));
+    if (Date.now() - (await fs.promises.stat(f)).mtimeMs < maxAgeH * 3600e3) return JSON.parse(await fs.promises.readFile(f, 'utf8'));
   } catch {}
   try {
     const data = await getJson(url);
