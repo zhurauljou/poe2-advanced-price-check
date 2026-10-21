@@ -45,6 +45,8 @@
       "!data/*.log",
       "!data/weights-store/**",
       "!data/patch-baseline.json",
+      "!data/drop-samples/**",
+      "!data/crafting-methods-research.json",
       "!assets/icon.ico",
       "!node_modules/uiohook-napi/{libuiohook,src}/**",
       "!node_modules/uiohook-napi/prebuilds/{darwin-*,linux-*,win32-arm64}/**",
