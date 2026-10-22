@@ -19,5 +19,4 @@ scripts/dashboard.js
 scripts/dashboard-server.js
 scripts/dashboard.html
 scripts/build-exalt-weights.js
-scripts/exalt-fit.js
 scripts/mod-match.js

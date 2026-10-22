@@ -80,6 +80,16 @@ test('minion sceptre: goal is minion levels, weak desecrated removed (Annulment 
   assert.ok(minion && minion.c.k === 'desecrate', 'minion levels via Desecrate');
 });
 
+test('minion sceptre: +# minion levels aim at T1 (+4) only; weighted tiers make it rare, Greater / Perfect cut the low ones', { skip }, async () => {
+  const p = await plan('sceptre-minion');
+  const s = p.steps.flatMap((x) => (x.act === 'add2' ? x.steps : [x])).find((x) => x.act === 'add' && /level of all minion skills/.test(x.mod));
+  assert.ok(s, 'the step exists');
+  assert.equal(s.target, 'T1', 'only +4 is the goal');
+  const { base, greater, perfect } = s.exalt;
+  assert.ok(base.chance < 1 / 100, `a plain Exalted is a long shot: 1 in ${Math.round(1 / base.chance)}`);
+  assert.ok(base.chance < greater.chance && greater.chance < perfect.chance, 'cutting low tiers helps, step by step');
+});
+
 test('Tiara: Whittling is not offered — it would remove the +2 to minions (lowest level)', { skip }, async () => {
   const p = await plan('tiara-minion');
   const rm = p.steps.find((s) => s.act === 'remove' && s.mods);

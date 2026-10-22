@@ -32,7 +32,7 @@
   }
 
   // Add a mod: try Exalted / Greater / Perfect (with and without a side omen) and take the cheapest on average.
-  // Chance — hitting the wanted family at T1–T2; a miss is removed with Annulment. rolls = 2 — with Omen of Greater Exaltation
+  // Chance — hitting the wanted family in a goal tier (src/main/tiers.js); a miss is removed with Annulment. rolls = 2 — with Omen of Greater Exaltation
   // (then s2 is the pair's second mod). Chance unknown (valuable mod) — pick by guess (all families equally likely), no price shown.
   const M = typeof module !== 'undefined' && module.exports ? require('./methods') : root.CraftMethods;
   const EXALT_NAME = Object.fromEntries(M.tiers('exalt').map(([n], i) => [['base', 'greater', 'perfect'][i], n]));

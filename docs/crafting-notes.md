@@ -242,6 +242,30 @@ Combining: up to three omens can be active at once (stated for Waystone omens in
 - For a fractured item: highlight that the side with the fractured mod makes side omens easier (Annul 1/(N-1)).
 - Step order in `planGoal`: essence → desecrate (if there is room) → Exalts → Divine → quality/sockets → (Vaal).
 
+### 6.1 Tier-aware odds (plan of 2026-10-23)
+
+Our exalt samples and Craft of Exile agree (16 of 16 families checked, 0.5.5, **H**): a family's lower tiers weigh about 1000
+each and its weight is their sum; the top tiers of damage, crit, attack / cast speed, Spirit and skill levels are cut in
+round steps (physical % T1 = 25, spell damage T1 = 50, crit T1 = 125, attack speed T1 = 100 against 1000); defences,
+life, mana, resistances and attributes have equal tiers. Hence «two best tiers, all equal» overstated the odds of the
+valuable top tiers several times over.
+
+1. **Tier weights and the goal tier — done (0.3.175).** `data/exalt-weights.json` `tiers`: per family, weight by mod level
+   (`scripts/exalt-fit.js` `fitLevelWeights`: the item level of every item, top tier never heavier than a lower one).
+   The goal is the tiers worth ≥ 85% of the best allowed roll (`src/main/tiers.js`): +4 minion levels → T1 only, life →
+   T1–T3. Exalted / Greater / Perfect and the Desecrate bones weigh tiers by the profile — cutting low tiers removes
+   most of a falling family's weight too, so Greater helps a T1 goal only about 2× (minion sceptre: +4 at 1 in ~350 with
+   a plain Exalted, ~150 Greater, ~95 Perfect). Tests: synthetic samples recover known weights (`test/tiers.test.js`);
+   the Craft of Exile comparison is a manual audit (dashboard «Weight» column), not a test.
+2. **Choose the method by the goal — open.** A miss «right family, wrong tier» is removed like any other; Desecrate «best
+   of 3 / 6» counts success only for a goal tier; Ancient against Preserved; «key mod, weak tier» priced as the cost to
+   reach the goal.
+3. **Price and sorting — open.** The goal price and the verdict at the goal tier; «Could become» sorted by the gain of
+   one attempt (demand × chance, then price gain × chance − attempt cost).
+
+Not covered: desecrated mod weights (unknown — average, flagged; needs reveal samples), the element of wand / staff bases
+(too few items per element).
+
 ## 7. Sources
 - [S1] Official 0.5.0 patch notes (Return of the Ancients / Runes of Aldur), PoE forum, ~21–26.05.2026 — https://www.pathofexile.com/forum/view-thread/3932540
 - [S2] The same thread, item/currency changes section (both parts) — https://www.pathofexile.com/forum/view-thread/3932540

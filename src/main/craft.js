@@ -12,6 +12,7 @@ const oddsOf = (p) => (p >= 0.5 ? `~${Math.round(Math.min(1, p) * 100)}%` : t('1
 
 const { essenceFor, perfectFor } = require('./essences');
 const { isKey, isWeak, tierFactor } = require('./weights');
+const { weigher, sumW, targetLevels, targetLabel } = require('./tiers');
 const methods = require('../shared/methods');
 const { t } = require('../shared/i18n');
 
@@ -328,6 +329,7 @@ async function advise(item, demandMods, cached) {
   }
   let nOf = null; // family frequency from collected stats (if any)
   const E = exaltWeights();
+  const tierW = (type) => weigher(E && E.tiers && E.tiers[type]); // a family's tier weights (src/main/tiers.js)
   const ec = E && E.classes[item.itemClass];
   const W = ec ? null : weights();
   const wc = ec ? null : classWeights(W, item.itemClass, base, d);
@@ -420,15 +422,21 @@ async function advise(item, demandMods, cached) {
     const lv = sidePool[c.side];
     const mineLv = lv.get(c.type);
     if (!mineLv) continue;
-    const top = [...mineLv].sort((a, b) => b - a).slice(0, 2).pop();
-    // Chance that the mod (among normal ones with level ≥ L plus "extra" foreign families at average weight) is this family in T1–T2.
-    // The min. level (Greater/Perfect, Ancient bone) cuts off low tiers, but a family with no tiers above the threshold
-    // still rolls at its best tier (docs/crafting-tricks.md §0) — families do not vanish from the pool.
+    // The goal: the tiers worth having (+4 minion levels, not +3 — src/main/tiers.js); without values — the two best.
+    const goal = targetLevels(c.ladder, ilvl);
+    const target = new Set(goal.length ? goal : [...mineLv].sort((a, b) => b - a).slice(0, 2));
+    c.targetLevels = [...target];
+    c.target = targetLabel(c.ladder, c.targetLevels);
+    // Chance that the mod (among normal ones with level ≥ L plus "extra" foreign families at average weight) is this family
+    // in a goal tier. Tiers are weighed by the family's profile (top tiers of damage, speed, levels roll far rarer).
+    // The min. level (Greater/Perfect, Ancient bone) cuts off low tiers — and with them most of such a family's weight —
+    // but a family with no tiers above the threshold still rolls at its best tier (docs/crafting-tricks.md §0).
     const at = (L, extra = 0) => {
       const allowed = (type) => { const l = lv.get(type); const ok = l.filter((x) => x >= L); return ok.length ? ok : [Math.max(...l)]; };
-      const share = (type) => allowed(type).length / lv.get(type).length;
+      const share = (type) => { const w = tierW(type); return sumW(w, allowed(type)) / sumW(w, lv.get(type)); };
       const okC = allowed(c.type);
-      const good = okC.filter((x) => x >= top).length / okC.length;
+      const wc = tierW(c.type);
+      const good = sumW(wc, okC.filter((x) => target.has(x))) / sumW(wc, okC);
       const types = [...lv.keys()];
       const odds = (w) => { const sum = types.reduce((s, type) => s + w(type), 0); return w(c.type) / (sum + extra * sum / types.length) * good; };
       // rough — the frequency-based estimate even for a "valuable" mod whose exact odds are not trusted (chanceUnknown):
@@ -442,6 +450,9 @@ async function advise(item, demandMods, cached) {
       const o = at(L);
       if (o) c.exalt[k] = o;
     }
+    // What the window shows next to the mod: a plain Exalted Orb (with the side's omen) giving it in a goal tier —
+    // c.chance stays the family's (any tier) for the plan's own choices.
+    c.chanceGoal = c.exalt.base ? c.exalt.base.chance : null;
     if (desecrateOK && bones.length && !c.desecrateOnly) {
       c.desecrate = {};
       for (const b of bones) { const o = at(b.minLevel, desFamilies[c.side]); if (o) c.desecrate[b.name] = o; }
@@ -508,7 +519,7 @@ async function advise(item, demandMods, cached) {
     const junk = top == null ? [] : [...lv.values()].filter((x) => !wanted.includes(x) && x.levels.some((l) => l > top));
     if (top != null && top < ilvl && junk.length) ilvlHint = { from: top, ilvl, junk: junk.map((x) => x.lines.join(' / ')).slice(0, 4), more: Math.max(0, junk.length - 4) };
   }
-  if (item.rarity === 'Normal') return { normal: transmuteOptions(normal, sidePool, nOf, ilvl, jewel), popular: normal.slice(0, 8), chanceMeta, ilvlHint };
+  if (item.rarity === 'Normal') return { normal: transmuteOptions(normal, sidePool, nOf, ilvl, jewel, tierW), popular: normal.slice(0, 8), chanceMeta, ilvlHint };
   const sections = [];
 
   // 0. Magic → rare: an essence gives a guaranteed mod, Regal — a random one from the whole pool.
@@ -725,9 +736,10 @@ async function advise(item, demandMods, cached) {
     if (!chanceMeta || (chanceMeta.source !== 'exalt' && Math.max(0, ...a.mod.lines.map((l) => want.get(l) || 0)) >= SALE_REASON)) return null;
     const side = a.mod.generation_type;
     const total = [...sidePool[side].keys()].reduce((sum, type) => sum + nOf(type), 0) + nOf(a.mod.type);
-    const tiers = onBase.filter((m) => m.type === a.mod.type && m.generation_type === side && m.domain === 'item' && m.required_level <= ilvl);
-    const atLeast = tiers.filter((m) => m.required_level >= a.mod.required_level).length;
-    return total && tiers.length ? (nOf(a.mod.type) / total) * (Math.max(1, atLeast) / tiers.length) : null;
+    const levels = onBase.filter((m) => m.type === a.mod.type && m.generation_type === side && m.domain === 'item' && m.required_level <= ilvl).map((m) => m.required_level);
+    const w = tierW(a.mod.type);
+    const atLeast = sumW(w, levels.filter((l) => l >= a.mod.required_level));
+    return total && levels.length ? (nOf(a.mod.type) / total) * (atLeast / sumW(w, levels)) : null;
   };
   const goal = planGoal(mine, normal, max, want, magic, magicFree, item.itemClass, craftedSources, item.quality || 0, craftedCap, reroll);
   // Runes / Soul Cores for sockets: augments for the class whose stats builds use (demand ≥ 15%) — the best per stat family.
@@ -756,9 +768,10 @@ async function advise(item, demandMods, cached) {
 
 // White base → magic: Orb of Transmutation gives one random mod (prefix or suffix);
 // Greater — only mods of level 44+, Perfect — 70+ (less junk, higher tiers). For each: how many families can roll,
-// chance of a popular mod (any tier) and of a popular one in one of its two best tiers. Weights — from stats (nOf) or equal.
+// chance of a popular mod (any tier) and of a popular one in a goal tier (src/main/tiers.js). Weights — from stats (nOf)
+// or equal; tiers by the family's profile (tierW).
 const TRANSMUTE = methods.tiers('transmute');
-function transmuteOptions(popular, sidePool, nOf, ilvl, jewel) {
+function transmuteOptions(popular, sidePool, nOf, ilvl, jewel, tierW = () => () => 1) {
   const out = [];
   for (const [name, L] of TRANSMUTE) {
     if (L && (jewel || ilvl < L)) continue;
@@ -768,14 +781,15 @@ function transmuteOptions(popular, sidePool, nOf, ilvl, jewel) {
         // A family with no tiers above the threshold rolls at its best tier (as with Exalted).
         const hi = lv.filter((x) => x >= L);
         const ok = hi.length ? hi : [Math.max(...lv)];
-        const w = (nOf ? nOf(type) : 1) * ok.length / lv.length;
+        const tw = tierW(type);
+        const w = (nOf ? nOf(type) : 1) * sumW(tw, ok) / sumW(tw, lv);
         total += w;
         pool++;
         const c = popular.find((x) => x.type === type && x.side === side);
         if (!c) continue;
-        const best = [...lv].sort((a, b) => b - a).slice(0, 2).pop();
+        const goal = new Set(c.targetLevels || [...lv].sort((a, b) => b - a).slice(0, 2));
         any += w;
-        top += w * ok.filter((x) => x >= best).length / ok.length;
+        top += w * sumW(tw, ok.filter((x) => goal.has(x))) / sumW(tw, ok);
       }
     }
     if (total) out.push({ name, minLevel: L, pool, any: any / total, top: top / total });
@@ -1067,7 +1081,7 @@ function planGoal(mine, candidates, max, want, magic, magicFree = [], itemClass 
       // Perfect/corrupted essence with this mod: a sacrificial Exalted on the side → the side's Crystallisation + essence.
       crafted: craftedFree && c.crafted && c.crafted.length ? c.crafted : null, essTier: c.essTier || null,
       // Best tier the item can roll (T1 may need a higher item level: topLevel / topRange).
-      bestTier: c.tier || null, topLevel: c.ladder && c.tier > 1 ? c.ladder[0].level : null, topRange: c.ladder && c.tier > 1 ? c.ladder[0].range : null, craftedOnly: c.craftedOnly || null, desecrateOnly: c.desecrateOnly || null, craftedSlots,
+      target: c.target || null, bestTier: c.tier || null, topLevel: c.ladder && c.tier > 1 ? c.ladder[0].level : null, topRange: c.ladder && c.tier > 1 ? c.ladder[0].range : null, craftedOnly: c.craftedOnly || null, desecrateOnly: c.desecrateOnly || null, craftedSlots,
       crystal: `Omen of ${S} Crystallisation`,
       cap: max[side] - fixed[side], // how many mods the essence can remove on the side (excluding fractured)
       // Key mods of this side (used by ≥ KEY_PCT% or tier 1–2): an essence / Alloy with a Crystallisation omen removes
@@ -1103,7 +1117,7 @@ function planGoal(mine, candidates, max, want, magic, magicFree = [], itemClass 
     plan.splice(-2, 2, { act: 'add2', cross: true, side: null, steps: last.map(bare), sideOmen: null, otherOpen: false, alt: last,
       retry: [...new Set(last.flatMap((s) => s.retry))], currencies: [...new Set([...last.flatMap((s) => s.currencies), 'Omen of Greater Exaltation'])] });
   }
-  return { keep, remove, add: add.map(({ side, text, pct, shownPct, pctParts, tier, tiers, range, stats, essence, chance, chanceUnknown, needs, desecrateOnly, craftedOnly }) => ({ side, text, pct, shownPct, pctParts, tier, tiers, range, stats, essence, chance, chanceUnknown, needs, desecrateOnly, craftedOnly })), plan };
+  return { keep, remove, add: add.map(({ side, text, pct, shownPct, pctParts, tier, tiers, range, stats, essence, chance, chanceGoal, target, chanceUnknown, needs, desecrateOnly, craftedOnly }) => ({ side, text, pct, shownPct, pctParts, tier, tiers, range, stats, essence, chance, chanceGoal, target, chanceUnknown, needs, desecrateOnly, craftedOnly })), plan };
 }
 
 // Whether a mod (poe.ninja template: "# to Level of all Spell Skills") can roll on this base. null — mod pool not loaded yet.

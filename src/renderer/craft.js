@@ -45,7 +45,7 @@ function craftRows(list, sub = '') {
     <div class="brow crow" data-row="${key}">
       <span class="bname">${esc(c.text)} ${c.tiers > 1 ? `<span class="craft-tier" title="${esc(t('Tier {n} of {m} — the best one this item level allows', { n: c.tier, m: c.tiers }))}">T${c.tier}${c.range ? ` · ${esc(c.range)}` : ''}</span>` : c.range ? `<span class="craft-tier" title="${esc(t('One tier — only Divine Orb improves the roll'))}">${esc(c.range)}</span>` : ''}${via}</span>
       <span class="cdem" title="${esc(demTitle(c) || t('Share of builds that wear this modifier on this item class (poe.ninja)'))}">${hot(demPct(c))}${fmt(demPct(c))}%</span>
-      <span class="cch">${chanceTag(c.chance, c.chanceUnknown, true)}</span>
+      <span class="cch">${chanceTag(c.chanceGoal ?? c.chance, c.chanceUnknown, true, c.chanceGoal != null ? c.target : null)}</span>
       <span class="cpx">${btn}</span></div>`;
   }).join('');
   // "Price all": one short search per row, then the list sorted by price gain, best one marked.
@@ -148,7 +148,7 @@ function goalHtml(g) {
   return `<div class="craft-sec goal"><div class="k" title="${esc(t('The best item this base can become — most wanted modifiers for its slots'))}">${esc(t('Goal'))}</div>
     ${g.keep.map((x) => row('keep', '✓', x, x.up ? ` <span class="tierup" title="${esc(t('Key modifier with a weak tier — a higher tier is worth more'))}">↑ ${esc(t('tier'))}</span>` : '')).join('')}
     ${g.remove.map((x) => row('remove', '✗', x)).join('')}
-    ${g.add.map((x) => row('add', '+', x, ` <span class="dem${demPct(x) >= 60 ? ' hot' : ''}" title="${esc(demTitle(x))}">${demPct(x) >= 60 ? '🔥 ' : ''}${esc(t('{pct}% builds', { pct: fmt(demPct(x)) }))}</span>${chanceTag(x.chance, x.chanceUnknown)}${x.essence ? ` <span class="ess">◈ ${esc(x.essence.short)}</span>` : ''}`)).join('')}
+    ${g.add.map((x) => row('add', '+', x, ` <span class="dem${demPct(x) >= 60 ? ' hot' : ''}" title="${esc(demTitle(x))}">${demPct(x) >= 60 ? '🔥 ' : ''}${esc(t('{pct}% builds', { pct: fmt(demPct(x)) }))}</span>${chanceTag(x.chanceGoal ?? x.chance, x.chanceUnknown, false, x.chanceGoal != null ? x.target : null)}${x.essence ? ` <span class="ess">◈ ${esc(x.essence.short)}</span>` : ''}`)).join('')}
 </div>`;
 }
 
@@ -170,13 +170,14 @@ function withMods(f, adds) {
 // Approximate chance of a mod with Exalted plus the omen for its side: "common / medium / rare" label and "≈ 1 in N".
 // Chance per attempt as "1 in 6", colored by rarity (common / medium / rare); unknown: "—" with an explanation.
 // dash — in the candidates table "unknown" is a muted dash (explained in the column header tooltip).
-function chanceTag(p, unknown, dash = false) {
+function chanceTag(p, unknown, dash = false, target = null) {
   if (unknown) return ` <span class="chance unknown" title="${esc(t('Valuable modifiers cannot be estimated from trade listings — items with them are priced and listed differently'))}">${dash ? '—' : esc(t('unknown'))}</span>`;
   if (p == null) return '';
   const cls = p >= 0.12 ? 'common' : p >= 0.04 ? 'uncommon' : 'rare';
   const n = Math.max(1, Math.round(1 / p));
   const text = p >= 0.5 ? `~${Math.round(p * 100)}%` : t('1 in {n}', { n: String(n) }); // "1 in 1.7" reads poorly
-  return ` <span class="chance ${cls}" title="${esc(t('Rough estimate: Exalted Orb + omen of its side gives this modifier about 1 in {n} times', { n }))}">${esc(text)}</span>`;
+  // The goal tier the chance is for (+4 minion levels: T1 only) — under the number.
+  return ` <span class="chance ${cls}" title="${esc(t('Rough estimate: Exalted Orb + omen of its side gives this modifier in {tiers} about 1 in {n} times', { n, tiers: target || 'T1–T2' }))}">${esc(text)}${target ? `<small class="ctgt">${esc(target)}</small>` : ''}</span>`;
 }
 
 // ---- Crafting for beginners: slots on the item, "sell or craft", plan with costs ----
@@ -347,9 +348,9 @@ function planHtml(plan) {
     let odds, side = null;
     // Unknown chance: the total can't be estimated, but one attempt has a price — shown for repeatable steps too.
     if (c.lottery) { odds = t('chance unknown — valuable modifier'); if (Number.isFinite(c.perTry)) side = { cost: c.perTry, per: true }; }
-    else if (c.hopeless) { odds = t('{odds} at T1–T2', { odds: (c.chances || [c.chance]).map(oneIn).join(' / ') }); side = { cost: c.perTry, per: true }; }
+    else if (c.hopeless) { odds = t('{odds} at {tiers}', { odds: (c.chances || [c.chance]).map(oneIn).join(' / '), tiers: s.target || 'T1–T2' }); side = { cost: c.perTry, per: true }; }
     else if (c.k === 'essence') odds = c.chance >= 1 ? t('guaranteed') : oneIn(c.chance);
-    else if (c.chances) odds = t('{odds} at T1–T2', { odds: c.chances.map(oneIn).join(' / ') });
+    else if (c.chances) odds = t('{odds} at {tiers}', { odds: c.chances.map(oneIn).join(' / '), tiers: s.target || (s.steps ? s.steps.map((x) => x.target || 'T1–T2').join(' / ') : 'T1–T2') });
     else if (s.mods) odds = '';
     else odds = c.chance >= 1 ? t('guaranteed') : oneIn(c.chance);
     if (!side && c.cost != null) side = { cost: c.cost, sub: s.mods ? (Math.round(c.tries * 10) === 10 ? t('1 attempt') : t('≈ {n} attempts', { n: fmt(Math.round(c.tries * 10) / 10) })) : '' };
@@ -743,7 +744,7 @@ function renderNormalCraft(r, head) {
   const best = known.length ? known.reduce((a, b) => (b.cost < a.cost ? b : a)) : opts[opts.length - 1];
   const pct = (x) => `${x >= 0.1 ? Math.round(x * 100) : Math.round(x * 1000) / 10}%`;
   const rows = opts.map((o) => `<div class="profit-row${o === best ? ' best' : ''}"><div><span class="game">${esc(o.name)}</span>${o.orb != null ? ` <small>≈ ${money(o.orb)}</small>` : ''}${o === best ? ` <b class="rec">${esc(t('recommended'))}</b>` : ''}</div>
-    <div class="ps-how">${esc(t('{n} possible modifiers · popular: {any} · popular in T1–T2: {top}', { n: o.pool, any: pct(o.any), top: pct(o.top) }))}${o.cost != null ? ` · <b>${esc(t('≈ {cost} on average', { cost: money(o.cost) }))}</b>` : ''}</div>
+    <div class="ps-how">${esc(t('{n} possible modifiers · popular: {any} · popular in a goal tier: {top}', { n: o.pool, any: pct(o.any), top: pct(o.top) }))}${o.cost != null ? ` · <b>${esc(t('≈ {cost} on average', { cost: money(o.cost) }))}</b>` : ''}</div>
     ${o.minLevel ? `<div class="ps-note">${esc(t('low tiers cut off (level {n}+; a family without such tiers rolls its best one)', { n: o.minLevel }))}</div>` : ''}</div>`).join('');
   const warn = base != null && base >= BASE_PRICEY
     ? `<div class="craft-warn">⚠ ${esc(t('The base itself sells for ≈ {price} — a miss costs a base like this. Selling it as is may be the better deal.', { price: money(base) }))}</div>` : '';
