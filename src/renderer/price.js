@@ -309,7 +309,7 @@ function renderTradeHero(r) {
 // Rare: how far rolls are from max and what raising them would cost. Divine rerolls the values of all mods
 // at once (the mods stay), so "luck" means all key rolls in the top quarter at once (TOP_Q, betterOdds in craft.js).
 // Key = explicit / desecrated mods with a range that are enabled in the search: Divine doesn't change fractured, crafted not counted.
-// Divined listings sell first; an imperfect item sells slower (Ame's video, research/youtube/ame).
+// Divined listings sell first; an imperfect item sells slower.
 function rollsHint() {
   const it = state.item;
   if (!it || it.rarity !== 'Rare' || it.corrupted || it.sanctified || it.mirrored) return '';
