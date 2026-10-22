@@ -90,6 +90,23 @@ test('minion sceptre: +# minion levels aim at T1 (+4) only; weighted tiers make 
   assert.ok(base.chance < greater.chance && greater.chance < perfect.chance, 'cutting low tiers helps, step by step');
 });
 
+test('weak tier of a key mod: the way to the goal tier is priced; a tier already worth the goal is not «weak»', { skip }, async () => {
+  await init();
+  const tierups = async (name) => {
+    const r = await craft.advise(item(name), json(`${name}.demand.json`).mods, cached);
+    return (r.sections || []).filter((s) => s.kind === 'tierup').flatMap((s) => s.mods);
+  };
+  const spear = await tierups('spear-rare-destruction');
+  const light = spear.find((m) => /lightning damage/.test(m.text));
+  assert.ok(light, 'flat lightning T4 is a weak key mod');
+  assert.equal(light.goal, 'T1', 'the goal is the top roll (the largest number, not the minimum damage)');
+  assert.ok(light.again > 0 && light.again < 1 / 100, `one Exalted brings T1 back rarely: 1 in ${Math.round(1 / light.again)}`);
+  assert.equal(light.sameSide, 2, 'a side Annulment hits it 1 in 2');
+  assert.ok(!('mod' in light), 'the window gets numbers, not the RePoE record');
+  const gloves = await tierups('gloves-es-fractured');
+  assert.ok(!gloves.some((m) => /lightning resistance/.test(m.text)), 'T3 resistance is within the goal (≥ 85% of the best allowed roll)');
+});
+
 test('Tiara: Whittling is not offered — it would remove the +2 to minions (lowest level)', { skip }, async () => {
   const p = await plan('tiara-minion');
   const rm = p.steps.find((s) => s.act === 'remove' && s.mods);

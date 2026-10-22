@@ -125,11 +125,14 @@ const range = (text) => {
   const m = String(text || '').match(/\((-?[\d.]+)-(-?[\d.]+)\)/);
   return m ? `${m[1]}–${m[2]}` : null;
 };
-// Upper value of a single-stat mod: "(30-34)% increased …" → 34, "30% increased …" → 30; null if there is no number.
+// Upper value of a mod: "(30-34)% increased …" → 34, "30% increased …" → 30; several ranges — the largest top
+// ("Adds (1-10) to (157-196)" → 196, not the minimum damage); null if there is no number.
 const topValue = (text) => {
   const s = String(text || '');
-  const m = s.match(/\((-?[\d.]+)-(-?[\d.]+)\)/) || s.match(/(-?\d+(?:\.\d+)?)/);
-  return m ? +(m[2] ?? m[1]) : null;
+  const tops = [...s.matchAll(/\((-?[\d.]+)-(-?[\d.]+)\)/g)].map((m) => +m[2]);
+  if (tops.length) return tops.reduce((a, b) => (Math.abs(b) > Math.abs(a) ? b : a));
+  const m = s.match(/(-?\d+(?:\.\d+)?)/);
+  return m ? +m[1] : null;
 };
 
 // item — the parsed item (item.affixes from the advanced format), demandMods — [{ name, pct }] from poe.ninja.
@@ -267,11 +270,14 @@ async function advise(item, demandMods, cached) {
     const tiers = onBase.filter((m) => m.type === a.mod.type && m.domain === a.mod.domain).sort((x, y) => y.required_level - x.required_level);
     const bestIdx = tiers.findIndex((m) => m.required_level <= ilvl);
     if (bestIdx < 0 || bestIdx + 1 >= a.tier) return null;
+    // Its tier is already a goal one (worth ≥ 85% of the best roll, src/main/tiers.js) — not weak.
+    const ladder = tiers.filter((m) => m.generation_type === a.mod.generation_type).map((m) => ({ level: m.required_level, hi: topValue(m.text) }));
+    if (targetLevels(ladder, ilvl).includes(a.mod.required_level)) return null;
     const how = [t('Divine Orb — rerolls the values of all modifiers at once, each only within its tier (now T{tier})', { tier: a.tier })];
     how.push(a.tag === 'desecrated'
       ? t('Orb of Annulment + Omen of Light removes it; desecrating again gives a random desecrated modifier — not necessarily this one')
       : t('A higher tier means removing it and rolling it again — the same modifier is not guaranteed'));
-    return { text: a.mod.lines.join(' / '), tier: a.tier, best: bestIdx + 1, range: range(tiers[bestIdx].text), pct, how };
+    return { text: a.mod.lines.join(' / '), tier: a.tier, best: bestIdx + 1, range: range(tiers[bestIdx].text), pct, how, mod: a.mod, side: a.side, tag: a.tag };
   }).filter(Boolean);
 
   const normal = candidates('item');
@@ -741,6 +747,26 @@ async function advise(item, demandMods, cached) {
     const atLeast = sumW(w, levels.filter((l) => l >= a.mod.required_level));
     return total && levels.length ? (nOf(a.mod.type) / total) * (atLeast / sumW(w, levels)) : null;
   };
+  // Key mods with a weak tier: what reaching the goal tier costs — a side's Annulment hits this one 1 in N (the side's
+  // removable mods), then one Exalted Orb with the side's omen gives the family back in a goal tier with `again`
+  // (weighted tiers — +4 minion levels comes back far rarer than +2 did). Desecrated ones have their own path.
+  for (const u of tierUps) {
+    const m = u.mod;
+    delete u.mod; // the window needs the numbers, not the RePoE record
+    if (u.tag === 'desecrated' || !nOf || !m || !['prefix', 'suffix'].includes(m.generation_type)) continue;
+    if (!chanceMeta || chanceMeta.source !== 'exalt') continue; // a key mod's odds from trade are not trusted
+    const side = m.generation_type;
+    const ladder = onBase.filter((x) => x.type === m.type && x.generation_type === side && x.domain === 'item')
+      .sort((a, b) => b.required_level - a.required_level).map((x) => ({ level: x.required_level, hi: topValue(x.text) }));
+    const goalLv = targetLevels(ladder, ilvl);
+    const levels = ladder.filter((r) => r.level <= ilvl).map((r) => r.level);
+    const total = [...sidePool[side].keys()].reduce((sum, type) => sum + nOf(type), 0) + nOf(m.type);
+    const w = tierW(m.type);
+    if (!total || !goalLv.length || !levels.length) continue;
+    u.goal = targetLabel(ladder, goalLv);
+    u.again = (nOf(m.type) / total) * (sumW(w, goalLv) / sumW(w, levels));
+    u.sameSide = mine.filter((a) => a.side === side && a.tag !== 'fractured').length;
+  }
   const goal = planGoal(mine, normal, max, want, magic, magicFree, item.itemClass, craftedSources, item.quality || 0, craftedCap, reroll);
   // Runes / Soul Cores for sockets: augments for the class whose stats builds use (demand ≥ 15%) — the best per stat family.
   const augments = [];

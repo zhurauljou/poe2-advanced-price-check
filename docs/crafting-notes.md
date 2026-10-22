@@ -257,9 +257,12 @@ valuable top tiers several times over.
    most of a falling family's weight too, so Greater helps a T1 goal only about 2× (minion sceptre: +4 at 1 in ~350 with
    a plain Exalted, ~150 Greater, ~95 Perfect). Tests: synthetic samples recover known weights (`test/tiers.test.js`);
    the Craft of Exile comparison is a manual audit (dashboard «Weight» column), not a test.
-2. **Choose the method by the goal — open.** A miss «right family, wrong tier» is removed like any other; Desecrate «best
-   of 3 / 6» counts success only for a goal tier; Ancient against Preserved; «key mod, weak tier» priced as the cost to
-   reach the goal.
+2. **Choose the method by the goal — done (0.3.176).** The odds are the goal tier's since step 1, so the plan already picks
+   among Exalted / Greater / Perfect and the bones (Ancient 40+ against Preserved) by the cost of reaching the goal, and a
+   «right family, wrong tier» roll is a miss. Each alternative in a step shows its odds for the goal tier. «Key mod, weak
+   tier»: a mod whose tier is already a goal one is not listed; the others get the way to the goal — a side Annulment hits
+   it 1 in N, then Exalted + the side's omen gives the goal tier with weighted odds (flat lightning on a spear: T1 at 1 in
+   ~400). A mod's value for the goal is its largest number («Adds (1-10) to (157-196)» → 196, not the minimum damage).
 3. **Price and sorting — open.** The goal price and the verdict at the goal tier; «Could become» sorted by the gain of
    one attempt (demand × chance, then price gain × chance − attempt cost).
 

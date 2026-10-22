@@ -362,6 +362,7 @@
     'One attempt fewer: the essence in the previous step already removed a random {side}': 'На одну попытку меньше: эссенция на прошлом шаге уже сняла случайный {side}',
     Beta: 'Бета',
     'Craft advice is in beta: modifier odds are estimates from samples we are still collecting, and unusual items can get a wrong plan. Check expensive steps yourself.': 'Советы по крафту — в бете: шансы модов — оценка по выборке, которую мы ещё собираем, а на необычных вещах план может ошибаться. Дорогие шаги проверяйте сами.',
+    'To {goal}: Orb of Annulment + Omen of {s} Annulment hits it 1 in {n}, then Exalted Orb + Omen of {s} Exaltation gives {goal} {odds}': 'До {goal}: Orb of Annulment + Omen of {s} Annulment снимет его с шансом 1 из {n}, затем Exalted Orb + Omen of {s} Exaltation даст {goal} {odds}',
     'back: {odds} per Exalt': 'вернуть: {odds} за Exalt',
     '«{mod}» goes too when an Annulment hits it; only if it is the last one left ({odds}) — Orb of Annulment + Omen of Light ({cost})': '«{mod}» тоже уйдёт, если Annulment попадёт в него; только если он останется последним ({odds}) — Orb of Annulment + Omen of Light ({cost})',
     'Chances: from {n} exalted items ({date})': 'Шансы — по {n} экзальтированным вещам ({date})',

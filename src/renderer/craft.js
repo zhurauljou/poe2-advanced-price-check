@@ -32,6 +32,19 @@ const demTitle = (c) => (c.pctParts && c.pctParts.length > 1 ? c.pctParts.map(([
 // builds use it | chance per Exalted attempt | item price with it. Previously one unlabeled line held demand (large,
 // on the right, with a background bar), chance and essence, so demand was easy to mistake for chance.
 // sub — the caption above the table ("Popular prefixes…"); it shares a line with "Price all and sort".
+// The way from a weak tier to the goal: a side's Annulment hits it 1 in N, then Exalted + the side's omen gives the goal
+// tier with its (weighted) odds — attempts multiply, so a rare goal tier shows why keeping the mod is the usual answer.
+function tierUpWay(m) {
+  if (!m.again || !m.sameSide || !m.side) return '';
+  const S = m.side === 'prefix' ? 'Sinistral' : 'Dextral';
+  const ann = (craftPrices['Orb of Annulment'] ?? 0) + (craftPrices[`Omen of ${S} Annulment`] ?? 0);
+  const ex = (craftPrices['Exalted Orb'] ?? 0) + (craftPrices[`Omen of ${S} Exaltation`] ?? 0);
+  // Expected: N Annulments to hit it (the others it hits are lost too — not counted), then 1 / again Exalts, each miss
+  // removed with one more side Annulment.
+  const cost = ann && ex ? m.sameSide * ann + (1 / m.again) * ex + (1 / m.again - 1) * ann : null;
+  return `<div class="craft-sub">${esc(t('To {goal}: Orb of Annulment + Omen of {s} Annulment hits it 1 in {n}, then Exalted Orb + Omen of {s} Exaltation gives {goal} {odds}', { goal: m.goal, s: S, n: m.sameSide, odds: oneIn(m.again) }))}${cost != null ? ` · ${esc(t('≈ {cost} on average', { cost: money(cost) }))}` : ''}</div>`;
+}
+
 function craftRows(list, sub = '') {
   const head = `<div class="crow chead"><span>${esc(t('Modifier'))}</span><span>${esc(t('builds'))}</span><span title="${esc(`${t('Chance per try: Exalted Orb + omen of its side')}\n${t('— chance unknown (valuable modifier, not enough data) · green — likely, orange — a few tries, red — expensive')}`)}">${esc(t('chance'))}</span><span>${esc(t('price'))}</span></div>`;
   const rows = head + list.map((c) => {
@@ -396,7 +409,7 @@ function planHtml(plan) {
       ? `${o.currencies.join(' + ')} · ${oneIn(o.chances[0])} · ${t('≈ {cost} on average', { cost: money(o.cost) })}`
       : o.k === 'desecrate'
       ? `${t('Desecrate')}${o.mod ? ` (${o.mod})` : ''}: ${o.currencies.join(' + ')}${o.chances[0] != null ? ` · ${oneIn(o.chances[0])}` : ''}${c.lottery ? '' : ` · ${t('≈ {cost} on average', { cost: money(o.cost) })}`}`
-      : `${o.currencies[0]} · ${t('≈ {cost} on average', { cost: money(o.cost) })}`;
+      : `${o.currencies[0]}${o.chances && o.chances[0] != null ? ` · ${oneIn(o.chances[0])}${s.target ? ` ${s.target}` : ''}` : ''} · ${t('≈ {cost} on average', { cost: money(o.cost) })}`;
     const alts = [...(c.alts || []).filter((o) => o.k !== 'desecrate' && o.k !== 'essence'), ...(c.desAlt || []).slice(0, 2)].filter((o) => Number.isFinite(o.cost)).map(altText);
     if (c.other) alts.push(t('{how}: ≈{n} attempts, ≈{hits} needed modifiers hit, {cost} in currency', { how: c.other.currencies.join(' + '), n: fmt(Math.round(c.other.tries * 10) / 10), hits: fmt(Math.round(c.other.hits * 10) / 10), cost: money(c.other.spent) }));
     if (c.des) key.push(t('«{mod}» goes too when an Annulment hits it; only if it is the last one left ({odds}) — Orb of Annulment + Omen of Light ({cost})', { mod: c.des.mod, odds: oneIn(Math.max(c.des.left, 0.01)), cost: money(c.des.cost) }));
@@ -944,7 +957,7 @@ function renderCraft(r) {
       parts.push(`<div class="craft-sec alt"><div class="k">${t('Guaranteed modifier: Perfect / corrupted Essences, Alloys')}</div><div class="craft-sub">${t('Removes a random modifier and adds its own guaranteed one:')}</div>${how(s.how)}</div>`);
     } else if (s.kind === 'tierup') {
       parts.push(`<div class="craft-sec"><div class="k">${t('Key modifier, weak tier — keep it')}</div>${s.mods.map((m) => `
-        <div class="craft-weak">${esc(m.text)} <span class="craft-tier">T${m.tier} → T${m.best}${m.range ? ` (${esc(m.range)})` : ''} · ${esc(t('{pct}% builds', { pct: fmt(m.pct) }))}</span></div>${how(m.how)}`).join('')}</div>`);
+        <div class="craft-weak">${esc(m.text)} <span class="craft-tier">T${m.tier} → T${m.best}${m.range ? ` (${esc(m.range)})` : ''} · ${esc(t('{pct}% builds', { pct: fmt(m.pct) }))}</span></div>${how(m.how)}${tierUpWay(m)}`).join('')}</div>`);
     } else if (s.kind === 'overfull') {
       parts.push(`<div class="craft-sec"><div class="k">${esc(t('Over the limit'))}</div>${how(s.how)}</div>`);
     } else if (s.kind === 'emotions') {
