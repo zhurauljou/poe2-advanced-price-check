@@ -433,6 +433,14 @@ async function advise(item, demandMods, cached) {
     const target = new Set(goal.length ? goal : [...mineLv].sort((a, b) => b - a).slice(0, 2));
     c.targetLevels = [...target];
     c.target = targetLabel(c.ladder, c.targetLevels);
+    // Priced at the goal: the search asks for the lowest roll of the lowest goal tier (life T1–T3 — from T3's minimum,
+    // not T1's), so the price with it is what the goal is worth, not only its best case.
+    const low = Math.min(...c.targetLevels);
+    if (goal.length && low < c.level) {
+      const gm = onBase.find((m) => m.type === c.type && m.domain === 'item' && m.required_level === low);
+      const st = gm && tradeStats(gm, 'item', item.itemClass);
+      if (st && st.length) c.stats = st;
+    }
     // Chance that the mod (among normal ones with level ≥ L plus "extra" foreign families at average weight) is this family
     // in a goal tier. Tiers are weighed by the family's profile (top tiers of damage, speed, levels roll far rarer).
     // The min. level (Greater/Perfect, Ancient bone) cuts off low tiers — and with them most of such a family's weight —
@@ -497,8 +505,21 @@ async function advise(item, demandMods, cached) {
   const co = normal.find((c) => c.craftedOnly);
   if (co && normal.some((c) => c !== co && c.crafted && c.crafted.some((n) => n !== co.craftedOnly) && c.pct >= co.pct * 0.6)) normal.splice(normal.indexOf(co), 1);
   for (const c of normal) {
-    const others = normal.filter((x) => x !== c && x.side === c.side && x.exalt && x.pct >= Math.max(15, c.pct * 0.6));
-    if (!others.length || !c.exalt) continue;
+    const pool = normal.filter((x) => x !== c && x.side === c.side && x.exalt && x.pct >= Math.max(15, c.pct * 0.6));
+    if (!pool.length || !c.exalt) continue;
+    // An alternative counts as reaching the goal, but the goal is priced with this mod: if the alternatives roll far more
+    // often, the result is mostly one of them (mana regeneration instead of +4 minion levels) and «1 in 2» would hide a
+    // 1-in-400 lottery. Alternatives are taken rarest first while this mod keeps at least a quarter of the combined odds.
+    const odds = (x) => (x.exalt.base ? x.exalt.base.chance ?? x.exalt.base.guess : null) || 0;
+    const own = odds(c);
+    const others = [];
+    let sum = own;
+    for (const x of [...pool].sort((a, b) => odds(a) - odds(b))) {
+      if (!own || own / (sum + odds(x)) < 0.25) break;
+      others.push(x);
+      sum += odds(x);
+    }
+    if (!others.length) continue;
     const merge = (list) => ({ ...list[0], guess: Math.min(0.95, list.reduce((a, o) => a + o.guess, 0)),
       chance: list.some((o) => o.chance == null) ? null : Math.min(0.95, list.reduce((a, o) => a + o.chance, 0)) });
     c.exaltAny = {};
@@ -535,7 +556,7 @@ async function advise(item, demandMods, cached) {
     sections.push({ kind: 'magicfill', how: [
       t('Orb of Augmentation — adds a random {side} while the item is magic: the cheapest step, do it before Regal', { side: t(magicFree[0]) }),
       jewel ? t('On jewels every modifier has one tier — Greater / Perfect currency gives nothing extra') : t('Greater / Perfect Orb of Augmentation — only modifiers of level 44+ / 70+'),
-    ], candidates: normal.filter((c) => c.side === magicFree[0]).slice(0, 6) });
+    ], candidates: byUse(normal.filter((c) => c.side === magicFree[0]), 6) });
   }
   if (magic) {
     const sure = normal.filter((c) => c.essence);
@@ -554,7 +575,7 @@ async function advise(item, demandMods, cached) {
   // 1. Free slots — Exalted Orb (Omen Sinistral/Dextral Exaltation — prefix/suffix only).
   for (const side of ['prefix', 'suffix']) {
     if (!open[side]) continue;
-    const list = normal.filter((c) => c.side === side).slice(0, 6);
+    const list = byUse(normal.filter((c) => c.side === side), 6);
     const omen = side === 'prefix' ? 'Omen of Sinistral Exaltation' : 'Omen of Dextral Exaltation';
     const exalt = `Exalted Orb${open.prefix && open.suffix ? ` + ${omen} (${t(`only ${side}es`)})` : ''}`;
     sections.push({
@@ -595,7 +616,7 @@ async function advise(item, demandMods, cached) {
       }
       sections.push({
         kind: 'replace', weak: { name: weak.name, side: weak.side, tier: weak.tier, text: weak.mod.lines.join(' / '), pct: weak.pct },
-        how, candidates: normal.filter((c) => c.side === weak.side).slice(0, 5),
+        how, candidates: byUse(normal.filter((c) => c.side === weak.side), 5),
       });
     }
   }
@@ -790,6 +811,16 @@ async function advise(item, demandMods, cached) {
   const runesIn = (item.modLines || []).filter((l) => l.tag === 'rune').length;
   const gamble = gambleFor(item, tags);
   return { open, max, sections, goal, gamble, augments, freeSockets: Math.max(0, (item.sockets || 0) - runesIn), chanceMeta, ilvlHint, source: 'RePoE (game files) · demand: poe.ninja' };
+}
+
+// Candidates for a slot, by the use of one attempt: demand × the odds of the goal tier (the even-pool guess while the odds
+// are unknown) — a popular mod that hardly ever rolls in its goal tier yields to a likely one. The key mods (≥ KEY_PCT%
+// of builds) stay in the list whatever their odds: the window shows how rare they are. n — how many to show.
+function byUse(list, n) {
+  const use = (c) => c.pct * (c.chanceGoal ?? (c.exalt && c.exalt.base ? c.exalt.base.guess : 0) ?? 0);
+  const ranked = [...list].sort((a, b) => use(b) - use(a));
+  const keep = new Set([...ranked.slice(0, n), ...list.filter((c) => c.pct >= KEY_PCT)]);
+  return ranked.filter((c) => keep.has(c));
 }
 
 // White base → magic: Orb of Transmutation gives one random mod (prefix or suffix);

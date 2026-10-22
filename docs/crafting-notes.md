@@ -263,8 +263,13 @@ valuable top tiers several times over.
    tier»: a mod whose tier is already a goal one is not listed; the others get the way to the goal — a side Annulment hits
    it 1 in N, then Exalted + the side's omen gives the goal tier with weighted odds (flat lightning on a spear: T1 at 1 in
    ~400). A mod's value for the goal is its largest number («Adds (1-10) to (157-196)» → 196, not the minimum damage).
-3. **Price and sorting — open.** The goal price and the verdict at the goal tier; «Could become» sorted by the gain of
-   one attempt (demand × chance, then price gain × chance − attempt cost).
+3. **Price and sorting — done (0.3.177).** «Price with it» and the goal price search from the lowest roll of the lowest
+   goal tier (life T1–T3 — from T3's minimum). «Could become» is ordered by demand × goal-tier odds, key mods (≥ 30% of
+   builds) kept whatever their odds; after «Price all» — by price gain × odds − the attempt's cost, shown per row.
+   **Alternatives «or …»** of a step count as reaching the goal, but the goal is priced with the step's own mod — so they
+   are taken rarest first only while the own mod keeps ≥ 25% of the combined odds. Before that, +4 minion levels (1 in
+   ~400) merged with mana regeneration / Intelligence read «1 in 2», and the plan promised a cheap craft better than selling
+   in 100% of runs (player's sceptre, 2026-10-23; test «alternatives do not hide a lottery»).
 
 Not covered: desecrated mod weights (unknown — average, flagged; needs reveal samples), the element of wand / staff bases
 (too few items per element).

@@ -767,6 +767,8 @@ footer > span:first-child { min-width: 0; overflow: hidden; text-overflow: ellip
 /* The goal tier a chance is for (T1 for +4 minion levels) — small under the number */
 .chance .ctgt { display: block; font: 600 10.5px/1.1 var(--body); color: var(--muted); text-align: center; }
 .crow .cpx { text-align: right; }
+/* After «Price all»: the average gain of one attempt under the price */
+.crow .cpx .cper { display: block; font: 600 10.5px/1.2 var(--body); color: var(--muted); white-space: nowrap; }
 .crow .cpx .cprice, .crow .cpx .cpr { margin-left: 0; }
 .crow .cvia { display: block; margin-top: 1px; font-size: 13px; color: #c9a0e8; }
 .crow.chead { padding: 0 6px 3px; border-bottom: 1px solid var(--line2); font: 700 11.5px/1.2 var(--body); letter-spacing: .6px;

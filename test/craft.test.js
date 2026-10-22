@@ -513,3 +513,42 @@ test('minion sceptre: the crafted Puppet Master counts for the theme; the plan g
   // «Minions deal #% increased Damage with Command Skills» is a Genesis Tree mod — not in the Exalted / Chaos pool.
   assert.ok(!p.goal.add.some((a) => /command skills/.test(a.text)), 'no Genesis Tree mod');
 });
+
+test('candidate lists: ordered by the use of one attempt (demand × goal-tier odds), key mods kept; priced at the lowest goal tier', { skip }, async () => {
+  await init();
+  const use = (c) => c.pct * (c.chanceGoal ?? (c.exalt && c.exalt.base ? c.exalt.base.guess : 0) ?? 0);
+  let lists = 0, multi = 0;
+  for (const name of ['sceptre-minion', 'boots-es', 'wand-astrid', 'spear-rare-destruction', 'ring-minion']) {
+    const r = await craft.advise(item(name), json(`${name}.demand.json`).mods, cached);
+    for (const s of r.sections || []) {
+      const list = s.candidates || [];
+      if (list.length < 2) continue;
+      lists++;
+      for (let i = 1; i < list.length; i++) assert.ok(use(list[i - 1]) >= use(list[i]) - 1e-12, `${name} ${s.kind}: ${list[i].text} out of order`);
+      for (const c of list) {
+        // The price search starts at the lowest roll of the lowest goal tier.
+        if (!c.targetLevels || c.targetLevels.length < 2 || !c.stats || c.stats.length !== 1 || !c.ladder) continue;
+        const low = c.ladder.find((x) => x.level === Math.min(...c.targetLevels));
+        const m = String(low.range || '').match(/^(-?[\d.]+)/);
+        if (!m) continue;
+        multi++;
+        // «reduced» mods are negative on trade (−30 = 30% reduced): compare magnitudes.
+        assert.equal(Math.abs(c.stats[0].min), Math.abs(Number(m[1])), `${name}: ${c.text} searched from ${c.stats[0].min}, the goal starts at ${low.range}`);
+      }
+    }
+  }
+  assert.ok(lists > 0, 'some candidate lists were checked');
+  assert.ok(multi > 0, 'some multi-tier goals were checked');
+});
+
+test('alternatives «or …» do not hide a lottery: a rare key mod is not merged with far more common ones', { skip }, async () => {
+  await init();
+  // As on a player's minion sceptre: +# minion levels wanted by 30.9% of builds, mana regeneration and Intelligence by more
+  // — they used to count as reaching the goal, priced with +4 minion levels: «1 in 2», «100% of runs better than selling».
+  const mods = json('sceptre-minion.demand.json').mods.map((m) => (/Level of all Minion Skills/i.test(m.name) ? { ...m, pct: 30.9 } : m));
+  const r = await craft.advise(item('sceptre-minion'), mods, cached);
+  const s = r.goal.plan.flatMap((x) => x.steps || [x]).find((x) => x.act === 'add' && /level of all minion skills/.test(x.mod));
+  assert.ok(s, 'the step exists');
+  assert.ok(s.exalt.base.chance < 1 / 100, `still a long shot: 1 in ${Math.round(1 / s.exalt.base.chance)}`);
+  for (const d of Object.values(s.desecrate || {})) if (d.chance != null) assert.ok(d.chance < 1 / 50, 'Desecrate odds are its own too');
+});

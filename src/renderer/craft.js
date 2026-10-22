@@ -66,7 +66,7 @@ function craftRows(list, sub = '') {
   // Where the odds come from: one line under the first table with them (details in the tooltip).
   let note = '';
   if (chanceNote && list.some((c) => c.chance != null)) { note = chanceNote; chanceNote = ''; }
-  const all = priceable > 1 ? `<button class="link cprice-all" data-priceall title="${esc(t('One trade search per row, then the list is sorted by how much each modifier adds to the price'))}">⇅ ${esc(t('Price all and sort'))}</button>` : '';
+  const all = priceable > 1 ? `<button class="link cprice-all" data-priceall title="${esc(t('One trade search per row, then the list is sorted by what one attempt gains on average: price gain × chance − its cost'))}">⇅ ${esc(t('Price all and sort'))}</button>` : '';
   return `<div class="clist">${sub || all ? `<div class="ctop"><span class="craft-sub">${esc(sub)}</span>${all}</div>` : ''}${rows}${note}</div>`;
 }
 const PRICE_ICON = '⌕'; // "price with it" per row: an icon instead of a repeated word; the price replaces it
@@ -102,12 +102,27 @@ async function priceAll(btn) {
       return;
     }
   }
+  // By the gain of one attempt: price gain × the odds of the goal tier − what the attempt costs (Exalted + the side's
+  // omen). A mod that adds a lot but almost never rolls in its goal tier goes below a likely modest one; without odds —
+  // by the price gain alone, after those with odds.
   const rows = [...list.querySelectorAll('.brow')];
-  const val = (r) => (r.dataset.delta == null || r.dataset.delta === '' ? -1e9 : Number(r.dataset.delta));
-  rows.sort((a, b) => val(b) - val(a)).forEach((r) => list.appendChild(r));
-  const best = rows.find((r) => val(r) > 0);
+  const delta = (r) => (r.dataset.delta == null || r.dataset.delta === '' ? null : Number(r.dataset.delta));
+  const perTry = (c) => (craftPrices['Exalted Orb'] ?? 0) + (craftPrices[`Omen of ${c.side === 'prefix' ? 'Sinistral' : 'Dextral'} Exaltation`] ?? 0);
+  const use = (r) => {
+    const d = delta(r), c = craftCands.get(r.dataset.row);
+    if (d == null) return { v: -1e9, odds: false };
+    const p = c && (c.chanceGoal ?? c.chance);
+    return p != null ? { v: d * p - perTry(c), odds: true, d } : { v: d - 1e6, odds: false, d };
+  };
+  const u = new Map(rows.map((r) => [r, use(r)]));
+  rows.sort((a, b) => u.get(b).v - u.get(a).v).forEach((r) => list.appendChild(r));
+  const best = rows.find((r) => u.get(r).odds && u.get(r).v > 0);
   if (best) best.classList.add('best');
-  for (const r of rows) if (val(r) <= 0) r.classList.add('flat');
+  for (const r of rows) {
+    const x = u.get(r);
+    if (x.d == null || x.d <= 0) r.classList.add('flat');
+    else if (x.odds) r.querySelector('.cpx').insertAdjacentHTML('beforeend', `<small class="cper" title="${esc(t('Average gain of one attempt: price gain × chance − the attempt\'s cost'))}">${x.v >= 0 ? '+' : '−'}${money(Math.abs(x.v))}/${esc(t('try'))}</small>`);
+  }
   btn.remove();
   fit();
 }
