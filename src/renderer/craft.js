@@ -970,6 +970,7 @@ function renderCraft(r) {
   if (chanceNote) parts.push(chanceNote); // there were no tables with odds, but the plan has odds: the line goes at the end
   if (r.gamble && r.goal && r.goal.plan && r.goal.plan.length) parts.push(gambleHtml(r.gamble)); // at the end, after all the safe methods
   // Sources are reference, not a decision: an icon with a tooltip.
+  parts.push(`<div class="craft-beta"><b>${esc(t('Beta'))}</b> · ${esc(t('Craft advice is in beta: modifier odds are estimates from samples we are still collecting, and unusual items can get a wrong plan. Check expensive steps yourself.'))}</div>`);
   parts.push(`<div class="craft-foot"><span class="ages-i" title="${esc(t(r.chanceMeta ? 'Mod pool: game files (RePoE).' : "Mod pool: game files (RePoE). Roll chances aren't shown — PoE 2 files have no modifier weights."))} ${esc(t('Demand: builds on poe.ninja. Prices: poe.ninja and the trade site.'))}">ⓘ ${esc(t('Sources'))}</span></div>`);
   // Wide window: plan on the left, all methods on the right (expanded).
   $('craft').innerHTML = head + `<div class="craft-cols"><div class="craft-l">${top.join('')}</div>`
