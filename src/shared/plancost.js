@@ -631,7 +631,9 @@
         if (Object.entries(r.sides).every(([sd, x]) => J[sd] === x.J) || !r.modSides) { out.push(r); continue; }
         const left = { ...J };
         const mods = r.mods.filter((_, k) => left[r.modSides[k]]-- > 0);
-        out.push({ ...r, mods, allSides: r.allSides || r.sides, sides: Object.fromEntries(Object.entries(r.sides).filter(([sd, x]) => J[sd] || x.des).map(([sd, x]) => [sd, { ...x, J: J[sd] }])) });
+        // Every side stays — a side with nothing to remove keeps J = 0 but its wanted mods: a plain Annulment or Chaos
+        // Orb hits them too (three T1 prefixes on a helmet whose junk is a suffix), the side omens skip it.
+        out.push({ ...r, mods, allSides: r.allSides || r.sides, sides: Object.fromEntries(Object.entries(r.sides).map(([sd, x]) => [sd, { ...x, J: J[sd] }])) });
         continue;
       }
       out.push(s);

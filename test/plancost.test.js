@@ -223,3 +223,25 @@ test('Desecrate: options in a triple don\'t repeat, an Abyssal Echoes reroll giv
   // 1 matching out of 20 equally likely: a triple is 3/20 (with repeats it would be 1 − 0.95³ ≈ 0.143), two triples — 1 − (17/20)².
   near(c.chance, c.echo ? 1 - 0.85 * 0.85 : 0.15, `chance (echo: ${c.echo})`);
 });
+
+test('a plan variant removing junk on one side keeps the wanted mods of the other side: plain Annulment / Chaos risk counts them', () => {
+  // A helmet: three T1 prefixes, junk Intelligence among two suffixes; the variant needs only the suffix freed.
+  const PlanCost = require('../src/shared/plancost');
+  const prices = { 'Orb of Annulment': 0.4, 'Omen of Dextral Annulment': 1, 'Omen of Sinistral Annulment': 1, 'Exalted Orb': 0.01, 'Chaos Orb': 0.1, 'Omen of Dextral Erasure': 0.5 };
+  const pc = PlanCost.create(() => ({ prices, goalValue: 3, est: 0.1 }));
+  // The full goal also replaces a junk prefix; this variant keeps only suffix additions — the prefix removal drops out.
+  const remove = { act: 'remove', mods: ['junk prefix', '# to intelligence'], modSides: ['prefix', 'suffix'],
+    sides: { prefix: { J: 1, K: 2, restore: [null, null], free: 0, full: true, omen: 'Omen of Sinistral Annulment', names: ['a', 'b'] },
+      suffix: { J: 1, K: 1, restore: [null], free: 1, full: false, omen: 'Omen of Dextral Annulment', names: ['d'] } },
+    currencies: ['Orb of Annulment'] };
+  const add = { act: 'add', side: 'suffix', mod: '#% to cold resistance', exalt: { base: { chance: 0.1, pool: 10 } }, currencies: ['Exalted Orb'] };
+  const add2 = { act: 'add', side: 'suffix', mod: '#% increased rarity of items found', exalt: { base: { chance: 0.1, pool: 10 } }, currencies: ['Exalted Orb'] };
+  // Two suffixes into one free slot: Intelligence has to go.
+  const sub = pc.subPlan([remove, add, add2], new Set(['#% to cold resistance', '#% increased rarity of items found']));
+  const r = sub.find((s) => s.act === 'remove');
+  assert.deepEqual(r.mods, ['# to intelligence'], 'only the suffix junk goes');
+  assert.ok(r.sides.prefix && r.sides.prefix.J === 0 && r.sides.prefix.K === 2, 'the prefix side with its wanted mods is still there');
+  const chaos = pc.chaosLoop(r, add);
+  // A plain Chaos Orb picks among all 5 mods: 4 of 5 attempts hit a wanted one — never «cheaper» than a side omen.
+  assert.ok(!chaos || !chaos.currencies.every((n) => n === 'Chaos Orb') || chaos.hits > 2, 'plain Chaos is not treated as safe');
+});

@@ -390,7 +390,10 @@ function planHtml(plan) {
     if (s.mods) notes.push(c.hits > 0.05
       ? t('on average ≈{n} needed modifiers get hit too — re-adding them is counted in the price', { n: fmt(Math.round(c.hits * 10) / 10) })
       : t('only unwanted modifiers can be hit'));
-    if (c.hopeless) key.push(t('One attempt: a miss stays on the item — removing it at random would more likely hit a needed modifier'));
+    // Why one attempt: a desecrated miss is removed precisely (Annulment + Omen of Light) — it is the price of that, not the risk.
+    if (c.hopeless) key.push(c.k === 'desecrate'
+      ? t('One attempt: removing a miss (Orb of Annulment + Omen of Light) and trying again costs more than the goal is worth')
+      : t('One attempt: a miss stays on the item — removing it at random would more likely hit a needed modifier'));
     else if (s.act !== 'remove' && c.k !== 'desecrate' && c.k !== 'essence' && (s.onSide || s.onItem)) notes.push(t('the average includes misses: an Annulment may hit a needed modifier, which then has to be added again'));
     if (c.k === 'essence') notes.push(t('Uses the only crafted-modifier slot (one per item; Alloys too)'));
     if (c.k === 'chaos') {
@@ -482,6 +485,10 @@ function verdictHtml(plan) {
   const costs = expandPlan(plan).map(stepCost);
   const known = costs.filter((c) => c.cost != null).reduce((a, c) => a + c.cost, 0);
   const lottery = costs.some((c) => c.cost == null);
+  // Unknown odds and a single attempt are different gambles: a step with known odds that cannot be retried (a miss stays
+  // on the item) is not «unknown».
+  const unknownOdds = costs.some((c) => c.lottery);
+  const gambleNote = unknownOdds ? t('A key modifier has unknown odds — this is a gamble') : t('A step is a single attempt: a miss stays on the item — this is a gamble');
   const risky = costs.some((c) => c.risky && c.chance < 1);
   const now = state.est;
   const rows = [
@@ -511,7 +518,7 @@ function verdictHtml(plan) {
       { n: sim.runs, p50: money(sim.value.p50), p10: money(sim.value.p10), p90: money(sim.value.p90), spent: money(sim.spent.mean), profit: Math.round(sim.profit * 100), full: Math.round(sim.full * 100) }))}</small>` : '';
     verdict = `<div class="verdict ${good && (!lottery || sim) ? 'good' : 'bad'}">${good
       ? `✅ ${esc(sim ? t('Craft: better than selling as is in {pct}% of simulated runs', { pct: Math.round(sim.profit * 100) }) : t('Craft: ≈ {gain} more than selling as is', { gain: money(gain) }))}`
-      : `✖ ${esc(t('Selling as is is better'))}`}${simNote}${lottery ? `<small>${esc(t('A key modifier has unknown odds — this is a gamble'))}</small>` : ''}${hitNote || (risky ? `<small>${esc(t('Removing a modifier can hit a good one — the cost may grow'))}</small>` : '')}</div>`;
+      : `✖ ${esc(t('Selling as is is better'))}`}${simNote}${lottery ? `<small>${esc(gambleNote)}</small>` : ''}${hitNote || (risky ? `<small>${esc(t('Removing a modifier can hit a good one — the cost may grow'))}</small>` : '')}</div>`;
   } else if (now == null) {
     verdict = `<div class="verdict">${esc(t('Price this item on the Price tab first'))}</div>`;
   }
@@ -664,12 +671,13 @@ function variantEarn(v) {
   const costs = expandPlan(v.plan).map(stepCost);
   const spend = planSpend(costs);
   const lottery = costs.some((c) => c.cost == null);
-  if (value == null || now == null) return { value, spend, lottery, gain: null };
+  const unknownOdds = costs.some((c) => c.lottery); // else it is a single attempt with known odds
+  if (value == null || now == null) return { value, spend, lottery, unknownOdds, gain: null };
   if (!v.sim || v.sim.value !== value || v.sim.now !== now) {
     const sim = PlanCost.create(() => ({ prices: craftPrices, goalValue: value, est: now })).simulate(v.plan, { keep: craftGoal ? craftGoal.keep.length : 0 }, 800);
     v.sim = { value, now, gain: sim ? sim.value.mean - now - sim.spent.mean : value - now - spend, expected: !!sim };
   }
-  return { value, spend, lottery, gain: v.sim.gain, expected: v.sim.expected };
+  return { value, spend, lottery, unknownOdds, gain: v.sim.gain, expected: v.sim.expected };
 }
 
 // Under half an exalted (money() picks the unit where the number is ≥ 1, so a number below 0.5 is in ex): shown as nothing.
@@ -678,11 +686,11 @@ const tiny = (div) => parseFloat(money(div).replace(/,/g, '')) < 0.5;
 function variantsHtml() {
   if (!variants) return '';
   const cards = variants.map((v) => {
-    const { value, spend, lottery, gain, expected } = variantEarn(v);
+    const { value, spend, lottery, unknownOdds, gain, expected } = variantEarn(v);
     const zero = gain != null && tiny(Math.abs(gain)); // rounds to nothing — no sign, no colour
     const earn = value === undefined ? '…' : gain == null ? '—' : zero ? '<b>≈ 0</b>'
       : `<b class="${gain > 0 ? 'good' : 'bad'}">${lottery && !expected && gain > 0 ? `${esc(t('up to'))} ` : '≈ '}${gain > 0 ? '+' : '−'}${money(Math.abs(gain))}</b>`;
-    return `<button class="variant${v.key === planVariant ? ' on' : ''}" data-act="variant" data-v="${v.key}"${lottery ? ` title="${esc(t('A key modifier has unknown odds — this is a gamble'))}"` : ''}>
+    return `<button class="variant${v.key === planVariant ? ' on' : ''}" data-act="variant" data-v="${v.key}"${lottery ? ` title="${esc(t(unknownOdds ? 'A key modifier has unknown odds — this is a gamble' : 'A step is a single attempt: a miss stays on the item — this is a gamble'))}"` : ''}>
       <span class="vn">${esc(t(VARIANT_NAME[v.key]))}</span>
       <span class="vr"><small>${esc(t('craft'))}</small><b>${tiny(spend) ? '< 1 ex' : `${lottery ? `${esc(t('from'))} ` : '~ '}${money(spend)}`}</b></span>
       <span class="vr"><small>${esc(t('earn'))}</small>${earn}</span></button>`;

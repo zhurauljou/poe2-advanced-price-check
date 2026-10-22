@@ -366,6 +366,8 @@
     "Average gain of one attempt: price gain × chance − the attempt's cost": 'Средний выигрыш одной попытки: прибавка к цене × шанс − цена попытки',
     try: 'попытку',
     'One trade search per row, then the list is sorted by what one attempt gains on average: price gain × chance − its cost': 'Один поиск на трейде на строку, затем список сортируется по среднему выигрышу одной попытки: прибавка к цене × шанс − её цена',
+    'A step is a single attempt: a miss stays on the item — this is a gamble': 'Один из шагов — одна попытка: промах остаётся на вещи, это лотерея',
+    'One attempt: removing a miss (Orb of Annulment + Omen of Light) and trying again costs more than the goal is worth': 'Одна попытка: снять промах (Orb of Annulment + Omen of Light) и повторить дороже, чем стоит цель',
     'back: {odds} per Exalt': 'вернуть: {odds} за Exalt',
     '«{mod}» goes too when an Annulment hits it; only if it is the last one left ({odds}) — Orb of Annulment + Omen of Light ({cost})': '«{mod}» тоже уйдёт, если Annulment попадёт в него; только если он останется последним ({odds}) — Orb of Annulment + Omen of Light ({cost})',
     'Chances: from {n} exalted items ({date})': 'Шансы — по {n} экзальтированным вещам ({date})',
