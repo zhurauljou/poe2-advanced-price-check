@@ -63,11 +63,19 @@ async function filters(name, demandFile) {
 }
 const mod = (f, re) => f.mods.find((m) => re.test(m.text));
 
-test('minion sceptre: goal is minion levels, weak desecrated removed with Omen of Light, Desecrate goes to levels', { skip }, async () => {
+test('minion sceptre: goal is minion levels, weak desecrated removed (Annulment run, Omen of Light if last), Desecrate goes to levels', { skip }, async () => {
   const p = await plan('sceptre-minion');
   assert.ok(p.goal.add.some((a) => /level of all minion skills/.test(a.text)), 'minion levels in the goal');
   assert.ok(p.goal.remove.some((r) => r.tag === 'desecrated'), 'desecrated is removed');
-  assert.ok(p.steps.some((s) => s.act === 'remove' && s.targeted), 'desecrated removal is targeted (Omen of Light)');
+  // With other junk to Annul, the desecrated one goes into the same run: Omen of Light only if it is the last one left.
+  const i = p.steps.findIndex((s) => s.act === 'remove' && (s.targeted || s.des));
+  assert.ok(i >= 0, 'desecrated removal is planned');
+  const rm = p.steps[i];
+  if (rm.des) {
+    const c = p.cost[i];
+    assert.ok(c.des && c.des.left > 0 && c.des.left < 1, 'Omen of Light is a fallback, not certain');
+    assert.ok(!rm.sides[rm.des.side].names.includes(rm.des.mod), 'the desecrated junk is not listed as a wanted mod');
+  }
   const minion = stepFor(p, /level of all minion skills/);
   assert.ok(minion && minion.c.k === 'desecrate', 'minion levels via Desecrate');
 });
@@ -86,6 +94,17 @@ test('boots without speed: Movement Speed via Essence of Hysteria (crafted slot)
   assert.ok(ms && ms.c.k === 'essence' && /Hysteria/.test(ms.c.currencies[0]), 'Hysteria for speed');
   const firstAdd = p.steps.findIndex((s) => s.act === 'add' || s.act === 'add2');
   assert.equal(p.steps[firstAdd], ms.s, 'essence is the first addition');
+});
+
+test('boots without speed: Hysteria with Omen of Dextral Crystallisation removes junk suffixes before the Annulments', { skip }, async () => {
+  // Free prefixes, junk suffixes: the essence's own removal goes to the other side as the first attempt of the run
+  // (verified in game with The Runebinder's Alloy, 2026-10-22) — no sacrificial Exalt, the prefixes are never hit.
+  const p = await plan('boots-no-ms');
+  const e = p.steps.findIndex((s) => s.act === 'add' && s.cross);
+  const r = p.steps.findIndex((s) => s.act === 'remove' && s.sides);
+  assert.ok(e >= 0 && e < r, 'the essence goes before the removal');
+  assert.deepEqual(p.cost[e].currencies.slice(1), ['Omen of Dextral Crystallisation'], 'only the omen of the other side, no sacrifice');
+  assert.equal(p.steps[r].essMerge.side, 'suffix', 'the removal counts the essence as one attempt');
 });
 
 test('ilvl 82 boots: Hysteria 30% speed is tier 2 — with a known goal price the plan weighs the lower tier', { skip }, async () => {

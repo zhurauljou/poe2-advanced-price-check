@@ -14,6 +14,16 @@ function weights() {
   return weightsData;
 }
 
+// Mod family weights from rares exalted to 6 mods (scripts/build-exalt-weights.js): nobody picked them by their mods, so
+// unlike trade listings they need no "reason for sale" correction. Classes with too few items aren't in the file.
+let exaltData;
+function exaltWeights() {
+  if (exaltData === undefined) {
+    try { exaltData = JSON.parse(fsW.readFileSync(pathW.join(__dirname, '..', '..', 'data', 'exalt-weights.json'), 'utf8')); } catch { exaltData = null; }
+  }
+  return exaltData;
+}
+
 const REPOE = 'https://repoe-fork.github.io/poe2';
 
 let data = null; // { bases: Map name→base, pool: [...] }
@@ -165,4 +175,4 @@ function canRoll(mod, tags) {
 // Loaded pool (or null until loaded) — for quick checks without await.
 const current = () => data;
 
-module.exports = { load, reset, onReset, current, templates, tradeStats, weights, guaranteedFor, corruptedFor, emotionsFor, canRoll };
+module.exports = { load, reset, onReset, current, templates, tradeStats, weights, exaltWeights, guaranteedFor, corruptedFor, emotionsFor, canRoll };

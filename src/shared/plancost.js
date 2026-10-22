@@ -62,30 +62,51 @@
     // the item is worth almost nothing.
     const restore = restoreValue();
     // Average price of "restoring a hit mod" over the side's wanted mods: crafted — its essence / Alloy, the rest — restoreValue.
+    const crystal = (side) => `Omen of ${side === 'prefix' ? 'Sinistral' : 'Dextral'} Crystallisation`;
+    // A key mod that one Exalted Orb + the side's omen gives back with chance `again`: re-adding it costs 1/again tries,
+    // capped by the key-mod loss (Spirit — a few Exalts; +levels — the cap: losing them costs the item its value).
+    const againCost = (r) => {
+      const per = p('Exalted Orb') != null && p(crystal(r.side)) != null ? p('Exalted Orb') + p(crystal(r.side)) : null;
+      return per == null ? restore : Math.min(restore, per / r.again);
+    };
     const sideRestore = (x) => {
       const list = (x.restore || []).length ? x.restore : [null];
       // secondary mod — re-adding it, but no more than half of the key mod's share
       const minor = Math.min(restoreCost ?? (p('Orb of Annulment') ?? 0) * 10, valueShare() ? valueShare() / 2 : Infinity);
-      return list.reduce((a, n) => a + (n === 'minor' ? minor : n && p(n) != null ? p(n) : restore), 0) / list.length;
+      return list.reduce((a, n) => a + (n === 'minor' ? minor : n && n.again ? againCost(n) : n && p(n) != null ? p(n) : restore), 0) / list.length;
+    };
+    // The desecrated junk in the run (craft.js planGoal): an Annulment removes it on the way with chance J/(J+1) — one
+    // more attempt; otherwise it is the last junk left and Orb of Annulment + Omen of Light removes it.
+    const light = (p('Omen of Light') ?? 0) + ann;
+    const desPart = (J, per) => {
+      if (!s.des) return { tries: 0, spent: 0, left: 0 };
+      const gone = J / (J + 1);
+      return { tries: gone, spent: gone * per + (1 - gone) * light, left: 1 - gone };
     };
     const opts = [];
     const sides = Object.values(s.sides);
-    const all = run(sides.reduce((a, x) => a + x.J, 0), sides.reduce((a, x) => a + x.K, 0));
+    const allJ = sides.reduce((a, x) => a + x.J, 0);
+    const all = run(allJ, sides.reduce((a, x) => a + x.K, 0));
     const allK = sides.reduce((a, x) => a + x.K, 0) || 1;
     const allRestore = sides.reduce((a, x) => a + sideRestore(x) * x.K, 0) / allK;
-    opts.push({ currencies: ['Orb of Annulment'], tries: all.tries, hits: all.hits, cost: all.tries * ann + all.hits * allRestore, spent: all.tries * ann });
+    const allDes = desPart(allJ, ann);
+    opts.push({ currencies: ['Orb of Annulment'], tries: all.tries + allDes.tries, hits: all.hits, desLeft: allDes.left,
+      cost: all.tries * ann + allDes.spent + all.hits * allRestore, spent: all.tries * ann + allDes.spent });
     if (sides.every((x) => !x.J || p(x.omen) != null)) {
       let tries = 0, hits = 0, spent = 0, lost = 0;
+      let desLeft = 0;
       for (const x of sides) {
+        if (x.des) { const dp = desPart(x.J, ann + (x.J ? p(x.omen) : 0)); tries += dp.tries; spent += dp.spent; desLeft = dp.left; }
         if (!x.J) continue;
         const r = run(x.J, x.K);
         tries += r.tries; hits += r.hits; spent += r.tries * (ann + p(x.omen)); lost += r.hits * sideRestore(x);
       }
-      opts.push({ currencies: ['Orb of Annulment', ...sides.filter((x) => x.J).map((x) => x.omen)], tries, hits, spent, cost: spent + lost });
+      opts.push({ currencies: ['Orb of Annulment', ...sides.filter((x) => x.J).map((x) => x.omen)], tries, hits, spent, cost: spent + lost, desLeft });
     }
     // The first attempt to remove an extra mod on this side was already made by Desecrate (desFirst) — not needed.
-    if (s.desMerge) {
-      const x = s.sides[s.desMerge.side];
+    const merged = s.desMerge || s.essMerge;
+    if (merged) {
+      const x = s.sides[merged.side];
       for (const o of opts) {
         const one = ann + (o.currencies.includes(x.omen) ? p(x.omen) : 0);
         o.tries -= 1; o.spent -= one; o.cost -= one;
@@ -95,14 +116,13 @@
     // attempts and hit wanted mods) and adds Mark of the Abyssal Lord; Mark is desecrated, Omen of Light +
     // Annulment removes it right away (player, 2026-10-19). A full option: chosen if it's the cheapest of all.
     let abyss = null;
-    const crystal = (side) => `Omen of ${side === 'prefix' ? 'Sinistral' : 'Dextral'} Crystallisation`;
     const sideJ = Object.entries(s.sides || {}).filter(([, x]) => x.J);
     if (s.abyss && p('Essence of the Abyss') != null && p('Omen of Light') != null && sideJ.length && sideJ.every(([side]) => p(crystal(side)) != null)) {
       let tries = 0, hits = 0, spent = 0, lost = 0;
       for (const [side, x] of sideJ) {
         const per = p('Essence of the Abyss') + p(crystal(side)) + p('Omen of Light') + ann;
         const r = run(x.J, x.K);
-        const n = r.tries - (s.desMerge && s.desMerge.side === side ? 1 : 0);
+        const n = r.tries - (merged && merged.side === side ? 1 : 0);
         tries += n; hits += r.hits; spent += n * per; lost += r.hits * sideRestore(x);
       }
       abyss = { currencies: ['Essence of the Abyss', ...sideJ.map(([side]) => crystal(side)), 'Omen of Light', 'Orb of Annulment'],
@@ -123,7 +143,8 @@
     }
     return { cost: best.cost, spent: best.spent, tries: best.tries, hits: best.hits, currencies: best.currencies,
       chance: best.hits > 0.05 ? 0.5 : 1, risky: best.hits > 0.05, whittle: wh.length ? wh : null, erasure,
-      viaAbyss: best === abyss, abyss: abyss && abyss !== best ? abyss : null, other: opts.find((o) => o !== best && o !== abyss) || null, desMerge: s.desMerge || null };
+      viaAbyss: best === abyss, abyss: abyss && abyss !== best ? abyss : null, other: opts.find((o) => o !== best && o !== abyss) || null, desMerge: s.desMerge || null, essMerge: s.essMerge || null,
+      des: s.des ? { mod: s.des.mod, left: best.desLeft || 0, cost: light } : null };
   }
 
   // Average cost until success, given how the miss is removed: per — attempt price, pc — chance,
@@ -176,7 +197,17 @@
     // Miss — remove the desecrated mod precisely: Orb of Annulment + Omen of Light.
     // Perfect/corrupted essence (crafted slot): a sacrificial mod via Exalted on this side → side Omen of Crystallisation
     // + essence: removes a random mod on the side (the sacrifice — if there are no other removable ones there) and adds its own mod.
-    if (rolls === 1 && (s.useCrafted || s.craftedOnly) && s.crafted) {
+    if (rolls === 1 && (s.useCrafted || s.craftedOnly) && s.crafted && s.cross) {
+      // The other side's Crystallisation (crossFirst): the essence removes a random mod there — one attempt of the removal
+      // run that follows, priced in that step — and adds its own mod into the free slot of its side. No sacrifice, no risk here.
+      for (const name of s.crafted || []) {
+        const cur = [name, s.cross.omen];
+        if (cur.some((n) => p(n) == null)) continue;
+        const per = cur.reduce((a, n) => a + p(n), 0);
+        const low = s.essTier && s.essTier[name] && s.bestTier ? Math.max(0, s.essTier[name].tier - s.bestTier) : 0;
+        opts.push({ k: 'essence', essence: name, low, currencies: cur, chances: [1], pool: 0, cost: per + Math.min(low * 0.1, 0.5) * valueShare(), per, slam: per, p: 1, ps: [1], cross: s.cross });
+      }
+    } else if (rolls === 1 && (s.useCrafted || s.craftedOnly) && s.crafted) {
       const P = 1 / ((s.onSide || 0) + 1);
       for (const name of s.crafted || []) {
         const cur = [name, s.crystal, 'Exalted Orb', ...(s.sideOmen ? [s.sideOmen] : [])];
@@ -230,7 +261,7 @@
     // An essence adds the mod for sure — its price is known even if the Exalted chance for this mod is unknown.
     const lot = lottery && best.k !== 'essence';
     return { hopeless, perTry: best.per, ps: best.ps, rem: best.rem, cost: lot || hopeless ? null : best.cost, score: best.cost, chance: best.chances[0], chances: best.chances, currencies: best.currencies,
-      lottery: lot, pool: best.pool, k: best.k, echo: best.echo, bone: best.bone, lich: best.lich, low: best.low || 0, alts: lottery ? [] : alts, desAlt };
+      lottery: lot, pool: best.pool, k: best.k, echo: best.echo, bone: best.bone, lich: best.lich, low: best.low || 0, cross: best.cross || null, alts: lottery ? [] : alts, desAlt };
   }
 
   // add2: if two separate Exalteds come out cheaper — expand it back into two steps.
@@ -303,7 +334,7 @@
     // Price of "restoring a wanted mod that got hit" — median of the plan's average addition prices (for removing extras).
     const adds = plan.flatMap((s) => (s.act === 'add2' ? s.steps : s.act === 'add' ? [s] : [])).map((x) => addCost(x, 1).score).filter(Number.isFinite).sort((a, b) => a - b);
     restoreCost = adds.length ? adds[Math.floor(adds.length / 2)] : null;
-    plan = withChaos(desFirst(pairUp(withDesecrate(plan))));
+    plan = withChaos(crossFirst(desFirst(pairUp(withDesecrate(plan)))));
     return plan.flatMap((s) => {
       if (s.act !== 'add2') return [s];
       const two = stepCost(s);
@@ -338,7 +369,7 @@
   function desFirst(plan) {
     const p = (n) => C().prices[n];
     const r = plan.findIndex((s) => s.act === 'remove' && s.sides);
-    if (r < 0) return plan;
+    if (r < 0 || plan[r].des) return plan; // the desecrated junk still holds the slot until the run is over
     const d = plan.findIndex((s, i) => i > r && s.act === 'add' && s.useDes);
     if (d < 0) return plan;
     const D = plan[d];
@@ -352,6 +383,53 @@
     const out = plan.filter((_, i) => i !== d);
     out.splice(r, 1, D2, R2);
     return out;
+  }
+
+  // A Perfect essence / Alloy always removes a random mod before adding its own. With a free slot on its own side and junk
+  // to Annul on the other side, the other side's Crystallisation makes that removal one attempt of the Annulment run
+  // (verified in game for Alloys, player 2026-10-22): no sacrificial Exalt on its own side, and its own mods are never at
+  // risk. Goes before the removals when the two steps together get cheaper.
+  function crossFirst(plan) {
+    const p = (n) => C().prices[n];
+    const m = plan.findIndex((s) => s.act === 'junk');
+    if (m >= 0) return crossJunk(plan, m).filter((s) => s.act !== 'junk');
+    const r = plan.findIndex((s) => s.act === 'remove' && s.sides);
+    if (r < 0 || plan[r].desMerge) return plan;
+    const e = plan.findIndex((s, i) => i > r && s.act === 'add' && (s.useCrafted || s.craftedOnly) && s.crafted && addCost(s, 1).k === 'essence');
+    if (e < 0) return plan;
+    const E = plan[e];
+    const other = E.side === 'prefix' ? 'suffix' : 'prefix';
+    const x = plan[r].sides[other], own = (plan[r].allSides || plan[r].sides)[E.side]; // a variant's removal may skip its side
+    // Its own side must have room before any removal; the desecrated junk on the other side would skew the odds — keep it simple.
+    if (!x || !x.J || !own || !(own.free >= 1) || (plan[r].des && plan[r].des.side === other)) return plan;
+    const omen = `Omen of ${other === 'prefix' ? 'Sinistral' : 'Dextral'} Crystallisation`;
+    if (p(omen) == null) return plan;
+    const E2 = { ...E, cross: { side: other, omen } };
+    const c2 = addCost(E2, 1);
+    if (c2.k !== 'essence' || !c2.cross) return plan;
+    const R2 = { ...plan[r], essMerge: { side: other, mod: E.mod } };
+    if (removeCost(R2).cost + c2.score >= removeCost(plan[r]).cost + addCost(E, 1).score) return plan;
+    const out = plan.filter((_, i) => i !== e);
+    out.splice(r, 1, E2, R2);
+    return out;
+  }
+
+  // A plan variant that keeps the junk (no removal step, only its marker): the essence still takes one off the other side
+  // when that side holds nothing but junk — free, nothing wanted is at risk.
+  function crossJunk(plan, m) {
+    const p = (n) => C().prices[n];
+    const e = plan.findIndex((s) => s.act === 'add' && (s.useCrafted || s.craftedOnly) && s.crafted && addCost(s, 1).k === 'essence');
+    if (e < 0) return plan;
+    const E = plan[e];
+    const other = E.side === 'prefix' ? 'suffix' : 'prefix';
+    const x = plan[m].sides[other], own = plan[m].sides[E.side];
+    if (!x || !x.J || x.K || x.des || !own || !(own.free >= 1)) return plan;
+    const omen = `Omen of ${other === 'prefix' ? 'Sinistral' : 'Dextral'} Crystallisation`;
+    if (p(omen) == null) return plan;
+    const E2 = { ...E, cross: { side: other, omen } };
+    const c2 = addCost(E2, 1);
+    if (c2.k !== 'essence' || !c2.cross || c2.score >= addCost(E, 1).score) return plan;
+    return plan.map((s, i) => (i === e ? E2 : s));
   }
 
   function withDesecrate(plan) {
@@ -537,13 +615,23 @@
         continue;
       }
       if (s.act === 'remove' && s.sides) {
+        // The desecrated junk in the run: kept as long as the variant needs its side, like the targeted step above.
+        const desKept = s.des && (sides.has(s.des.side) || desOnly);
+        if (s.des && !desKept) noDes = true;
+        const r = desKept ? s : { ...s, des: null, sides: Object.fromEntries(Object.entries(s.sides).map(([sd, x]) => [sd, { ...x, des: 0 }])) };
         // Per side: remove only as many as the variant's mods do not fit into the free slots (no data on free — all of them).
-        const J = Object.fromEntries(Object.entries(s.sides).map(([sd, x]) => [sd, x.free == null ? (sides.has(sd) ? x.J : 0) : Math.min(x.J, Math.max(0, putOn(sd) - x.free))]));
-        if (!Object.values(J).some(Boolean)) continue;
-        if (Object.entries(s.sides).every(([sd, x]) => J[sd] === x.J) || !s.modSides) { out.push(s); continue; }
+        const J = Object.fromEntries(Object.entries(r.sides).map(([sd, x]) => [sd, x.free == null ? (sides.has(sd) ? x.J : 0) : Math.min(x.J, Math.max(0, putOn(sd) - x.free))]));
+        if (!Object.values(J).some(Boolean)) {
+          // No other junk left to Annul: the desecrated one is removed for sure, Annulment + Omen of Light.
+          if (desKept) out.push({ act: 'remove', side: s.des.side, mod: s.des.mod, currencies: ['Orb of Annulment', 'Omen of Light'], chance: 1, targeted: true });
+          // The junk stays on the item — an essence can still take one off the other side for free (crossFirst drops this marker).
+          out.push({ act: 'junk', sides: r.sides });
+          continue;
+        }
+        if (Object.entries(r.sides).every(([sd, x]) => J[sd] === x.J) || !r.modSides) { out.push(r); continue; }
         const left = { ...J };
-        const mods = s.mods.filter((_, k) => left[s.modSides[k]]-- > 0);
-        out.push({ ...s, mods, sides: Object.fromEntries(Object.entries(s.sides).filter(([sd]) => J[sd]).map(([sd, x]) => [sd, { ...x, J: J[sd] }])) });
+        const mods = r.mods.filter((_, k) => left[r.modSides[k]]-- > 0);
+        out.push({ ...r, mods, allSides: r.allSides || r.sides, sides: Object.fromEntries(Object.entries(r.sides).filter(([sd, x]) => J[sd] || x.des).map(([sd, x]) => [sd, { ...x, J: J[sd] }])) });
         continue;
       }
       out.push(s);

@@ -86,7 +86,11 @@ a screenshot of the overlay and exits.
 
 ## Data
 
-Mod weight estimates (chances in the craft advice) — `data/weights.json`, collected from trade listings (not game data).
+Mod weight estimates (chances in the craft advice) are not game data: PoE 2 files have no modifier weights.
+- `data/exalt-weights.json` — from rares exalted to 6 mods with plain Exalted Orbs and read whole (nobody picked them by
+  their mods). Used for every class it has (100+ items).
+- `data/weights.json` — from cheap trade listings, for the other classes (jewels). Sellers list items for the mods the market
+  values, so such mods come out 2–4× too common there; their chance is not shown.
 
 - Prices and demand — [poe.ninja](https://poe.ninja), mods and bases — [RePoE](https://repoe-fork.github.io/poe2), search — the official GGG trade site.
 - Item names in other client languages and service lines — from [Exiled Exchange 2](https://github.com/Kvan7/Exiled-Exchange-2) (MIT).

@@ -6,7 +6,7 @@
 const fsW = require('fs');
 const pathW = require('path');
 const craftData = require('./craft-data');
-const { load, templates, tradeStats, weights, guaranteedFor, corruptedFor, emotionsFor, canRoll } = craftData;
+const { load, templates, tradeStats, weights, exaltWeights, guaranteedFor, corruptedFor, emotionsFor, canRoll } = craftData;
 // Odds in words: "1 in 3"; better than 1 in 2 — as a percentage ("~60%"): "1 in 1.7" reads badly.
 const oddsOf = (p) => (p >= 0.5 ? `~${Math.round(Math.min(1, p) * 100)}%` : t('1 in {n}', { n: Math.round(10 / p) / 10 }));
 
@@ -327,12 +327,16 @@ async function advise(item, demandMods, cached) {
     sidePool[side] = lv;
   }
   let nOf = null; // family frequency from collected stats (if any)
-  const W = weights();
-  const wc = classWeights(W, item.itemClass, base, d);
+  const E = exaltWeights();
+  const ec = E && E.classes[item.itemClass];
+  const W = ec ? null : weights();
+  const wc = ec ? null : classWeights(W, item.itemClass, base, d);
   let chanceMeta = null;
-  if (wc && wc.items >= 50) {
-    chanceMeta = { items: wc.items, collected: W.meta.collected, league: W.meta.league };
-    const counts = familyCounts(wc, (type) => Math.max(0, ...(d.typeLines.get(type) || []).map((l) => want.get(l) || 0)));
+  if (ec || (wc && wc.items >= 50)) {
+    // Exalt samples are fair for every family; trade listings — not for valuable ones (see below).
+    chanceMeta = ec ? { items: ec.items, collected: E.meta.collected, league: E.meta.league, source: 'exalt' }
+      : { items: wc.items, collected: W.meta.collected, league: W.meta.league, source: 'trade' };
+    const counts = ec ? { ...ec.counts } : familyCounts(wc, (type) => Math.max(0, ...(d.typeLines.get(type) || []).map((l) => want.get(l) || 0)));
     // Stats are per whole class (all boots), but defence mods roll only on their own bases (evasion — on "dex" ones).
     // Divide the frequency by the share of the class's "base types" where the family can roll at all: a weight estimate as if it rolled everywhere.
     const share = eligibleShare(d, base);
@@ -345,7 +349,7 @@ async function advise(item, demandMods, cached) {
       // Valuable mods (≥ SALE_REASON% of builds) cannot be estimated fairly from trade: without a price cap they are inflated (such items
       // are listed more eagerly), with a cap — deflated (such items cost more). No chance is shown for them.
       for (const c of normal.filter((x) => x.side === side)) {
-        if (c.pct >= SALE_REASON) c.chance = null, c.chanceUnknown = true;
+        if (c.pct >= SALE_REASON && !ec) c.chance = null, c.chanceUnknown = true;
         else if (total && types.has(c.type)) c.chance = n(c.type) / total;
       }
     }
@@ -713,7 +717,19 @@ async function advise(item, demandMods, cached) {
     }
   }
 
-  const goal = planGoal(mine, normal, max, want, magic, magicFree, item.itemClass, craftedSources, item.quality || 0, craftedCap);
+  // Chance that one Exalted Orb with the side's Crystallisation omen gives a lost mod back — its family at its tier or better
+  // (tiers taken as equally likely). Only from weights that can be trusted for the mod: exalt samples, or trade for a mod
+  // that is not valuable. Prices the risk of an Annulment hitting it: Spirit comes back in a few tries, +levels hardly ever.
+  const reroll = (a) => {
+    if (!nOf || !a.mod || (a.mod.generation_type !== 'prefix' && a.mod.generation_type !== 'suffix')) return null;
+    if (!chanceMeta || (chanceMeta.source !== 'exalt' && Math.max(0, ...a.mod.lines.map((l) => want.get(l) || 0)) >= SALE_REASON)) return null;
+    const side = a.mod.generation_type;
+    const total = [...sidePool[side].keys()].reduce((sum, type) => sum + nOf(type), 0) + nOf(a.mod.type);
+    const tiers = onBase.filter((m) => m.type === a.mod.type && m.generation_type === side && m.domain === 'item' && m.required_level <= ilvl);
+    const atLeast = tiers.filter((m) => m.required_level >= a.mod.required_level).length;
+    return total && tiers.length ? (nOf(a.mod.type) / total) * (Math.max(1, atLeast) / tiers.length) : null;
+  };
+  const goal = planGoal(mine, normal, max, want, magic, magicFree, item.itemClass, craftedSources, item.quality || 0, craftedCap, reroll);
   // Runes / Soul Cores for sockets: augments for the class whose stats builds use (demand ≥ 15%) — the best per stat family.
   const augments = [];
   if (!jewel) {
@@ -836,7 +852,7 @@ const EXALT_MIN = Object.fromEntries(methods.tiers('exalt').map(([, lv], i) => [
 const EXALT_NAME = Object.fromEntries(methods.tiers('exalt').map(([n], i) => [EXALT_KEYS[i], n]));
 const KEY_PCT = 30; // a mod used by this % of builds is not swapped for another
 const KEEP_BONUS = 1.5;
-function planGoal(mine, candidates, max, want, magic, magicFree = [], itemClass = '', craftedSources = [], itemQuality = 0, craftedCap = 1) {
+function planGoal(mine, candidates, max, want, magic, magicFree = [], itemClass = '', craftedSources = [], itemQuality = 0, craftedCap = 1, reroll = () => null) {
   // A key mod for the slot (skill levels, Spirit, speed on boots…) raises the price more than its popularity
   // suggests: "+2 to minions" on a sceptre is worth more than Mana Regeneration, even if the latter is more common.
   const KEY_BONUS = 2;
@@ -947,34 +963,46 @@ function planGoal(mine, candidates, max, want, magic, magicFree = [], itemClass 
     }
   }
   // 1. First remove the junk ("Annul down to the base"), then add. Desecrated — targeted: Annulment + Omen of Light.
-  for (const r of remove.filter((x) => x.tag === 'desecrated')) {
+  // With other junk to Annul, a desecrated junk mod goes into the same run instead: a plain Annulment hitting it is progress,
+  // and the wanted mods are hit no more often (what counts is the order of the other junk and the wanted ones). Omen of
+  // Light is needed only if it is the last junk left — 1 in J+1 — so the run goes first and the omen mostly stays unbought.
+  const junk = remove.filter((x) => x.tag !== 'desecrated');
+  const desJunk = remove.filter((x) => x.tag === 'desecrated');
+  const desInRun = junk.length && desJunk.length === 1 ? desJunk[0] : null;
+  for (const r of desJunk) {
+    if (r === desInRun) continue;
     plan.push({ act: 'remove', side: r.side, mod: r.text, currencies: ['Orb of Annulment', 'Omen of Light'], chance: 1, targeted: true });
     filled[r.side]--;
   }
   // The rest — with Annulments (with or without a side omen): the window counts attempts and how many wanted mods get hit.
-  // sides: J — junk on the side, K — wanted ones that Annulment can remove (not fractured).
-  const junk = remove.filter((x) => x.tag !== 'desecrated');
+  // sides: J — junk on the side, K — wanted ones that Annulment can remove (not fractured), des — the desecrated junk in the run.
   if (junk.length) {
     const sides = {};
+    const removed = (a, side) => remove.some((x) => x.side === side && x.text === (a.mod ? a.mod.lines.join(' / ') : a.name));
     for (const side of ['prefix', 'suffix']) {
       const J = junk.filter((x) => x.side === side).length;
-      const K = filled[side] - fixed[side] - J;
+      const des = desInRun && desInRun.side === side ? 1 : 0;
+      const K = filled[side] - fixed[side] - J - des;
       // How to restore each wanted mod of the side if Annulment hits it: a crafted one — with its essence / Alloy.
-      const keepers = mine.filter((a) => a.side === side && a.tag !== 'fractured' && !junk.some((x) => x.side === side && x.text === (a.mod ? a.mod.lines.join(' / ') : a.name)));
-      const restore = keepers.map((a) => {
+      // Every mod being removed (desecrated junk too) is junk here, not a wanted one.
+      const keepers = mine.filter((a) => a.side === side && a.tag !== 'fractured' && !removed(a, side));
+      const again = keepers.map((a) => (a.tag !== 'crafted' ? reroll(a) : null));
+      const restore = keepers.map((a, i) => {
         if (a.tag !== 'crafted' || !a.mod) {
-          // Key (used by ≥ KEY_PCT% or a good tier) — losing it is costly; a minor one — just craft it again.
+          // Key (used by ≥ KEY_PCT% or a good tier) — losing it is costly, unless one Exalted Orb gives it back often
+          // enough (again); a minor one — just craft it again.
           const pct = a.mod ? Math.max(0, ...a.mod.lines.map((l) => want.get(l) || 0)) : 0;
-          return !a.mod || pct >= KEY_PCT || (a.tier && a.tier <= 2) ? null : 'minor';
+          if (a.mod && !(pct >= KEY_PCT || (a.tier && a.tier <= 2))) return 'minor';
+          return again[i] ? { again: again[i], side } : null;
         }
         const src = craftedSources.find((x) => templates(x.text.replace(/–/g, '-').replace(/ \/ /g, '\n')).some((l) => a.mod.lines.includes(l)));
         return src ? src.name : null;
       });
       // full — no room on the side: Desecrate with this side's Necromancy removes a random mod by itself (verified in game).
       // free — empty slots before the removal: a plan variant with fewer mods may not need to remove anything here.
-      sides[side] = { J, K, restore, omen: `Omen of ${side === 'prefix' ? 'Sinistral' : 'Dextral'} Annulment`, full: filled[side] >= max[side], free: max[side] - filled[side],
-        // The wanted mods an Annulment can hit instead of the junk — named in the step's warning.
-        names: keepers.map((a) => ((a.lines || []).length ? a.lines.join(' / ') : a.mod ? a.mod.lines.join(' / ') : a.name)),
+      sides[side] = { J, K, des, restore, omen: `Omen of ${side === 'prefix' ? 'Sinistral' : 'Dextral'} Annulment`, full: filled[side] - des >= max[side], free: max[side] - filled[side] + des,
+        // The wanted mods an Annulment can hit instead of the junk — named in the step's warning, with the odds of getting each back.
+        names: keepers.map((a) => ((a.lines || []).length ? a.lines.join(' / ') : a.mod ? a.mod.lines.join(' / ') : a.name)), again,
         necro: `Omen of ${side === 'prefix' ? 'Sinistral' : 'Dextral'} Necromancy` };
     }
     // Chaos + Omen of Whittling removes the lowest-level mod — if a junk mod is strictly below all other removable ones
@@ -994,10 +1022,15 @@ function planGoal(mine, candidates, max, want, magic, magicFree = [], itemClass 
     // Mark of the Abyssal Lord — a desecrated mod, removed by Omen of Light + Annulment (player, 2026-10-19; Ame's videos).
     // Needs a free desecrated slot; the crafted slot is required too (the essence does not apply to an item with a crafted mod — data notes).
     const abyss = desFree && craftedFree && craftedSources.some((x) => x.name === 'Essence of the Abyss');
-    plan.push({ act: 'remove', mods: junk.map((x) => x.text), modSides: junk.map((x) => x.side), sides, whittle, whittleWrong, freeQuality, abyss,
+    const rerolled = Object.values(sides).some((x) => x.restore.some((r) => r && r.again));
+    plan.push({ act: 'remove', mods: junk.map((x) => x.text), modSides: junk.map((x) => x.side), sides, whittle, whittleWrong, freeQuality,
+      abyss: abyss && !desInRun, des: desInRun ? { side: desInRun.side, mod: desInRun.text } : null,
       currencies: ['Orb of Annulment', 'Omen of Sinistral Annulment', 'Omen of Dextral Annulment', ...(whittle ? ['Chaos Orb', 'Omen of Whittling'] : []),
-        ...(abyss ? ['Essence of the Abyss', 'Omen of Sinistral Crystallisation', 'Omen of Dextral Crystallisation', 'Omen of Light'] : [])] });
+        ...(desInRun ? ['Omen of Light'] : []),
+        ...(rerolled ? ['Exalted Orb', 'Omen of Sinistral Crystallisation', 'Omen of Dextral Crystallisation'] : []),
+        ...(abyss && !desInRun ? ['Essence of the Abyss', 'Omen of Sinistral Crystallisation', 'Omen of Dextral Crystallisation', 'Omen of Light'] : [])] });
     for (const x of junk) filled[x.side]--;
+    if (desInRun) filled[desInRun.side]--;
   }
   if (essenceMod) filled[essenceMod.side]++; // the essence has already taken a slot on its side
   // Every addition is a one-attempt lottery (odds unknown, a miss stays) and together they fill every free slot on both

@@ -18,3 +18,4 @@ Collect drops.bat
 scripts/dashboard.js
 scripts/dashboard-server.js
 scripts/dashboard.html
+scripts/build-exalt-weights.js

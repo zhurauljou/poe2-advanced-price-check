@@ -265,7 +265,7 @@ const STEP_LABEL = {
   rune: (s) => t('Socket the rune: «{mod}» (permanent)', { mod: s.mod }) + (s.free ? '' : ` — ${t("needs a free augment socket (Artificer's Orb)")}`),
   regal: () => t('Make it rare'),
   essence: (s) => t('Make it rare with {mod}', { mod: s.mod }),
-  remove: (s) => t('Remove {mod}', { mod: s.mod || s.mods.join(', ') }),
+  remove: (s) => t('Remove {mod}', { mod: s.mod || [...s.mods, ...(s.des ? [s.des.mod] : [])].join(', ') }),
   add: (s) => t('Add {mod}', { mod: s.mod }) + (s.orMods && s.orMods.length ? ` (${t('or {mods}', { mods: s.orMods.slice(0, 3).join(', ') })})` : ''),
   add2: (s) => t('Add {a} and {b}', { a: s.steps[0].mod, b: s.steps[1].mod }),
   replace: (s) => t('Replace {junk} with {mod}', { junk: s.junk.join(', '), mod: s.mod }),
@@ -273,7 +273,7 @@ const STEP_LABEL = {
 
 // The same steps split for the plan card: a muted verb, then each mod on its own line in the mod colour.
 const STEP_PARTS = {
-  remove: (s) => ({ verb: t('Remove'), mods: s.mod ? [s.mod] : s.mods, or: [] }),
+  remove: (s) => ({ verb: t('Remove'), mods: s.mod ? [s.mod] : [...s.mods, ...(s.des ? [s.des.mod] : [])], or: [] }),
   add: (s) => ({ verb: t('Add'), mods: [s.mod], or: (s.orMods || []).slice(0, 3) }),
   add2: (s) => ({ verb: t('Add'), mods: [s.steps[0].mod, s.steps[1].mod], or: [] }),
   replace: (s) => ({ verb: t('Replace'), mods: [...s.junk, `→ ${s.mod}`], or: (s.orMods || []).slice(0, 3) }),
@@ -319,12 +319,17 @@ function removeRisk(s, c) {
   if (!(c.hits > 0.05)) return '';
   const sided = c.currencies.some((n) => /(Annulment|Crystallisation)$/.test(n) && /^Omen of (Sinistral|Dextral)/.test(n));
   const parts = Object.values(s.sides).filter((x) => (sided ? x.J : x.J || x.K));
-  const J = parts.reduce((a, x) => a + x.J, 0), K = parts.reduce((a, x) => a + x.K, 0);
-  const names = parts.flatMap((x) => x.names || []);
+  // The desecrated junk in the run counts as junk too (a plain Annulment hitting it is progress).
+  const J = parts.reduce((a, x) => a + x.J + (x.des || 0), 0), K = parts.reduce((a, x) => a + x.K, 0);
+  // Each wanted mod with the odds of one Exalted Orb + side omen giving it back: losing Spirit is not losing +levels.
+  const names = parts.flatMap((x) => (x.names || []).map((m, i) => {
+    const again = (x.again || [])[i];
+    return again ? `«${m}» (${t('back: {odds} per Exalt', { odds: oneIn(again) })})` : `«${m}»`;
+  }));
   if (!K || !names.length) return '';
   const odds = K / (J + K);
   const fmtOdds = odds >= 0.5 ? `~${Math.round(odds * 100)}%` : oneIn(odds);
-  return `<div class="ps-risk">⚠ ${esc(t('{odds} on the first attempt: it removes {mods} instead of the junk (then fewer mods are left) · on average ≈{hits} of them are lost before it is done', { odds: fmtOdds, mods: names.map((m) => `«${m}»`).join(t(' or ')), hits: fmt(Math.round(c.hits * 10) / 10) }))}</div>`;
+  return `<div class="ps-risk">⚠ ${esc(t('{odds} on the first attempt: it removes {mods} instead of the junk (then fewer mods are left) · on average ≈{hits} of them are lost before it is done', { odds: fmtOdds, mods: names.join(t(' or ')), hits: fmt(Math.round(c.hits * 10) / 10) }))}</div>`;
 }
 
 function planHtml(plan) {
@@ -393,6 +398,9 @@ function planHtml(plan) {
       : `${o.currencies[0]} · ${t('≈ {cost} on average', { cost: money(o.cost) })}`;
     const alts = [...(c.alts || []).filter((o) => o.k !== 'desecrate' && o.k !== 'essence'), ...(c.desAlt || []).slice(0, 2)].filter((o) => Number.isFinite(o.cost)).map(altText);
     if (c.other) alts.push(t('{how}: ≈{n} attempts, ≈{hits} needed modifiers hit, {cost} in currency', { how: c.other.currencies.join(' + '), n: fmt(Math.round(c.other.tries * 10) / 10), hits: fmt(Math.round(c.other.hits * 10) / 10), cost: money(c.other.spent) }));
+    if (c.des) key.push(t('«{mod}» goes too when an Annulment hits it; only if it is the last one left ({odds}) — Orb of Annulment + Omen of Light ({cost})', { mod: c.des.mod, odds: oneIn(Math.max(c.des.left, 0.01)), cost: money(c.des.cost) }));
+    if (c.cross) key.push(t('{omen}: {essence} removes a random {side} — the junk you are removing anyway, or one Annulment attempt\'s risk — and adds its modifier into the free {own}; your {own}es are never hit', { omen: c.cross.omen, essence: c.currencies[0], side: t(c.cross.side), own: t(s.side) }));
+    if (c.essMerge) key.push(t('One attempt fewer: the essence in the previous step already removed a random {side}', { side: t(c.essMerge.side) }));
     if (c.desMerge) key.push(t('One attempt fewer: the desecration in the previous step already removed a random {side}', { side: t(c.desMerge.side) }));
     if (s.freeQuality) notes.push(t('{mod} has done its job: quality is already above 20% and stays after it is removed (community data) — the crafted slot frees up', { mod: s.freeQuality }));
     if (s.whittleWrong) notes.push(t('Chaos Orb + Omen of Whittling would not help: it removes the lowest-level modifier, and that is «{mod}» (level {level})', { mod: s.whittleWrong.mod, level: s.whittleWrong.level }));
@@ -424,7 +432,7 @@ function planHtml(plan) {
     const how = [c.k === 'essence' || c.viaAbyss ? '' : curChips(c.currencies), esc(odds)].filter(Boolean).join(' · ');
     const sideHtml = side ? `<div class="ps-side${side.per ? ' per' : ''}"><b class="ps-cost">≈ ${money(side.cost)}</b>${side.per ? `<small>${esc(t('per attempt'))}</small>` : side.sub ? `<small>${esc(side.sub)}</small>` : ''}</div>` : '';
     return `<li${side ? ' class="has-side"' : ''}><div class="ps-main"><div class="ps-what">${title}</div>
-      ${c.k === 'essence' ? essenceSeq(s, c) : ''}${c.viaAbyss ? abyssSeq(c, desAt(si)) : ''}
+      ${c.k === 'essence' && !c.cross ? essenceSeq(s, c) : ''}${c.viaAbyss ? abyssSeq(c, desAt(si)) : ''}
       ${how ? `<div class="ps-how">${how}</div>` : ''}
       ${why.map((w) => `<div class="ps-key">${esc(w)}</div>`).join('')}
       ${key.length ? `<div class="ps-key">${esc(key.join(' · '))}</div>` : ''}
@@ -705,6 +713,7 @@ function sessionHtml(r) {
 // briefly on a line under the odds table, full text in the tooltip.
 function chanceLine(m) {
   const date = m.league && state && m.league !== state.league ? `${m.collected}, ${m.league}` : m.collected;
+  if (m.source === 'exalt') return `<div class="craft-chance-note" title="${esc(t('Chances from {n} rares exalted to 6 modifiers with plain Exalted Orbs ({date}) — nobody picked them by their modifiers. PoE 2 game files have no modifier weights, so these are estimates, not exact odds.', { n: m.items, date }))}">ⓘ ${esc(t('Chances: from {n} exalted items ({date})', { n: fmt(m.items), date }))}</div>`;
   return `<div class="craft-chance-note" title="${esc(t('Chances are rough estimates from {n} cheap trade listings ({date}) — PoE 2 game files have no modifier weights. Treat them as "common / rare", not exact odds.', { n: m.items, date }))}">ⓘ ${esc(t('Chances: a rough estimate from {n} trade listings ({date})', { n: fmt(m.items), date }))}</div>`;
 }
 

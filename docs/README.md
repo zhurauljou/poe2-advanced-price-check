@@ -36,7 +36,7 @@ the snapshot for tests — `test/fixtures/data`), the trade reference data (`sta
 
 | Question | Sources | What the code does now |
 |---|---|---|
-| **Abyssal Echoes:** after the reroll, can you take an option from the first three (a choice of 6) or only from the new ones? | Player (2026-10-18): the omen lets you see 3 options and reroll once — "3 + 3". Whether you can go back to the first three is not clarified, but **it does not affect the calculation**: if the needed mod is in the first three, you take it; if not, you reroll; the chance is the same 1 − (1 − p)⁶. The difference matters only when choosing the best of several suitable ones | two independent triples, no repeats within a triple (player: a mod can come back in the second triple): 1 − Π(1 − g/(N − i)) per triple (`plancost.js`, 0.3.146) |
+| ~~**Abyssal Echoes:** after the reroll, can you take an option from the first three (a choice of 6) or only from the new ones?~~ **Only the new three** — player screenshot, 2026-10-22 (H): after the reroll the Well of Souls shows just the three new options | Player (2026-10-18): the omen lets you see 3 options and reroll once — "3 + 3". Whether you can go back to the first three is not clarified, but **it does not affect the calculation**: if the needed mod is in the first three, you take it; if not, you reroll; the chance is the same 1 − (1 − p)⁶. The difference matters only when choosing the best of several suitable ones | two independent triples, no repeats within a triple (player: a mod can come back in the second triple): 1 − Π(1 − g/(N − i)) per triple (`plancost.js`, 0.3.146) |
 | ~~**Desecrate on a full item with a Necromancy omen** removes a mod from the same side?~~ **Yes** — player, 2026-10-18 (H): on full suffixes with Dextral Necromancy a suffix disappeared and an unrevealed desecrated suffix took its place | Mobalytics abyss-crafting, talisman-craft | `plancost.js` `desFirst`: one extra mod on a full side — Desecrate before the removals, instead of one Annulment attempt |
 | **Essence of the Abyss + Fracturing Orb:** can the Mark be fractured? | tricks D-3 [T15]: yes; Mobalytics ssf-crafting: the Mark is desecrated and cannot be fractured. Player (2026-10-19): the Mark is desecrated and is removed by Omen of Light + Annulment — this supports the Mobalytics version, but Fracture on the Mark was not tested directly | — |
 | **Jewel: exceeding the limit after Contempt** — remove the crafted "+1 Suffix allowed" and the three suffixes stay? Does it work in 0.5.5? | GGG forum 2026-06-04, poecurrency 2026-08-07 (M/L); no fix in the patch notes | the side over the limit is not touched, section "Over the limit" (`craft.js`) |
@@ -59,6 +59,7 @@ the snapshot for tests — `test/fixtures/data`), the trade reference data (`sta
 3. `node scripts/audit-craft.js` — the advisor on 840 random items: 0 violations.
 4. Check the manually collected data (`data/crafting-currency.json`, `data/gamble-currency.json`, `src/main/essences.js`,
    `src/shared/methods.js`) against the patch notes and poe2db; update "Patch / verified" in the table above.
-5. Mod weight estimates for the new league — with the local collection utility (not in git): commit `data/weights.json`
-   once enough has been collected (hours / overnight).
+5. Mod weight estimates for the new league — with the local collection utilities (not in git): exalted rares
+   (`scripts/collect-drops.js`, then `scripts/build-exalt-weights.js`) → commit `data/exalt-weights.json`; trade listings
+   for the classes without enough exalted items → commit `data/weights.json` once enough has been collected (hours / overnight).
 6. `node scripts/snapshot-test-data.js` — a new data snapshot for tests.
