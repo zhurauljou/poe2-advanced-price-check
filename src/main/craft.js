@@ -1022,17 +1022,23 @@ function planGoal(mine, candidates, max, want, magic, magicFree = [], itemClass 
   // An unwanted mod is removed only when its slot is needed for a goal mod; otherwise it stays — removing it costs currency
   // and risks hitting a wanted mod for nothing. Desecrated and crafted junk keep their own handling (they hold the
   // desecrated / crafted slot). need — how many slots the side is short of with every goal mod added.
+  // Which junk is better to keep: the most wanted; on a tie not a weak one (Attribute Requirements, Light Radius…), then the
+  // better tier — never just the order on the item.
+  const weak = (r) => ((r.templates || []).length && r.templates.every((l) => isWeak(l)) ? 1 : 0);
+  const stayOrder = (a, b) => (b.pct || 0) - (a.pct || 0) || weak(a) - weak(b) || (a.tier || 99) - (b.tier || 99);
   for (const side of ['prefix', 'suffix']) {
     const plain = remove.filter((r) => r.side === side && r.tag !== 'desecrated' && r.tag !== 'crafted');
     const need = filled[side] + adds(side) + (essenceMod && essenceMod.side === side ? 1 : 0) - max[side];
     const drop = plain.length - Math.max(0, need);
     if (drop <= 0) continue;
-    // The ones that stay: the most wanted of the junk; a random mod from Regal is never kept (it exists only when there is no room).
-    for (const r of plain.filter((x) => x.tag !== 'random').sort((a, b) => (b.pct || 0) - (a.pct || 0)).slice(0, drop)) {
+    // A random mod from Regal is never kept (it exists only when there is no room).
+    for (const r of plain.filter((x) => x.tag !== 'random').sort(stayOrder).slice(0, drop)) {
       remove.splice(remove.indexOf(r), 1);
       keep.push({ ...r, stays: true });
     }
   }
+  // The worst junk first: a plan variant that needs fewer slots removes the first ones of a side (plancost subPlan).
+  remove.sort((a, b) => stayOrder(b, a));
   // 1. First remove the junk ("Annul down to the base"), then add. Desecrated — targeted: Annulment + Omen of Light.
   // With other junk to Annul, a desecrated junk mod goes into the same run instead: a plain Annulment hitting it is progress,
   // and the wanted mods are hit no more often (what counts is the order of the other junk and the wanted ones). Omen of
@@ -1046,17 +1052,21 @@ function planGoal(mine, candidates, max, want, magic, magicFree = [], itemClass 
     filled[r.side]--;
   }
   // The rest — with Annulments (with or without a side omen): the window counts attempts and how many wanted mods get hit.
-  // sides: J — junk on the side, K — wanted ones that Annulment can remove (not fractured), des — the desecrated junk in the run.
+  // sides: J — junk on the side, K — wanted ones that Annulment can remove (not fractured), des — the desecrated junk in the run,
+  // S — spare junk: it stays when nothing hits it, but an Annulment taking it instead frees the slot just as well (not a loss).
   if (junk.length) {
     const sides = {};
     const removed = (a, side) => remove.some((x) => x.side === side && x.text === (a.mod ? a.mod.lines.join(' / ') : a.name));
+    const spare = (a, side) => keep.some((x) => x.stays && x.side === side && x.text === (a.mod ? a.mod.lines.join(' / ') : a.name));
     for (const side of ['prefix', 'suffix']) {
       const J = junk.filter((x) => x.side === side).length;
       const des = desInRun && desInRun.side === side ? 1 : 0;
-      const K = filled[side] - fixed[side] - J - des;
+      const spares = mine.filter((a) => a.side === side && a.tag !== 'fractured' && spare(a, side));
+      const S = spares.length;
+      const K = filled[side] - fixed[side] - J - des - S;
       // How to restore each wanted mod of the side if Annulment hits it: a crafted one — with its essence / Alloy.
-      // Every mod being removed (desecrated junk too) is junk here, not a wanted one.
-      const keepers = mine.filter((a) => a.side === side && a.tag !== 'fractured' && !removed(a, side));
+      // Every mod being removed (desecrated junk too) is junk here, not a wanted one; nor is the spare junk.
+      const keepers = mine.filter((a) => a.side === side && a.tag !== 'fractured' && !removed(a, side) && !spare(a, side));
       const again = keepers.map((a) => (a.tag !== 'crafted' ? reroll(a) : null));
       const restore = keepers.map((a, i) => {
         if (a.tag !== 'crafted' || !a.mod) {
@@ -1071,9 +1081,10 @@ function planGoal(mine, candidates, max, want, magic, magicFree = [], itemClass 
       });
       // full — no room on the side: Desecrate with this side's Necromancy removes a random mod by itself (verified in game).
       // free — empty slots before the removal: a plan variant with fewer mods may not need to remove anything here.
-      sides[side] = { J, K, des, restore, omen: `Omen of ${side === 'prefix' ? 'Sinistral' : 'Dextral'} Annulment`, full: filled[side] - des >= max[side], free: max[side] - filled[side] + des,
+      sides[side] = { J, K, S, des, restore, omen: `Omen of ${side === 'prefix' ? 'Sinistral' : 'Dextral'} Annulment`, full: filled[side] - des >= max[side], free: max[side] - filled[side] + des,
         // The wanted mods an Annulment can hit instead of the junk — named in the step's warning, with the odds of getting each back.
         names: keepers.map((a) => ((a.lines || []).length ? a.lines.join(' / ') : a.mod ? a.mod.lines.join(' / ') : a.name)), again,
+        spareNames: spares.map((a) => ((a.lines || []).length ? a.lines.join(' / ') : a.mod.lines.join(' / '))),
         necro: `Omen of ${side === 'prefix' ? 'Sinistral' : 'Dextral'} Necromancy` };
     }
     // Chaos + Omen of Whittling removes the lowest-level mod — if a junk mod is strictly below all other removable ones

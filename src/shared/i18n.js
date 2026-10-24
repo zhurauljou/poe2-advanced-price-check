@@ -467,6 +467,7 @@
     'If the Mark landed on the {side}es — skip step 2 and desecrate right away (step with Desecrate below): it replaces the Mark with an unrevealed modifier of a higher tier':
       'Если Mark встал в {side}ы — пропустите шаг 2 и сразу сделайте Desecrate (шаг с Desecrate ниже): он заменит Mark нераскрытым модом более высокого тира',
     'frees a {side} for {mods}': 'освобождает {side} под {mods}',
+    'If it takes {mods} instead, that is fine too: the slot is freed just as well': 'Если вместо него уйдёт {mods} — тоже хорошо: слот освободится так же',
     '{essence} gives {value} — tier {tier}, while Exalted / Desecrate can roll tier {best} on this item': '{essence} даёт {value} — это тир {tier}, а Exalted / Desecrate на этом предмете могут дать тир {best}',
     'Tier 1 ({range}) needs item level {level} — this base cannot roll it, the essence is as good as it gets': 'Тир 1 ({range}) требует уровень предмета {level} — на этой базе его не выкинуть, эссенция даёт максимум возможного',
     'This variant': 'Этот вариант',

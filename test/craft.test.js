@@ -386,6 +386,27 @@ test('jewels: emotions — variants by base colour (Ancient — Time-Lost only),
   assert.ok(basic.sections.find((s) => s.kind === 'emotions').blocked, 'a crafted mod is already present');
 });
 
+test('two junk suffixes, one slot needed: the weak one goes (Attribute Requirements, not Chaos Resistance), whatever the item order', { skip }, async () => {
+  await init();
+  const demand = [{ name: '#% increased Energy Shield', pct: 100 }, { name: '# to maximum Energy Shield', pct: 100 },
+    { name: '#% increased Cast Speed', pct: 40 }, { name: '#% to Cold Resistance', pct: 34 }];
+  const r = await craft.advise(item('focus-es-junk'), demand, cached);
+  assert.ok(r.goal, r.note || 'plan not built');
+  const cast = r.goal.add.find((a) => /cast speed/i.test(a.text));
+  assert.ok(cast, 'cast speed is a goal mod');
+  const planner = PlanCost.create(() => ({ prices, goalValue: null, est: null }));
+  const rem = planner.subPlan(r.goal.plan, new Set([cast.text])).find((s) => s.act === 'remove');
+  assert.deepEqual(rem && rem.mods.map((m) => m.toLowerCase()), ['#% reduced attribute requirements']);
+  // Chaos Resistance stays spare: an Annulment taking it instead frees the slot too. 1 junk to remove among 2 junk:
+  // K·J/(J+S+1) wanted ones lost on average — with the side omen K = 1 (Cold Resistance): 1/3, not 1/2; a plain
+  // Annulment, K = 4 (three prefixes too): 4/3, not 2.
+  assert.equal(rem.sides.suffix.S, 1);
+  assert.deepEqual(rem.sides.suffix.names.map((m) => m.toLowerCase()), ['+23% to cold resistance']);
+  const c = planner.removeCost(rem);
+  const want = c.currencies.includes('Omen of Dextral Annulment') ? 1 / 3 : 4 / 3;
+  assert.ok(Math.abs(c.hits - want) < 1e-9, `hits ${c.hits} with ${c.currencies.join(', ')}`);
+});
+
 test('magic jewel: Augmentation and Regal add random mods — the plan counts their slots and never exceeds 2 + 2', { skip }, async () => {
   await init();
   const demand = [{ name: '#% increased Critical Hit Chance for Attacks', pct: 70 }, { name: '#% increased Critical Damage Bonus for Attack Damage', pct: 65 },

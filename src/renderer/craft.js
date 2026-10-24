@@ -348,8 +348,8 @@ function removeRisk(s, c) {
   if (!(c.hits > 0.05)) return '';
   const sided = c.currencies.some((n) => /(Annulment|Crystallisation)$/.test(n) && /^Omen of (Sinistral|Dextral)/.test(n));
   const parts = Object.values(s.sides).filter((x) => (sided ? x.J : x.J || x.K));
-  // The desecrated junk in the run counts as junk too (a plain Annulment hitting it is progress).
-  const J = parts.reduce((a, x) => a + x.J + (x.des || 0), 0), K = parts.reduce((a, x) => a + x.K, 0);
+  // The desecrated junk in the run and the spare junk count as junk too (an Annulment hitting them is progress).
+  const J = parts.reduce((a, x) => a + x.J + (x.des || 0) + (x.S || 0), 0), K = parts.reduce((a, x) => a + x.K, 0);
   // Each wanted mod with the odds of one Exalted Orb + side omen giving it back: losing Spirit is not losing +levels.
   const names = parts.flatMap((x) => (x.names || []).map((m, i) => {
     const again = (x.again || [])[i];
@@ -443,6 +443,9 @@ function planHtml(plan) {
     const why = [];
     if (s.mods && s.sides) {
       why.push(...Object.entries(s.sides).filter(([, x]) => x.J).map(([sd]) => { const m = addsAfter(si, sd); return m.length ? t('frees a {side} for {mods}', { side: t(sd), mods: m.slice(0, 2).join(', ') }) : ''; }).filter(Boolean));
+      // Spare junk (the variant no longer needs its slot): an Annulment taking it instead is progress, not a miss.
+      const spare = Object.values(s.sides).filter((x) => x.J).flatMap((x) => x.spareNames || []);
+      if (spare.length) why.push(t('If it takes {mods} instead, that is fine too: the slot is freed just as well', { mods: spare.map((m) => `«${m}»`).join(t(' or ')) }));
       if (c.hits > 0.05 && c.spent != null && c.cost != null) why.push(t('currency ≈ {cur} · risk of hitting a needed modifier ≈ {risk}', { cur: money(c.spent), risk: money(Math.max(0, c.cost - c.spent)) }));
     }
     if (c.abyss) {

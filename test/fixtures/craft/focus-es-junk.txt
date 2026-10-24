@@ -1,0 +1,25 @@
+Item Class: Foci
+Rarity: Rare
+Dire Spell
+Tasalian Focus
+--------
+Quality: +14% (augmented)
+Energy Shield: 351 (augmented)
+--------
+Requires: Level 80, 97 Int
+--------
+Item Level: 81
+--------
+{ Prefix Modifier "Blazing" (Tier: 4) — Defences }
++53(48-60) to maximum Energy Shield
+{ Prefix Modifier "Unassailable" (Tier: 1) — Defences }
+100(92-100)% increased Energy Shield
+{ Prefix Modifier "Serene" (Tier: 5) — Defences, Mana }
+14(14-20)% increased Energy Shield
++15(9-16) to maximum Mana
+{ Suffix Modifier "of the Lost" (Tier: 6) — Chaos, Resistance }
++4(4-7)% to Chaos Resistance
+{ Suffix Modifier "of the Yeti" (Tier: 5) — Elemental, Cold, Resistance }
++23(21-25)% to Cold Resistance
+{ Suffix Modifier "of the Worthy" (Tier: 5) }
+15% reduced Attribute Requirements

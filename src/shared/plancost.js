@@ -57,7 +57,8 @@
     if (ann == null) return { cost: null, chance: null, currencies: ['Orb of Annulment'], lottery: true };
     // Annulment removes the side's mods in a random order until the last junk one is gone; a hit wanted mod is restored after
     // that, not in between (the side shrinks: 1 in 3, then 1 in 2…). Wanted ones removed before the last of J junk: K·J/(J+1).
-    const run = (J, K) => { const hits = J ? (K * J) / (J + 1) : 0; return { tries: J + hits, hits }; };
+    // S spare junk (craft.js planGoal): any J of the J + S junk will do — wanted ones removed before that: K·J/(J+S+1).
+    const run = (J, K, S = 0) => { const hits = J ? (K * J) / (J + S + 1) : 0; return { tries: J + hits, hits }; };
     // A wanted mod that got hit: restoring it costs as much as adding it, but no less than a quarter of the goal price — without a key mod
     // the item is worth almost nothing.
     const restore = restoreValue();
@@ -86,7 +87,7 @@
     const opts = [];
     const sides = Object.values(s.sides);
     const allJ = sides.reduce((a, x) => a + x.J, 0);
-    const all = run(allJ, sides.reduce((a, x) => a + x.K, 0));
+    const all = run(allJ, sides.reduce((a, x) => a + x.K, 0), sides.reduce((a, x) => a + (x.S || 0), 0));
     const allK = sides.reduce((a, x) => a + x.K, 0) || 1;
     const allRestore = sides.reduce((a, x) => a + sideRestore(x) * x.K, 0) / allK;
     const allDes = desPart(allJ, ann);
@@ -98,7 +99,7 @@
       for (const x of sides) {
         if (x.des) { const dp = desPart(x.J, ann + (x.J ? p(x.omen) : 0)); tries += dp.tries; spent += dp.spent; desLeft = dp.left; }
         if (!x.J) continue;
-        const r = run(x.J, x.K);
+        const r = run(x.J, x.K, x.S);
         tries += r.tries; hits += r.hits; spent += r.tries * (ann + p(x.omen)); lost += r.hits * sideRestore(x);
       }
       opts.push({ currencies: ['Orb of Annulment', ...sides.filter((x) => x.J).map((x) => x.omen)], tries, hits, spent, cost: spent + lost, desLeft });
@@ -121,7 +122,7 @@
       let tries = 0, hits = 0, spent = 0, lost = 0;
       for (const [side, x] of sideJ) {
         const per = p('Essence of the Abyss') + p(crystal(side)) + p('Omen of Light') + ann;
-        const r = run(x.J, x.K);
+        const r = run(x.J, x.K, x.S);
         const n = r.tries - (merged && merged.side === side ? 1 : 0);
         tries += n; hits += r.hits; spent += n * per; lost += r.hits * sideRestore(x);
       }
@@ -139,7 +140,7 @@
       const omen = `Omen of ${side === 'prefix' ? 'Sinistral' : 'Dextral'} Erasure`;
       if (!x.J || p(omen) == null || !chaos.length) continue;
       const [n] = chaos[0];
-      erasure.push({ side, orb: n, omen, chance: x.J / (x.J + x.K), cost: p(n) + p(omen) });
+      erasure.push({ side, orb: n, omen, chance: (x.J + (x.S || 0)) / (x.J + (x.S || 0) + x.K), cost: p(n) + p(omen) });
     }
     return { cost: best.cost, spent: best.spent, tries: best.tries, hits: best.hits, currencies: best.currencies,
       chance: best.hits > 0.05 ? 0.5 : 1, risky: best.hits > 0.05, whittle: wh.length ? wh : null, erasure,
@@ -278,7 +279,9 @@
     const x = rem.sides[side];
     const others = Object.entries(rem.sides).filter(([sd]) => sd !== side);
     if (!x || x.J !== 1 || others.some(([, o]) => o.J)) return null;
-    const N = Object.values(rem.sides).reduce((a, o) => a + o.J + o.K, 0);
+    // Spare junk (S) on the side: Chaos taking it instead frees the slot just as well; on the other side it is not a loss either.
+    const N = Object.values(rem.sides).reduce((a, o) => a + o.J + o.K + (o.S || 0), 0);
+    const xS = x.S || 0, otherJunk = others.reduce((a, [, o]) => a + o.J + (o.S || 0), 0);
     const full = Object.values(rem.sides).every((o) => o.full);
     const land = full || others.every(([, o]) => o.full) ? 1 : 0.5;
     const restore = restoreValue();
@@ -297,8 +300,8 @@
         const pc = pJunk * land * q;
         opts.push({ currencies, per, p: pc, hit, cost: (per + hit * restore) / pc });
       };
-      opt([], 1 / N, (N - 1 - others.reduce((a, [, o]) => a + o.J, 0)) / N);
-      opt([`Omen of ${side === 'prefix' ? 'Sinistral' : 'Dextral'} Erasure`], 1 / (1 + x.K), x.K / (1 + x.K));
+      opt([], (1 + xS) / N, (N - 1 - xS - otherJunk) / N);
+      opt([`Omen of ${side === 'prefix' ? 'Sinistral' : 'Dextral'} Erasure`], (1 + xS) / (1 + xS + x.K), x.K / (1 + xS + x.K));
       if (rem.whittle) opt(['Omen of Whittling'], 1, 0);
     });
     if (!opts.length) return null;
@@ -633,7 +636,10 @@
         const mods = r.mods.filter((_, k) => left[r.modSides[k]]-- > 0);
         // Every side stays — a side with nothing to remove keeps J = 0 but its wanted mods: a plain Annulment or Chaos
         // Orb hits them too (three T1 prefixes on a helmet whose junk is a suffix), the side omens skip it.
-        out.push({ ...r, mods, allSides: r.allSides || r.sides, sides: Object.fromEntries(Object.entries(r.sides).map(([sd, x]) => [sd, { ...x, J: J[sd] }])) });
+        // The junk the variant no longer removes stays spare (S): hitting it instead is not a loss.
+        const dropped = (sd) => r.mods.filter((m, k) => r.modSides[k] === sd && !mods.includes(m));
+        out.push({ ...r, mods, allSides: r.allSides || r.sides, sides: Object.fromEntries(Object.entries(r.sides).map(([sd, x]) => [sd,
+          { ...x, J: J[sd], S: (x.S || 0) + x.J - J[sd], spareNames: [...(x.spareNames || []), ...dropped(sd)] }])) });
         continue;
       }
       out.push(s);
