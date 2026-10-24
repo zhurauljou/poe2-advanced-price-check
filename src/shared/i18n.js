@@ -405,6 +405,7 @@
     'On average the craft adds ≈ {add} to the price and costs ≈ {cost} in currency': 'В среднем крафт добавит к цене ≈ {add}, а валюты уйдёт ≈ {cost}',
     'Omen of Whittling makes the {orb} remove the lowest-level modifier — {junk} — and a random modifier takes its place. Sure only once: if it is not {mod}, the new modifier is not the lowest — go on with {then}': 'Omen of Whittling заставляет {orb} снять мод самого низкого уровня — {junk} — и на его место встаёт случайный. Гарантированно только раз: если выпал не {mod}, новый мод уже не самый низкий — дальше {then}',
     'Omen of Whittling makes the {orb} remove the lowest-level modifier — {junk} — and a random modifier takes its place': 'Omen of Whittling заставляет {orb} снять мод самого низкого уровня — {junk} — и на его место встаёт случайный',
+    '{odds} — any of them; {mod} alone — {own}': '{odds} — любой из них; только {mod} — {own}',
     'Show the plan anyway': 'Всё равно показать план',
     'Not worth it: the currency costs more than the finished item': 'Не стоит: валюта дороже готового предмета',
     'Probably not worth it: the currency costs more than the goal is worth at least': 'Скорее не стоит: валюта дороже нижней оценки цели',

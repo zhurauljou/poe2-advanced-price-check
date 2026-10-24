@@ -525,15 +525,8 @@ async function advise(item, demandMods, cached) {
       sum += odds(x);
     }
     if (!others.length) continue;
-    const merge = (list) => ({ ...list[0], guess: Math.min(0.95, list.reduce((a, o) => a + o.guess, 0)),
-      chance: list.some((o) => o.chance == null) ? null : Math.min(0.95, list.reduce((a, o) => a + o.chance, 0)) });
-    c.exaltAny = {};
-    for (const k of Object.keys(c.exalt)) c.exaltAny[k] = merge([c.exalt[k], ...others.map((x) => x.exalt[k]).filter(Boolean)]);
-    if (c.desecrate) {
-      c.desecrateAny = {};
-      for (const b of Object.keys(c.desecrate)) c.desecrateAny[b] = merge([c.desecrate[b], ...others.map((x) => x.desecrate && x.desecrate[b]).filter(Boolean)]);
-    }
-    c.orMods = others.map((x) => x.text);
+    c.orOdds = others.map((x) => ({ text: x.text, exalt: x.exalt, desecrate: x.desecrate }));
+    withAlternatives(c, c.orOdds);
   }
   // "Lucky ilvl" (docs/market-notes.md §2): the last level where a tier opened for a family builds want. Above it —
   // only tiers of unwanted ones: for wanted mods the base is no better than a base of that level, and the extra tiers dilute the pool (family weight
@@ -988,6 +981,9 @@ function planGoal(mine, candidates, max, want, magic, magicFree = [], itemClass 
   }
   if (!add.length) return null;
   add.sort((x, y) => y.pct - x.pct);
+  // An alternative that is itself in the goal is no alternative: mana rolled for the evasion step leaves the mana step
+  // nothing to roll — the step accepts only the mods the goal does not add anyway.
+  for (const c of add) if (c.orOdds) withAlternatives(c, c.orOdds.filter((o) => !add.some((a) => a !== c && a.text === o.text)));
   // Plan for the window: steps with currency and chance — costs are computed from them (main.js fills in currency prices from poe.ninja).
   // retry — what removes a failed result so you can try again.
   const plan = [];
@@ -1156,6 +1152,7 @@ function planGoal(mine, candidates, max, want, magic, magicFree = [], itemClass 
     // onSide / onItem — how many mods are already there (all wanted: junk removed earlier) — determines how to remove a miss.
     const step = (c, i) => ({ act: 'add', side, mod: c.text, pct: c.pct, worth: c.pct * (keyOf(c.text.split(' / ')) ? KEY_BONUS : 1), onSide: filled[side] - fixed[side] + i, onItem: filled.prefix + filled.suffix - fixed.prefix - fixed.suffix + i,
       annulOmen: `Omen of ${S} Annulment`, exalt: c.exaltAny || c.exalt || { base: { chance: c.chanceUnknown ? null : c.chance || null } }, orMods: c.orMods || null,
+      exaltOwn: c.exaltAny ? c.exalt : null, // this mod alone — the step names it next to the «any of them» odds
       sideOmen, otherOpen, retry: ['Orb of Annulment', `Omen of ${S} Annulment`],
       // Instead of Exalted — Desecrate (bone + side Necromancy omen): pick 1 of 3 on reveal. The window decides which pays off.
       desecrate: desFree && c.desecrate && Object.keys(c.desecrate).length ? c.desecrateAny || c.desecrate : null,
@@ -1206,6 +1203,21 @@ function planGoal(mine, candidates, max, want, magic, magicFree = [], itemClass 
       retry: [...new Set(last.flatMap((s) => s.retry))], currencies: [...new Set([...last.flatMap((s) => s.currencies), 'Omen of Greater Exaltation'])] });
   }
   return { keep, remove, add: add.map(({ side, text, pct, shownPct, pctParts, tier, tiers, range, stats, essence, chance, chanceGoal, target, targetLevels, chanceUnknown, needs, desecrateOnly, craftedOnly }) => ({ side, text, pct, shownPct, pctParts, tier, tiers, range, stats, essence, chance, chanceGoal, target, targetLevels, chanceUnknown, needs, desecrateOnly, craftedOnly })), plan };
+}
+
+// A step that accepts alternatives («evasion, or accuracy, life, mana»): the odds of any of them, per Exalted / bone.
+// Without alternatives — just the mod's own odds.
+function withAlternatives(c, others) {
+  const merge = (list) => ({ ...list[0], guess: Math.min(0.95, list.reduce((a, o) => a + o.guess, 0)),
+    chance: list.some((o) => o.chance == null) ? null : Math.min(0.95, list.reduce((a, o) => a + o.chance, 0)) });
+  if (!others.length) { delete c.exaltAny; delete c.desecrateAny; delete c.orMods; return; }
+  c.exaltAny = {};
+  for (const k of Object.keys(c.exalt)) c.exaltAny[k] = merge([c.exalt[k], ...others.map((x) => x.exalt[k]).filter(Boolean)]);
+  if (c.desecrate) {
+    c.desecrateAny = {};
+    for (const b of Object.keys(c.desecrate)) c.desecrateAny[b] = merge([c.desecrate[b], ...others.map((x) => x.desecrate && x.desecrate[b]).filter(Boolean)]);
+  }
+  c.orMods = others.map((x) => x.text);
 }
 
 // Whether a mod (poe.ninja template: "# to Level of all Spell Skills") can roll on this base. null — mod pool not loaded yet.

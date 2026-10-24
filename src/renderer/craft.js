@@ -456,7 +456,12 @@ function planHtml(plan) {
     const key = []; // the step can't be done without these, shown up front; the rest goes under "details"
     // Regal's random mod: room on one side only — it stays unless it lands on the tight side (craft.js planGoal).
     if (s.act === 'regal' && s.tightSide) key.push(t('If the random modifier lands on the {side}es, remove it before adding — there is no room for it there; otherwise it stays', { side: t(s.tightSide) }));
-    if (c.two) key.push(t('one Exalted Orb adds both modifiers')); // visible: otherwise two "Add" steps look like four Exalts
+    if (c.two) key.push(t('one Exalted Orb adds both modifiers'));
+    // A step that accepts alternatives: its odds are for any of them — the wanted mod alone is rarer, say so.
+    const os = s.exaltOwn ? s : s.add && s.add.exaltOwn ? s.add : null;
+    const ok = c.k === 'chaos' ? ['base', 'greater', 'perfect'][['Chaos Orb', 'Greater Chaos Orb', 'Perfect Chaos Orb'].indexOf(c.currencies[0])] : c.k;
+    const own = os && os.exaltOwn[ok], anyOf = os && os.exalt[ok];
+    if (own && anyOf && own.chance && anyOf.chance && c.chance && !c.lottery) key.push(t('{odds} — any of them; {mod} alone — {own}', { odds: oneIn(c.chance), mod: os.mod, own: oneIn(c.chance * own.chance / anyOf.chance) })); // visible: otherwise two "Add" steps look like four Exalts
     if (s.mods) notes.push(c.hits > 0.05
       ? t('on average ≈{n} needed modifiers get hit too — re-adding them is counted in the price', { n: fmt(Math.round(c.hits * 10) / 10) })
       : t('only unwanted modifiers can be hit'));

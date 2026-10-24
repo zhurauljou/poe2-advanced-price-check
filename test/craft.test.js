@@ -616,3 +616,16 @@ test('minion ring: Whittling is not «sure» while a kept desecrated mod is leve
   assert.ok(rm, 'a removal is planned');
   assert.equal(rm.whittle, null, `Whittling would hit «${rm.whittle}» for sure`);
 });
+
+test('alternatives of a step exclude the goal\'s own mods, and the step keeps this mod\'s own odds', { skip }, async () => {
+  // Player's minion ring (2026-10-25): «evasion, or accuracy, life, mana — 1 in 3», while mana was a goal mod of its own —
+  // rolling it in the evasion step leaves the mana step nothing; evasion alone was 1 in 10.
+  await init();
+  const r = await craft.advise(item('ring-minion'), json('ring-minion-themed.demand.json').mods, cached);
+  const adds = r.goal.plan.flatMap((x) => x.steps || [x]).filter((s) => s.act === 'add');
+  const goal = new Set(r.goal.add.map((a) => a.text));
+  for (const s of adds) {
+    for (const o of s.orMods || []) assert.ok(!goal.has(o), `«${o}» is in the goal, not an alternative for «${s.mod}»`);
+    if (s.orMods) for (const k of Object.keys(s.exalt)) assert.ok(s.exaltOwn[k].chance <= s.exalt[k].chance, 'own odds ≤ any of them');
+  }
+});
