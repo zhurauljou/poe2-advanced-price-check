@@ -434,9 +434,10 @@ function planHtml(plan) {
     const alts = [...(c.alts || []).filter((o) => o.k !== 'desecrate' && o.k !== 'essence'), ...(c.desAlt || []).slice(0, 2)].filter((o) => Number.isFinite(o.cost)).map(altText);
     if (c.other) alts.push(t('{how}: ≈{n} attempts, ≈{hits} needed modifiers hit, {cost} in currency', { how: c.other.currencies.join(' + '), n: fmt(Math.round(c.other.tries * 10) / 10), hits: fmt(Math.round(c.other.hits * 10) / 10), cost: money(c.other.spent) }));
     if (c.des) key.push(t('«{mod}» goes too when an Annulment hits it; only if it is the last one left ({odds}) — Orb of Annulment + Omen of Light ({cost})', { mod: c.des.mod, odds: oneIn(Math.max(c.des.left, 0.01)), cost: money(c.des.cost) }));
+    // The currencies are the step's chips; the note says only why this order works.
     if (c.cross) key.push(c.cross.same
-      ? t('{omen}: {essence} removes a random {side} while the junk is still there — one Annulment attempt — and its modifier takes the freed slot; no sacrificial modifier', { omen: c.cross.omen, essence: c.currencies[0], side: t(c.cross.side) })
-      : t('{omen}: {essence} removes a random {side} — the junk you are removing anyway, or one Annulment attempt\'s risk — and adds its modifier into the free {own}; your {own}es are never hit', { omen: c.cross.omen, essence: c.currencies[0], side: t(c.cross.side), own: t(s.side) }));
+      ? t('Removes a random {side} while the junk is still there — one Annulment attempt — and its modifier takes the freed slot; no sacrificial modifier', { side: t(c.cross.side) })
+      : t('Removes a random {side} — the junk you are removing anyway, or one Annulment attempt\'s risk — and adds its modifier into the free {own}; your {own}es are never hit', { side: t(c.cross.side), own: t(s.side) }));
     if (c.essMerge) key.push(t('One attempt fewer: the essence in the previous step already removed a random {side}', { side: t(c.essMerge.side) }));
     if (c.desMerge) key.push(t('One attempt fewer: the desecration in the previous step already removed a random {side}', { side: t(c.desMerge.side) }));
     if (s.freeQuality) notes.push(t('{mod} has done its job: quality is already above 20% and stays after it is removed (community data) — the crafted slot frees up', { mod: s.freeQuality }));
@@ -477,7 +478,7 @@ function planHtml(plan) {
       ${c.k === 'essence' && !c.cross ? essenceSeq(s, c) : ''}${c.viaAbyss ? abyssSeq(c, desAt(si)) : ''}
       ${how ? `<div class="ps-how">${how}</div>` : ''}
       ${why.map((w) => `<div class="ps-key">${esc(w)}</div>`).join('')}
-      ${key.length ? `<div class="ps-key">${key.map((k) => chipify(k).html).join(' · ')}</div>` : ''}
+      ${key.length ? `<div class="ps-key">${esc(key.join(' · '))}</div>` : ''}
       ${c.risky && c.chance < 1 && !s.mods ? `<div class="ps-risk">${esc(t('A miss removes a good modifier instead'))}</div>` : ''}
       ${s.mods && s.sides ? removeRisk(s, c) : ''}
       ${c.k === 'essence' && c.chance < 1 && (s.atRisk || []).length ? keyRisk(s) : ''}

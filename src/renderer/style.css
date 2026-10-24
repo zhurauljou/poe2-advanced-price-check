@@ -657,16 +657,14 @@ body.wide .steps-toggle { display: none; }
 .profit-row small { color: var(--muted); }
 .profit-row .rec { margin-left: 6px; font-size: 12px; color: var(--good); border: 1px solid var(--good); border-radius: 3px; padding: 0 4px; }
 .cm.diff i, .cmp-legend .diff { color: var(--warn); }
-.ps-how .cur, .ps-seq .cur, .craft-how .cur, .ps-key .cur { display: inline-block; padding: 0 5px; margin: 1px 0; border-radius: 3px; border: 1px solid; font-size: 13.5px; line-height: 1.5; }
+.ps-how .cur, .ps-seq .cur, .craft-how .cur { display: inline-block; padding: 0 5px; margin: 1px 0; border-radius: 3px; border: 1px solid; font-size: 13.5px; line-height: 1.5; }
 /* Price from a handful of trades: dashed and marked — a guess, not a market */
 .cur.thin { border-style: dashed !important; }
-/* Currency named inside a step's key note: the same chip, tighter in running text */
-.ps-key .cur { padding: 0 4px; margin: 0; line-height: 1.35; }
 .cur.thin::after { content: " ?"; opacity: .7; }
-.ps-how .cur.orb, .ps-seq .cur.orb, .craft-how .cur.orb, .ps-key .cur.orb { color: #e8c674; border-color: rgba(232, 198, 116, .45); background: rgba(232, 198, 116, .08); }
-.ps-how .cur.omen, .ps-seq .cur.omen, .craft-how .cur.omen, .ps-key .cur.omen { color: #c9a0ff; border-color: rgba(201, 160, 255, .45); background: rgba(201, 160, 255, .08); }
-.ps-how .cur.bone, .ps-seq .cur.bone, .craft-how .cur.bone, .ps-key .cur.bone { color: #ff9b8a; border-color: rgba(255, 155, 138, .45); background: rgba(255, 155, 138, .08); }
-.ps-how .cur.essence, .ps-seq .cur.essence, .craft-how .cur.essence, .ps-key .cur.essence { color: #7fd8d0; border-color: rgba(127, 216, 208, .45); background: rgba(127, 216, 208, .08); }
+.ps-how .cur.orb, .ps-seq .cur.orb, .craft-how .cur.orb { color: #e8c674; border-color: rgba(232, 198, 116, .45); background: rgba(232, 198, 116, .08); }
+.ps-how .cur.omen, .ps-seq .cur.omen, .craft-how .cur.omen { color: #c9a0ff; border-color: rgba(201, 160, 255, .45); background: rgba(201, 160, 255, .08); }
+.ps-how .cur.bone, .ps-seq .cur.bone, .craft-how .cur.bone { color: #ff9b8a; border-color: rgba(255, 155, 138, .45); background: rgba(255, 155, 138, .08); }
+.ps-how .cur.essence, .ps-seq .cur.essence, .craft-how .cur.essence { color: #7fd8d0; border-color: rgba(127, 216, 208, .45); background: rgba(127, 216, 208, .08); }
 .ps-how .plus, .ps-seq .plus, .craft-how .plus { margin: 0 3px; color: var(--muted); }
 .range-in { display: inline-flex; gap: 3px; flex-shrink: 0; }
 .mod .range-in input.max { width: 44px; }
