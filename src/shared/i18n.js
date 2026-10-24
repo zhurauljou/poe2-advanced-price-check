@@ -376,6 +376,7 @@
     'The plan and the verdict appear once the goal and its variants are priced — the first numbers would change.': 'План и вердикт появятся, когда цель и её варианты будут оценены, — первые цифры поменялись бы.',
     'Show the draft now': 'Показать черновик сейчас',
     'Draft: prices are still loading ({done} of {total}) — the numbers and the chosen variant may change': 'Черновик: цены ещё загружаются ({done} из {total}) — цифры и выбранный вариант могут измениться',
+    '{odds}: it removes {mods} instead of the junk': '{odds}: снимет {mods} вместо мусора',
     'back: {odds} per Exalt': 'вернуть: {odds} за Exalt',
     '«{mod}» goes too when an Annulment hits it; only if it is the last one left ({odds}) — Orb of Annulment + Omen of Light ({cost})': '«{mod}» тоже уйдёт, если Annulment попадёт в него; только если он останется последним ({odds}) — Orb of Annulment + Omen of Light ({cost})',
     'Chances: from {n} exalted items ({date})': 'Шансы — по {n} экзальтированным вещам ({date})',

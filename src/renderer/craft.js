@@ -309,7 +309,8 @@ const STEP_PARTS = {
   replace: (s) => ({ verb: t('Replace'), mods: [...s.junk, `→ ${s.mod}`], or: (s.orMods || []).slice(0, 3) }),
 };
 
-const oneIn = (c) => oddsText(1 / c);
+// «1 in 1» reads as «certain»: from even odds up the chance is a percentage (94% is not a sure thing).
+const oneIn = (c) => (c >= 0.5 ? `~${Math.round(c * 100)}%` : oddsText(1 / c));
 const EXALT_WHY = {
   greater: 'low tiers cut off (level 35+; a family without such tiers rolls its best one)',
   perfect: 'low tiers cut off (level 50+; a family without such tiers rolls its best one)',
@@ -345,6 +346,20 @@ function abyssSeq(c, desSide) {
 // A removal that can hit wanted mods: the same warning as for an essence — the odds per attempt, which mods, and how many
 // of them it hits on average before the junk is gone. A side omen (Annulment or the Abyss chain's Crystallisation) limits it
 // to the junk's side; a plain Annulment picks among all mods.
+// A step that itself removes a random mod of a side before the removal step (Desecrate with Necromancy on a full side,
+// an essence with Crystallisation): the same risk as the removal's first attempt, shown where it happens — the side's
+// wanted mods it may take instead of the junk.
+function sideRisk(steps, side) {
+  const r = steps.find((x) => x.sides && (x.desMerge || x.essMerge));
+  const x = r && r.sides[side];
+  if (!x || !x.K) return '';
+  const J = x.J + (x.des || 0) + (x.S || 0), K = x.K;
+  const names = (x.names || []).map((m, i) => { const again = (x.again || [])[i]; return again ? `«${m}» (${t('back: {odds} per Exalt', { odds: oneIn(again) })})` : `«${m}»`; });
+  if (!names.length) return '';
+  const odds = K / (J + K);
+  return `<div class="ps-risk">⚠ ${esc(t('{odds}: it removes {mods} instead of the junk', { odds: odds >= 0.5 ? `~${Math.round(odds * 100)}%` : oneIn(odds), mods: names.join(t(' or ')) }))}</div>`;
+}
+
 function removeRisk(s, c) {
   if (!(c.hits > 0.05)) return '';
   const sided = c.currencies.some((n) => /(Annulment|Crystallisation)$/.test(n) && /^Omen of (Sinistral|Dextral)/.test(n));
@@ -411,7 +426,8 @@ function planHtml(plan) {
     else if (et && s.topLevel) key.push(t('Tier 1 ({range}) needs item level {level} — this base cannot roll it, the essence is as good as it gets', { range: s.topRange, level: s.topLevel }));
     if (c.k === 'desecrate') {
       notes.push(t('Desecrate: reveal it at the Well of Souls and pick 1 of 3 offered modifiers — only one desecrated modifier per item'));
-      if (c.desAvg) key.push(t('Rough odds: the weights of desecrated modifiers are unknown — they are counted as average'));
+      // Unknown desecrated weights matter when the wanted one is one of many; three of four shown twice — hardly at all.
+      if (c.desAvg && c.chance != null && c.chance < 0.9) key.push(t('Rough odds: the weights of desecrated modifiers are unknown — they are counted as average'));
       if (/^Ancient /.test(c.bone)) notes.push(t('Ancient bone — low tiers cut off (level 40+)'));
       if (c.echo) notes.push(t('Omen of Abyssal Echoes — reroll the 3 options once'));
       if (c.bone === 'Altered Collarbone') notes.push(t('Altered Collarbone: desecrates jewellery with a chance for otherworldly (Breach) modifiers — how often they show up among the options is unknown'));
@@ -481,6 +497,7 @@ function planHtml(plan) {
       ${key.length ? `<div class="ps-key">${esc(key.join(' · '))}</div>` : ''}
       ${c.risky && c.chance < 1 && !s.mods ? `<div class="ps-risk">${esc(t('A miss removes a good modifier instead'))}</div>` : ''}
       ${s.mods && s.sides ? removeRisk(s, c) : ''}
+      ${s.desFirst ? sideRisk(steps, s.side) : c.cross ? sideRisk(steps, c.cross.side) : ''}
       ${c.k === 'essence' && c.chance < 1 && (s.atRisk || []).length ? keyRisk(s) : ''}
       ${more.length ? `<details class="ps-more"><summary>${esc(alts.length ? t('details and alternatives') : t('details'))}</summary>${more.join('')}</details>` : ''}</div>${sideHtml}</li>`;
   }).join('')}</ol>${long ? `<button class="link steps-toggle" data-act="steps">${esc(stepsLabel(steps.length))}</button>` : ''}</div>`;
