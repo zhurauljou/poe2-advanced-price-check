@@ -73,6 +73,18 @@ function money(div) {
   const u = moneyUnit(div);
   return `${fmt(u === 'div' ? div : u === 'chaos' ? div * rates.chaos : div * rates.exalted)} ${u}`;
 }
+// Prices read side by side (the plan's now · goal · currency) in one unit — 5 chaos against 10 ex makes you convert in
+// your head. The unit of the smallest price; a bigger one only where the largest would run into thousands.
+const MONEY_UNITS = ['ex', 'chaos', 'div'];
+const divIn = (div, u) => (u === 'div' ? div : u === 'chaos' ? div * rates.chaos : div * rates.exalted);
+function unitFor(vals) {
+  const v = vals.filter((x) => Number.isFinite(x) && x > 0);
+  if (!v.length) return null;
+  let i = MONEY_UNITS.indexOf(moneyUnit(Math.min(...v)));
+  while (i < MONEY_UNITS.length - 1 && divIn(Math.max(...v), MONEY_UNITS[i]) >= 1000) i++;
+  return MONEY_UNITS[i];
+}
+const moneyIn = (div, u) => (div == null || !u ? money(div) : `${fmt(divIn(div, u))} ${u}`);
 
 function ago(iso) {
   const s = (Date.now() - new Date(iso).getTime()) / 1000;

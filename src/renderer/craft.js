@@ -424,14 +424,16 @@ function removeRisk(s, c) {
   return `<div class="ps-risk">⚠ ${esc(t('{odds} on the first attempt: it removes {mods} instead of the junk (then fewer mods are left) · on average ≈{hits} of them are lost before it is done', { odds: fmtOdds, mods: names.join(t(' or ')), hits: fmt(Math.round(c.hits * 10) / 10) }))}</div>`;
 }
 
+// Not worth crafting: the steps of a craft you are told not to do are only reading — folded behind a link.
+let verdictBad = false; // set by verdictBody, drawn just before the steps
+let planAnyway = false;
 function planHtml(plan) {
   if (planBusy()) return '<div class="plan-steps pending"></div>'; // the class stays: refreshPlan swaps it for the steps
+  if (verdictBad && !planAnyway) return `<div class="plan-steps folded"><button class="link" data-act="plananyway">${esc(t('Show the plan anyway'))} ▾</button></div>`;
   const steps = expandPlan(plan);
   const costs = steps.map(stepCost);
   // What each step must not hide (a badge and a stripe) and, above the steps, how many of each.
   const flags = steps.map((s, i) => stepFlag(s, costs[i], steps));
-  const count = (k) => flags.filter((f) => f && f.kind === k).length;
-  const summary = [count('shot') && t('long shots: {n}', { n: count('shot') }), count('risk') && t('risky steps: {n}', { n: count('risk') }), count('unknown') && t('unknown odds: {n}', { n: count('unknown') })].filter(Boolean);
   const long = steps.length > STEPS_SHOWN;
   // A later Desecrate step and its side (for the Mark hint) and later additions per side (what a removal frees a slot for).
   const desAt = (i) => { for (let j = i + 1; j < steps.length; j++) if (costs[j].k === 'desecrate') return steps[j].side; return null; };
@@ -514,8 +516,9 @@ function planHtml(plan) {
     // Essence of the Abyss chain: if chosen, explain the order; if another way is cheaper, show it under "Instead".
     // Removal: what it frees a slot for, and its price split into currency and the risk of hitting a wanted mod.
     const why = [];
+    // What a removal is for, under its title: «Remove +115 life» alone reads as losing a good mod for nothing.
+    const frees = s.mods && s.sides ? Object.entries(s.sides).filter(([, x]) => x.J).map(([sd]) => { const m = addsAfter(si, sd); return m.length ? t('frees a {side} for {mods}', { side: t(sd), mods: m.slice(0, 2).join(', ') }) : ''; }).filter(Boolean) : [];
     if (s.mods && s.sides) {
-      why.push(...Object.entries(s.sides).filter(([, x]) => x.J).map(([sd]) => { const m = addsAfter(si, sd); return m.length ? t('frees a {side} for {mods}', { side: t(sd), mods: m.slice(0, 2).join(', ') }) : ''; }).filter(Boolean));
       // Spare junk (the variant no longer needs its slot): an Annulment taking it instead is progress, not a miss.
       const spare = Object.values(s.sides).filter((x) => x.J).flatMap((x) => x.spareNames || []);
       if (spare.length) why.push(t('If it takes {mods} instead, that is fine too: the slot is freed just as well', { mods: spare.map((m) => `«${m}»`).join(t(' or ')) }));
@@ -541,7 +544,7 @@ function planHtml(plan) {
       ...(desNote ? [`<div class="ps-note">${esc(desNote)}</div>`] : [])];
     const parts = STEP_PARTS[s.act] ? STEP_PARTS[s.act](s) : null;
     const title = parts
-      ? `<span class="ps-verb">${esc(parts.verb)}</span>${parts.mods.map((m) => `<span class="ps-mod">${esc(m)}</span>`).join('')}${parts.or.length ? `<span class="ps-or">${esc(t('or {mods}', { mods: parts.or.join(', ') }))}</span>` : ''}`
+      ? `<span class="ps-verb">${esc(parts.verb)}</span>${parts.mods.map((m) => `<span class="ps-mod">${esc(m)}</span>`).join('')}${parts.or.length ? `<span class="ps-or">${esc(t('or {mods}', { mods: parts.or.join(', ') }))}</span>` : ''}${frees.map((f) => `<span class="ps-or">${esc(f)}</span>`).join('')}`
       : esc(STEP_LABEL[s.act](s));
     // Essence and the Abyss chain show their own numbered sequence instead of a single chip line.
     // The currencies as chips, to catch the eye; an essence with a sacrifice and the Abyss chain show them in their numbered
@@ -567,6 +570,7 @@ const hlNums = (s) => esc(s).replace(/≈\s?[\d.,]+(?:\s?(?:div|chaos|ex|exalted
 // Verdict: sell as is or craft (goal price − currency cost).
 function verdictHtml(plan) {
   if (planBusy()) {
+    verdictBad = false;
     return `<div class="verdict pending"><span class="spin"></span>${esc(t('Checking prices on trade… {done} of {total}', { done: planPricing.done, total: planPricing.total }))}
       <small>${esc(t('The plan and the verdict appear once the goal and its variants are priced — the first numbers would change.'))}</small>
       <button class="link" data-act="plandraft">${esc(t('Show the draft now'))}</button></div>`;
@@ -577,7 +581,6 @@ function verdictHtml(plan) {
 
 function verdictBody(plan) {
   const { value: goalValue, basis: goalBasis, thin: goalThin } = curGoal();
-  const part = curVariant() && planVariant !== 'ideal';
   const costs = expandPlan(plan).map(stepCost);
   const known = costs.filter((c) => c.cost != null).reduce((a, c) => a + c.cost, 0);
   const lottery = costs.some((c) => c.cost == null);
@@ -587,41 +590,53 @@ function verdictBody(plan) {
   const gambleNote = unknownOdds ? t('A key modifier has unknown odds — this is a gamble') : t('A step is a single attempt: a miss stays on the item — this is a gamble');
   const risky = costs.some((c) => c.risky && c.chance < 1);
   const now = state.est;
+  // One currency number everywhere: the simulated average when both prices are known (misses included — what the variant
+  // switch and the verdict count), else the plan's sum. And one unit for all the numbers of the card.
+  const sim = goalValue != null && now != null ? verdictSim(plan, goalValue, now) : null;
+  const spend = sim ? sim.spent.mean : planSpend(costs);
+  const u = unitFor([now, goalValue != null ? goalValue : goalThin && goalThin.value, spend]);
+  const m = (x) => moneyIn(x, u);
   // The three numbers the decision rests on, in one line: the item now, the goal, the currency.
-  const goalText = goalValue === undefined ? '…' : goalValue == null ? (goalThin ? `${money(goalThin.value)}?` : t('none listed')) : (goalBasis === 'partial' ? '≥ ' : '≈ ') + money(goalValue);
+  const goalText = goalValue === undefined ? '…' : goalValue == null ? (goalThin ? `${m(goalThin.value)}?` : t('none listed')) : (goalBasis === 'partial' ? '≥ ' : '≈ ') + m(goalValue);
   const goalTitle = goalValue != null && goalBasis !== 'exact' ? t(goalBasis === 'similar' ? 'No exact matches — priced by similar items: the added modifiers required, the rest at their tier floor' : 'No similar items either — priced by items with only the most valuable added modifier: the real goal is worth more')
     : goalThin ? `${t('Too few listings to price the goal — one or two prices can be anything')} · ${t('{n} listings', { n: goalThin.n })}` : '';
-  const rows = [`<div class="profit-line"><span>${esc(t('now'))} <b>${now != null ? money(now) : '—'}</b></span><span${goalTitle ? ` title="${esc(goalTitle)}"` : ''}>${esc(t(part ? 'this variant' : 'goal'))} <b>${goalText}</b></span><span>${esc(t('currency'))} <b>${tiny(planSpend(costs)) ? '< 1 ex' : `${lottery ? `${esc(t('from'))} ` : ''}${money(planSpend(costs))}`}</b></span></div>`];
+  const rows = [`<div class="profit-line"><span>${esc(t('now'))} <b>${now != null ? m(now) : '—'}</b></span><span${goalTitle ? ` title="${esc(goalTitle)}"` : ''}>${esc(t('goal'))} <b>${goalText}</b></span><span>${esc(t('currency'))} <b>${tiny(spend) ? '< 1 ex' : `${lottery && !sim ? `${esc(t('from'))} ` : '≈ '}${m(spend)}`}</b></span></div>`];
   let verdict = '';
   // Removing extras with Annulments will on average hit needed mods: on such an item it's almost always unprofitable.
   const hits = Math.max(0, ...costs.map((c) => c.hits || 0));
   const hitNote = hits >= 1 ? `<small>${hlNums(t('Removing the unwanted modifiers would hit ≈{n} needed ones on average — on an item like this it is rarely worth it', { n: fmt(Math.round(hits * 10) / 10) }))}</small>` : '';
   // Currency costs more than the finished goal: crafting won't pay off at any item price (item price may not be computed yet).
   if (goalValue != null && known >= goalValue) {
-    verdict = `<div class="verdict bad">✖ ${esc(t(goalBasis === 'partial' ? 'Probably not worth it: the currency alone (≈ {cost}) costs more than the lower bound of the goal (≥ {goal})' : 'Not worth it: the currency alone (≈ {cost}) costs more than the finished goal (≈ {goal})', { cost: money(known), goal: money(goalValue) }))}${hitNote}</div>`;
+    // The numbers are in the line above: the headline says what they mean, and what to do instead.
+    verdict = `<div class="verdict bad">✖ ${esc(t(goalBasis === 'partial' ? 'Probably not worth it: the currency costs more than the goal is worth at least' : 'Not worth it: the currency costs more than the finished item'))}${now != null ? `<small>${esc(t('Better: sell it as is'))}</small>` : ''}${hitNote}</div>`;
   } else if (goalValue === null && now != null) {
     // No finished equivalents on trade (or only 1–2): goal price unknown. Costs already reach the item price: simpler to sell.
     const why = goalThin ? t('Only {n} listings like the goal — too few to judge the craft by', { n: goalThin.n }) : t('No finished items like the goal are listed — its price is unknown');
     verdict = known >= now * 0.5
-      ? `<div class="verdict bad">✖ ${esc(t('Selling as is is better: the currency alone costs ≈ {cost}, the item sells for ≈ {now}', { cost: money(known), now: money(now) }))}<small>${esc(why)}</small>${hitNote}</div>`
+      ? `<div class="verdict bad">✖ ${esc(t('Selling as is is better: the currency alone costs ≈ {cost}, the item sells for ≈ {now}', { cost: m(known), now: m(now) }))}<small>${esc(why)}</small>${hitNote}</div>`
       : `<div class="verdict">${esc(why)}${hitNote}</div>`;
   } else if (goalValue != null && now != null) {
     // Whole-plan simulation: outcome distribution and the chance crafting beats selling now (src/shared/plancost.js).
-    const sim = verdictSim(plan, goalValue, now);
     const gain = goalValue - now - known;
     const good = sim ? sim.profit >= 0.5 : gain > Math.max(now * 0.15, known * 0.5);
+    // The reason in plain words first; the simulation behind it goes under «why».
+    // Its two numbers in their own unit: a gain of 0.03 chaos reads as nothing, 1 ex against 38 ex reads at once.
+    const add = sim ? Math.max(0, sim.value.mean - now) : 0;
+    const pu = sim ? unitFor([add, sim.spent.mean]) : null;
+    const plain = sim ? `<small>${hlNums(t('On average the craft adds ≈ {add} to the price and costs ≈ {cost} in currency', { add: moneyIn(add, pu), cost: moneyIn(sim.spent.mean, pu) }))}</small>` : '';
     const simNote = sim ? `<small class="sim">${hlNums(t('Simulated {n} crafts: the item ends up ≈ {p50} (10–90%: {p10}–{p90}), currency ≈ {spent} on average; better than selling now in {profit}%, the full goal in {full}%',
-      { n: sim.runs, p50: money(sim.value.p50), p10: money(sim.value.p10), p90: money(sim.value.p90), spent: money(sim.spent.mean), profit: Math.round(sim.profit * 100), full: Math.round(sim.full * 100) }))}</small>` : '';
+      { n: sim.runs, p50: m(sim.value.p50), p10: m(sim.value.p10), p90: m(sim.value.p90), spent: m(sim.spent.mean), profit: Math.round(sim.profit * 100), full: Math.round(sim.full * 100) }))}</small>` : '';
     verdict = `<div class="verdict ${good && (!lottery || sim) ? 'good' : 'bad'}">${good
-      ? `✅ ${esc(sim ? t('Craft: better than selling as is in {pct}% of simulated runs', { pct: Math.round(sim.profit * 100) }) : t('Craft: ≈ {gain} more than selling as is', { gain: money(gain) }))}`
-      : `✖ ${esc(t('Selling as is is better'))}`}${simNote}${lottery ? `<small>${esc(gambleNote)}</small>` : ''}${hitNote || (risky ? `<small>${esc(t('Removing a modifier can hit a good one — the cost may grow'))}</small>` : '')}</div>`;
+      ? `✅ ${esc(sim ? t('Craft: better than selling as is in {pct}% of simulated runs', { pct: Math.round(sim.profit * 100) }) : t('Craft: ≈ {gain} more than selling as is', { gain: m(gain) }))}`
+      : `✖ ${esc(t('Selling as is is better'))}`}${plain}${simNote}${lottery ? `<small>${esc(gambleNote)}</small>` : ''}${hitNote || (risky ? `<small>${esc(t('Removing a modifier can hit a good one — the cost may grow'))}</small>` : '')}</div>`;
   } else if (goalValue === undefined && now != null && known >= Math.max(1, 20 * now)) {
     // The goal is still being priced, but the currency alone dwarfs the item: say it now, not after the search.
-    verdict = `<div class="verdict">${esc(t('Currency ≈ {cost} — {n}× what the item is worth now ({now}); it pays only if the goal sells for more', { cost: money(known), n: fmt(Math.round(known / now)), now: money(now) }))}</div>`;
+    verdict = `<div class="verdict">${esc(t('Currency ≈ {cost} — {n}× what the item is worth now ({now}); it pays only if the goal sells for more', { cost: m(known), n: fmt(Math.round(known / now)), now: m(now) }))}</div>`;
   } else if (now == null) {
     verdict = `<div class="verdict">${esc(t('Price this item on the Price tab first'))}</div>`;
   }
   // Headline and its one reason stay; the simulation, the gamble and hit notes go under «why».
+  verdictBad = verdict.startsWith('<div class="verdict bad">');
   verdict = verdict.replace(/(<small[^>]*>[\s\S]*?<\/small>)((?:<small[^>]*>[\s\S]*?<\/small>)+)(<\/div>)$/, (m, first, rest, end) => `${first}<details class="vmore"><summary>${esc(t('why'))}</summary>${rest}</details>${end}`);
   return `${rows.join('')}${verdict}`;
 }
@@ -687,7 +702,7 @@ async function computeGoal(g) {
   goalValue = undefined;
   goalBasis = 'exact';
   goalThin = null;
-  if (variantsItem !== state) { planVariant = 'ideal'; variantPicked = false; variantsItem = state; }
+  if (variantsItem !== state) { planVariant = 'ideal'; variantPicked = false; planAnyway = false; variantsItem = state; }
   variants = null;
   try {
     const r = await priceGoal(g, g.add, true);
@@ -906,21 +921,23 @@ function variantsHtml() {
   if (variants.every((v) => variantEarn(v).gain == null)) {
     return `<div class="variants mini">${variants.map((v) => { const { spend, lottery } = variantEarn(v); return `<button class="variant mini${v.key === planVariant ? ' on' : ''}" data-act="variant" data-v="${v.key}">${esc(t(VARIANT_NAME[v.key]))} <small>${tiny(spend) ? '< 1 ex' : `${lottery ? `${esc(t('from'))} ` : ''}${money(spend)}`}</small></button>`; }).join('')}</div>`;
   }
-  const cards = variants.map((v) => {
-    const { value, spend, lottery, unknownOdds, gain, expected } = variantEarn(v);
+  // Every variant loses against selling as is: nothing to choose — the verdict says so, the switch would only add numbers.
+  const rows = variants.map((v) => ({ v, ...variantEarn(v) }));
+  if (rows.every((r) => r.gain != null && (r.gain <= 0 || tiny(r.gain)))) return '';
+  // A switch: the name and the one number that tells the variants apart — what each earns over selling as is, in one unit
+  // (the costs are in the line under the verdict).
+  const u = unitFor(rows.map((r) => (r.gain != null ? Math.abs(r.gain) : null)));
+  const cards = rows.map(({ v, value, lottery, unknownOdds, gain, expected }) => {
     const zero = gain != null && tiny(Math.abs(gain)); // rounds to nothing — no sign, no colour
-    const earn = value === undefined ? '…' : gain == null ? '—' : zero ? '<b>≈ 0</b>'
-      : `<b class="${gain > 0 ? 'good' : 'bad'}">${lottery && !expected && gain > 0 ? `${esc(t('up to'))} ` : '≈ '}${gain > 0 ? '+' : '−'}${money(Math.abs(gain))}</b>`;
-    return `<button class="variant${v.key === planVariant ? ' on' : ''}" data-act="variant" data-v="${v.key}"${lottery ? ` title="${esc(t(unknownOdds ? 'A key modifier has unknown odds — this is a gamble' : 'A step is a single attempt: a miss stays on the item — this is a gamble'))}"` : ''}>
-      <span class="vn">${esc(t(VARIANT_NAME[v.key]))}</span>
-      <span class="vr"><small>${esc(t('craft'))}</small><b>${tiny(spend) ? '< 1 ex' : `${lottery ? `${esc(t('from'))} ` : '~ '}${money(spend)}`}</b></span>
-      <span class="vr"><small>${esc(t('earn'))}</small>${earn}</span></button>`;
+    const earn = value === undefined ? '…' : gain == null ? '—' : zero ? '≈ 0'
+      : `<span class="${gain > 0 ? 'good' : 'bad'}">${lottery && !expected && gain > 0 ? `${esc(t('up to'))} ` : ''}${gain > 0 ? '+' : '−'}${moneyIn(Math.abs(gain), u)}</span>`;
+    return `<button class="variant mini${v.key === planVariant ? ' on' : ''}" data-act="variant" data-v="${v.key}"${lottery ? ` title="${esc(t(unknownOdds ? 'A key modifier has unknown odds — this is a gamble' : 'A step is a single attempt: a miss stays on the item — this is a gamble'))}"` : ''}>${esc(t(VARIANT_NAME[v.key]))} <small>${earn}</small></button>`;
   }).join('');
   const v = curVariant();
   const ideal = variants.find((x) => x.key === 'ideal');
   const left = v && v.key !== 'ideal' ? ideal.adds.filter((a) => !v.adds.includes(a)) : [];
   const gets = left.length ? `<div class="v-gets">${esc(t('Gets'))} ${v.adds.map((a) => `<b>${esc(a.text)}</b>`).join(', ')} · ${esc(t('leaves out'))} ${left.map((a) => `<span>${esc(a.text)}</span>`).join(', ')}</div>` : '';
-  return `<div class="variants">${cards}</div>${gets}`;
+  return `<div class="variants mini">${cards}</div>${gets}`;
 }
 
 // ---- step-by-step crafting: item and goal remembered; each new copy of the same item shows what happened and what's next ----

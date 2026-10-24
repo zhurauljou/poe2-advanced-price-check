@@ -326,6 +326,8 @@ ol.plan > li.flag-sure { box-shadow: inset 3px 0 var(--good); }
 .variants.mini { display: flex; gap: 6px; flex-wrap: wrap; }
 .variant.mini { padding: 3px 9px; }
 .variant.mini small { color: var(--muted); }
+.variant.mini .good { color: var(--good); } .variant.mini .bad { color: var(--bad); }
+.plan-steps.folded { margin: 2px 0 4px; }
 details.vmore summary { cursor: pointer; font-size: 12.5px; color: var(--muted); margin-top: 3px; }
 .craft-beta { margin-top: 8px; padding: 5px 8px; border-left: 2px solid var(--warn); background: rgba(224, 179, 90, .05);
               font-size: 13px; color: var(--muted); }
