@@ -608,10 +608,7 @@ test('minion ring: Whittling is not «sure» while a kept desecrated mod is leve
   // Player's ring (2026-10-25): the plan said Chaos + Omen of Whittling removes «+20% to Maximum Quality» for sure — but
   // the kept Genesis Tree «of Invigoration» (desecrated) is level 1 as well: Whittling could take it instead.
   await init();
-  const text = read('ring-minion.txt').replace('{ Suffix Modifier "of Gripping" (Tier: 1) — Minion, Damage, Critical }\nMinions have 42(36-42)% increased Critical Damage Bonus',
-    '{ Suffix Modifier "of Extinction" (Tier: 1) — Minion, Damage, Critical }\nMinions have 33(31-35)% increased Critical Damage Bonus');
-  assert.ok(text.includes('of Extinction'), 'the line was swapped');
-  const r = await craft.advise(parseItem(text), json('ring-minion-themed.demand.json').mods, cached);
+  const r = await craft.advise(item('ring-minion'), json('ring-minion-themed.demand.json').mods, cached);
   const rm = r.goal.plan.flatMap((x) => x.steps || [x]).find((s) => s.act === 'remove' && s.mods);
   assert.ok(rm, 'a removal is planned');
   assert.equal(rm.whittle, null, `Whittling would hit «${rm.whittle}» for sure`);
@@ -628,4 +625,14 @@ test('alternatives of a step exclude the goal\'s own mods, and the step keeps th
     for (const o of s.orMods || []) assert.ok(!goal.has(o), `«${o}» is in the goal, not an alternative for «${s.mod}»`);
     if (s.orMods) for (const k of Object.keys(s.exalt)) assert.ok(s.exaltOwn[k].chance <= s.exalt[k].chance, 'own odds ≤ any of them');
   }
+});
+
+test('minion ring: Genesis Tree mods without a tier in the header get it from the matched mod', { skip }, async () => {
+  // The real copy (2026-10-25): «{ Suffix Modifier "of Eradication" — Damage, Minion, Critical — 40% Increased }» — base
+  // numbers, the catalyst boost in the header, no «Tier:». of Eradication is the 2nd of 6 ring tiers, of Puncturing the 3rd.
+  await init();
+  const r = await craft.advise(item('ring-minion'), json('ring-minion-themed.demand.json').mods, cached);
+  const tier = (re) => (r.goal.keep.find((k) => re.test(k.text)) || {}).tier;
+  assert.equal(tier(/critical damage bonus/), 2);
+  assert.equal(tier(/critical hit chance/), 3);
 });

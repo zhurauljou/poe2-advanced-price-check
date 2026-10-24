@@ -199,7 +199,17 @@ async function advise(item, demandMods, cached) {
   const addedTags = new Set(item.affixes.flatMap((a) => ((findMod(a, basePool) || {}).adds_tags || [])));
   const onBase = addedTags.size ? d.pool.filter((m) => canRoll(m, [...tags, ...hasInf, ...addedTags])) : basePool;
   // Jewel mods have one tier — "T1" on all of them, not a sign of a valuable mod: on a jewel a mod is key only by demand.
-  const mine = item.affixes.map((a) => ({ ...a, tier: jewel ? null : a.tier, mod: findMod(a, onBase) }));
+  // No tier in the header (Genesis Tree minion mods on rings: «of Eradication — … — 40% Increased»): counted from the
+  // matched mod — its place among the family's tiers on this base, T1 the highest level.
+  const tierOf = (mod) => {
+    if (!mod) return null;
+    // The family as it rolls here: the base's tags plus the mod's own spawn tags (genesis_tree_minion is not on the base).
+    const own = (mod.spawn_weights || []).filter((w) => w.weight > 0).map((w) => w.tag);
+    const fam = d.pool.filter((m) => m.type === mod.type && m.generation_type === mod.generation_type && m.domain === mod.domain
+      && canRoll(m, [...tags, ...hasInf, ...own])).map((m) => m.required_level);
+    return fam.includes(mod.required_level) && fam.length > 1 ? [...new Set(fam)].sort((x, y) => y - x).indexOf(mod.required_level) + 1 : null;
+  };
+  const mine = item.affixes.map((a) => { const mod = findMod(a, onBase); return { ...a, tier: jewel ? null : a.tier || tierOf(mod), mod }; });
   const present = new Set(mine.flatMap((a) => (a.mod ? a.mod.groups || [] : [])));
 
   // How many slots: a rare has 3+3 (jewels 2+2 — 4 mods total), a magic item 1+1;

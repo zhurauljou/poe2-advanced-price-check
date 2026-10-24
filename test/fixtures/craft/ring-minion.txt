@@ -9,18 +9,18 @@ Requires: Level 55
 --------
 Item Level: 80
 --------
-{ Implicit Modifier — Drop }
-9(6-15)% increased Rarity of Items found (implicit)
+{ Implicit Modifier }
+9(6-15)% increased Rarity of Items found
 --------
-{ Prefix Modifier "Annealed" (Tier: 4) — Damage, Physical, Attack }
-Adds 6(6-10) to 13(12-17) Physical Damage to Attacks
 { Prefix Modifier "Blistering" (Tier: 4) — Damage, Elemental, Fire }
 13(13-17)% increased Fire Damage
-{ Crafted Prefix Modifier "Breachlord's" — }
-+20% to Maximum Quality (crafted)
-{ Suffix Modifier "of Piercing" (Tier: 1) — Minion, Critical }
-Minions have 47(45-52)% increased Critical Hit Chance
-{ Suffix Modifier "of Gripping" (Tier: 1) — Minion, Damage, Critical }
-Minions have 42(36-42)% increased Critical Damage Bonus
-{ Desecrated Suffix Modifier "of Invigoration" (Tier: 1) — Minion }
-Minions have 40(21-29)% increased Cooldown Recovery Rate
+{ Prefix Modifier "Annealed" (Tier: 4) — Damage, Physical, Attack }
+Adds 6(6-10) to 13(12-17) Physical Damage to Attacks
+{ Crafted Prefix Modifier "Breachlord's" }
++20% to Maximum Quality — Unscalable Value
+{ Suffix Modifier "of Eradication" — Damage, Minion, Critical — 40% Increased }
+Minions have 30(26-30)% increased Critical Damage Bonus
+{ Suffix Modifier "of Puncturing" — Minion, Critical — 40% Increased }
+Minions have 34(29-36)% increased Critical Hit Chance
+{ Desecrated Suffix Modifier "of Invigoration" — Minion — 40% Increased }
+Minions have 29(21-29)% increased Cooldown Recovery Rate
