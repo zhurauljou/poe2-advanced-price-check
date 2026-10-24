@@ -257,6 +257,40 @@ const curChips = (list) => list.map((n) => `<span class="cur ${curKind(n)}${craf
 // c.currencies: [essence, Crystallisation omen, Exalted Orb, side omen?].
 // Chance the essence removes a key mod of the item (not the sacrificial or plan-added one): key mods on the side / all mods
 // of the side including the sacrifice.
+// The one fact a step must not hide, worst first: almost impossible (< 1 in 1000 a try), a long shot (< 1 in 100, or a
+// single attempt whose miss stays), risky (≥ 1 in 3 to take a needed mod instead of the junk), odds unknown.
+// → { kind, text } for the step's badge and its stripe, or null for a plain step.
+function stepFlag(s, c, steps) {
+  const pct = (x) => (x >= 0.5 ? `~${Math.round(x * 100)}%` : oneIn(x));
+  if (s.act !== 'remove' && !c.lottery) {
+    const ps = (c.chances || [c.chance]).filter((x) => x != null);
+    const p = ps.length ? Math.min(...ps) : null;
+    if (p != null && p < 0.001) return { kind: 'shot', text: t('Almost impossible: {odds} per attempt', { odds: oneIn(p) }) };
+    if (p != null && (p < 0.01 || c.hopeless)) return { kind: 'shot', text: c.hopeless ? t('Long shot: {odds}, one attempt', { odds: pct(p) }) : t('Long shot: {odds} per attempt', { odds: oneIn(p) }) };
+  }
+  // The chance to take a needed mod — the same numbers as the detailed warnings below.
+  let hit = 0;
+  if (s.mods && s.sides && c.hits > 0.05) {
+    const sided = (c.currencies || []).some((n) => /^Omen of (Sinistral|Dextral) (Annulment|Crystallisation)$/.test(n));
+    const parts = Object.values(s.sides).filter((x) => (sided ? x.J : x.J || x.K));
+    const J = parts.reduce((a, x) => a + x.J + (x.des || 0) + (x.S || 0), 0), K = parts.reduce((a, x) => a + x.K, 0);
+    if (J + K) hit = K / (J + K);
+  }
+  const own = s.desFirst ? s.side : c.cross ? c.cross.side : null;
+  if (own) {
+    const r = steps.find((x) => x.sides && (x.desMerge || x.essMerge));
+    const x = r && r.sides[own];
+    if (x && x.K) hit = Math.max(hit, x.K / (x.J + (x.des || 0) + (x.S || 0) + x.K));
+  }
+  if (c.k === 'essence' && c.chance < 1 && (s.atRisk || []).length) hit = Math.max(hit, Math.min(s.atRisk.length, s.onSide || 0) / ((s.onSide || 0) + 1));
+  if (hit >= 1 / 3) return { kind: 'risk', text: t('Risky: {odds} it removes a needed modifier', { odds: pct(hit) }) };
+  if (c.lottery) return { kind: 'unknown', text: t('Odds unknown') };
+  // A sure step (an essence, a targeted removal) with nothing needed at stake — the good news gets its colour too.
+  if (c.chance != null && c.chance >= 1 && !(c.hits > 0.05)) return { kind: 'sure', text: t('Guaranteed') };
+  return null;
+}
+const FLAG_ICON = { shot: '🎲', risk: '⚠', unknown: '?', sure: '✓' };
+
 function keyRisk(s) {
   const n = (s.onSide || 0) + 1;
   const r = Math.min(s.atRisk.length, n - 1) / n;
@@ -381,12 +415,16 @@ function planHtml(plan) {
   if (planBusy()) return '<div class="plan-steps pending"></div>'; // the class stays: refreshPlan swaps it for the steps
   const steps = expandPlan(plan);
   const costs = steps.map(stepCost);
+  // What each step must not hide (a badge and a stripe) and, above the steps, how many of each.
+  const flags = steps.map((s, i) => stepFlag(s, costs[i], steps));
+  const count = (k) => flags.filter((f) => f && f.kind === k).length;
+  const summary = [count('shot') && t('long shots: {n}', { n: count('shot') }), count('risk') && t('risky steps: {n}', { n: count('risk') }), count('unknown') && t('unknown odds: {n}', { n: count('unknown') })].filter(Boolean);
   const long = steps.length > STEPS_SHOWN;
   // A later Desecrate step and its side (for the Mark hint) and later additions per side (what a removal frees a slot for).
   const desAt = (i) => { for (let j = i + 1; j < steps.length; j++) if (costs[j].k === 'desecrate') return steps[j].side; return null; };
   const addsAfter = (i, side) => steps.slice(i + 1).flatMap((x) => (x.act === 'add2' ? x.steps : x.act === 'add' || x.act === 'replace' ? [x] : []))
     .filter((x) => x.side === side).map((x) => x.mod);
-  return `<div class="plan-steps${long ? ' collapsible' : ''}${stepsOpen ? ' open' : ''}" data-n="${steps.length}"><ol class="plan">${steps.map((s, si) => {
+  return `<div class="plan-steps${long ? ' collapsible' : ''}${stepsOpen ? ' open' : ''}" data-n="${steps.length}">${summary.length ? `<div class="ps-summary">${esc(summary.join(' · '))}</div>` : ''}<ol class="plan">${steps.map((s, si) => {
     const c = costs[si];
     // Right column of the card: the expected cost of the whole step, or — for a one-attempt step — the price of one attempt
     // (marked "per attempt": the two are not the same thing). The body keeps only the chance.
@@ -488,11 +526,15 @@ function planHtml(plan) {
     // Essence and the Abyss chain show their own numbered sequence instead of a single chip line.
     // The currencies as chips, to catch the eye; an essence with a sacrifice and the Abyss chain show them in their numbered
     // sequence instead (an essence on a side with junk — cross — has no sequence, its chips go here).
-    const how = [(c.k === 'essence' && !c.cross) || c.viaAbyss ? '' : curChips(c.currencies), esc(odds)].filter(Boolean).join(' · ');
+    // «guaranteed» is the green badge below — not repeated next to the currencies.
+    const how = [(c.k === 'essence' && !c.cross) || c.viaAbyss ? '' : curChips(c.currencies), flags[si] && flags[si].kind === 'sure' ? '' : esc(odds)].filter(Boolean).join(' · ');
     const sideHtml = side ? `<div class="ps-side${side.per ? ' per' : ''}"><b class="ps-cost">≈ ${money(side.cost)}</b>${side.per ? `<small>${esc(t('per attempt'))}</small>` : side.sub ? `<small>${esc(side.sub)}</small>` : ''}</div>` : '';
-    return `<li${side ? ' class="has-side"' : ''}><div class="ps-main"><div class="ps-what">${title}</div>
+    const flag = flags[si];
+    const cls = [side ? 'has-side' : '', flag ? `flag-${flag.kind}` : ''].filter(Boolean).join(' ');
+    return `<li${cls ? ` class="${cls}"` : ''}><div class="ps-main"><div class="ps-what">${title}</div>
       ${c.k === 'essence' && !c.cross ? essenceSeq(s, c) : ''}${c.viaAbyss ? abyssSeq(c, desAt(si)) : ''}
       ${how ? `<div class="ps-how">${how}</div>` : ''}
+      ${flag ? `<div class="ps-flag ${flag.kind}"><span>${FLAG_ICON[flag.kind]}</span>${esc(flag.text)}</div>` : ''}
       ${why.map((w) => `<div class="ps-key">${esc(w)}</div>`).join('')}
       ${key.length ? `<div class="ps-key">${esc(key.join(' · '))}</div>` : ''}
       ${c.risky && c.chance < 1 && !s.mods ? `<div class="ps-risk">${esc(t('A miss removes a good modifier instead'))}</div>` : ''}

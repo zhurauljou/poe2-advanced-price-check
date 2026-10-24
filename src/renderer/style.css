@@ -295,6 +295,17 @@ body.cmp-page { background: #0a0d12; }
 .verdict.pending .spin { width: 12px; height: 12px; border: 2px solid rgba(226, 194, 122, .25); border-top-color: var(--warn); border-radius: 50%; animation: spin .8s linear infinite; }
 @keyframes spin { to { transform: rotate(360deg); } }
 .verdict.draft { margin-bottom: 6px; border-left: 2px solid var(--warn); color: var(--warn); font-size: 13px; }
+/* A step's one fact it must not hide: a stripe on the left and a badge under its currencies */
+ol.plan > li.flag-shot { box-shadow: inset 3px 0 #e0a24a; }
+ol.plan > li.flag-risk { box-shadow: inset 3px 0 #e05a4f; }
+ol.plan > li.flag-unknown { box-shadow: inset 3px 0 #6b7280; }
+ol.plan > li.flag-sure { box-shadow: inset 3px 0 var(--good); }
+.ps-flag { display: inline-flex; align-items: center; gap: 6px; margin: 4px 0 2px; padding: 2px 8px; border-radius: 4px; font-weight: 700; font-size: 13px; }
+.ps-flag.shot { color: #f0b860; background: rgba(224, 162, 74, .14); }
+.ps-flag.risk { color: #ff8a7a; background: rgba(224, 90, 79, .16); }
+.ps-flag.unknown { color: var(--muted); background: rgba(107, 114, 128, .18); }
+.ps-flag.sure { color: var(--good); background: rgba(110, 200, 120, .12); }
+.ps-summary { margin: 2px 0 6px; font-size: 12.5px; color: var(--warn); }
 .craft-beta { margin-top: 8px; padding: 5px 8px; border-left: 2px solid var(--warn); background: rgba(224, 179, 90, .05);
               font-size: 13px; color: var(--muted); }
 .craft-beta b { color: var(--warn); font-weight: 700; }
