@@ -300,19 +300,18 @@ ol.plan > li.flag-shot { box-shadow: inset 3px 0 #e0a24a; }
 ol.plan > li.flag-risk { box-shadow: inset 3px 0 #e05a4f; }
 ol.plan > li.flag-unknown { box-shadow: inset 3px 0 #6b7280; }
 ol.plan > li.flag-sure { box-shadow: inset 3px 0 var(--good); }
-.ps-flag { display: inline-flex; align-items: center; gap: 6px; margin: 4px 0 2px; padding: 2px 8px; border-radius: 4px; font-weight: 700; font-size: 13px; }
-.ps-flag.shot { color: #f0b860; background: rgba(224, 162, 74, .14); }
-.ps-flag.risk { color: #ff8a7a; background: rgba(224, 90, 79, .16); }
-.ps-flag.unknown { color: var(--muted); background: rgba(107, 114, 128, .18); }
-.ps-flag.sure { color: var(--good); background: rgba(110, 200, 120, .12); }
+.ps-flag { display: inline-flex; align-items: center; gap: 6px; margin: 4px 0 2px; padding: 3px 9px 3px 7px; border-radius: 5px; font-size: 13px; font-weight: 400; }
+.ps-flag b { font-weight: 800; }
+.ps-flag.shot { color: #d9b27a; background: rgba(224, 162, 74, .10); } .ps-flag.shot b { color: #f2d3a0; }
+.ps-flag.risk { color: #e2a198; background: rgba(224, 90, 79, .13); } .ps-flag.risk b { color: #ffe1db; }
+.ps-flag.unknown { color: var(--muted); background: rgba(107, 114, 128, .16); }
+.ps-flag.sure { color: #9fd8a5; background: rgba(110, 200, 120, .10); }
+.ps-flag.risk .fi { color: #e0675a; } .ps-flag.shot .fi { color: #e0a24a; } .ps-flag.sure .fi { color: var(--good); }
 .ps-summary { margin: 2px 0 6px; font-size: 12.5px; color: var(--warn); }
-.ps-flag .fi { display: inline-grid; place-items: center; flex: none; width: 17px; height: 17px; border-radius: 50%;
-  font: 800 12px/1 var(--body); color: #15171c; }
-.ps-flag.shot .fi { background: #f0b860; } .ps-flag.risk .fi { background: #ff8a7a; }
-.ps-flag.unknown .fi { background: #9aa0aa; } .ps-flag.sure .fi { background: var(--good); }
+.ps-flag .fi { display: inline-flex; flex: none; }
 .ps-flag.fi-only { padding: 0; margin: 0 6px 0 0; background: none; vertical-align: -3px; }
 /* A craft resting on luck: buy a base with the hard mod instead */
-.craft-bases { margin: 8px 0 4px; padding: 7px 9px; border-left: 3px solid #e0a24a; background: rgba(224, 162, 74, .08); font-size: 13px; }
+.craft-bases { margin: 4px 0; padding: 4px 9px; border-left: 3px solid #e0a24a; font-size: 13px; }
 .craft-bases .cb-head { color: var(--cream); }
 .craft-bases .cb-body { margin-top: 5px; display: flex; flex-wrap: wrap; align-items: center; gap: 4px 6px; color: var(--muted); }
 .craft-bases .good { color: var(--good); }
@@ -321,6 +320,13 @@ ol.plan > li.flag-sure { box-shadow: inset 3px 0 var(--good); }
 .craft-bases .cb-row { display: grid; grid-template-columns: 1fr auto auto; gap: 8px; align-items: baseline; padding: 1px 0; }
 .craft-bases .cb-row b { color: var(--cream); font-weight: 600; white-space: nowrap; }
 .craft-bases .cb-cmp { margin-top: 4px; }
+/* Plan header, kept short: one line of numbers, a compact variant switch when there is no gain to show */
+.profit-line { display: flex; flex-wrap: wrap; gap: 2px 14px; margin: 4px 0 6px; font-size: 13px; color: var(--muted); }
+.profit-line b { color: var(--cream); }
+.variants.mini { display: flex; gap: 6px; flex-wrap: wrap; }
+.variant.mini { padding: 3px 9px; }
+.variant.mini small { color: var(--muted); }
+details.vmore summary { cursor: pointer; font-size: 12.5px; color: var(--muted); margin-top: 3px; }
 .craft-beta { margin-top: 8px; padding: 5px 8px; border-left: 2px solid var(--warn); background: rgba(224, 179, 90, .05);
               font-size: 13px; color: var(--muted); }
 .craft-beta b { color: var(--warn); font-weight: 700; }
