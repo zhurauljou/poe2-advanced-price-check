@@ -124,6 +124,7 @@ document.addEventListener('click', (e) => {
   if (act === 'session') { startSession(); window.pc.pin(true); craftFor = null; loadCraft(); }
   if (act === 'steps') toggleSteps(b.closest('.plan-steps'));
   if (act === 'variant') { planVariant = b.dataset.v; variantPicked = true; refreshPlan(); }
+  if (act === 'plandraft') { planDraft = true; refreshPlan(); }
   if (act === 'session-stop') { craftSession = null; window.pc.pin(userPinned); craftFor = null; loadCraft(); }
 });
 

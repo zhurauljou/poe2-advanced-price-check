@@ -289,6 +289,12 @@ body.cmp-page { background: #0a0d12; }
 .craft-sub { font-size: 13.5px; color: var(--muted); margin: 6px 0 2px; }
 .craft-tier { color: #a39f96; font-size: 13.5px; white-space: nowrap; margin-left: 6px; }
 .craft-foot { margin-top: 8px; font-size: 13px; color: var(--muted); text-align: center; }
+/* The plan while its prices load: a spinner instead of numbers that would change; the draft says it is one */
+.verdict.pending { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 8px; color: var(--muted); }
+.verdict.pending small { flex-basis: 100%; }
+.verdict.pending .spin { width: 12px; height: 12px; border: 2px solid rgba(226, 194, 122, .25); border-top-color: var(--warn); border-radius: 50%; animation: spin .8s linear infinite; }
+@keyframes spin { to { transform: rotate(360deg); } }
+.verdict.draft { margin-bottom: 6px; border-left: 2px solid var(--warn); color: var(--warn); font-size: 13px; }
 .craft-beta { margin-top: 8px; padding: 5px 8px; border-left: 2px solid var(--warn); background: rgba(224, 179, 90, .05);
               font-size: 13px; color: var(--muted); }
 .craft-beta b { color: var(--warn); font-weight: 700; }

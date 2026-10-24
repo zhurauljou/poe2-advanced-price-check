@@ -363,6 +363,7 @@ function removeRisk(s, c) {
 }
 
 function planHtml(plan) {
+  if (planBusy()) return '<div class="plan-steps pending"></div>'; // the class stays: refreshPlan swaps it for the steps
   const steps = expandPlan(plan);
   const costs = steps.map(stepCost);
   const long = steps.length > STEPS_SHOWN;
@@ -487,6 +488,16 @@ const hlNums = (s) => esc(s).replace(/≈\s?[\d.,]+(?:\s?(?:div|chaos|ex|exalted
 
 // Verdict: sell as is or craft (goal price − currency cost).
 function verdictHtml(plan) {
+  if (planBusy()) {
+    return `<div class="verdict pending"><span class="spin"></span>${esc(t('Checking prices on trade… {done} of {total}', { done: planPricing.done, total: planPricing.total }))}
+      <small>${esc(t('The plan and the verdict appear once the goal and its variants are priced — the first numbers would change.'))}</small>
+      <button class="link" data-act="plandraft">${esc(t('Show the draft now'))}</button></div>`;
+  }
+  const draft = planPricing ? `<div class="verdict draft">${esc(t('Draft: prices are still loading ({done} of {total}) — the numbers and the chosen variant may change', { done: planPricing.done, total: planPricing.total }))}</div>` : '';
+  return draft + verdictBody(plan);
+}
+
+function verdictBody(plan) {
   const { value: goalValue, basis: goalBasis, thin: goalThin } = curGoal();
   const part = curVariant() && planVariant !== 'ideal';
   const costs = expandPlan(plan).map(stepCost);
@@ -584,6 +595,13 @@ async function priceGoal(g, adds, lowerBound) {
 }
 
 // Goal price right when the tab opens (one trade search), then redraw the verdict; then the budget variants and their prices.
+// While the goal and its variants are priced on trade the plan is not shown: the first numbers (no goal price, the
+// cheapest variant) change once the prices are in, and a player could act on them. { done, total } of the searches;
+// planDraft — the player asked to see the draft anyway (a long trade rate-limit wait).
+let planPricing = null;
+let planDraft = false;
+const planBusy = () => !!planPricing && !planDraft;
+
 async function computeGoal(g) {
   const mine = state;
   goalValue = undefined;
@@ -602,18 +620,23 @@ async function computeGoal(g) {
   }
   // Variants are split by step costs, which depend on the goal price (the cost of hitting a needed mod).
   variants = planVariants(g);
+  const rest = (variants || []).filter((v) => v.key !== 'ideal');
+  if (planPricing) planPricing = { done: 1, total: 1 + rest.length };
   autoVariant();
   refreshPlan();
-  for (const v of variants || []) {
-    if (v.key === 'ideal') continue;
+  for (const v of rest) {
     try {
       const r = await priceGoal(g, v.adds, false);
       if (!r || mine !== state) return;
       Object.assign(v, r);
     } catch { v.value = null; }
+    if (planPricing) planPricing = { ...planPricing, done: planPricing.done + 1 };
     autoVariant();
     refreshPlan();
   }
+  planPricing = null; // all priced: the plan is final
+  autoVariant();
+  refreshPlan();
 }
 
 // The variant shown by default: the one that earns the most over selling as is on average; while the prices are not known —
@@ -697,7 +720,7 @@ function variantEarn(v) {
 const tiny = (div) => parseFloat(money(div).replace(/,/g, '')) < 0.5;
 
 function variantsHtml() {
-  if (!variants) return '';
+  if (!variants || planBusy()) return '';
   const cards = variants.map((v) => {
     const { value, spend, lottery, unknownOdds, gain, expected } = variantEarn(v);
     const zero = gain != null && tiny(Math.abs(gain)); // rounds to nothing — no sign, no colour
@@ -969,6 +992,8 @@ function renderCraft(r) {
   const inSession = craftSession && sessionMatches();
   if (inSession) top.unshift(sessionHtml(r));
   if (r.goal && r.goal.plan && r.goal.plan.length) {
+    planPricing = { done: 0, total: 1 }; // computeGoal below prices the goal, then the variants
+    planDraft = false;
     top.push(`<div class="craft-sec plan-box"><div class="k">${t('Plan')}${inSession ? '' : ` <button class="link session-btn" data-act="session" title="${esc(t('Do a step, check the item again with the hotkey — the window stays open and shows what you got and the next step'))}">▶ ${esc(t('Craft step by step'))}</button>`}</div><div class="variants-box">${variantsHtml()}</div><div class="verdict-box">${verdictHtml(curVariant() ? curVariant().plan : r.goal.plan)}</div>
       ${planHtml(curVariant() ? curVariant().plan : r.goal.plan)}<details class="why"><summary>${t('Why this plan')}</summary>${goalHtml(r.goal)}</details></div>`);
   } else {
