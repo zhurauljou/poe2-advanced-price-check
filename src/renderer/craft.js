@@ -249,7 +249,8 @@ function curKind(n) {
   if (/Essence/.test(n)) return 'essence';
   return 'orb';
 }
-const curChips = (list) => list.map((n) => `<span class="cur ${curKind(n)}">${esc(n)}</span>`).join('<span class="plus">+</span>');
+let craftThin = new Set(); // currency priced from a handful of trades (poe.ninja volume) — marked on its chip
+const curChips = (list) => list.map((n) => `<span class="cur ${curKind(n)}${craftThin.has(n) ? ' thin' : ''}"${craftThin.has(n) ? ` title="${esc(t('Price from only a few trades on poe.ninja — a guess'))}"` : ''}>${esc(n)}</span>`).join('<span class="plus">+</span>');
 
 // Essence / Alloy on a rare: order matters. First a sacrificial mod via Exalted on that side, then the omen
 // Crystallisation + essence (removes a random mod of that side). Without a sacrifice one of your mods goes: steps, numbered.
@@ -409,6 +410,7 @@ function planHtml(plan) {
     else if (et && s.topLevel) key.push(t('Tier 1 ({range}) needs item level {level} — this base cannot roll it, the essence is as good as it gets', { range: s.topRange, level: s.topLevel }));
     if (c.k === 'desecrate') {
       notes.push(t('Desecrate: reveal it at the Well of Souls and pick 1 of 3 offered modifiers — only one desecrated modifier per item'));
+      if (c.desAvg) key.push(t('Rough odds: the weights of desecrated modifiers are unknown — they are counted as average'));
       if (/^Ancient /.test(c.bone)) notes.push(t('Ancient bone — low tiers cut off (level 40+)'));
       if (c.echo) notes.push(t('Omen of Abyssal Echoes — reroll the 3 options once'));
       if (c.bone === 'Altered Collarbone') notes.push(t('Altered Collarbone: desecrates jewellery with a chance for otherworldly (Breach) modifiers — how often they show up among the options is unknown'));
@@ -431,7 +433,9 @@ function planHtml(plan) {
     const alts = [...(c.alts || []).filter((o) => o.k !== 'desecrate' && o.k !== 'essence'), ...(c.desAlt || []).slice(0, 2)].filter((o) => Number.isFinite(o.cost)).map(altText);
     if (c.other) alts.push(t('{how}: ≈{n} attempts, ≈{hits} needed modifiers hit, {cost} in currency', { how: c.other.currencies.join(' + '), n: fmt(Math.round(c.other.tries * 10) / 10), hits: fmt(Math.round(c.other.hits * 10) / 10), cost: money(c.other.spent) }));
     if (c.des) key.push(t('«{mod}» goes too when an Annulment hits it; only if it is the last one left ({odds}) — Orb of Annulment + Omen of Light ({cost})', { mod: c.des.mod, odds: oneIn(Math.max(c.des.left, 0.01)), cost: money(c.des.cost) }));
-    if (c.cross) key.push(t('{omen}: {essence} removes a random {side} — the junk you are removing anyway, or one Annulment attempt\'s risk — and adds its modifier into the free {own}; your {own}es are never hit', { omen: c.cross.omen, essence: c.currencies[0], side: t(c.cross.side), own: t(s.side) }));
+    if (c.cross) key.push(c.cross.same
+      ? t('{omen}: {essence} removes a random {side} while the junk is still there — one Annulment attempt — and its modifier takes the freed slot; no sacrificial modifier', { omen: c.cross.omen, essence: c.currencies[0], side: t(c.cross.side) })
+      : t('{omen}: {essence} removes a random {side} — the junk you are removing anyway, or one Annulment attempt\'s risk — and adds its modifier into the free {own}; your {own}es are never hit', { omen: c.cross.omen, essence: c.currencies[0], side: t(c.cross.side), own: t(s.side) }));
     if (c.essMerge) key.push(t('One attempt fewer: the essence in the previous step already removed a random {side}', { side: t(c.essMerge.side) }));
     if (c.desMerge) key.push(t('One attempt fewer: the desecration in the previous step already removed a random {side}', { side: t(c.desMerge.side) }));
     if (s.freeQuality) notes.push(t('{mod} has done its job: quality is already above 20% and stays after it is removed (community data) — the crafted slot frees up', { mod: s.freeQuality }));
@@ -522,6 +526,9 @@ function verdictHtml(plan) {
     verdict = `<div class="verdict ${good && (!lottery || sim) ? 'good' : 'bad'}">${good
       ? `✅ ${esc(sim ? t('Craft: better than selling as is in {pct}% of simulated runs', { pct: Math.round(sim.profit * 100) }) : t('Craft: ≈ {gain} more than selling as is', { gain: money(gain) }))}`
       : `✖ ${esc(t('Selling as is is better'))}`}${simNote}${lottery ? `<small>${esc(gambleNote)}</small>` : ''}${hitNote || (risky ? `<small>${esc(t('Removing a modifier can hit a good one — the cost may grow'))}</small>` : '')}</div>`;
+  } else if (goalValue === undefined && now != null && known >= Math.max(1, 20 * now)) {
+    // The goal is still being priced, but the currency alone dwarfs the item: say it now, not after the search.
+    verdict = `<div class="verdict">${esc(t('Currency ≈ {cost} — {n}× what the item is worth now ({now}); it pays only if the goal sells for more', { cost: money(known), n: fmt(Math.round(known / now)), now: money(now) }))}</div>`;
   } else if (now == null) {
     verdict = `<div class="verdict">${esc(t('Price this item on the Price tab first'))}</div>`;
   }
@@ -671,8 +678,11 @@ const VARIANT_NAME = { cheap: 'Cheap', balanced: 'Balanced', ideal: 'Ideal' };
 function variantEarn(v) {
   const now = state.est;
   const value = v.key === 'ideal' ? goalValue : v.value;
-  const costs = expandPlan(v.plan).map(stepCost);
-  const spend = planSpend(costs);
+  // Each card under its own goal price: a step dearer than this variant's goal is a single attempt here, whatever the
+  // chosen variant's goal says (the card and its simulation agree).
+  const vp = PlanCost.create(() => ({ prices: craftPrices, goalValue: value, est: now }));
+  const costs = vp.expandPlan(v.plan).map(vp.stepCost);
+  const spend = vp.planSpend(costs);
   const lottery = costs.some((c) => c.cost == null);
   const unknownOdds = costs.some((c) => c.lottery); // else it is a single attempt with known odds
   if (value == null || now == null) return { value, spend, lottery, unknownOdds, gain: null };
@@ -771,6 +781,7 @@ const BASE_PRICEY = 0.5; // div: a pricier base is a product in itself, a miss h
 function renderNormalCraft(r, head) {
   craftGoal = null;
   craftPrices = r.prices || {};
+  craftThin = new Set(r.thin || []);
   const p = (n) => craftPrices[n];
   const base = state.est;
   const retry = base != null ? Math.min(base, p('Orb of Annulment') ?? base) : 0;
@@ -844,6 +855,7 @@ function renderUniqueCraft(r, head) {
   craftGoal = null;
   uniqueTop = undefined;
   craftPrices = r.prices || {};
+  craftThin = new Set(r.thin || []);
   const rolls = uniqueRolls();
   const top = [];
   if (!rolls.length) {
@@ -937,6 +949,7 @@ function gambleHtml(g, open = false) {
 function renderCraft(r) {
   craftGoal = r.goal || null;
   craftPrices = r.prices || {};
+  craftThin = new Set(r.thin || []);
   craftCands.clear();
   chanceNote = r.chanceMeta ? chanceLine(r.chanceMeta) : '';
   const head = `<div class="sect"><span>${t('Craft')}</span></div>`;

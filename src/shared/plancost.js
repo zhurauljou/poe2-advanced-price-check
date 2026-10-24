@@ -64,11 +64,15 @@
     const restore = restoreValue();
     // Average price of "restoring a hit mod" over the side's wanted mods: crafted — its essence / Alloy, the rest — restoreValue.
     const crystal = (side) => `Omen of ${side === 'prefix' ? 'Sinistral' : 'Dextral'} Crystallisation`;
-    // A key mod that one Exalted Orb + the side's omen gives back with chance `again`: re-adding it costs 1/again tries,
-    // capped by the key-mod loss (Spirit — a few Exalts; +levels — the cap: losing them costs the item its value).
+    // A key mod that one Exalted Orb + the side's Exaltation omen gives back with chance `again`. Every miss is another mod
+    // that has to come off again (Annulment + the side's Annulment omen) — «1 in 30» is 29 removals, not 30 cheap Exalts.
+    // Capped by the key-mod loss (Spirit — a few Exalts; +levels — the cap: losing them costs the item its value).
     const againCost = (r) => {
-      const per = p('Exalted Orb') != null && p(crystal(r.side)) != null ? p('Exalted Orb') + p(crystal(r.side)) : null;
-      return per == null ? restore : Math.min(restore, per / r.again);
+      const S = r.side === 'prefix' ? 'Sinistral' : 'Dextral';
+      const per = p('Exalted Orb') != null && p(`Omen of ${S} Exaltation`) != null ? p('Exalted Orb') + p(`Omen of ${S} Exaltation`) : null;
+      if (per == null) return restore;
+      const miss = (p('Orb of Annulment') ?? 0) + (p(`Omen of ${S} Annulment`) ?? 0);
+      return Math.min(restore, (per + (1 - r.again) * miss) / r.again);
     };
     const sideRestore = (x) => {
       const list = (x.restore || []).length ? x.restore : [null];
@@ -238,7 +242,7 @@
           const three = o.pool > 3 ? 1 - [0, 1, 2].reduce((a, i) => a * Math.max(0, 1 - (one * o.pool) / (o.pool - i)), 1) : null;
           const pc = o.pool <= 3 ? o.good : three != null ? 1 - Math.pow(1 - three, echo ? 2 : 1) : 1 - Math.pow(1 - one, echo ? 6 : 3);
           const per = cur.reduce((a, n) => a + p(n), 0);
-          opts.push({ k: 'desecrate', bone: boneName, lich: o.lich || null, echo, currencies: cur, chances: [lottery ? null : pc], pool: o.pool, cost: tries(per, pc, [{ a: desRetry, q: 0 }]), per, slam: per / pc, p: pc, ps: [pc], rem: { a: desRetry, q: 0 } });
+          opts.push({ k: 'desecrate', bone: boneName, lich: o.lich || null, echo, currencies: cur, chances: [lottery ? null : pc], pool: o.pool, cost: tries(per, pc, [{ a: desRetry, q: 0 }]), per, slam: per / pc, p: pc, ps: [pc], rem: { a: desRetry, q: 0 }, desAvg: !!o.desAvg });
         }
       }
     }
@@ -248,7 +252,10 @@
     // Single attempt (until-success doesn't converge) on an item with a known gain: a miss is a ruined item, not the orb's price.
     // Then choose by the attempt's gain: chance × (goal price − price now) − attempt price (Perfect Exalted on an expensive item).
     // "Until success" costs more than the goal itself — nobody crafts like that: it's a single attempt (the miss stays on the item).
-    if (C().goalValue) for (const o of opts) if (o.cost > C().goalValue) o.cost = Infinity;
+    // No goal price yet (or none found): caution, not optimism — «until success» far above what the item is worth now
+    // counts as a single attempt (2,842 div of Omen of Light retries on a 5 ex focus), until the goal is priced.
+    const cap = C().goalValue ? C().goalValue : C().est != null ? Math.max(10, 50 * C().est) : null;
+    if (cap != null) for (const o of opts) if (o.cost > cap) o.cost = Infinity;
     const gain = C().goalValue != null && C().est != null ? Math.max(0, C().goalValue - C().est) : 0;
     if (gain && opts.every((o) => !Number.isFinite(o.cost))) opts.sort((a, b) => (b.p * gain - b.per) - (a.p * gain - a.per));
     else opts.sort((a, b) => a.cost - b.cost || a.slam - b.slam);
@@ -262,7 +269,7 @@
     // An essence adds the mod for sure — its price is known even if the Exalted chance for this mod is unknown.
     const lot = lottery && best.k !== 'essence';
     return { hopeless, perTry: best.per, ps: best.ps, rem: best.rem, cost: lot || hopeless ? null : best.cost, score: best.cost, chance: best.chances[0], chances: best.chances, currencies: best.currencies,
-      lottery: lot, pool: best.pool, k: best.k, echo: best.echo, bone: best.bone, lich: best.lich, low: best.low || 0, cross: best.cross || null, alts: lottery ? [] : alts, desAlt };
+      lottery: lot, pool: best.pool, k: best.k, echo: best.echo, bone: best.bone, lich: best.lich, low: best.low || 0, cross: best.cross || null, desAvg: !!best.desAvg, alts: lottery ? [] : alts, desAlt };
   }
 
   // add2: if two separate Exalteds come out cheaper — expand it back into two steps.
@@ -388,10 +395,13 @@
     return out;
   }
 
-  // A Perfect essence / Alloy always removes a random mod before adding its own. With a free slot on its own side and junk
-  // to Annul on the other side, the other side's Crystallisation makes that removal one attempt of the Annulment run
-  // (verified in game for Alloys, player 2026-10-22): no sacrificial Exalt on its own side, and its own mods are never at
-  // risk. Goes before the removals when the two steps together get cheaper.
+  // A Perfect essence / Alloy always removes a random mod before adding its own. Done while a side still has junk to Annul,
+  // that removal is one attempt of the Annulment run — no sacrificial Exalt:
+  // · the other side's Crystallisation, when its own side has room (verified in game for Alloys, player 2026-10-22) — its
+  //   own mods are never at risk;
+  // · its own side's Crystallisation, before the junk there is annulled: the junk dilutes the side (Transcendent Alloy on
+  //   a focus with two junk suffixes of three — 2 in 3 it takes junk) and the freed slot gets the essence's mod.
+  // Goes before the removals when the two steps together get cheaper; the cheaper side wins.
   function crossFirst(plan) {
     const p = (n) => C().prices[n];
     const m = plan.findIndex((s) => s.act === 'junk');
@@ -402,18 +412,27 @@
     if (e < 0) return plan;
     const E = plan[e];
     const other = E.side === 'prefix' ? 'suffix' : 'prefix';
-    const x = plan[r].sides[other], own = (plan[r].allSides || plan[r].sides)[E.side]; // a variant's removal may skip its side
-    // Its own side must have room before any removal; the desecrated junk on the other side would skew the odds — keep it simple.
-    if (!x || !x.J || !own || !(own.free >= 1) || (plan[r].des && plan[r].des.side === other)) return plan;
-    const omen = `Omen of ${other === 'prefix' ? 'Sinistral' : 'Dextral'} Crystallisation`;
-    if (p(omen) == null) return plan;
-    const E2 = { ...E, cross: { side: other, omen } };
-    const c2 = addCost(E2, 1);
-    if (c2.k !== 'essence' || !c2.cross) return plan;
-    const R2 = { ...plan[r], essMerge: { side: other, mod: E.mod } };
-    if (removeCost(R2).cost + c2.score >= removeCost(plan[r]).cost + addCost(E, 1).score) return plan;
+    const own = (plan[r].allSides || plan[r].sides)[E.side]; // a variant's removal may skip its side
+    const base = removeCost(plan[r]).cost + addCost(E, 1).score;
+    let best = null;
+    for (const side of [other, E.side]) {
+      const x = plan[r].sides[side];
+      // Junk to take on that side; the other side needs room on the essence's own; the desecrated junk there would skew
+      // the odds — keep it simple.
+      if (!x || !x.J || (plan[r].des && plan[r].des.side === side)) continue;
+      if (side === other && !(own && own.free >= 1)) continue;
+      const omen = `Omen of ${side === 'prefix' ? 'Sinistral' : 'Dextral'} Crystallisation`;
+      if (p(omen) == null) continue;
+      const E2 = { ...E, cross: { side, omen, same: side === E.side } };
+      const c2 = addCost(E2, 1);
+      if (c2.k !== 'essence' || !c2.cross) continue;
+      const R2 = { ...plan[r], essMerge: { side, mod: E.mod } };
+      const total = removeCost(R2).cost + c2.score;
+      if (total < base && (!best || total < best.total)) best = { E2, R2, total };
+    }
+    if (!best) return plan;
     const out = plan.filter((_, i) => i !== e);
-    out.splice(r, 1, E2, R2);
+    out.splice(r, 1, best.E2, best.R2);
     return out;
   }
 

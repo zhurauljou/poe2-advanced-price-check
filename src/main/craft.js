@@ -417,8 +417,8 @@ async function advise(item, demandMods, cached) {
       for (const b of bones) {
         // Gnawed — items up to ilvl 64: does not give level-65 exclusives (lich mods) (docs/crafting-tricks.md).
         if (mod && mod.required_level >= 65 && /^Gnawed/.test(b.name)) continue;
-        best.desecrate[b.name] = { pool: fam, good: 1, guess: 1 / fam, chance: 1 / fam };
-        if (lichOK) best.desecrate[`${b.name}|${LICH_OMEN[lich]}`] = { pool: lichN, good: 1, guess: 1 / lichN, chance: 1 / lichN, extra: [LICH_OMEN[lich]], lich: { name: lich, n: lichN } };
+        best.desecrate[b.name] = { pool: fam, good: 1, guess: 1 / fam, chance: 1 / fam, desAvg: true };
+        if (lichOK) best.desecrate[`${b.name}|${LICH_OMEN[lich]}`] = { pool: lichN, good: 1, guess: 1 / lichN, chance: 1 / lichN, extra: [LICH_OMEN[lich]], lich: { name: lich, n: lichN }, desAvg: true };
       }
       normal.push(best);
       normal.sort((a, b) => b.pct - a.pct);
@@ -456,7 +456,7 @@ async function advise(item, demandMods, cached) {
       // rough — the frequency-based estimate even for a "valuable" mod whose exact odds are not trusted (chanceUnknown):
       // used only to decide which step deserves the single Desecrate (the rarer, the more a 1-of-3 choice helps).
       const rough = nOf ? odds((type) => nOf(type) * share(type)) : null;
-      return { pool: types.length + extra, good, guess: odds(share), rough, chance: nOf && !c.chanceUnknown ? rough : null };
+      return { pool: types.length + extra, good, guess: odds(share), rough, chance: nOf && !c.chanceUnknown ? rough : null, desAvg: extra > 0 };
     };
     c.exalt = {};
     for (const [k, L] of Object.entries(EXALT_MIN)) {
@@ -1109,7 +1109,7 @@ function planGoal(mine, candidates, max, want, magic, magicFree = [], itemClass 
       abyss: abyss && !desInRun, des: desInRun ? { side: desInRun.side, mod: desInRun.text } : null,
       currencies: ['Orb of Annulment', 'Omen of Sinistral Annulment', 'Omen of Dextral Annulment', ...(whittle ? ['Chaos Orb', 'Omen of Whittling'] : []),
         ...(desInRun ? ['Omen of Light'] : []),
-        ...(rerolled ? ['Exalted Orb', 'Omen of Sinistral Crystallisation', 'Omen of Dextral Crystallisation'] : []),
+        ...(rerolled ? ['Exalted Orb', 'Omen of Sinistral Exaltation', 'Omen of Dextral Exaltation'] : []),
         ...(abyss && !desInRun ? ['Essence of the Abyss', 'Omen of Sinistral Crystallisation', 'Omen of Dextral Crystallisation', 'Omen of Light'] : [])] });
     for (const x of junk) filled[x.side]--;
     if (desInRun) filled[desInRun.side]--;

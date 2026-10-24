@@ -130,6 +130,32 @@ Community snapshot for 0.5 [T17][T14][T13], very approximate:
 
 ---
 
+## 5a. Principles (from planning on real items, 0.5.5, 2026-10-23)
+
+Drawn from the planner's mistakes on players' items (minion sceptres, an evasion / ES helmet, a Tasalian Focus); **H** where
+the arithmetic is the whole argument, the examples are the evidence.
+
+1. **A miss costs money.** «1 in N» is not N attempts at the price of one: every miss is an extra mod that has to come off,
+   and the removal costs and risks too. «Get 100% increased ES back: 1 in 30» means 29 removals.
+2. **Losing a mod costs what getting it back costs** — the odds of that family in that tier, plus removing the misses — but
+   no more than its share of the item's price. Spirit and mana come back cheaply; skill levels and top tiers do not.
+3. **Any «remove a random mod» while the side still has junk.** Perfect essence / Alloy with Crystallisation, Desecrate with
+   Necromancy, Chaos: the junk dilutes the pool, so the action doubles as a free removal attempt — on its own side while
+   the junk is there, on the other side if that side holds only junk and its own has room (Puppet Master via Alloy on a
+   sceptre; Transcendent Alloy on a focus before the junk suffixes are annulled).
+4. **Cheap risky steps first, expensive precise ones last.** Omen of Light and other targeted removals at the end — often
+   they are not needed (a desecrated junk mod goes with a plain Annulment 2 times in 3 on its own).
+5. **A side omen concentrates the risk.** Good when the side holds nothing valuable; with a valuable mod there (+4 minion
+   levels as a suffix) a plain removal spreads the risk over the whole item and may be the safer one.
+6. **The goal is a tier, not a family.** A tier counts when it is worth ≥ ~85% of the best roll — for skill levels only T1.
+   Greater / Perfect / Ancient cut the low tiers, and with them most of a falling family's weight: they help less than
+   they seem.
+7. **Know when to stop.** A step pays only if its expected gain beats its price plus the expected loss; harmless junk with
+   nothing to put in its place is best left alone.
+8. **Prices are part of the plan.** The same plan differs tenfold between Standard and the league (Omen of Light 89 vs
+   10.6 div, 2026-10-24); always compare the total currency with what the item is worth. Prices from a handful of trades
+   are guesses.
+
 ## 6. Pitfalls
 - Whittling with an unrevealed desecrated mod or a special essence mod hits them (§0).
 - Desecrating a full item removes a random mod; Essence of the Abyss → desecrate doesn't (it replaces the Mark).

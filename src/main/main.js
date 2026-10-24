@@ -714,7 +714,10 @@ app.whenReady().then(singleInstance).then((ok) => {
         prices[name] = row ? row.divine : null;
       }
     }
-    return { ...r, prices, theme: d ? d.themed : [], themeBuilds: d ? d.total : null };
+    // Prices from a handful of trades (poe.ninja volume): the window marks them — in Standard a Greater Exalted Orb trades
+    // a few times a day, its price is a guess.
+    const thin = Object.keys(prices).filter((name) => { const row = api.ninja.byName.get(name); return row && (row.volume || 0) < 10; });
+    return { ...r, prices, thin, theme: d ? d.themed : [], themeBuilds: d ? d.total : null };
   });
   handle('demand', FROM.overlay, async (_e, opts) => forBase(await categoryDemand({ ...opts, league: curLeague(), limit: 80, minLevel: demandLevel(), ...demandScope(lastItem, opts && opts.withMods) }, api.fetchBuffer), lastItem)); // 80 — to also find the item's mods outside the top 10
   handle('set-price-currency', FROM.overlay, (_e, c) => { if (PRICE_CURRENCIES.includes(c)) settings.set({ priceCurrency: c }); });

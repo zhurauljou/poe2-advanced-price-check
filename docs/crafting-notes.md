@@ -271,6 +271,16 @@ valuable top tiers several times over.
    ~400) merged with mana regeneration / Intelligence read «1 in 2», and the plan promised a cheap craft better than selling
    in 100% of runs (player's sceptre, 2026-10-23; test «alternatives do not hide a lottery»).
 
+**Rules for the planner** (2026-10-24; the craft principles behind them — crafting-tricks.md §5a):
+- Success is exactly what the price assumes: outcomes of different value are not summed when the price is the best one's
+  (alternatives «or …», 0.3.177).
+- Every number is computed under the decision's assumptions: the variant cards, the simulation and the verdict use the same
+  goal price — each variant its own.
+- The risk counts every mod of the item: a trimmed variant does not drop the other side's wanted mods (0.3.178).
+- «Unknown odds», «a single attempt» and «a rough estimate» are different things and each says why.
+- Without a goal price — caution, not optimism: a costly «until success» counts as a single attempt until the goal is priced,
+  and a total far above the item's price is pointed out.
+
 Not covered: desecrated mod weights (unknown — average, flagged; needs reveal samples), the element of wand / staff bases
 (too few items per element).
 

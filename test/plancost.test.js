@@ -245,3 +245,46 @@ test('a plan variant removing junk on one side keeps the wanted mods of the othe
   // A plain Chaos Orb picks among all 5 mods: 4 of 5 attempts hit a wanted one — never «cheaper» than a side omen.
   assert.ok(!chaos || !chaos.currencies.every((n) => n === 'Chaos Orb') || chaos.hits > 2, 'plain Chaos is not treated as safe');
 });
+
+test('getting a lost mod back counts the misses: a plain Annulment over valuable prefixes loses to the side omen', () => {
+  const PlanCost = require('../src/shared/plancost');
+  // A focus: three valuable prefixes (100% ES comes back 1 in 30), two junk suffixes and cold resistance.
+  const prices = { 'Orb of Annulment': 0.29, 'Omen of Dextral Annulment': 13.6, 'Omen of Sinistral Annulment': 13.6, 'Exalted Orb': 0.0015, 'Omen of Sinistral Exaltation': 0.06, 'Omen of Dextral Exaltation': 0.06 };
+  const pc = PlanCost.create(() => ({ prices, goalValue: 185, est: 0.02 }));
+  const back = (again, side) => ({ again, side });
+  const r = pc.removeCost({ act: 'remove', mods: ['attr', 'chaos'], modSides: ['suffix', 'suffix'],
+    sides: { prefix: { J: 0, K: 3, restore: [back(1 / 30, 'prefix'), back(1 / 9, 'prefix'), back(1 / 5, 'prefix')], omen: 'Omen of Sinistral Annulment' },
+      suffix: { J: 2, K: 1, restore: [back(1 / 13, 'suffix')], omen: 'Omen of Dextral Annulment' } } });
+  assert.ok(r.currencies.includes('Omen of Dextral Annulment'), `the side omen wins: ${r.currencies.join(' + ')}`);
+});
+
+test('an essence on its own side while the junk is still there: no sacrificial Exalt, one removal attempt saved', () => {
+  const PlanCost = require('../src/shared/plancost');
+  const prices = { 'Orb of Annulment': 0.29, 'Omen of Dextral Annulment': 13.6, 'Omen of Sinistral Annulment': 13.6, 'Exalted Orb': 0.0015,
+    'Omen of Dextral Exaltation': 0.06, 'Omen of Dextral Crystallisation': 0.5, 'Omen of Sinistral Crystallisation': 0.5, 'Transcendent Alloy': 3 };
+  const pc = PlanCost.create(() => ({ prices, goalValue: 185, est: 0.02 }));
+  const remove = { act: 'remove', mods: ['attr', 'chaos'], modSides: ['suffix', 'suffix'],
+    sides: { prefix: { J: 0, K: 3, restore: [null, null, null], free: 0, full: true, omen: 'Omen of Sinistral Annulment' },
+      suffix: { J: 2, K: 1, restore: [null], free: 0, full: true, omen: 'Omen of Dextral Annulment' } } };
+  const add = { act: 'add', side: 'suffix', mod: 'cast speed', useCrafted: true, crafted: ['Transcendent Alloy'], crystal: 'Omen of Dextral Crystallisation',
+    sideOmen: 'Omen of Dextral Exaltation', onSide: 1, atRisk: ['cold'], exalt: { base: { chance: 0.004, pool: 20 } }, currencies: ['Exalted Orb'] }; // a rare goal tier: the Alloy beats Exalting
+  const plan = pc.expandPlan([remove, add]);
+  assert.equal(plan[0].act, 'add', 'the Alloy goes first');
+  assert.ok(plan[0].cross && plan[0].cross.same && plan[0].cross.side === 'suffix', 'on its own side');
+  const c = pc.stepCost(plan[0]);
+  assert.deepEqual(c.currencies, ['Transcendent Alloy', 'Omen of Dextral Crystallisation'], 'no sacrificial Exalt');
+  assert.equal(plan[1].essMerge.side, 'suffix', 'the removal counts it as one attempt');
+});
+
+test('without a goal price a costly «until success» is a single attempt, not a promise', () => {
+  const PlanCost = require('../src/shared/plancost');
+  // Standard prices: Omen of Light 89 div per miss, a 5 ex focus, the goal not priced yet.
+  const prices = { 'Ancient Rib': 11, 'Omen of Dextral Necromancy': 0.2, 'Omen of Abyssal Echoes': 0.75, 'Orb of Annulment': 0.36, 'Omen of Light': 89 };
+  const pc = PlanCost.create(() => ({ prices, goalValue: undefined, est: 0.007 }));
+  // Exalted odds known (no Exalted price here, so Desecrate is the only way): a single attempt, not «unknown odds».
+  const s = { act: 'add', side: 'suffix', mod: 'spell levels', useDes: true, necro: 'Omen of Dextral Necromancy', exalt: { base: { chance: 1 / 400, pool: 24 } },
+    desecrate: { 'Ancient Rib': { pool: 24, good: 1, chance: 1 / 40, guess: 1 / 24 } }, currencies: [] };
+  const c = pc.stepCost(s);
+  assert.equal(c.cost, null, 'no «until success» total');
+  assert.ok(c.hopeless && c.perTry < 15, `one attempt ≈ ${c.perTry && c.perTry.toFixed(1)} div`);
+});
