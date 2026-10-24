@@ -940,6 +940,22 @@ function planGoal(mine, candidates, max, want, magic, magicFree = [], itemClass 
   const keyOf = (lines) => lines.some((l) => boosts(l) || (isKey(itemClass, l) && (!known || (want.get(l) || 0) >= WANT_PCT)));
   // Tier quality — same scale as mod importance in search (weights.tierFactor), so the goal and the price do not disagree.
   const value = (pct, tier) => pct * tierFactor(tier || null);
+  // A hybrid with a junk half ("Light Radius / Mana Regeneration") is worth more than an empty slot, but less than a pure mod.
+  const worth = (c) => value(c.pct, 2) * (keyOf(c.text.split(' / ')) ? KEY_BONUS : 1) * (c.text.split(' / ').some((l) => isWeak(l) && !((want.get(l) || 0) >= WANT_PCT)) ? 0.6 : 1);
+  // Skill levels of different kinds serve different builds: Spell and Projectile levels on one amulet — one of them is
+  // wasted on any build, so the goal takes one kind (the most valuable, or the one the item already has), not both.
+  // Spells and an element of spells go together (a cold caster wants both), Attack with Melee or Projectile; two elements do not.
+  const skillOf = (text) => text.split(' / ').map((l) => l.match(/Level of all (?:(Fire|Cold|Lightning|Chaos|Physical) )?(\w+) Skills/i)).filter(Boolean)
+    .map((m) => ({ el: (m[1] || '').toLowerCase(), kind: m[2].toLowerCase() }))[0];
+  const attacks = (a, b) => a.kind === 'attack' && ['melee', 'projectile'].includes(b.kind);
+  const clash = (a, b) => (a.kind === b.kind ? !!(a.el && b.el && a.el !== b.el) : !attacks(a, b) && !attacks(b, a));
+  const skills = mine.map((a) => a.mod && skillOf(a.mod.lines.join(' / '))).filter(Boolean);
+  const drop = new Set();
+  for (const c of candidates.filter((x) => skillOf(x.text)).sort((x, y) => worth(y) - worth(x))) {
+    const s = skillOf(c.text);
+    if (skills.some((o) => clash(o, s))) drop.add(c); else skills.push(s);
+  }
+  const pool = candidates.filter((c) => !drop.has(c));
   const keep = [], remove = [], add = [];
   for (const side of ['prefix', 'suffix']) {
     // Side over the limit (jewel: the crafted "+1 Suffix Modifier allowed" was removed after Potent Contempt — three suffixes
@@ -959,9 +975,7 @@ function planGoal(mine, candidates, max, want, magic, magicFree = [], itemClass 
       const desSlot = a.tag === 'desecrated' ? 0.5 : 1;
       return { kind: 'cur', a, pct, v: locked ? Infinity : value(pct, a.tier) * KEEP_BONUS * desSlot * (a.mod && keyOf(a.mod.lines) ? KEY_BONUS : 1) };
     });
-    // A hybrid with a junk half ("Light Radius / Mana Regeneration") is worth more than an empty slot, but less than a pure mod.
-    const worth = (c) => value(c.pct, 2) * (keyOf(c.text.split(' / ')) ? KEY_BONUS : 1) * (c.text.split(' / ').some((l) => isWeak(l) && !((want.get(l) || 0) >= WANT_PCT)) ? 0.6 : 1);
-    const cand = candidates.filter((c) => c.side === side).map((c) => ({ kind: 'add', c, pct: c.pct, v: worth(c) }));
+    const cand = pool.filter((c) => c.side === side).map((c) => ({ kind: 'add', c, pct: c.pct, v: worth(c) }));
     const chosen = over ? cur : [...cur, ...cand].sort((x, y) => y.v - x.v).slice(0, max[side]);
     for (const x of cur) {
       const info = { side, tag: x.a.tag, text: x.a.mod ? x.a.mod.lines.join(' / ') : x.a.name, templates: x.a.mod ? x.a.mod.lines : [], tier: x.a.tier, pct: x.pct,

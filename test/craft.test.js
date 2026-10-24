@@ -587,3 +587,19 @@ test('amulet: a lich mod a Perfect essence also gives comes from the essence, fo
   assert.equal(p.cost[i].k, 'essence', `by ${p.cost[i].currencies.join(' + ')}`);
   assert.equal(p.cost[i].currencies[0], 'Perfect Essence of Enhancement');
 });
+
+test('a goal has one kind of skill levels: Spell or Projectile, not both', { skip }, async () => {
+  // Player's Lunar Amulet (2026-10-25): the goal added Spirit, Spell levels (31%) and Projectile levels (26%) — no build
+  // uses both, the Ideal variant priced a lottery for a mod nobody needs together with the other.
+  const kinds = (g) => g.add.concat(g.keep).map((a) => (a.text.match(/level of all (?:(?:fire|cold|lightning|chaos|physical) )?(\w+) skills/i) || [])[1]).filter(Boolean);
+  const p = await plan('amulet-enhancement');
+  const k = kinds(p.goal);
+  assert.ok(k.length <= 1 || new Set(k).size === 1, `skill levels in the goal: ${k.join(', ')}`);
+  for (const f of fs.readdirSync(FIX).filter((x) => x.endsWith('.demand.json') && fs.existsSync(path.join(FIX, x.replace('.demand.json', '.txt'))))) {
+    const name = f.replace('.demand.json', '');
+    const r = await craft.advise(item(name), json(f).mods, cached);
+    if (!r.goal) continue;
+    const ks = new Set(kinds(r.goal).map((x) => x.toLowerCase()));
+    assert.ok(ks.size <= 1 || [...ks].every((x) => ['attack', 'melee', 'projectile'].includes(x)) && ks.has('attack'), `${name}: ${[...ks].join(', ')}`);
+  }
+});
