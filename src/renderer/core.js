@@ -77,14 +77,40 @@ function money(div) {
 // your head. The unit of the smallest price; a bigger one only where the largest would run into thousands.
 const MONEY_UNITS = ['ex', 'chaos', 'div'];
 const divIn = (div, u) => (u === 'div' ? div : u === 'chaos' ? div * rates.chaos : div * rates.exalted);
+// Estimates (the craft tab: averages, simulations) are rough anyway and currency is indivisible — whole numbers. A number
+// that rounding would move by more than a tenth (1.26 chaos → 1) goes to the smaller unit instead (≈ 88 ex).
+const whole = (v) => { const r = Math.round(v); return v >= 10 || (r >= 1 && Math.abs(r - v) <= v * 0.1) ? r : null; };
+const hasRate = (u) => u === 'div' || (u === 'chaos' ? !!rates.chaos : !!rates.exalted);
+function approxUnit(div) {
+  for (let i = MONEY_UNITS.indexOf(moneyUnit(div)); i >= 0; i--) {
+    if (!hasRate(MONEY_UNITS[i])) return MONEY_UNITS[i + 1] || 'div';
+    if (i === 0 || whole(divIn(div, MONEY_UNITS[i])) != null) return MONEY_UNITS[i];
+  }
+  return 'ex';
+}
+function approx(div) {
+  if (div == null) return '—';
+  const u = approxUnit(div);
+  const v = divIn(div, u);
+  if (u === 'ex' && v < 0.5) return '< 1 ex';
+  const r = u === 'ex' ? Math.round(v) : whole(v); // nothing smaller than an exalted
+  return `${fmt(r != null ? r : Math.round(v * 10) / 10)} ${u}`;
+}
 function unitFor(vals) {
   const v = vals.filter((x) => Number.isFinite(x) && x > 0);
   if (!v.length) return null;
-  let i = MONEY_UNITS.indexOf(moneyUnit(Math.min(...v)));
+  let i = MONEY_UNITS.indexOf(approxUnit(Math.min(...v)));
   while (i < MONEY_UNITS.length - 1 && divIn(Math.max(...v), MONEY_UNITS[i]) >= 1000) i++;
   return MONEY_UNITS[i];
 }
-const moneyIn = (div, u) => (div == null || !u ? money(div) : `${fmt(divIn(div, u))} ${u}`);
+// In a fixed unit (numbers compared side by side): whole, or one decimal where the unit is big for it; below 1 — its own unit.
+function moneyIn(div, u) {
+  if (div == null || !u) return approx(div);
+  const v = divIn(div, u);
+  if (v < 1) return approx(div);
+  const r = u === 'ex' ? Math.round(v) : whole(v); // nothing smaller than an exalted
+  return `${fmt(r != null ? r : Math.round(v * 10) / 10)} ${u}`;
+}
 
 function ago(iso) {
   const s = (Date.now() - new Date(iso).getTime()) / 1000;

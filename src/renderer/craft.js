@@ -42,7 +42,7 @@ function tierUpWay(m) {
   // Expected: N Annulments to hit it (the others it hits are lost too — not counted), then 1 / again Exalts, each miss
   // removed with one more side Annulment.
   const cost = ann && ex ? m.sameSide * ann + (1 / m.again) * ex + (1 / m.again - 1) * ann : null;
-  return `<div class="craft-sub">${esc(t('To {goal}: Orb of Annulment + Omen of {s} Annulment hits it 1 in {n}, then Exalted Orb + Omen of {s} Exaltation gives {goal} {odds}', { goal: m.goal, s: S, n: m.sameSide, odds: oneIn(m.again) }))}${cost != null ? ` · ${esc(t('≈ {cost} on average', { cost: money(cost) }))}` : ''}</div>`;
+  return `<div class="craft-sub">${esc(t('To {goal}: Orb of Annulment + Omen of {s} Annulment hits it 1 in {n}, then Exalted Orb + Omen of {s} Exaltation gives {goal} {odds}', { goal: m.goal, s: S, n: m.sameSide, odds: oneIn(m.again) }))}${cost != null ? ` · ${esc(t('≈ {cost} on average', { cost: approx(cost) }))}` : ''}</div>`;
 }
 
 function craftRows(list, sub = '') {
@@ -121,7 +121,7 @@ async function priceAll(btn) {
   for (const r of rows) {
     const x = u.get(r);
     if (x.d == null || x.d <= 0) r.classList.add('flat');
-    else if (x.odds) r.querySelector('.cpx').insertAdjacentHTML('beforeend', `<small class="cper" title="${esc(t('Average gain of one attempt: price gain × chance − the attempt\'s cost'))}">${x.v >= 0 ? '+' : '−'}${money(Math.abs(x.v))}/${esc(t('try'))}</small>`);
+    else if (x.odds) r.querySelector('.cpx').insertAdjacentHTML('beforeend', `<small class="cper" title="${esc(t('Average gain of one attempt: price gain × chance − the attempt\'s cost'))}">${x.v >= 0 ? '+' : '−'}${approx(Math.abs(x.v))}/${esc(t('try'))}</small>`);
   }
   btn.remove();
   fit();
@@ -146,16 +146,16 @@ async function priceCraft(b) {
     if (v == null) html = `<span class="cpr" title="${t('Nothing like it is listed — could be rare and pricey')}">${t('none listed')}</span>`;
     else if (q.total < MIN_LOTS) {
       // 1–2 listings is not an estimate: show greyed out, at the bottom when sorting with "Price all".
-      html = `<span class="cpr thin" title="${esc(t('Too few listings to price it — one or two prices can be anything'))} · ${esc(t('{n} listings', { n: q.total }))}">${money(v)}?</span>`;
+      html = `<span class="cpr thin" title="${esc(t('Too few listings to price it — one or two prices can be anything'))} · ${esc(t('{n} listings', { n: q.total }))}">${approx(v)}?</span>`;
     } else {
       const d = state.est != null ? v - state.est : null;
       const cls = d == null ? '' : d > state.est * 0.1 ? ' up' : d < -state.est * 0.1 ? ' down' : '';
       // The gain is what matters: large "+2.1 div", next to it the item's total price with the mod.
-      const delta = d == null ? '' : Math.abs(d) < state.est * 0.1 ? t('same') : `${d > 0 ? '+' : '−'}${money(Math.abs(d))}`;
+      const delta = d == null ? '' : Math.abs(d) < state.est * 0.1 ? t('same') : `${d > 0 ? '+' : '−'}${approx(Math.abs(d))}`;
       // In the candidates table the column is narrow: gain shown, total price in the tooltip.
       html = row && row.classList.contains('crow')
-        ? `<span class="cpr${cls}" title="${t('{n} listed with it · vs your current estimate', { n: q.total })} · ≈ ${money(v)}">${delta ? `<b>${delta}</b>` : `≈ ${money(v)}`}</span>`
-        : `<span class="cpr${cls}" title="${t('{n} listed with it · vs your current estimate', { n: q.total })}">${delta ? `<b>${delta}</b> · ` : ''}≈ ${money(v)}</span>`;
+        ? `<span class="cpr${cls}" title="${t('{n} listed with it · vs your current estimate', { n: q.total })} · ≈ ${approx(v)}">${delta ? `<b>${delta}</b>` : `≈ ${approx(v)}`}</span>`
+        : `<span class="cpr${cls}" title="${t('{n} listed with it · vs your current estimate', { n: q.total })}">${delta ? `<b>${delta}</b> · ` : ''}≈ ${approx(v)}</span>`;
       if (row && d != null) row.dataset.delta = Math.abs(d) < state.est * 0.1 ? 0 : d;
     }
     b.outerHTML = html;
@@ -322,7 +322,7 @@ function emotionsHtml(s, how) {
   const rows = s.options.map((o) => `<div class="erow"><span class="ename">${curChips([o.name])}</span>
     <span class="emod">${esc(o.text)} <small class="muted">· ${esc(side(o))}</small></span>
     <span class="edem">${o.pct ? `${hot(o.pct)}${fmt(o.pct)}%` : '—'}</span>
-    <span class="epx">${craftPrices[o.name] != null ? money(craftPrices[o.name]) : '—'}</span></div>`).join('');
+    <span class="epx">${craftPrices[o.name] != null ? approx(craftPrices[o.name]) : '—'}</span></div>`).join('');
   const r = s.risk;
   const risk = r.keys.length
     ? `<div class="ps-risk">⚠ ${esc(t('Removes a random one of the {n} modifiers: {k} of them are key ({mods}) — {odds} to lose one', { n: r.n, k: r.keys.length, mods: r.keys.join(', '), odds: r.keys.length / r.n >= 0.5 ? `~${Math.round(r.keys.length / r.n * 100)}%` : oneIn(r.keys.length / r.n) }))}</div>`
@@ -487,7 +487,7 @@ function planHtml(plan) {
       if (c.lich) notes.push(t(c.lich.n <= 3 ? 'Lich omen: all options come from {lich}\'s pool — {n} on this side, so the modifier is guaranteed' : 'Lich omen: all options come from {lich}\'s pool — {n} on this side', { lich: c.lich.name[0].toUpperCase() + c.lich.name.slice(1), n: c.lich.n }));
       if (s.desFirst) key.push(t('The {side}es are full: with {omen} the desecration itself removes a random {side} — the same as one Annulment attempt, so do this before removing', { side: t(s.side), omen: s.necro }));
       key.push(t('At the reveal pick: {mods}', { mods: [s.mod, ...(s.orMods || [])].join(' › ') }));
-      notes.push(t('A miss → Orb of Annulment + Omen of Light removes it ({cost})', { cost: money((craftPrices['Orb of Annulment'] || 0) + (craftPrices['Omen of Light'] || 0)) }));
+      notes.push(t('A miss → Orb of Annulment + Omen of Light removes it ({cost})', { cost: approx((craftPrices['Orb of Annulment'] || 0) + (craftPrices['Omen of Light'] || 0)) }));
     }
     if (EXALT_WHY[c.k]) notes.push(t(EXALT_WHY[c.k]));
     if (s.blocker && c.k !== 'essence' && c.k !== 'desecrate') {
@@ -496,13 +496,13 @@ function planHtml(plan) {
     }
     if (s.act !== 'remove' && c.k !== 'desecrate' && s.sideOmen && !c.currencies.includes(s.sideOmen)) notes.push(t('without a side omen half the rolls land on the other side'));
     const altText = (o) => o.k === 'essence'
-      ? `${o.currencies.join(' + ')} · ${oneIn(o.chances[0])} · ${t('≈ {cost} on average', { cost: money(o.cost) })}`
+      ? `${o.currencies.join(' + ')} · ${oneIn(o.chances[0])} · ${t('≈ {cost} on average', { cost: approx(o.cost) })}`
       : o.k === 'desecrate'
-      ? `${t('Desecrate')}${o.mod ? ` (${o.mod})` : ''}: ${o.currencies.join(' + ')}${o.chances[0] != null ? ` · ${oneIn(o.chances[0])}` : ''}${c.lottery ? '' : ` · ${t('≈ {cost} on average', { cost: money(o.cost) })}`}`
-      : `${o.currencies[0]}${o.chances && o.chances[0] != null ? ` · ${oneIn(o.chances[0])}${s.target ? ` ${s.target}` : ''}` : ''} · ${t('≈ {cost} on average', { cost: money(o.cost) })}`;
+      ? `${t('Desecrate')}${o.mod ? ` (${o.mod})` : ''}: ${o.currencies.join(' + ')}${o.chances[0] != null ? ` · ${oneIn(o.chances[0])}` : ''}${c.lottery ? '' : ` · ${t('≈ {cost} on average', { cost: approx(o.cost) })}`}`
+      : `${o.currencies[0]}${o.chances && o.chances[0] != null ? ` · ${oneIn(o.chances[0])}${s.target ? ` ${s.target}` : ''}` : ''} · ${t('≈ {cost} on average', { cost: approx(o.cost) })}`;
     const alts = [...(c.alts || []).filter((o) => o.k !== 'desecrate' && o.k !== 'essence'), ...(c.desAlt || []).slice(0, 2)].filter((o) => Number.isFinite(o.cost)).map(altText);
-    if (c.other) alts.push(t('{how}: ≈{n} attempts, ≈{hits} needed modifiers hit, {cost} in currency', { how: c.other.currencies.join(' + '), n: fmt(Math.round(c.other.tries * 10) / 10), hits: fmt(Math.round(c.other.hits * 10) / 10), cost: money(c.other.spent) }));
-    if (c.des) notes.push(t('«{mod}» goes too when an Annulment hits it; only if it is the last one left ({odds}) — Orb of Annulment + Omen of Light ({cost})', { mod: c.des.mod, odds: oneIn(Math.max(c.des.left, 0.01)), cost: money(c.des.cost) }));
+    if (c.other) alts.push(t('{how}: ≈{n} attempts, ≈{hits} needed modifiers hit, {cost} in currency', { how: c.other.currencies.join(' + '), n: fmt(Math.round(c.other.tries * 10) / 10), hits: fmt(Math.round(c.other.hits * 10) / 10), cost: approx(c.other.spent) }));
+    if (c.des) notes.push(t('«{mod}» goes too when an Annulment hits it; only if it is the last one left ({odds}) — Orb of Annulment + Omen of Light ({cost})', { mod: c.des.mod, odds: oneIn(Math.max(c.des.left, 0.01)), cost: approx(c.des.cost) }));
     // The currencies are the step's chips; the note says only why this order works.
     if (c.cross) notes.push(c.cross.same
       ? t('Removes a random {side} while the junk is still there — one Annulment attempt — and its modifier takes the freed slot; no sacrificial modifier', { side: t(c.cross.side) })
@@ -512,7 +512,7 @@ function planHtml(plan) {
     if (s.freeQuality) notes.push(t('{mod} has done its job: quality is already above 20% and stays after it is removed (community data) — the crafted slot frees up', { mod: s.freeQuality }));
     if (s.whittleWrong) notes.push(t('Chaos Orb + Omen of Whittling would not help: it removes the lowest-level modifier, and that is «{mod}» (level {level})', { mod: s.whittleWrong.mod, level: s.whittleWrong.level }));
     if (c.whittle) alts.push(t('{mod}: Chaos Orb + Omen of Whittling removes it for sure (lowest-level modifier), a random modifier takes its place — {list}', { mod: s.whittle,
-      list: c.whittle.map((o) => `${o.orb}${o.level ? ` (${t('new one {n}+', { n: o.level })})` : ''} ≈ ${money(o.cost)}`).join('; ') }));
+      list: c.whittle.map((o) => `${o.orb}${o.level ? ` (${t('new one {n}+', { n: o.level })})` : ''} ≈ ${approx(o.cost)}`).join('; ') }));
     // Essence of the Abyss chain: if chosen, explain the order; if another way is cheaper, show it under "Instead".
     // Removal: what it frees a slot for, and its price split into currency and the risk of hitting a wanted mod.
     const why = [];
@@ -522,15 +522,15 @@ function planHtml(plan) {
       // Spare junk (the variant no longer needs its slot): an Annulment taking it instead is progress, not a miss.
       const spare = Object.values(s.sides).filter((x) => x.J).flatMap((x) => x.spareNames || []);
       if (spare.length) why.push(t('If it takes {mods} instead, that is fine too: the slot is freed just as well', { mods: spare.map((m) => `«${m}»`).join(t(' or ')) }));
-      if (c.hits > 0.05 && c.spent != null && c.cost != null) why.push(t('currency ≈ {cur} · risk of hitting a needed modifier ≈ {risk}', { cur: money(c.spent), risk: money(Math.max(0, c.cost - c.spent)) }));
+      if (c.hits > 0.05 && c.spent != null && c.cost != null) why.push(t('currency ≈ {cur} · risk of hitting a needed modifier ≈ {risk}', { cur: approx(c.spent), risk: approx(Math.max(0, c.cost - c.spent)) }));
     }
     if (c.abyss) {
       const how = t('{chain}: removes a random modifier of the side like an Annulment omen; the Mark it leaves is desecrated and Omen of Light removes it', { chain: c.abyss.currencies.join(' → ') });
-      alts.push(t('{how}: ≈{n} attempts, ≈{hits} needed modifiers hit, {cost} in currency', { how, n: fmt(Math.round(c.abyss.tries * 10) / 10), hits: fmt(Math.round(c.abyss.hits * 10) / 10), cost: money(c.abyss.spent) }));
+      alts.push(t('{how}: ≈{n} attempts, ≈{hits} needed modifiers hit, {cost} in currency', { how, n: fmt(Math.round(c.abyss.tries * 10) / 10), hits: fmt(Math.round(c.abyss.hits * 10) / 10), cost: approx(c.abyss.spent) }));
     }
-    for (const e of c.erasure || []) alts.push(t('{orb} + {omen}: removes a random {side} ({odds} hits an unwanted one) and adds a random modifier, ≈ {cost} per try', { orb: e.orb, omen: e.omen, side: t(e.side), odds: e.chance >= 0.5 ? `~${Math.round(e.chance * 100)}%` : t('1 in {n}', { n: Math.round(1 / e.chance * 10) / 10 }), cost: money(e.cost) }));
-    if (c.regal && c.regal.length) notes.push(t('Greater / Perfect Regal Orb: the random modifier is level 35+ / 50+ — instead: {list}', { list: c.regal.map((o) => `${o.orb} ≈ ${money(o.cost)}`).join('; ') }));
-    const desNote = (c.desAlt || []).some((o) => o.k === 'desecrate') ? t('Desecrate: pick 1 of 3 offered modifiers at the Well of Souls, but a miss costs Orb of Annulment + Omen of Light ({cost})', { cost: money((craftPrices['Orb of Annulment'] || 0) + (craftPrices['Omen of Light'] || 0)) }) : '';
+    for (const e of c.erasure || []) alts.push(t('{orb} + {omen}: removes a random {side} ({odds} hits an unwanted one) and adds a random modifier, ≈ {cost} per try', { orb: e.orb, omen: e.omen, side: t(e.side), odds: e.chance >= 0.5 ? `~${Math.round(e.chance * 100)}%` : t('1 in {n}', { n: Math.round(1 / e.chance * 10) / 10 }), cost: approx(e.cost) }));
+    if (c.regal && c.regal.length) notes.push(t('Greater / Perfect Regal Orb: the random modifier is level 35+ / 50+ — instead: {list}', { list: c.regal.map((o) => `${o.orb} ≈ ${approx(o.cost)}`).join('; ') }));
+    const desNote = (c.desAlt || []).some((o) => o.k === 'desecrate') ? t('Desecrate: pick 1 of 3 offered modifiers at the Well of Souls, but a miss costs Orb of Annulment + Omen of Light ({cost})', { cost: approx((craftPrices['Orb of Annulment'] || 0) + (craftPrices['Omen of Light'] || 0)) }) : '';
     // Explanations and alternatives are collapsed: the step shows only what to do, with what, the chance and the cost.
     // The risk breakdown (which mods, the odds of getting each back) — the badge says how risky; the details say why.
     const riskHtml = [
@@ -552,7 +552,7 @@ function planHtml(plan) {
     // «guaranteed» is the green badge below — not repeated next to the currencies.
     // The badge carries the number (and the goal tier) — the odds are not repeated next to the currencies.
     const how = [(c.k === 'essence' && !c.cross) || c.viaAbyss ? '' : curChips(c.currencies), flags[si] ? '' : esc(odds)].filter(Boolean).join(' · ');
-    const sideHtml = side ? `<div class="ps-side${side.per ? ' per' : ''}"><b class="ps-cost">≈ ${money(side.cost)}</b>${side.per ? `<small>${esc(t('per attempt'))}</small>` : side.sub ? `<small>${esc(side.sub)}</small>` : ''}</div>` : '';
+    const sideHtml = side ? `<div class="ps-side${side.per ? ' per' : ''}"><b class="ps-cost">≈ ${approx(side.cost)}</b>${side.per ? `<small>${esc(t('per attempt'))}</small>` : side.sub ? `<small>${esc(side.sub)}</small>` : ''}</div>` : '';
     const flag = flags[si];
     const cls = [side ? 'has-side' : '', flag ? `flag-${flag.kind}` : ''].filter(Boolean).join(' ');
     return `<li${cls ? ` class="${cls}"` : ''}><div class="ps-main"><div class="ps-what">${title}</div>
@@ -788,10 +788,10 @@ function basesHtml(plan) {
   else {
     // A row per kind of base: how many, from what price, the link; the cheapest one against rolling it yourself.
     const cheapest = Math.min(...bs.found.rows.filter((r) => r.total && r.divs.length).map((r) => r.divs[0]));
-    const rows = bs.found.rows.map((r) => `<div class="cb-row"><span>${esc(r.label)}</span><b>${r.total ? esc(t('{n} listed, from {price}', { n: r.total, price: r.divs.length ? money(r.divs[0]) : '—' })) : `<span class="muted">${esc(t('none'))}</span>`}</b>`
+    const rows = bs.found.rows.map((r) => `<div class="cb-row"><span>${esc(r.label)}</span><b>${r.total ? esc(t('{n} listed, from {price}', { n: r.total, price: r.divs.length ? approx(r.divs[0]) : '—' })) : `<span class="muted">${esc(t('none'))}</span>`}</b>`
       + (r.total ? `<button class="link" data-act="bases-open" data-url="${esc(r.url)}">${esc(t('Open on trade'))} ↗</button>` : '') + '</div>').join('');
     body = `<div class="cb-for">${esc(t('With {mods}:', { mods: bs.found.label }))}</div>${rows}`
-      + (roll && Number.isFinite(cheapest) ? `<div class="cb-cmp">${esc(t('rolling it yourself ≈ {cost} on average', { cost: money(roll) }))}${cheapest < roll ? ` · <b class="good">${esc(t('buying is cheaper'))}</b>` : ''}</div>` : '');
+      + (roll && Number.isFinite(cheapest) ? `<div class="cb-cmp">${esc(t('rolling it yourself ≈ {cost} on average', { cost: approx(roll) }))}${cheapest < roll ? ` · <b class="good">${esc(t('buying is cheaper'))}</b>` : ''}</div>` : '');
   }
   return `<div class="craft-bases"><div class="cb-head"><span class="ps-flag shot fi-only"><span class="fi">${FLAG_ICON.shot}</span></span>${esc(t('{mods} — usually bought as a base, not rolled', { mods: names }))}</div><div class="cb-body">${body}</div></div>`;
 }
@@ -912,14 +912,14 @@ function variantEarn(v) {
   return { value, spend, lottery, unknownOdds, gain: v.sim.gain, expected: v.sim.expected };
 }
 
-// Under half an exalted (money() picks the unit where the number is ≥ 1, so a number below 0.5 is in ex): shown as nothing.
+// Under half an exalted (approx() picks the unit where the number is ≥ 1, so a number below 0.5 is in ex): shown as nothing.
 const tiny = (div) => parseFloat(money(div).replace(/,/g, '')) < 0.5;
 
 function variantsHtml() {
   if (!variants || planBusy()) return '';
   // No variant has a gain to show (no goal or item price): the cards would be columns of dashes — a compact switch.
   if (variants.every((v) => variantEarn(v).gain == null)) {
-    return `<div class="variants mini">${variants.map((v) => { const { spend, lottery } = variantEarn(v); return `<button class="variant mini${v.key === planVariant ? ' on' : ''}" data-act="variant" data-v="${v.key}">${esc(t(VARIANT_NAME[v.key]))} <small>${tiny(spend) ? '< 1 ex' : `${lottery ? `${esc(t('from'))} ` : ''}${money(spend)}`}</small></button>`; }).join('')}</div>`;
+    return `<div class="variants mini">${variants.map((v) => { const { spend, lottery } = variantEarn(v); return `<button class="variant mini${v.key === planVariant ? ' on' : ''}" data-act="variant" data-v="${v.key}">${esc(t(VARIANT_NAME[v.key]))} <small>${tiny(spend) ? '< 1 ex' : `${lottery ? `${esc(t('from'))} ` : ''}${approx(spend)}`}</small></button>`; }).join('')}</div>`;
   }
   // Every variant loses against selling as is: nothing to choose — the verdict says so, the switch would only add numbers.
   const rows = variants.map((v) => ({ v, ...variantEarn(v) }));
@@ -1018,11 +1018,11 @@ function renderNormalCraft(r, head) {
   const known = opts.filter((o) => o.cost != null);
   const best = known.length ? known.reduce((a, b) => (b.cost < a.cost ? b : a)) : opts[opts.length - 1];
   const pct = (x) => `${x >= 0.1 ? Math.round(x * 100) : Math.round(x * 1000) / 10}%`;
-  const rows = opts.map((o) => `<div class="profit-row${o === best ? ' best' : ''}"><div><span class="game">${esc(o.name)}</span>${o.orb != null ? ` <small>≈ ${money(o.orb)}</small>` : ''}${o === best ? ` <b class="rec">${esc(t('recommended'))}</b>` : ''}</div>
-    <div class="ps-how">${esc(t('{n} possible modifiers · popular: {any} · popular in a goal tier: {top}', { n: o.pool, any: pct(o.any), top: pct(o.top) }))}${o.cost != null ? ` · <b>${esc(t('≈ {cost} on average', { cost: money(o.cost) }))}</b>` : ''}</div>
+  const rows = opts.map((o) => `<div class="profit-row${o === best ? ' best' : ''}"><div><span class="game">${esc(o.name)}</span>${o.orb != null ? ` <small>≈ ${approx(o.orb)}</small>` : ''}${o === best ? ` <b class="rec">${esc(t('recommended'))}</b>` : ''}</div>
+    <div class="ps-how">${esc(t('{n} possible modifiers · popular: {any} · popular in a goal tier: {top}', { n: o.pool, any: pct(o.any), top: pct(o.top) }))}${o.cost != null ? ` · <b>${esc(t('≈ {cost} on average', { cost: approx(o.cost) }))}</b>` : ''}</div>
     ${o.minLevel ? `<div class="ps-note">${esc(t('low tiers cut off (level {n}+; a family without such tiers rolls its best one)', { n: o.minLevel }))}</div>` : ''}</div>`).join('');
   const warn = base != null && base >= BASE_PRICEY
-    ? `<div class="craft-warn">⚠ ${esc(t('The base itself sells for ≈ {price} — a miss costs a base like this. Selling it as is may be the better deal.', { price: money(base) }))}</div>` : '';
+    ? `<div class="craft-warn">⚠ ${esc(t('The base itself sells for ≈ {price} — a miss costs a base like this. Selling it as is may be the better deal.', { price: approx(base) }))}</div>` : '';
   const steps = [
     t('{orb} — makes it magic with one random modifier', { orb: best.name }),
     t('A popular modifier → Orb of Augmentation (Greater / Perfect — same idea) for the other side, then an Essence or Regal Orb → rare; open Craft again for the next steps'),
@@ -1118,16 +1118,16 @@ function uniqueVerdictHtml(tries) {
   const div = craftPrices['Divine Orb'];
   const cost = div != null ? tries * div : null;
   const rows = [
-    `<div><span>${esc(t('Sell as is'))}</span><b>${now != null ? money(now) : '—'}</b></div>`,
-    `<div><span>${esc(t('With top-quarter key rolls'))}</span><b>${uniqueTop === undefined ? '…' : uniqueTop == null ? t('none listed') : money(uniqueTop)}</b></div>`,
-    `<div><span>${esc(t('Divine Orbs, on average'))}</span><b>${esc(t('{n} pcs', { n: countText(tries) }))}${cost != null ? ` ≈ ${money(cost)}` : ''}</b></div>`,
+    `<div><span>${esc(t('Sell as is'))}</span><b>${now != null ? approx(now) : '—'}</b></div>`,
+    `<div><span>${esc(t('With top-quarter key rolls'))}</span><b>${uniqueTop === undefined ? '…' : uniqueTop == null ? t('none listed') : approx(uniqueTop)}</b></div>`,
+    `<div><span>${esc(t('Divine Orbs, on average'))}</span><b>${esc(t('{n} pcs', { n: countText(tries) }))}${cost != null ? ` ≈ ${approx(cost)}` : ''}</b></div>`,
   ];
   let verdict = '';
   if (uniqueTop != null && now != null && cost != null) {
     const gain = uniqueTop - now - cost;
     const good = gain > Math.max(now * 0.15, cost * 0.5);
     verdict = `<div class="verdict ${good ? 'good' : 'bad'}">${good
-      ? `✅ ${esc(t('Divine: ≈ {gain} more than selling as is', { gain: money(gain) }))}`
+      ? `✅ ${esc(t('Divine: ≈ {gain} more than selling as is', { gain: approx(gain) }))}`
       : `✖ ${esc(t('Selling as is is better'))}`}<small>${esc(t('Each Divine can also make the rolls worse — this is the average over many tries'))}</small></div>`;
   } else if (now == null) {
     verdict = `<div class="verdict">${esc(t('Price this item on the Price tab first'))}</div>`;
@@ -1164,7 +1164,7 @@ async function computeUniqueTop(rolls) {
 // "Risky finish": corruption and sanctification are irreversible, odds are community estimates.
 // Collapsed: the last step, rarely reached. Nothing to improve (open): expanded.
 function gambleHtml(g, open = false) {
-  const p = (n) => (craftPrices[n] != null && (n !== 'Omen of Sanctification' || state.item.rarity === 'Rare') ? ` · ${n} ≈ ${money(craftPrices[n])}` : '');
+  const p = (n) => (craftPrices[n] != null && (n !== 'Omen of Sanctification' || state.item.rarity === 'Rare') ? ` · ${n} ≈ ${approx(craftPrices[n])}` : '');
   const list = (xs) => xs.map((h) => `<div class="craft-how">${esc(h)}</div>`).join('');
   return `<details class="craft-sec gamble"${open ? ' open' : ''}><summary class="k">⚠ ${esc(t('Risky final step: corruption and sanctification'))}</summary>${list(g.how)}
     <div class="craft-sub">${esc(t('Prices'))}${esc(p('Vaal Orb') + p('Omen of Sanctification') + p('Omen of Putrefaction'))}</div>
@@ -1232,7 +1232,7 @@ function renderCraft(r) {
     } else if (s.kind === 'magicfill') {
       parts.push(`<div class="craft-sec"><div class="k">${t('While it is magic')}</div>${how(s.how)}${s.candidates.length ? craftRows(s.candidates, t('Popular modifiers for the free slot:')) : ''}</div>`);
     } else if (s.kind === 'risky') {
-      const pr = (s.prices || []).filter((n) => craftPrices[n] != null).map((n) => `${n} ≈ ${money(craftPrices[n])}`).join(' · ');
+      const pr = (s.prices || []).filter((n) => craftPrices[n] != null).map((n) => `${n} ≈ ${approx(craftPrices[n])}`).join(' · ');
       parts.push(`<div class="craft-sec alt"><div class="k">${t('Risky')}</div>${how(s.how)}${pr ? `<div class="craft-sub">${esc(t('Prices'))} · ${esc(pr)}</div>` : ''}</div>`);
     } else if (s.kind === 'keep') {
       parts.push(`<div class="craft-sec"><div class="k">${t('Full — all modifiers are top tier')}</div><div class="craft-sub">${t('Nothing worth replacing.')}</div></div>`);
@@ -1243,7 +1243,7 @@ function renderCraft(r) {
   if (r.augments && r.augments.length) {
     const sock = r.freeSockets ? t('{n} free augment socket(s)', { n: r.freeSockets }) : t("no free augment socket — Artificer's Orb adds one");
     parts.push(`<div class="craft-sec"><div class="k">${esc(t('Runes and soul cores for the sockets'))} <small class="muted">· ${esc(sock)}</small></div>
-      ${r.augments.map((a) => `<div class="craft-how"><span><span class="game">${esc(a.name)}</span>${craftPrices[a.name] != null ? ` ≈ ${money(craftPrices[a.name])}` : ''} — ${esc(a.lines.join(', '))} <span class="dem">· ${esc(t('{pct}% builds', { pct: fmt(a.pct) }))}</span>${a.ancient ? ` <small class="muted">(${esc(t('Ancient Augment: one per item'))})</small>` : ''}</span></div>`).join('')}</div>`);
+      ${r.augments.map((a) => `<div class="craft-how"><span><span class="game">${esc(a.name)}</span>${craftPrices[a.name] != null ? ` ≈ ${approx(craftPrices[a.name])}` : ''} — ${esc(a.lines.join(', '))} <span class="dem">· ${esc(t('{pct}% builds', { pct: fmt(a.pct) }))}</span>${a.ancient ? ` <small class="muted">(${esc(t('Ancient Augment: one per item'))})</small>` : ''}</span></div>`).join('')}</div>`);
   }
   if (r.theme && r.theme.length) {
     top.splice(1, 0, `<div class="craft-theme" title="${t('Demand % below is among {n} builds that wear this item class with these modifiers', { n: r.themeBuilds })}">${t('Demand among builds using')}${r.theme.map((m, i) => `${i ? '<span class="plus">+</span>' : ''}<b>${esc(m)}</b>`).join('')}</div>`);
