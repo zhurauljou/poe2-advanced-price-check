@@ -469,13 +469,15 @@ function planHtml(plan) {
       ? `<span class="ps-verb">${esc(parts.verb)}</span>${parts.mods.map((m) => `<span class="ps-mod">${esc(m)}</span>`).join('')}${parts.or.length ? `<span class="ps-or">${esc(t('or {mods}', { mods: parts.or.join(', ') }))}</span>` : ''}`
       : esc(STEP_LABEL[s.act](s));
     // Essence and the Abyss chain show their own numbered sequence instead of a single chip line.
-    const how = [c.k === 'essence' || c.viaAbyss ? '' : curChips(c.currencies), esc(odds)].filter(Boolean).join(' · ');
+    // The currencies as chips, to catch the eye; an essence with a sacrifice and the Abyss chain show them in their numbered
+    // sequence instead (an essence on a side with junk — cross — has no sequence, its chips go here).
+    const how = [(c.k === 'essence' && !c.cross) || c.viaAbyss ? '' : curChips(c.currencies), esc(odds)].filter(Boolean).join(' · ');
     const sideHtml = side ? `<div class="ps-side${side.per ? ' per' : ''}"><b class="ps-cost">≈ ${money(side.cost)}</b>${side.per ? `<small>${esc(t('per attempt'))}</small>` : side.sub ? `<small>${esc(side.sub)}</small>` : ''}</div>` : '';
     return `<li${side ? ' class="has-side"' : ''}><div class="ps-main"><div class="ps-what">${title}</div>
       ${c.k === 'essence' && !c.cross ? essenceSeq(s, c) : ''}${c.viaAbyss ? abyssSeq(c, desAt(si)) : ''}
       ${how ? `<div class="ps-how">${how}</div>` : ''}
       ${why.map((w) => `<div class="ps-key">${esc(w)}</div>`).join('')}
-      ${key.length ? `<div class="ps-key">${esc(key.join(' · '))}</div>` : ''}
+      ${key.length ? `<div class="ps-key">${key.map((k) => chipify(k).html).join(' · ')}</div>` : ''}
       ${c.risky && c.chance < 1 && !s.mods ? `<div class="ps-risk">${esc(t('A miss removes a good modifier instead'))}</div>` : ''}
       ${s.mods && s.sides ? removeRisk(s, c) : ''}
       ${c.k === 'essence' && c.chance < 1 && (s.atRisk || []).length ? keyRisk(s) : ''}
