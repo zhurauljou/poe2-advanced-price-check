@@ -1,0 +1,24 @@
+Item Class: Amulets
+Rarity: Rare
+Brood Heart
+Jade Amulet
+--------
+Requires: Level 44
+--------
+Item Level: 78
+--------
+{ Implicit Modifier — Attribute }
++10(10-15) to Dexterity
+--------
+{ Prefix Modifier "Magpie's" (Tier: 3) }
+9(8-11)% increased Rarity of Items found
+{ Prefix Modifier "Lady's" (Tier: 5) }
++33(30-33) to Spirit
+{ Prefix Modifier "Aqua" (Tier: 8) — Mana }
++78(65-79) to maximum Mana
+{ Suffix Modifier "of the Drake" (Tier: 6) — Elemental, Fire, Resistance }
++19(16-20)% to Fire Resistance
+{ Suffix Modifier "of the Goliath" (Tier: 3) — Attribute }
++25(25-27) to Strength
+{ Suffix Modifier "of the Mongoose" (Tier: 8) — Attribute }
++7(5-8) to Dexterity

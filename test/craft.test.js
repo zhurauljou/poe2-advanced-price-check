@@ -255,8 +255,12 @@ test('amulet: lich mod (Desecrate only) — via a bone with a lich omen, not in 
   const step = p.steps.find((s) => s.act === 'add' && s.desecrateOnly);
   assert.ok(step, 'there is a lich mod step');
   const c = p.cost[p.steps.indexOf(step)];
-  assert.equal(c.k, 'desecrate');
-  assert.ok(c.currencies.some((n) => /^Omen of the (Sovereign|Liege|Blackblooded)$/.test(n)), 'lich omen in the currency');
+  // Desecrate with a lich omen — or a Perfect essence that gives the very same line for sure (Enhancement on an amulet).
+  if (c.k === 'essence') assert.ok((step.crafted || []).includes(c.currencies[0]), `the essence gives this line: ${c.currencies[0]}`);
+  else {
+    assert.equal(c.k, 'desecrate');
+    assert.ok(c.currencies.some((n) => /^Omen of the (Sovereign|Liege|Blackblooded)$/.test(n)), 'lich omen in the currency');
+  }
   assert.ok(!p.steps.some((s) => s.act === 'add2' && s.steps.some((x) => x.desecrateOnly)), 'not in a pair');
 });
 
@@ -572,4 +576,14 @@ test('alternatives «or …» do not hide a lottery: a rare key mod is not merge
   assert.ok(s, 'the step exists');
   assert.ok(s.exalt.base.chance < 1 / 100, `still a long shot: 1 in ${Math.round(1 / s.exalt.base.chance)}`);
   for (const d of Object.values(s.desecrate || {})) if (d.chance != null) assert.ok(d.chance < 1 / 50, 'Desecrate odds are its own too');
+});
+
+test('amulet: a lich mod a Perfect essence also gives comes from the essence, for sure — not a Desecrate with three omens', { skip }, async () => {
+  // Player's amulet (2026-10-25): «% increased Global Armour, Evasion and Energy Shield» was planned as Desecrate with
+  // Omen of the Liege (~94%), while Perfect Essence of Enhancement gives exactly that line on an amulet.
+  const p = await plan('amulet-enhancement');
+  const i = p.steps.findIndex((s) => s.act === 'add' && /global armour, evasion and energy shield/.test(s.mod));
+  assert.ok(i >= 0, 'the mod is in the plan');
+  assert.equal(p.cost[i].k, 'essence', `by ${p.cost[i].currencies.join(' + ')}`);
+  assert.equal(p.cost[i].currencies[0], 'Perfect Essence of Enhancement');
 });

@@ -1,0 +1,507 @@
+{
+ "league": "Forbidden Rites",
+ "class": "Amulets",
+ "themed": [
+  "#% increased Rarity of Items found",
+  "# to Spirit"
+ ],
+ "mods": [
+  {
+   "name": "# to Spirit",
+   "count": 12570,
+   "pct": 100
+  },
+  {
+   "name": "#% increased Rarity of Items found",
+   "count": 12570,
+   "pct": 100
+  },
+  {
+   "name": "# to Level of all Spell Skills",
+   "count": 5300,
+   "pct": 42.2
+  },
+  {
+   "name": "#% increased Global Armour, Evasion and Energy Shield",
+   "count": 5169,
+   "pct": 41.1
+  },
+  {
+   "name": "#% to Quality of all Skills",
+   "count": 4153,
+   "pct": 33
+  },
+  {
+   "name": "Allocates Paragon",
+   "count": 3947,
+   "pct": 31.4
+  },
+  {
+   "name": "# to Level of all Projectile Skills",
+   "count": 3226,
+   "pct": 25.7
+  },
+  {
+   "name": "#% increased maximum Energy Shield",
+   "count": 2746,
+   "pct": 21.8
+  },
+  {
+   "name": "#% to all Elemental Resistances",
+   "count": 2664,
+   "pct": 21.2
+  },
+  {
+   "name": "# to maximum Energy Shield",
+   "count": 2579,
+   "pct": 20.5
+  },
+  {
+   "name": "# to maximum Mana",
+   "count": 2359,
+   "pct": 18.8
+  },
+  {
+   "name": "# to maximum Life",
+   "count": 1819,
+   "pct": 14.5
+  },
+  {
+   "name": "#% increased Cast Speed",
+   "count": 1731,
+   "pct": 13.8
+  },
+  {
+   "name": "# Suffix Modifier allowed",
+   "count": 1583,
+   "pct": 12.6
+  },
+  {
+   "name": "# to Level of all Minion Skills",
+   "count": 1580,
+   "pct": 12.6
+  },
+  {
+   "name": "#% increased Evasion Rating",
+   "count": 1525,
+   "pct": 12.1
+  },
+  {
+   "name": "Allocates Thaumaturgic Generator",
+   "count": 1525,
+   "pct": 12.1
+  },
+  {
+   "name": "Allocates Dominion",
+   "count": 1500,
+   "pct": 11.9
+  },
+  {
+   "name": "# Prefix Modifier allowed",
+   "count": 1366,
+   "pct": 10.9
+  },
+  {
+   "name": "# to Level of all Melee Skills",
+   "count": 1360,
+   "pct": 10.8
+  },
+  {
+   "name": "#% increased Spell Damage",
+   "count": 1300,
+   "pct": 10.3
+  },
+  {
+   "name": "# to all Attributes",
+   "count": 1278,
+   "pct": 10.2
+  },
+  {
+   "name": "#% to Lightning Resistance",
+   "count": 1230,
+   "pct": 9.8
+  },
+  {
+   "name": "#% to Fire Resistance",
+   "count": 1216,
+   "pct": 9.7
+  },
+  {
+   "name": "#% to Cold Resistance",
+   "count": 1209,
+   "pct": 9.6
+  },
+  {
+   "name": "#% increased Armour",
+   "count": 1122,
+   "pct": 8.9
+  },
+  {
+   "name": "# to Intelligence",
+   "count": 952,
+   "pct": 7.6
+  },
+  {
+   "name": "# to Strength",
+   "count": 892,
+   "pct": 7.1
+  },
+  {
+   "name": "# to Dexterity",
+   "count": 873,
+   "pct": 6.9
+  },
+  {
+   "name": "Allocates Zarokh's Gift",
+   "count": 850,
+   "pct": 6.8
+  },
+  {
+   "name": "#% increased Mana Regeneration Rate",
+   "count": 782,
+   "pct": 6.2
+  },
+  {
+   "name": "#% increased Critical Damage Bonus",
+   "count": 776,
+   "pct": 6.2
+  },
+  {
+   "name": "#% increased Critical Hit Chance",
+   "count": 746,
+   "pct": 5.9
+  },
+  {
+   "name": "#% to Chaos Resistance",
+   "count": 623,
+   "pct": 5
+  },
+  {
+   "name": "Allocates Well of Power",
+   "count": 618,
+   "pct": 4.9
+  },
+  {
+   "name": "Allocates Efficient Inscriptions",
+   "count": 602,
+   "pct": 4.8
+  },
+  {
+   "name": "# Life Regeneration per second",
+   "count": 599,
+   "pct": 4.8
+  },
+  {
+   "name": "#% increased maximum Mana",
+   "count": 529,
+   "pct": 4.2
+  },
+  {
+   "name": "#% increased maximum Life",
+   "count": 416,
+   "pct": 3.3
+  },
+  {
+   "name": "Allocates Serrated Edges",
+   "count": 407,
+   "pct": 3.2
+  },
+  {
+   "name": "# to Accuracy Rating",
+   "count": 355,
+   "pct": 2.8
+  },
+  {
+   "name": "Allocates Climate Change",
+   "count": 300,
+   "pct": 2.4
+  },
+  {
+   "name": "#% of Damage taken Recouped as Mana",
+   "count": 277,
+   "pct": 2.2
+  },
+  {
+   "name": "Minions have #% increased Cooldown Recovery Rate",
+   "count": 273,
+   "pct": 2.2
+  },
+  {
+   "name": "#% of Damage taken Recouped as Life",
+   "count": 271,
+   "pct": 2.2
+  },
+  {
+   "name": "# to Level of all Skills",
+   "count": 246,
+   "pct": 2
+  },
+  {
+   "name": "#% increased Energy Shield from Equipped Body Armour",
+   "count": 191,
+   "pct": 1.5
+  },
+  {
+   "name": "Allocates Cooked",
+   "count": 171,
+   "pct": 1.4
+  },
+  {
+   "name": "#% to Maximum Quality",
+   "count": 149,
+   "pct": 1.2
+  },
+  {
+   "name": "Allocates Warlord Leader",
+   "count": 133,
+   "pct": 1.1
+  },
+  {
+   "name": "Allocates The Soul Meridian",
+   "count": 126,
+   "pct": 1
+  },
+  {
+   "name": "Allocates Gigantic Following",
+   "count": 113,
+   "pct": 0.9
+  },
+  {
+   "name": "Allocates Overwhelming Strike",
+   "count": 112,
+   "pct": 0.9
+  },
+  {
+   "name": "#% increased Cooldown Recovery Rate",
+   "count": 102,
+   "pct": 0.8
+  },
+  {
+   "name": "#% to Cold and Chaos Resistances",
+   "count": 96,
+   "pct": 0.8
+  },
+  {
+   "name": "Allocates Crystallised Immunities",
+   "count": 95,
+   "pct": 0.8
+  },
+  {
+   "name": "Allocates Barbaric Strength",
+   "count": 87,
+   "pct": 0.7
+  },
+  {
+   "name": "#% increased maximum Runic Ward",
+   "count": 70,
+   "pct": 0.6
+  },
+  {
+   "name": "Allocates Kite Runner",
+   "count": 70,
+   "pct": 0.6
+  },
+  {
+   "name": "Allocates Augmented Flesh",
+   "count": 69,
+   "pct": 0.5
+  },
+  {
+   "name": "#% increased Evasion Rating from Equipped Body Armour",
+   "count": 59,
+   "pct": 0.5
+  },
+  {
+   "name": "#% to Lightning and Chaos Resistances",
+   "count": 55,
+   "pct": 0.4
+  },
+  {
+   "name": "#% to Fire and Chaos Resistances",
+   "count": 47,
+   "pct": 0.4
+  },
+  {
+   "name": "Allocates Subterfuge Mask",
+   "count": 46,
+   "pct": 0.4
+  },
+  {
+   "name": "#% increased Skill Speed",
+   "count": 42,
+   "pct": 0.3
+  },
+  {
+   "name": "Allocates Greatest Defence",
+   "count": 42,
+   "pct": 0.3
+  },
+  {
+   "name": "Allocates Lust for Power",
+   "count": 42,
+   "pct": 0.3
+  },
+  {
+   "name": "Allocates Lord of Horrors",
+   "count": 39,
+   "pct": 0.3
+  },
+  {
+   "name": "Allocates Vulgar Methods",
+   "count": 35,
+   "pct": 0.3
+  },
+  {
+   "name": "Equipment and Skill Gems have #% reduced Attribute Requirements",
+   "count": 35,
+   "pct": 0.3
+  },
+  {
+   "name": "Allocates Warlord Berserker",
+   "count": 34,
+   "pct": 0.3
+  },
+  {
+   "name": "Recover #% of maximum Mana on Kill",
+   "count": 30,
+   "pct": 0.2
+  },
+  {
+   "name": "Allocates Throatseeker",
+   "count": 29,
+   "pct": 0.2
+  },
+  {
+   "name": "#% of Damage is taken from Mana before Life",
+   "count": 28,
+   "pct": 0.2
+  },
+  {
+   "name": "Allocates Stimulants",
+   "count": 28,
+   "pct": 0.2
+  },
+  {
+   "name": "#% to Fire Spell Critical Hit Chance",
+   "count": 27,
+   "pct": 0.2
+  },
+  {
+   "name": "#% increased Deflection Rating",
+   "count": 25,
+   "pct": 0.2
+  },
+  {
+   "name": "Allocates Tribal Fury",
+   "count": 25,
+   "pct": 0.2
+  },
+  {
+   "name": "Allocates Endless Blizzard",
+   "count": 24,
+   "pct": 0.2
+  },
+  {
+   "name": "Allocates Gem Enthusiast",
+   "count": 24,
+   "pct": 0.2
+  }
+ ],
+ "bases": [
+  {
+   "name": "Gold Amulet",
+   "count": 8276,
+   "pct": 65.8
+  },
+  {
+   "name": "Solar Amulet",
+   "count": 1376,
+   "pct": 10.9
+  },
+  {
+   "name": "Absent Amulet",
+   "count": 1322,
+   "pct": 10.5
+  },
+  {
+   "name": "Portent Amulet",
+   "count": 254,
+   "pct": 2
+  },
+  {
+   "name": "Stellar Amulet",
+   "count": 206,
+   "pct": 1.6
+  },
+  {
+   "name": "Lunar Amulet",
+   "count": 195,
+   "pct": 1.6
+  },
+  {
+   "name": "Jade Amulet",
+   "count": 171,
+   "pct": 1.4
+  },
+  {
+   "name": "Lapis Amulet",
+   "count": 163,
+   "pct": 1.3
+  },
+  {
+   "name": "Amber Amulet",
+   "count": 151,
+   "pct": 1.2
+  },
+  {
+   "name": "Bloodstone Amulet",
+   "count": 143,
+   "pct": 1.1
+  },
+  {
+   "name": "Azure Amulet",
+   "count": 136,
+   "pct": 1.1
+  },
+  {
+   "name": "Crimson Amulet",
+   "count": 79,
+   "pct": 0.6
+  },
+  {
+   "name": "Pearlescent Amulet",
+   "count": 50,
+   "pct": 0.4
+  },
+  {
+   "name": "Lament Amulet",
+   "count": 38,
+   "pct": 0.3
+  },
+  {
+   "name": "Dusk Amulet",
+   "count": 4,
+   "pct": 0
+  },
+  {
+   "name": "Corona Amulet",
+   "count": 2,
+   "pct": 0
+  },
+  {
+   "name": "Gloam Amulet",
+   "count": 2,
+   "pct": 0
+  },
+  {
+   "name": "Distorted Amulet",
+   "count": 1,
+   "pct": 0
+  },
+  {
+   "name": "Penumbra Amulet",
+   "count": 1,
+   "pct": 0
+  }
+ ]
+}

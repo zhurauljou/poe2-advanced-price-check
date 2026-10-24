@@ -114,7 +114,8 @@ const rollText = (t) => clean(t).replace(/\((-?[\d.]+)-(-?[\d.]+)\)/g, (s, a, b)
         if (!c.currencies || !c.currencies.length) flag('шаг без валюты', `${cls} ${s.act} ${s.mod || ''}`);
         if (c.cost != null && !(Number.isFinite(c.cost) && c.cost >= 0)) flag('цена шага не число', `${cls} ${s.act}: ${c.cost}`);
         if (c.cost != null && c.cost > 500) flag('цена шага > 500 div при цели 50 div', `${cls} ${s.act} ${s.mod || (s.mods || []).join(',')}: ${Math.round(c.cost)} div (${c.currencies.join('+')})`);
-        if (s.act === 'add' && s.desecrateOnly && c.k !== 'desecrate' && !c.lottery) flag('мод «только Desecrate» добавляется не Desecrate', `${cls}: ${s.mod} → ${c.currencies.join('+')}`);
+        // A desecrated-pool mod may also come from a Perfect essence / Alloy giving the same line (s.crafted) — that is fine.
+        if (s.act === 'add' && s.desecrateOnly && c.k !== 'desecrate' && !(c.k === 'essence' && (s.crafted || []).includes(c.currencies[0])) && !c.lottery) flag('мод «только Desecrate» добавляется не Desecrate', `${cls}: ${s.mod} → ${c.currencies.join('+')}`);
         if (s.act === 'add' && s.craftedOnly && c.k !== 'essence') flag('мод «только эссенция/Alloy» добавляется не ими', `${cls}: ${s.mod} → ${c.currencies.join('+')}`);
         if (s.act === 'add2' && s.steps.some((x) => x.desecrateOnly || x.craftedOnly)) flag('мод одного слота в паре Greater Exaltation', `${cls}: ${s.steps.map((x) => x.mod).join(' + ')}`);
         if (c.k === 'desecrate' && (item.affixes || []).some((a) => a.tag === 'desecrated') && !r.goal.remove.some((x) => x.tag === 'desecrated')) flag('Desecrate при занятом desecrated-слоте', `${cls}: ${s.mod}`);

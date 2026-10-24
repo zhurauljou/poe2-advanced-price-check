@@ -413,6 +413,11 @@ async function advise(item, demandMods, cached) {
       const fam = new Set([...sideDes.map((x) => x.type), ...sidePool[best.side].keys()]).size || 1;
       const lichN = lichOK ? new Set(sideDes.filter((x) => (x.implicit_tags || []).includes(`${lich}_mod`)).map((x) => x.type)).size || 1 : 0;
       best.desecrateOnly = true;
+      // A Perfect essence or an Alloy may give the very same line for sure (Perfect Essence of Enhancement on an amulet:
+      // «% increased Global Armour, Evasion and Energy Shield», also a lich mod) — the plan weighs it against Desecrate.
+      const lines = best.text.split(' / ');
+      const crafted = craftedSources.filter((x) => { const src = templates(x.text.replace(/–/g, '-').split(' / ').join('\n')); return lines.every((l) => src.includes(l)); }).map((x) => x.name);
+      if (crafted.length) best.crafted = crafted;
       best.desecrate = {};
       for (const b of bones) {
         // Gnawed — items up to ilvl 64: does not give level-65 exclusives (lich mods) (docs/crafting-tricks.md).

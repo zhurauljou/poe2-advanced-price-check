@@ -30,6 +30,7 @@ const SCENARIOS = [
   { name: 'jewel-bow-attack', class: 'Jewels', theme: ['11% increased Attack Damage'] },
   { name: 'gloves-es-fractured', class: 'Gloves', theme: ['+57 to maximum Energy Shield', '42% increased Energy Shield'] },
   { name: 'sceptre-omen-minion', class: 'Sceptres', theme: ['Minions have 31% increased maximum Life', '+4 maximum stacks of Puppet Master'] },
+  { name: 'amulet-enhancement', class: 'Amulets', theme: ['9% increased Rarity of Items found', '+33 to Spirit'] },
 ];
 const UNIQUES = ['Heart of the Well'];
 const PRICE_TYPES = ['Currency', 'Ritual', 'Abyss', 'Essences', 'Runes', 'Verisium', 'Delirium', 'Breach', 'SoulCores'];

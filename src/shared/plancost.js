@@ -344,7 +344,9 @@
     // Price of "restoring a wanted mod that got hit" — median of the plan's average addition prices (for removing extras).
     const adds = plan.flatMap((s) => (s.act === 'add2' ? s.steps : s.act === 'add' ? [s] : [])).map((x) => addCost(x, 1).score).filter(Number.isFinite).sort((a, b) => a - b);
     restoreCost = adds.length ? adds[Math.floor(adds.length / 2)] : null;
-    plan = withChaos(crossFirst(desFirst(pairUp(withDesecrate(plan)))));
+    // The essence's free removal before Desecrate's: a sure mod for the same one attempt beats a 94% one (the step holds
+    // both slots — desFirst would take the removal first and the essence would never get it).
+    plan = withChaos(desFirst(crossFirst(pairUp(withDesecrate(plan)))));
     return plan.flatMap((s) => {
       if (s.act !== 'add2') return [s];
       const two = stepCost(s);
@@ -408,7 +410,8 @@
     if (m >= 0) return crossJunk(plan, m).filter((s) => s.act !== 'junk');
     const r = plan.findIndex((s) => s.act === 'remove' && s.sides);
     if (r < 0 || plan[r].desMerge) return plan;
-    const e = plan.findIndex((s, i) => i > r && s.act === 'add' && (s.useCrafted || s.craftedOnly) && s.crafted && addCost(s, 1).k === 'essence');
+    // Any step holding the crafted slot: the plain essence (with a sacrifice) may lose to Desecrate and still win here.
+    const e = plan.findIndex((s, i) => i > r && s.act === 'add' && (s.useCrafted || s.craftedOnly) && s.crafted && s.crafted.length);
     if (e < 0) return plan;
     const E = plan[e];
     const other = E.side === 'prefix' ? 'suffix' : 'prefix';
@@ -517,12 +520,32 @@
       }
     }
     const free = (x) => (kind === 'essence' && x.crafted ? { ...x, crafted: x.crafted.filter((n) => !used.has(n)) } : x);
+    // The essence as crossFirst will use it — removing the junk of a side (its own while the junk is there, the other one
+    // when its own has room) instead of a sacrifice: weighed here already, or the slot goes to Desecrate and crossFirst
+    // never gets the chance (Perfect Essence of Enhancement on an amulet with junk mana among its prefixes).
+    const rem = plan.find((s) => s.act === 'remove' && s.sides);
+    const crossYes = (x) => {
+      if (kind !== 'essence' || !rem) return null;
+      let best = null;
+      for (const side of [x.side, x.side === 'prefix' ? 'suffix' : 'prefix']) {
+        const y = rem.sides[side];
+        if (!y || !y.J || (rem.des && rem.des.side === side)) continue;
+        if (side !== x.side && !(((rem.allSides || rem.sides)[x.side] || {}).free >= 1)) continue;
+        const omen = `Omen of ${side === 'prefix' ? 'Sinistral' : 'Dextral'} Crystallisation`;
+        if (C().prices[omen] == null) continue;
+        const c = addCost({ ...x, [flag]: true, cross: { side, omen, same: side === x.side } }, 1);
+        if (c.k === 'essence' && (!best || c.score < best.score)) best = c;
+      }
+      return best;
+    };
     plan.forEach((s, i) => {
       for (const [j, x0] of (s.act === 'add2' ? s.steps : s.act === 'add' ? [s] : []).entries()) {
         const x = free(x0);
         if (!x[field] || (Array.isArray(x[field]) && !x[field].length) || x.useDes || x.useCrafted) continue;
         const no = addCost(x, 1).score;
-        const yes = addCost({ ...x, [flag]: true }, 1);
+        let yes = addCost({ ...x, [flag]: true }, 1);
+        const cx = crossYes(x);
+        if (cx && !(yes.k === kind && yes.score <= cx.score)) yes = cx;
         const alt = yes.k === kind ? yes.score : (yes.alts || []).concat(yes.desAlt || []).find((o) => o.k === kind)?.cost;
         if (alt == null || !no) continue;
         const r = !Number.isFinite(no) ? (Number.isFinite(alt) ? 0 : Infinity) : alt / no;
