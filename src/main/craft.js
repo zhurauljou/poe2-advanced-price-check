@@ -1104,11 +1104,11 @@ function planGoal(mine, candidates, max, want, magic, magicFree = [], itemClass 
     if (desInRun) filled[desInRun.side]--;
   }
   if (essenceMod) filled[essenceMod.side]++; // the essence has already taken a slot on its side
-  // Every addition is a one-attempt lottery (odds unknown, a miss stays) and together they fill every free slot on both
-  // sides: the final item is random mods from each side's pool either way, so a side omen changes nothing — a roll that
-  // lands on the other side is progress there, not a loss. Side omens are dropped (rolls are not halved in the cost).
+  // The additions together fill every free slot on both sides: every Exalted lands in a slot the plan fills anyway, so a
+  // side omen changes nothing — a roll that lands on the other side is an attempt there, not a loss (with known odds too:
+  // a retry after a miss lands in the freed slot or in another one the plan fills). Side omens are dropped (rolls are not halved in the cost).
   const toAdd = add.filter((c) => c !== essenceMod);
-  const lotteryFill = toAdd.length > 0 && toAdd.every((c) => c.chanceUnknown && !c.craftedOnly && !c.desecrateOnly)
+  const lotteryFill = toAdd.length > 0 && toAdd.every((c) => !c.craftedOnly && !c.desecrateOnly)
     && ['prefix', 'suffix'].every((s) => toAdd.filter((c) => c.side === s).length === max[s] - filled[s]);
   const startFilled = { ...filled }; // before any addition — where a Desecrate moved to the front of the additions stands
   // 2. Add the wanted ones: first the side with the most in-demand mod.

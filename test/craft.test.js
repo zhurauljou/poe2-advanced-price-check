@@ -405,7 +405,7 @@ test('magic jewel: Augmentation and Regal add random mods — the plan counts th
     most = Math.max(most, mods);
   }
   assert.ok(most <= 4, `slots exceeded: ${most} (${steps.map((s) => s.act).join(', ')})`);
-  // Every addition is a lottery (odds unknown) and they fill all free slots: a side omen changes nothing — none is used.
+  // The additions fill all free slots: a side omen changes nothing — none is used (with or without jewel weights).
   assert.ok(r.goal.plan.every((s) => !s.sideOmen), r.goal.plan.map((s) => `${s.act}:${s.sideOmen || '-'}`).join(', '));
 });
 
