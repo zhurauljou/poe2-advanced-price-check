@@ -467,8 +467,10 @@ function planHtml(plan) {
     else if (s.act !== 'remove' && c.k !== 'desecrate' && c.k !== 'essence' && (s.onSide || s.onItem)) notes.push(t('the average includes misses: an Annulment may hit a needed modifier, which then has to be added again'));
     if (c.k === 'essence') notes.push(t('Uses the only crafted-modifier slot (one per item; Alloys too)'));
     if (c.k === 'chaos') {
-      key.push(c.currencies.includes('Omen of Whittling')
-        ? t('Omen of Whittling makes the {orb} remove the lowest-level modifier — {junk}; a random modifier takes its place: repeat until it is {mod}', { orb: c.currencies[0], junk: c.junk.join(', '), mod: s.mod })
+      key.push(c.currencies.includes('Omen of Whittling') && !c.then
+        ? t('Omen of Whittling makes the {orb} remove the lowest-level modifier — {junk} — and a random modifier takes its place', { orb: c.currencies[0], junk: c.junk.join(', ') })
+        : c.currencies.includes('Omen of Whittling')
+        ? t('Omen of Whittling makes the {orb} remove the lowest-level modifier — {junk} — and a random modifier takes its place. Sure only once: if it is not {mod}, the new modifier is not the lowest — go on with {then}', { orb: c.currencies[0], junk: c.junk.join(', '), mod: s.mod, then: (c.then || []).join(' + ') })
         : t('{orb} removes a random modifier and adds a random one: repeat until it removes {junk} and adds {mod}', { orb: c.currencies[0], junk: c.junk.join(', '), mod: s.mod }));
       if (c.currencies[0] !== 'Chaos Orb') key.push(t('{orb}: the new modifier is level {level}+ — a better shot at a good tier', { orb: c.currencies[0], level: /^Perfect/.test(c.currencies[0]) ? 50 : 35 }));
       if (c.land < 1) notes.push(t('The item has a free slot: the new modifier lands on this side about half the time'));

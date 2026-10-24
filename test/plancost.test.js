@@ -126,11 +126,14 @@ test('Chaos replace: with Whittling on the lowest-level unwanted mod it beats An
   const c = p.stepCost(plan[0]);
   assert.deepEqual(c.currencies, ['Chaos Orb', 'Omen of Whittling']);
   near(c.chance, 0.3, 'Whittling removes the unwanted mod for sure; the new one is wanted with the Exalted odds');
-  // A higher Chaos tier cuts low tiers off: with far better odds at T1–T2 it pays for itself (an expensive base).
+  // Sure only once: a miss is not the lowest-level mod, and every other way to go on hits the good mods here — one attempt.
+  assert.ok(c.hopeless && c.cost == null, 'a single attempt, not «repeat until»');
+  // A higher Chaos tier cuts low tiers off: with far better odds at T1–T2 it pays for itself (an expensive base) — the one sure
+  // attempt is worth most with the best odds.
   const tiered = PlanCost.create(() => ({ prices: { ...prices, 'Greater Chaos Orb': 0.1, 'Perfect Chaos Orb': 0.5 }, goalValue: 20, est: 2 }));
   const strong = { ...step, exalt: { base: { chance: 0.05, guess: 0.05, pool: 10 }, greater: { chance: 0.3, guess: 0.3, pool: 10 }, perfect: { chance: 0.6, guess: 0.6, pool: 10 } } };
   const g = tiered.stepCost(tiered.expandPlan([rem(true), strong])[0]);
-  assert.deepEqual(g.currencies, ['Greater Chaos Orb', 'Omen of Whittling']);
+  assert.deepEqual(g.currencies, ['Perfect Chaos Orb', 'Omen of Whittling']);
   // Without Whittling Chaos hits one of five good mods most of the time — the plan keeps Annulment, then Exalted.
   assert.deepEqual(p.expandPlan([rem(false), step]).map((s) => s.act), ['remove', 'add']);
 });
@@ -287,4 +290,17 @@ test('without a goal price a costly «until success» is a single attempt, not a
   const c = pc.stepCost(s);
   assert.equal(c.cost, null, 'no «until success» total');
   assert.ok(c.hopeless && c.perTry < 15, `one attempt ≈ ${c.perTry && c.perTry.toFixed(1)} div`);
+});
+
+test('Chaos + Whittling with a safe way to go on: one sure attempt, then the cheaper Annulment + Exalted for the rest', () => {
+  // Player's minion ring (2026-10-25): «repeat until it is evasion» — but after a miss Whittling removes whatever is
+  // lowest then, not the new mod (Perfect Chaos rolls level 50+).
+  const prices = { ...PRICES, 'Chaos Orb': 0.02, 'Omen of Whittling': 0.05 };
+  const p = PlanCost.create(() => ({ prices, goalValue: 20, est: 2 }));
+  const rem = { act: 'remove', mods: ['junk'], whittle: 'junk', sides: { prefix: { J: 1, K: 0, full: true, omen: 'Omen of Sinistral Annulment' }, suffix: { J: 0, K: 3, full: true, omen: 'Omen of Dextral Annulment' } } };
+  const step = { act: 'add', side: 'prefix', mod: 'wanted', worth: 50, onItem: 3, onSide: 0, annulOmen: 'Omen of Sinistral Annulment', exalt: { base: { chance: 0.3, guess: 0.3, pool: 10 } } };
+  const c = p.chaosLoop(rem, step);
+  const usual = p.removeCost(rem).cost + p.addCost(step, 1).score;
+  near(c.cost, 0.07 + 0.7 * usual, 'one Whittling attempt, then the usual way after a miss');
+  assert.ok(c.then && c.then.includes('Orb of Annulment'), 'the step names how to go on');
 });

@@ -1106,17 +1106,18 @@ function planGoal(mine, candidates, max, want, magic, magicFree = [], itemClass 
         spareNames: spares.map((a) => ((a.lines || []).length ? a.lines.join(' / ') : a.mod.lines.join(' / '))),
         necro: `Omen of ${side === 'prefix' ? 'Sinistral' : 'Dextral'} Necromancy` };
     }
-    // Chaos + Omen of Whittling removes the lowest-level mod — if a junk mod is strictly below all other removable ones
-    // (desecrated already removed), it goes for sure, but a random mod takes its place.
+    // Chaos + Omen of Whittling removes the lowest-level mod — if a junk mod is strictly below all other removable ones,
+    // it goes for sure, but a random mod takes its place. Desecrated mods count: the Genesis Tree ones are level 1 — a
+    // «+20% to Maximum Quality» (level 1 too) next to a kept «of Invigoration» is a coin flip, not a sure removal.
     // The level is known only for matched mods: if even one is unknown — Whittling is not evaluated.
-    const removable = mine.filter((a) => a.tag !== 'fractured' && a.tag !== 'desecrated');
+    const removable = mine.filter((a) => a.tag !== 'fractured');
     const known = removable.every((a) => a.mod);
     const levels = removable.map((a) => (a.mod ? a.mod.required_level : 0));
     const low = Math.min(...levels);
     const lowJunk = junk.filter((x) => x.level === low);
     const whittle = known && lowJunk.length === 1 && levels.filter((l) => l === low).length === 1 ? lowJunk[0].text : null;
     // The lowest-level one is a wanted mod: Whittling would remove it (we show why Whittling does not fit here).
-    const lowest = mine.filter((a) => a.tag !== 'fractured' && a.tag !== 'desecrated' && a.mod && a.mod.required_level === low);
+    const lowest = removable.filter((a) => a.mod && a.mod.required_level === low);
     const whittleWrong = known && !whittle && lowest.length && !lowJunk.length ? { mod: lowest.map((a) => a.mod.lines.join(' / ')).join(', '), level: low } : null;
     const freeQuality = (junk.find((x) => x.spentQuality) || {}).text || null;
     // Essence of the Abyss + the side's Crystallisation removes a random mod of that side (like Annulment with an omen) and adds

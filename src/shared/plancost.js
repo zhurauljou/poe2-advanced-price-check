@@ -278,6 +278,9 @@
   // on a full item the new mod goes to the freed side, otherwise to either (≈ half the time to this one).
   // Options: plain Chaos (any mod of the item can go), + side Erasure omen (only this side), + Whittling (the unwanted mod is
   // the lowest-level one — it goes for sure). A hit wanted mod is restored like after an Annulment.
+  // Whittling is sure only once: a miss leaves a new mod of level 35+ / 50+ (Greater / Perfect) or any level (plain), and
+  // the next Whittling removes whatever is lowest then — a kept mod as likely as the miss. After a miss the loop goes on
+  // the next best way.
   // → the cheapest option, or null if Chaos does not fit (several unwanted mods, another side to clean, no prices).
   function chaosLoop(rem, add) {
     const p = (n) => C().prices[n];
@@ -309,13 +312,31 @@
       };
       opt([], (1 + xS) / N, (N - 1 - xS - otherJunk) / N);
       opt([`Omen of ${side === 'prefix' ? 'Sinistral' : 'Dextral'} Erasure`], (1 + xS) / (1 + xS + x.K), x.K / (1 + xS + x.K));
-      if (rem.whittle) opt(['Omen of Whittling'], 1, 0);
     });
+    // Whittling: one sure attempt, then the cheapest other way for the rest — another Chaos option, or the usual Annulment
+    // then Exalted (after a miss the side has one unwanted mod again, the new one). No acceptable way to go on (each hits
+    // the item's good mods) — a single attempt: the junk goes for sure, a miss stays.
+    if (rem.whittle && p('Omen of Whittling') != null) {
+      const r = removeCost(rem), a1 = addCost(add, 1);
+      const usual = r.cost != null && Number.isFinite(a1.score) ? { cost: r.cost + a1.score, p: 1, hit: r.hits || 0, currencies: [...r.currencies, ...a1.currencies] } : null;
+      const rest = [...opts, ...(usual ? [usual] : [])].sort((x, y) => x.cost - y.cost)[0];
+      const restOk = rest && Number.isFinite(rest.cost) && rest.hit / rest.p <= (r.hits || 0) + 0.5;
+      M.tiers('chaos').forEach(([orb], i) => {
+        const e = add.exalt[['base', 'greater', 'perfect'][i]];
+        const q = e ? (lottery ? (e.rough ?? e.guess) : e.chance) : null;
+        if (!q || p(orb) == null) return;
+        const per = p(orb) + p('Omen of Whittling');
+        const pc = land * q;
+        if (!restOk) { opts.push({ currencies: [orb, 'Omen of Whittling'], per, p: pc, hit: 0, cost: per / pc, single: true }); return; }
+        const hits = (1 - pc) * (rest.hit / rest.p);
+        opts.push({ currencies: [orb, 'Omen of Whittling'], per, p: pc, hit: hits * pc, cost: per + (1 - pc) * rest.cost, then: rest.currencies });
+      });
+    }
     if (!opts.length) return null;
     opts.sort((a, b) => a.cost - b.cost);
     const best = opts[0];
-    return { k: 'chaos', cost: lottery ? null : best.cost, score: best.cost, perTry: best.per, chance: lottery ? null : best.p, chances: lottery ? null : [best.p],
-      ps: [best.p], rem: { a: 0, q: best.hit }, hits: best.hit / best.p, currencies: best.currencies, lottery, land, junk: rem.mods };
+    return { k: 'chaos', cost: lottery || best.single ? null : best.cost, score: best.cost, hopeless: !!best.single, perTry: best.per, chance: lottery ? null : best.p, chances: lottery ? null : [best.p],
+      ps: [best.p], rem: { a: 0, q: best.hit }, hits: best.hit / best.p, currencies: best.currencies, lottery, land, junk: rem.mods, then: best.then || null };
   }
 
   // A removal followed by an addition on the same side → one Chaos step, if that is cheaper than both (lottery odds: the rough ones).

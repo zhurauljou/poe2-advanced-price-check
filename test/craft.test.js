@@ -603,3 +603,16 @@ test('a goal has one kind of skill levels: Spell or Projectile, not both', { ski
     assert.ok(ks.size <= 1 || [...ks].every((x) => ['attack', 'melee', 'projectile'].includes(x)) && ks.has('attack'), `${name}: ${[...ks].join(', ')}`);
   }
 });
+
+test('minion ring: Whittling is not «sure» while a kept desecrated mod is level 1 too', { skip }, async () => {
+  // Player's ring (2026-10-25): the plan said Chaos + Omen of Whittling removes «+20% to Maximum Quality» for sure — but
+  // the kept Genesis Tree «of Invigoration» (desecrated) is level 1 as well: Whittling could take it instead.
+  await init();
+  const text = read('ring-minion.txt').replace('{ Suffix Modifier "of Gripping" (Tier: 1) — Minion, Damage, Critical }\nMinions have 42(36-42)% increased Critical Damage Bonus',
+    '{ Suffix Modifier "of Extinction" (Tier: 1) — Minion, Damage, Critical }\nMinions have 33(31-35)% increased Critical Damage Bonus');
+  assert.ok(text.includes('of Extinction'), 'the line was swapped');
+  const r = await craft.advise(parseItem(text), json('ring-minion-themed.demand.json').mods, cached);
+  const rm = r.goal.plan.flatMap((x) => x.steps || [x]).find((s) => s.act === 'remove' && s.mods);
+  assert.ok(rm, 'a removal is planned');
+  assert.equal(rm.whittle, null, `Whittling would hit «${rm.whittle}» for sure`);
+});
