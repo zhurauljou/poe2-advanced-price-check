@@ -316,6 +316,11 @@ ol.plan > li.flag-sure { box-shadow: inset 3px 0 var(--good); }
 .craft-bases .cb-head { color: var(--cream); }
 .craft-bases .cb-body { margin-top: 5px; display: flex; flex-wrap: wrap; align-items: center; gap: 4px 6px; color: var(--muted); }
 .craft-bases .good { color: var(--good); }
+.craft-bases .cb-body { display: block; }
+.craft-bases .cb-for { margin-bottom: 3px; }
+.craft-bases .cb-row { display: grid; grid-template-columns: 1fr auto auto; gap: 8px; align-items: baseline; padding: 1px 0; }
+.craft-bases .cb-row b { color: var(--cream); font-weight: 600; white-space: nowrap; }
+.craft-bases .cb-cmp { margin-top: 4px; }
 .craft-beta { margin-top: 8px; padding: 5px 8px; border-left: 2px solid var(--warn); background: rgba(224, 179, 90, .05);
               font-size: 13px; color: var(--muted); }
 .craft-beta b { color: var(--warn); font-weight: 700; }

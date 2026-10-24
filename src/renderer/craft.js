@@ -752,13 +752,14 @@ function basesHtml(plan) {
   if (!bs) body = `<button class="link" data-act="bases">${esc(t('Find bases on trade'))}</button>`;
   else if (bs.status === 'loading') body = `<span class="spin"></span>${esc(t('Searching trade…'))}`;
   else if (bs.status === 'error') body = `<span class="muted">${esc(bs.error)}</span>`;
-  else if (!bs.found.total) body = esc(t('Nobody lists a base with {mods} — rolling is the only way', { mods: bs.found.label }));
+  else if (!bs.found.rows.some((r) => r.total)) body = esc(t('Nobody lists a base with {mods} — rolling is the only way', { mods: bs.found.label }));
   else {
-    const cheaper = roll && bs.found.divs.length && bs.found.divs[0] < roll;
-    body = `${esc(t('{n} listed with {mods}, from {price}', { n: bs.found.total, mods: bs.found.label, price: bs.found.divs.length ? money(bs.found.divs[0]) : '—' }))}`
-      + (roll ? ` · ${esc(t('rolling it yourself ≈ {cost} on average', { cost: money(roll) }))}` : '')
-      + (cheaper ? ` · <b class="good">${esc(t('buying is cheaper'))}</b>` : '')
-      + ` <button class="link" data-act="bases-open" data-url="${esc(bs.found.url)}">${esc(t('Open on trade'))} ↗</button>`;
+    // A row per kind of base: how many, from what price, the link; the cheapest one against rolling it yourself.
+    const cheapest = Math.min(...bs.found.rows.filter((r) => r.total && r.divs.length).map((r) => r.divs[0]));
+    const rows = bs.found.rows.map((r) => `<div class="cb-row"><span>${esc(r.label)}</span><b>${r.total ? esc(t('{n} listed, from {price}', { n: r.total, price: r.divs.length ? money(r.divs[0]) : '—' })) : `<span class="muted">${esc(t('none'))}</span>`}</b>`
+      + (r.total ? `<button class="link" data-act="bases-open" data-url="${esc(r.url)}">${esc(t('Open on trade'))} ↗</button>` : '') + '</div>').join('');
+    body = `<div class="cb-for">${esc(t('With {mods}:', { mods: bs.found.label }))}</div>${rows}`
+      + (roll && Number.isFinite(cheapest) ? `<div class="cb-cmp">${esc(t('rolling it yourself ≈ {cost} on average', { cost: money(roll) }))}${cheapest < roll ? ` · <b class="good">${esc(t('buying is cheaper'))}</b>` : ''}</div>` : '');
   }
   return `<div class="craft-bases"><div class="cb-head"><span class="ps-flag shot fi-only"><span class="fi">%</span></span>${esc(t('This craft rests on luck: {mods}. Players usually buy a base that already has it and craft on from there.', { mods: names }))}</div><div class="cb-body">${body}</div></div>`;
 }
@@ -771,9 +772,11 @@ async function findBases() {
   const mine = state;
   baseSearch = { key, status: 'loading' };
   refreshPlan();
-  // This base type, any non-unique rarity (a magic base is the usual buy), only the hard mods from their goal tier,
-  // an item level that allows that tier — nothing else of the item (properties, sockets, its other mods).
-  const search = (list) => {
+  // What players actually buy as a base (not finished rares that happen to have the line): a magic item with the hard mods
+  // and nothing else of note — on this base and on any base of the class (the implicit decides: a Solar Amulet for
+  // Spirit) — and a rare with the hard mods and room left (2+ empty affixes). Only the hard mods from their goal tier, an
+  // item level that allows it, not corrupted; nothing else of the item (properties, sockets, its other mods).
+  const search = (list, { rarity, anyBase, room }) => {
     const f = JSON.parse(JSON.stringify(state.filters));
     for (const m of f.mods) m.enabled = false;
     for (const p of f.props || []) p.enabled = false;
@@ -781,20 +784,30 @@ async function findBases() {
     // States off — except «not corrupted»: a corrupted base cannot be crafted on.
     for (const x of f.flags || []) Object.assign(x, x.key === 'corrupted' ? { enabled: true, value: false } : { enabled: false });
     for (const k of ['sockets', 'gemLevel', 'quality', 'reqLevel', 'skill']) if (f[k] && typeof f[k] === 'object') f[k].enabled = false;
-    f.useType = true;
+    f.useType = !anyBase;
     f.flex = false;
     withMods(f, list.map((h) => h.c));
+    if (room) f.mods.push({ statId: 'pseudo.pseudo_number_of_empty_affix_mods', enabled: true, min: room, importance: 3, tag: 'pseudo', text: '# Empty Modifiers' });
     const lv = Math.max(0, ...list.map((h) => (h.c.targetLevels && h.c.targetLevels.length ? Math.min(...h.c.targetLevels) : 0)));
     f.ilvl = lv ? { enabled: true, min: lv } : null;
-    return quickPrice({ ...state.item, rarity: 'Rare' }, f);
+    return quickPrice({ ...state.item, rarity }, f);
   };
+  const KINDS = [
+    { key: 'magic', label: t('magic, {base}', { base: state.item.baseType }), opts: { rarity: 'Magic' } },
+    ...(state.filters.category ? [{ key: 'any', label: t('magic, any base of the class'), opts: { rarity: 'Magic', anyBase: true } }] : []),
+    { key: 'room', label: t('rare with 2+ empty affixes, {base}', { base: state.item.baseType }), opts: { rarity: 'Rare', room: 2 } },
+  ];
   try {
+    // A base with all the hard mods; nobody lists one — the most valuable one alone.
     let list = hard;
-    let q = await search(list);
-    // No base with all of them: the most valuable one alone.
-    if (!q.total && hard.length > 1) { list = [[...hard].sort((a, b) => b.c.pct - a.c.pct)[0]]; q = await search(list); }
-    if (state !== mine) return;
-    baseSearch = { key, status: 'done', found: { total: q.total, divs: q.divs || [], url: q.url, label: list.map((h) => `«${h.c.text}»`).join(' + ') } };
+    let rows = [];
+    for (const k of KINDS) { const q = await search(list, k.opts); if (state !== mine) return; rows.push({ ...k, total: q.total, divs: q.divs || [], url: q.url }); }
+    if (!rows.some((r) => r.total) && hard.length > 1) {
+      list = [[...hard].sort((x, y) => y.c.pct - x.c.pct)[0]];
+      rows = [];
+      for (const k of KINDS) { const q = await search(list, k.opts); if (state !== mine) return; rows.push({ ...k, total: q.total, divs: q.divs || [], url: q.url }); }
+    }
+    baseSearch = { key, status: 'done', found: { rows, label: list.map((h) => `«${h.c.text}»`).join(' + ') } };
   } catch (e) {
     if (state !== mine) return;
     baseSearch = { key, status: 'error', error: errText(e) };
