@@ -1190,7 +1190,7 @@ function planGoal(mine, candidates, max, want, magic, magicFree = [], itemClass 
     plan.splice(-2, 2, { act: 'add2', cross: true, side: null, steps: last.map(bare), sideOmen: null, otherOpen: false, alt: last,
       retry: [...new Set(last.flatMap((s) => s.retry))], currencies: [...new Set([...last.flatMap((s) => s.currencies), 'Omen of Greater Exaltation'])] });
   }
-  return { keep, remove, add: add.map(({ side, text, pct, shownPct, pctParts, tier, tiers, range, stats, essence, chance, chanceGoal, target, chanceUnknown, needs, desecrateOnly, craftedOnly }) => ({ side, text, pct, shownPct, pctParts, tier, tiers, range, stats, essence, chance, chanceGoal, target, chanceUnknown, needs, desecrateOnly, craftedOnly })), plan };
+  return { keep, remove, add: add.map(({ side, text, pct, shownPct, pctParts, tier, tiers, range, stats, essence, chance, chanceGoal, target, targetLevels, chanceUnknown, needs, desecrateOnly, craftedOnly }) => ({ side, text, pct, shownPct, pctParts, tier, tiers, range, stats, essence, chance, chanceGoal, target, targetLevels, chanceUnknown, needs, desecrateOnly, craftedOnly })), plan };
 }
 
 // Whether a mod (poe.ninja template: "# to Level of all Spell Skills") can roll on this base. null — mod pool not loaded yet.

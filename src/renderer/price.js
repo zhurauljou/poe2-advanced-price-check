@@ -125,6 +125,8 @@ document.addEventListener('click', (e) => {
   if (act === 'steps') toggleSteps(b.closest('.plan-steps'));
   if (act === 'variant') { planVariant = b.dataset.v; variantPicked = true; refreshPlan(); }
   if (act === 'plandraft') { planDraft = true; refreshPlan(); }
+  if (act === 'bases') findBases();
+  if (act === 'bases-open') window.pc.openUrl(b.dataset.url);
   if (act === 'session-stop') { craftSession = null; window.pc.pin(userPinned); craftFor = null; loadCraft(); }
 });
 

@@ -289,7 +289,8 @@ function stepFlag(s, c, steps) {
   if (c.chance != null && c.chance >= 1 && !(c.hits > 0.05)) return { kind: 'sure', text: t('Guaranteed') };
   return null;
 }
-const FLAG_ICON = { shot: '🎲', risk: '⚠', unknown: '?', sure: '✓' };
+// A bold glyph in a coloured disc — an emoji die was too small to make out.
+const FLAG_ICON = { shot: '%', risk: '!', unknown: '?', sure: '✓' };
 
 function keyRisk(s) {
   const n = (s.onSide || 0) + 1;
@@ -534,7 +535,7 @@ function planHtml(plan) {
     return `<li${cls ? ` class="${cls}"` : ''}><div class="ps-main"><div class="ps-what">${title}</div>
       ${c.k === 'essence' && !c.cross ? essenceSeq(s, c) : ''}${c.viaAbyss ? abyssSeq(c, desAt(si)) : ''}
       ${how ? `<div class="ps-how">${how}</div>` : ''}
-      ${flag ? `<div class="ps-flag ${flag.kind}"><span>${FLAG_ICON[flag.kind]}</span>${esc(flag.text)}</div>` : ''}
+      ${flag ? `<div class="ps-flag ${flag.kind}"><span class="fi">${FLAG_ICON[flag.kind]}</span>${esc(flag.text)}</div>` : ''}
       ${why.map((w) => `<div class="ps-key">${esc(w)}</div>`).join('')}
       ${key.length ? `<div class="ps-key">${esc(key.join(' · '))}</div>` : ''}
       ${c.risky && c.chance < 1 && !s.mods ? `<div class="ps-risk">${esc(t('A miss removes a good modifier instead'))}</div>` : ''}
@@ -715,6 +716,92 @@ function autoVariant() {
 }
 
 // Redraw the plan card for the chosen variant: the variants row, the verdict and the steps.
+// ---- Bases on trade: a craft that rests on luck is bought, not rolled ----
+// Players rarely roll a mod that is 1 in hundreds: they buy a base that already has it (a magic or a cheap rare with the
+// key line) and craft on from there. When the plan's additions are long shots, the plan says so and searches trade —
+// on click only, the trade rate limit is shared — for this base type with those mods at their goal tier.
+let baseSearch = null; // { key, status: 'loading' | 'done' | 'error', found, error } for the current item
+function hardMods(plan) {
+  const steps = expandPlan(plan);
+  const costs = steps.map(stepCost);
+  const out = [];
+  steps.forEach((s, i) => {
+    const f = stepFlag(s, costs[i], steps);
+    if (!f || f.kind !== 'shot') return;
+    const c0 = costs[i];
+    const p = Math.min(...(c0.chances || [c0.chance]).filter((x) => x != null));
+    // Only the truly rare ones: a single attempt at a 1-in-12 mana roll is a gamble, not a reason to buy a base.
+    if (!(p < 1 / 40)) return;
+    for (const x of s.act === 'add2' ? s.steps : s.act === 'add' ? [s] : []) {
+      const c = (craftGoal.add || []).find((a) => a.text === x.mod);
+      if (c && c.stats && c.stats.length && Number.isFinite(p)) out.push({ c, p, per: c0.perTry ?? c0.per ?? null, target: x.target || c.target });
+    }
+  });
+  return out;
+}
+function basesHtml(plan) {
+  if (planBusy() || !craftGoal) return '';
+  const hard = hardMods(plan);
+  if (!hard.length) return '';
+  const key = hard.map((h) => h.c.text).join('|');
+  const names = hard.map((h) => `«${h.c.text}»${h.target ? ` ${h.target}` : ''} — ${oneIn(h.p)}`).join(', ');
+  // What rolling it yourself costs on average: attempts × the price of one (a miss that stays is not even counted).
+  const roll = hard.reduce((a, h) => a + (h.per != null ? h.per / h.p : 0), 0);
+  const bs = baseSearch && baseSearch.key === key ? baseSearch : null;
+  let body;
+  if (!bs) body = `<button class="link" data-act="bases">${esc(t('Find bases on trade'))}</button>`;
+  else if (bs.status === 'loading') body = `<span class="spin"></span>${esc(t('Searching trade…'))}`;
+  else if (bs.status === 'error') body = `<span class="muted">${esc(bs.error)}</span>`;
+  else if (!bs.found.total) body = esc(t('Nobody lists a base with {mods} — rolling is the only way', { mods: bs.found.label }));
+  else {
+    const cheaper = roll && bs.found.divs.length && bs.found.divs[0] < roll;
+    body = `${esc(t('{n} listed with {mods}, from {price}', { n: bs.found.total, mods: bs.found.label, price: bs.found.divs.length ? money(bs.found.divs[0]) : '—' }))}`
+      + (roll ? ` · ${esc(t('rolling it yourself ≈ {cost} on average', { cost: money(roll) }))}` : '')
+      + (cheaper ? ` · <b class="good">${esc(t('buying is cheaper'))}</b>` : '')
+      + ` <button class="link" data-act="bases-open" data-url="${esc(bs.found.url)}">${esc(t('Open on trade'))} ↗</button>`;
+  }
+  return `<div class="craft-bases"><div class="cb-head"><span class="ps-flag shot fi-only"><span class="fi">%</span></span>${esc(t('This craft rests on luck: {mods}. Players usually buy a base that already has it and craft on from there.', { mods: names }))}</div><div class="cb-body">${body}</div></div>`;
+}
+async function findBases() {
+  if (!craftGoal || !state) return;
+  const plan = curVariant() ? curVariant().plan : craftGoal.plan;
+  const hard = hardMods(plan);
+  if (!hard.length) return;
+  const key = hard.map((h) => h.c.text).join('|');
+  const mine = state;
+  baseSearch = { key, status: 'loading' };
+  refreshPlan();
+  // This base type, any non-unique rarity (a magic base is the usual buy), only the hard mods from their goal tier,
+  // an item level that allows that tier — nothing else of the item (properties, sockets, its other mods).
+  const search = (list) => {
+    const f = JSON.parse(JSON.stringify(state.filters));
+    for (const m of f.mods) m.enabled = false;
+    for (const p of f.props || []) p.enabled = false;
+    for (const x of f.exclude || []) x.enabled = false;
+    // States off — except «not corrupted»: a corrupted base cannot be crafted on.
+    for (const x of f.flags || []) Object.assign(x, x.key === 'corrupted' ? { enabled: true, value: false } : { enabled: false });
+    for (const k of ['sockets', 'gemLevel', 'quality', 'reqLevel', 'skill']) if (f[k] && typeof f[k] === 'object') f[k].enabled = false;
+    f.useType = true;
+    f.flex = false;
+    withMods(f, list.map((h) => h.c));
+    const lv = Math.max(0, ...list.map((h) => (h.c.targetLevels && h.c.targetLevels.length ? Math.min(...h.c.targetLevels) : 0)));
+    f.ilvl = lv ? { enabled: true, min: lv } : null;
+    return quickPrice({ ...state.item, rarity: 'Rare' }, f);
+  };
+  try {
+    let list = hard;
+    let q = await search(list);
+    // No base with all of them: the most valuable one alone.
+    if (!q.total && hard.length > 1) { list = [[...hard].sort((a, b) => b.c.pct - a.c.pct)[0]]; q = await search(list); }
+    if (state !== mine) return;
+    baseSearch = { key, status: 'done', found: { total: q.total, divs: q.divs || [], url: q.url, label: list.map((h) => `«${h.c.text}»`).join(' + ') } };
+  } catch (e) {
+    if (state !== mine) return;
+    baseSearch = { key, status: 'error', error: errText(e) };
+  }
+  refreshPlan();
+}
+
 function refreshPlan() {
   const g = craftGoal;
   if (!g) return;
@@ -723,6 +810,8 @@ function refreshPlan() {
   if (vb) vb.innerHTML = variantsHtml();
   const box = document.querySelector('#craft .verdict-box');
   if (box) box.innerHTML = verdictHtml(plan);
+  const bb = document.querySelector('#craft .bases-box');
+  if (bb) bb.innerHTML = basesHtml(plan);
   // Steps too: the cost of hitting a needed mod depends on the goal price.
   const ol = document.querySelector('#craft .plan-box .plan-steps');
   if (ol) ol.outerHTML = planHtml(plan);
@@ -1032,6 +1121,7 @@ function gambleHtml(g, open = false) {
 }
 
 function renderCraft(r) {
+  baseSearch = null; // another item (or its plan rebuilt): the bases found were for the previous one
   craftGoal = r.goal || null;
   craftPrices = r.prices || {};
   craftThin = new Set(r.thin || []);
@@ -1056,7 +1146,7 @@ function renderCraft(r) {
   if (r.goal && r.goal.plan && r.goal.plan.length) {
     planPricing = { done: 0, total: 1 }; // computeGoal below prices the goal, then the variants
     planDraft = false;
-    top.push(`<div class="craft-sec plan-box"><div class="k">${t('Plan')}${inSession ? '' : ` <button class="link session-btn" data-act="session" title="${esc(t('Do a step, check the item again with the hotkey — the window stays open and shows what you got and the next step'))}">▶ ${esc(t('Craft step by step'))}</button>`}</div><div class="variants-box">${variantsHtml()}</div><div class="verdict-box">${verdictHtml(curVariant() ? curVariant().plan : r.goal.plan)}</div>
+    top.push(`<div class="craft-sec plan-box"><div class="k">${t('Plan')}${inSession ? '' : ` <button class="link session-btn" data-act="session" title="${esc(t('Do a step, check the item again with the hotkey — the window stays open and shows what you got and the next step'))}">▶ ${esc(t('Craft step by step'))}</button>`}</div><div class="variants-box">${variantsHtml()}</div><div class="verdict-box">${verdictHtml(curVariant() ? curVariant().plan : r.goal.plan)}</div><div class="bases-box">${basesHtml(curVariant() ? curVariant().plan : r.goal.plan)}</div>
       ${planHtml(curVariant() ? curVariant().plan : r.goal.plan)}<details class="why"><summary>${t('Why this plan')}</summary>${goalHtml(r.goal)}</details></div>`);
   } else {
     top.push(`<div class="craft-sec plan-box"><div class="verdict">${esc(t('No clear upgrade for this item — selling as is is the simple choice'))}</div></div>`);
