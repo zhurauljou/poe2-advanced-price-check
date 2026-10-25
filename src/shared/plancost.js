@@ -27,6 +27,13 @@
       const pick = [...opts].reverse().find((o) => o.cost <= Math.max(0.1, cheapest * 3)) || opts[0] || { orb: 'Regal Orb', cost: p('Regal Orb') };
       return { cost: pick.cost, chance: 1, currencies: [pick.orb], regal: opts.filter((o) => o !== pick) };
     }
+    if (s.act === 'essence' && s.options && s.options.length > 1) {
+      // Magic → rare: every essence tier that reaches the goal's tier (src/main/craft.js) — the cheapest one; a Greater one
+      // can cost less than the regular one.
+      const priced = s.options.filter((n) => p(n) != null).sort((a, b) => p(a) - p(b));
+      const pick = priced[0] || s.currencies[0];
+      return { cost: p(pick) ?? null, chance: 1, currencies: [pick] };
+    }
     const cost = sum(s.currencies);
     return { cost, chance: 1, currencies: s.currencies };
   }

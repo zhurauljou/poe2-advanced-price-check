@@ -304,3 +304,10 @@ test('Chaos + Whittling with a safe way to go on: one sure attempt, then the che
   near(c.cost, 0.07 + 0.7 * usual, 'one Whittling attempt, then the usual way after a miss');
   assert.ok(c.then && c.then.includes('Orb of Annulment'), 'the step names how to go on');
 });
+
+test('magic → rare essence: of the tiers that reach the goal, the cheapest one', () => {
+  const p = PlanCost.create(() => ({ prices: { 'Essence of the Body': 0.75, 'Greater Essence of the Body': 0.01 }, goalValue: null, est: null }));
+  const c = p.stepCost({ act: 'essence', currencies: ['Essence of the Body'], options: ['Essence of the Body', 'Greater Essence of the Body'], chance: 1 });
+  assert.deepEqual(c.currencies, ['Greater Essence of the Body']);
+  near(c.cost, 0.01, 'cost');
+});

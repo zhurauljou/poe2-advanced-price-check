@@ -70,7 +70,11 @@ function essenceFor(template, itemClass) {
     const row = e.tiers.find(([classes]) => classes.includes(itemClass));
     if (!row) return null;
     const tiers = row.slice(1).map((r, i) => (r ? `${TIER_NAMES[i] ? `${TIER_NAMES[i]} ` : ''}${r}` : null)).filter(Boolean);
-    return { name: `Essence of ${e.name}`, short: e.name.replace(/^the /, ''), tiers };
+    // Each essence tier as a currency name with its lowest roll — the plan takes only the ones that reach the goal's tier.
+    // «16–24 to 28–42» (Adds … to …) is searched on trade by the average, so its floor is the average of the two minimums.
+    const floor = (r) => { const mins = r.split(' to ').map((p) => parseFloat(p)); return mins.reduce((a, b) => a + b, 0) / mins.length; };
+    const levels = row.slice(1).map((r, i) => (r ? { name: `${i === 1 ? '' : `${TIER_NAMES[i]} `}Essence of ${e.name}`, lo: floor(r) } : null)).filter(Boolean);
+    return { name: `Essence of ${e.name}`, short: e.name.replace(/^the /, ''), tiers, levels };
   }
   return null;
 }

@@ -1010,10 +1010,15 @@ function planGoal(mine, candidates, max, want, magic, magicFree = [], itemClass 
   let essenceMod = null; // mod the magic → rare essence will add — do not add it a second time
   if (magicFree.length) plan.push({ act: 'augment', side: magicFree[0], currencies: ['Orb of Augmentation'], chance: 1 });
   if (magic) {
-    const ess = add.find((c) => c.essence);
+    // The essence makes the item rare with its mod for sure — but only in its own range: Essence of the Body gives 85–99
+    // life, a goal of T1–T3 asks for 175+. Only the essence tiers whose lowest roll reaches the goal's search minimum count
+    // (the window takes the cheapest of them); none does — the goal mod comes by Exalted like the rest, the item by Regal.
+    const goalMin = (c) => (c.stats && c.stats.length === 1 ? c.stats[0].min : null);
+    const reach = (c) => (c.essence && c.essence.levels ? c.essence.levels.filter((l) => goalMin(c) == null || l.lo >= goalMin(c)) : []);
+    const ess = add.find((c) => reach(c).length);
     essenceMod = ess || null;
     // Jewels: one tier per mod — Greater / Perfect Regal cut nothing, so the plan prices only the plain Regal Orb.
-    plan.push(ess ? { act: 'essence', mod: ess.text, side: ess.side, currencies: [ess.essence.name], chance: 1 }
+    plan.push(ess ? { act: 'essence', mod: ess.text, side: ess.side, currencies: [reach(ess)[0].name], options: reach(ess).map((l) => l.name), chance: 1 }
       : { act: 'regal', currencies: ['Regal Orb'], chance: 1, oneTier: /Jewel/i.test(itemClass) });
   }
   // First the side with the most in-demand (key) mod — it raises the price the most.
@@ -1044,7 +1049,12 @@ function planGoal(mine, candidates, max, want, magic, magicFree = [], itemClass 
     filled[side]++;
     if (spare(side) < 0) remove.push({ side, text: t('the random modifier from {orb}', { orb }), tag: 'random', level: null });
   };
-  if (magicFree.length) random('Orb of Augmentation', magicFree[0]);
+  // Augmentation adds a random mod to the free side — worth it only when the goal leaves that side a slot for it. A side
+  // the goal fills would get a mod that the plan then pays to Annul again: the step is dropped.
+  if (magicFree.length) {
+    if (spare(magicFree[0]) > 0) random('Orb of Augmentation', magicFree[0]);
+    else plan.splice(plan.findIndex((s) => s.act === 'augment'), 1);
+  }
   if (magic && !essenceMod) {
     const roomy = ['prefix', 'suffix'].filter((s) => spare(s) > 0).sort((a, b) => spare(b) - spare(a))[0];
     const tight = ['prefix', 'suffix'].find((s) => spare(s) <= 0) || null;

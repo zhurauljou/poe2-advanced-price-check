@@ -712,7 +712,7 @@ app.whenReady().then(singleInstance).then((ok) => {
     // Emotions on jewels (variants section) — their prices vary a lot: Potent Ferocity ≈ 6 div, coloured ones — a few ex.
     for (const s of r.sections || []) for (const o of s.options || []) { const row = api.ninja.byName.get(o.name); prices[o.name] = row ? row.divine : null; }
     for (const s of (r.goal && r.goal.plan) || []) {
-      for (const name of [...s.currencies, ...(s.retry || [])]) {
+      for (const name of [...s.currencies, ...(s.retry || []), ...(s.options || [])]) {
         const row = api.ninja.byName.get(name);
         prices[name] = row ? row.divine : null;
       }

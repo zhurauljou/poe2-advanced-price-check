@@ -162,14 +162,27 @@ test('rare spear: Celestial Alloy (Accuracy / Attack Speed) via the crafted slot
   assert.ok(alloy && alloy.c.k === 'essence' && /Alloy/.test(alloy.c.currencies[0]));
 });
 
-test('magic spear: first step is the Thrud\'s Might rune, the essence mod is not added a second time', { skip }, async () => {
+test('magic jewel: no Augmentation when the goal fills that side — its random mod would only be annulled again', { skip }, async () => {
+  await init();
+  const demand = [{ name: '#% increased Critical Hit Chance for Attacks', pct: 70 }, { name: '#% increased Critical Damage Bonus for Attack Damage', pct: 65 },
+    { name: '#% increased Projectile Damage', pct: 50 }, { name: '#% increased Attack Damage', pct: 45 }];
+  const it = parseItem(read('../magic-jewel-one-mod.txt'));
+  it.baseType = bases.filter((n) => it.name.includes(n)).sort((a, b) => b.length - a.length)[0];
+  const r = await craft.advise(it, demand, cached);
+  assert.ok(!r.goal.plan.some((s) => s.act === 'augment'), 'no Augmentation step');
+  assert.ok(!r.goal.remove.some((x) => /Augmentation/.test(x.text)), 'nothing from Augmentation to remove');
+});
+
+test('magic spear: first step is the Thrud\'s Might rune; no essence that falls short of the goal tier', { skip }, async () => {
   const p = await plan('spear-magic');
   assert.equal(p.steps[0].act, 'rune');
   assert.deepEqual(p.steps[0].currencies, ["Thrud's Might"]);
-  const ess = p.steps.find((s) => s.act === 'essence');
-  assert.ok(ess, 'essence magic → rare');
+  // The goal is Critical Hit Chance T1–T2 (3.81+); even Greater Essence of Seeking rolls 3.11–3.8 — «guaranteed» would be a
+  // lower tier. The item goes rare by Regal and the crit comes by Exalted.
+  assert.ok(!p.steps.some((s) => s.act === 'essence'), 'no essence');
+  assert.ok(p.steps.some((s) => s.act === 'regal'), 'Regal makes it rare');
   const adds = p.steps.flatMap((s) => (s.act === 'add2' ? s.steps : s.act === 'add' ? [s] : [])).map((s) => s.mod);
-  assert.ok(!adds.includes(ess.mod), 'essence mod is not repeated');
+  assert.ok(adds.some((m) => /critical hit chance/.test(m)), 'crit added by Exalted');
 });
 
 test('body armour with desecrated: two open slots on different sides — one Exalted with Omen of Greater Exaltation', { skip }, async () => {
