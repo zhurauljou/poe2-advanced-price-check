@@ -513,6 +513,9 @@ body.upd-page { height: auto; }
 .th-price .big.copy { cursor: pointer; margin: 0; gap: 2px; font-size: 40px; }
 .th-price .big img.ci { width: 32px; height: 32px; transform: translateY(4px); }
 .th-price .big.copy:hover { color: #fff4b4; }
+/* 1–2 listings behind the median: not an estimate (core.js MIN_LOTS) — grey, with «?». */
+.th-price .big.copy.thin, .th-price .big.copy.thin:hover { color: var(--muted); }
+.th-price .big.copy.thin img.ci { opacity: .6; }
 /* Quick and patient prices: two equal cells under the estimate — a caption over the price to copy */
 .sell-inline { display: grid; grid-template-columns: repeat(auto-fit, minmax(0, 1fr)); gap: 6px; margin-top: 8px; color: var(--muted); }
 .sell-inline .so { display: flex; flex-direction: column; gap: 1px; padding: 5px 9px 6px; border-radius: 4px; background: rgba(255, 255, 255, .035); }

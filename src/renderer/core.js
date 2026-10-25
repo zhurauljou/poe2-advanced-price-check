@@ -23,6 +23,8 @@ const isLimit = (e) => errText(e).startsWith('⏳');
 // Fewer than MIN_LOTS listings is not an estimate: one or two prices can be anything (sceptre: target 900 div, item at 13 div).
 // Such a price is shown grey with "?", but no decisions are made on it (craft target, "evaluate", "what drives the price").
 const MIN_LOTS = 3;
+// The item's price for decisions (craft verdicts, gains): null while it rests on fewer than MIN_LOTS listings.
+const estNow = () => (state && !state.estThin ? state.est : null);
 
 // The short price-only search runs once per item and filters: a re-render (language change, craft after search) doesn't spend
 // the trade limit. Reset with a new item and on league change; errors are not remembered.

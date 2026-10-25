@@ -197,17 +197,20 @@ function renderSearchingHero() {
 // Estimate = median of the cheapest (up to 5) listings: a single undercutting seller won't drag it down.
 // How far to trust the estimate: how many similar listings and how spread the cheapest prices are.
 // Spread = how many times the priciest of the (up to 5) cheapest exceeds the cheapest.
+// head — the prices the estimate is the median of; fewer than MIN_LOTS is no estimate (one weaker listing among stronger ones).
 function confidence(total, head, cheapest = [], extra = '') {
   const spread = head.length > 1 && head[0] > 0 ? head[head.length - 1] / head[0] : 1;
   const allStale = cheapest.length >= 3 && cheapest.every((l) => l.age >= 7);
+  const few = total < 4 || head.length < MIN_LOTS;
   let level = 2;
   let why = t('{n} listings, prices within ×{x}', { n: total, x: fmt(spread) });
-  if (total >= 10 && spread <= 2 && !allStale) level = 3;
-  else if (total < 4 || spread > 4 || allStale) level = 1;
-  if (total < 4) why = t('only {n} similar listings', { n: total });
+  if (total >= 10 && spread <= 2 && !allStale && !few) level = 3;
+  else if (few || spread > 4 || allStale) level = 1;
+  if (few) why = t('only {n} similar listings', { n: Math.min(total, head.length) });
   else if (allStale) why = t('all cheapest listings are a week+ old — those prices may not be real');
   else if (spread > 4) why = t('cheapest prices differ ×{x} — someone may be underpricing', { x: fmt(spread) });
-  const label = t({ 3: 'Reliable', 2: 'Some data', 1: 'Few listings' }[level]);
+  // The label names the weak point itself: «Few listings» over a list of 37 read as a bug when the reason was the spread.
+  const label = t(level === 1 ? (few ? 'Few listings' : allStale ? 'Old listings' : 'Prices vary') : { 3: 'Reliable', 2: 'Some data' }[level]);
   // Three rising bars, like demand strength: a calm gauge — not a red warning for a price that is merely thin.
   return `<div class="conf c${level}"><span title="${esc(why)}"><i class="cb">${[1, 2, 3].map((i) => `<b${i <= level ? ' class="on"' : ''}></b>`).join('')}</i>${label}</span>${extra}</div>`;
 }
@@ -286,8 +289,12 @@ function renderTradeHero(r) {
       ${premium >= 15 ? `<span class="prem">${t('your rolls ≈ +{n}%', { n: premium })}</span>` : ''}</div>`;
   }
   floorHtml += rollsHint();
+  // Fewer than MIN_LOTS prices behind the median is no estimate (core.js): shown grey with «?», kept out of the history,
+  // the craft verdict and «What drives the price?».
+  const thin = head.length < MIN_LOTS;
   state.est = est;
-  const drivable =state.filters.mods.some((m) => m.enabled && m.statId && !m.option && !m.inSum);
+  state.estThin = thin;
+  const drivable = !thin && state.filters.mods.some((m) => m.enabled && m.statId && !m.option && !m.inSum);
   // Layout: the price on the left (a click copies it as the listing note) with reliability on the right; the quick and
   // patient prices in one line under it; callouts (missing key mod, stronger listings, rolls) in one style; at the
   // bottom "What drives the price?" and the last check (header.js prevCheckHtml lands in .th-foot).
@@ -296,7 +303,7 @@ function renderTradeHero(r) {
     <div class="th-top">
       <div class="th-price">
         <div class="k">${fl ? t('Like yours') : t('Estimated price')}</div>
-        <div class="big copy" data-note="~price ${market.amount} ${market.cur}" title="${esc(t('Market price — click to copy the price note'))}">${moneyHtml(money(est))}</div>
+        <div class="big copy${thin ? ' thin' : ''}" data-note="~price ${market.amount} ${market.cur}" title="${esc(thin ? t('Too few listings to estimate — one or two prices can be anything') : t('Market price — click to copy the price note'))}">${moneyHtml(money(est))}${thin ? '?' : ''}</div>
         <div class="alt">${moneyHtml(alt(est))}</div>
         ${k < 1 ? `<div class="alt" title="${esc(t('Partly used tablets are rarely listed — priced as a full one, scaled by the uses left (an assumption)'))}">${moneyHtml(t('a full one ({full} uses) ≈ {price}', { full: Math.round(state.item.props.uses / k), price: money(est / k) }))}</div>` : ''}
       </div>
@@ -374,13 +381,14 @@ function estimate(lots) {
 }
 
 // Listing price: round, in the currency it's traded in: from 1 div, div; cheaper, chaos; very cheap, ex.
-function listPrice(div) {
+// cur — the currency to use regardless (the price card's quick and patient prices go in the market price's currency).
+function listPrice(div, cur = null) {
   const round = (v, step) => Math.max(step, Math.round(v / step) * step);
-  if (div >= UNIT_EPS) {
+  if (cur ? cur === 'divine' : div >= UNIT_EPS) {
     const amount = round(div, div < 10 ? 0.5 : div < 50 ? 1 : 5);
     return { amount, cur: 'divine', label: `${fmt(amount)} div` };
   }
-  if (rates.chaos && div * rates.chaos >= UNIT_EPS) {
+  if (cur ? cur === 'chaos' : rates.chaos && div * rates.chaos >= UNIT_EPS) {
     const amount = round(div * rates.chaos, 1);
     return { amount, cur: 'chaos', label: `${amount} chaos` };
   }
@@ -401,10 +409,11 @@ function sellHtml(priced, est, cheapest, median, n) {
   // Cheapest listing and median go in tooltips, the listing count in the list header.
   // The market price is the big estimate itself (clickable), so only the quick and patient ones are listed here,
   // in one line; one that rounds to the market price is dropped.
-  const mkt = listPrice(est).label;
+  // All three in the market price's currency: «1 div · quick 6 ex · patient 2 div» made you convert in your head.
+  const { label: mkt, cur } = listPrice(est);
   const opts = [['Quick sale', quick, t('Just under the cheapest active listing — sells fastest. Cheapest listed: {price}', { price: money(cheapest) })],
     ['Patient', patient, t('Above the market — wait for a buyer. Median of {n}: {price}', { n, price: money(median) })]]
-    .map(([k, div, title]) => ({ k, title, ...listPrice(div) }))
+    .map(([k, div, title]) => ({ k, title, ...listPrice(div, cur) }))
     .filter((o, i, a) => o.label !== mkt && !a.slice(0, i).some((p) => p.label === o.label));
   if (!opts.length) return '';
   return `<div class="sell-inline">${opts.map((o) => `<span class="so"><span class="k">${t(o.k)}</span><span class="v copy" data-note="~price ${o.amount} ${o.cur}" title="${o.title}

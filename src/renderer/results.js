@@ -271,6 +271,7 @@ async function runSearch(relax = false) {
   impactSeq++;
   state.impact = null;
   state.est = null;
+  state.estThin = false;
   $('search').classList.remove('dirty');
   $('search').textContent = t('Search');
   $('search').disabled = true;
@@ -296,7 +297,7 @@ async function runSearch(relax = false) {
     $('copyLink').hidden = false;
     heroRender = () => { renderTradeHero(r); ($('hero').querySelector('.th-foot') || $('hero')).insertAdjacentHTML('beforeend', prevCheckHtml()); renderResults(r); renderElements(); };
     heroRender();
-    recordPrice(state.est);
+    if (!state.estThin) recordPrice(state.est);
     loadElements(seq, false);
     // Craft advice was computed as "sell as is" without an estimate (tab opened before the search finished; in step-by-step crafting
     // always) or with the old filters: recompute, right away if the tab is open, otherwise when it opens.

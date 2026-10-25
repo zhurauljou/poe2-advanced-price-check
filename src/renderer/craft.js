@@ -148,15 +148,16 @@ async function priceCraft(b) {
       // 1–2 listings is not an estimate: show greyed out, at the bottom when sorting with "Price all".
       html = `<span class="cpr thin" title="${esc(t('Too few listings to price it — one or two prices can be anything'))} · ${esc(t('{n} listings', { n: q.total }))}">${approx(v)}?</span>`;
     } else {
-      const d = state.est != null ? v - state.est : null;
-      const cls = d == null ? '' : d > state.est * 0.1 ? ' up' : d < -state.est * 0.1 ? ' down' : '';
+      const est = estNow();
+      const d = est != null ? v - est : null;
+      const cls = d == null ? '' : d > est * 0.1 ? ' up' : d < -est * 0.1 ? ' down' : '';
       // The gain is what matters: large "+2.1 div", next to it the item's total price with the mod.
-      const delta = d == null ? '' : Math.abs(d) < state.est * 0.1 ? t('same') : `${d > 0 ? '+' : '−'}${approx(Math.abs(d))}`;
+      const delta = d == null ? '' : Math.abs(d) < est * 0.1 ? t('same') : `${d > 0 ? '+' : '−'}${approx(Math.abs(d))}`;
       // In the candidates table the column is narrow: gain shown, total price in the tooltip.
       html = row && row.classList.contains('crow')
         ? `<span class="cpr${cls}" title="${t('{n} listed with it · vs your current estimate', { n: q.total })} · ≈ ${approx(v)}">${delta ? `<b>${delta}</b>` : `≈ ${approx(v)}`}</span>`
         : `<span class="cpr${cls}" title="${t('{n} listed with it · vs your current estimate', { n: q.total })}">${delta ? `<b>${delta}</b> · ` : ''}≈ ${approx(v)}</span>`;
-      if (row && d != null) row.dataset.delta = Math.abs(d) < state.est * 0.1 ? 0 : d;
+      if (row && d != null) row.dataset.delta = Math.abs(d) < est * 0.1 ? 0 : d;
     }
     b.outerHTML = html;
   } catch (e) {
@@ -243,7 +244,7 @@ function slotsHtml(r) {
 }
 
 // The plan cost model lives in src/shared/plancost.js (also used by tests and the simulation).
-const planner = PlanCost.create(() => ({ prices: craftPrices, goalValue: curGoal().value, est: state.est }));
+const planner = PlanCost.create(() => ({ prices: craftPrices, goalValue: curGoal().value, est: estNow() }));
 const { stepCost, expandPlan, EXALT_NAME } = planner;
 
 // Currency in steps as colored tags (orbs, omens, bones, essences): the recipe reads at a glance.
@@ -600,7 +601,7 @@ function verdictBody(plan) {
   const unknownOdds = costs.some((c) => c.lottery);
   const gambleNote = unknownOdds ? t('A key modifier has unknown odds — this is a gamble') : t('A step is a single attempt: a miss stays on the item — this is a gamble');
   const risky = costs.some((c) => c.risky && c.chance < 1);
-  const now = state.est;
+  const now = estNow();
   // One currency number everywhere: the simulated average when both prices are known (misses included — what the variant
   // switch and the verdict count), else the plan's sum. And one unit for all the numbers of the card.
   const sim = goalValue != null && now != null ? verdictSim(plan, goalValue, now) : null;
@@ -618,19 +619,29 @@ function verdictBody(plan) {
   const hits = Math.max(0, ...costs.map((c) => c.hits || 0));
   const hitNote = hits >= 1 ? `<small>${hlNums(t('Removing the unwanted modifiers would hit ≈{n} needed ones on average — on an item like this it is rarely worth it', { n: fmt(Math.round(hits * 10) / 10) }))}</small>` : '';
   // Currency costs more than the finished goal: crafting won't pay off at any item price (item price may not be computed yet).
+  // known — the plan's cost: currency plus the expected loss of wanted mods a removal hits (a quarter of the goal each, the
+  // essence's sacrifice). The headline names which it is: «the currency costs more» next to «currency ≈ 2» read as a lie.
+  const withLosses = spend < known * 0.9;
   if (goalValue != null && known >= goalValue) {
     // The numbers are in the line above: the headline says what they mean, and what to do instead.
-    verdict = `<div class="verdict bad">✖ ${esc(t(goalBasis === 'partial' ? 'Probably not worth it: the currency costs more than the goal is worth at least' : 'Not worth it: the currency costs more than the finished item'))}${now != null ? `<small>${esc(t('Better: sell it as is'))}</small>` : ''}${hitNote}</div>`;
+    const head = goalBasis === 'partial'
+      ? (withLosses ? 'Probably not worth it: the currency and the good modifiers it may destroy cost more than the goal is worth at least' : 'Probably not worth it: the currency costs more than the goal is worth at least')
+      : (withLosses ? 'Not worth it: the currency and the good modifiers it may destroy cost more than the finished item' : 'Not worth it: the currency costs more than the finished item');
+    verdict = `<div class="verdict bad">✖ ${esc(t(head))}${now != null ? `<small>${esc(t('Better: sell it as is'))}</small>` : ''}${hitNote}</div>`;
   } else if (goalValue === null && now != null) {
     // No finished equivalents on trade (or only 1–2): goal price unknown. Costs already reach the item price: simpler to sell.
     const why = goalThin ? t('Only {n} listings like the goal — too few to judge the craft by', { n: goalThin.n }) : t('No finished items like the goal are listed — its price is unknown');
     verdict = known >= now * 0.5
-      ? `<div class="verdict bad">✖ ${esc(t('Selling as is is better: the currency alone costs ≈ {cost}, the item sells for ≈ {now}', { cost: m(known), now: m(now) }))}<small>${esc(why)}</small>${hitNote}</div>`
+      ? `<div class="verdict bad">✖ ${esc(withLosses
+        ? t('Selling as is is better: the currency and the good modifiers it may destroy cost ≈ {cost}, the item sells for ≈ {now}', { cost: m(known), now: m(now) })
+        : t('Selling as is is better: the currency alone costs ≈ {cost}, the item sells for ≈ {now}', { cost: m(spend), now: m(now) }))}<small>${esc(why)}</small>${hitNote}</div>`
       : `<div class="verdict">${esc(why)}${hitNote}</div>`;
   } else if (goalValue != null && now != null) {
     // Whole-plan simulation: outcome distribution and the chance crafting beats selling now (src/shared/plancost.js).
-    const gain = goalValue - now - known;
-    const good = sim ? sim.profit >= 0.5 : gain > Math.max(now * 0.15, known * 0.5);
+    // The verdict and the variant cards judge by the same number — the average gain over selling as is (variantEarn): a
+    // green «+0.6» card next to «Selling as is is better» (more than half the runs lose) read as a contradiction.
+    const gain = sim ? sim.value.mean - now - sim.spent.mean : goalValue - now - known;
+    const good = sim ? gain > 0 : gain > Math.max(now * 0.15, known * 0.5);
     // The reason in plain words first; the simulation behind it goes under «why».
     // Its two numbers in their own unit: a gain of 0.03 chaos reads as nothing, 1 ex against 38 ex reads at once.
     const add = sim ? Math.max(0, sim.value.mean - now) : 0;
@@ -639,13 +650,13 @@ function verdictBody(plan) {
     const simNote = sim ? `<small class="sim">${hlNums(t('Simulated {n} crafts: the item ends up ≈ {p50} (10–90%: {p10}–{p90}), currency ≈ {spent} on average; better than selling now in {profit}%, the full goal in {full}%',
       { n: sim.runs, p50: m(sim.value.p50), p10: m(sim.value.p10), p90: m(sim.value.p90), spent: m(sim.spent.mean), profit: Math.round(sim.profit * 100), full: Math.round(sim.full * 100) }))}</small>` : '';
     verdict = `<div class="verdict ${good && (!lottery || sim) ? 'good' : 'bad'}">${good
-      ? `✅ ${esc(sim ? t('Craft: better than selling as is in {pct}% of simulated runs', { pct: Math.round(sim.profit * 100) }) : t('Craft: ≈ {gain} more than selling as is', { gain: m(gain) }))}`
+      ? `✅ ${esc(sim ? t('Craft: on average ≈ {gain} more than selling as is; better in {pct}% of simulated runs', { gain: m(gain), pct: Math.round(sim.profit * 100) }) : t('Craft: ≈ {gain} more than selling as is', { gain: m(gain) }))}`
       : `✖ ${esc(t('Selling as is is better'))}`}${plain}${simNote}${lottery ? `<small>${esc(gambleNote)}</small>` : ''}${hitNote || (risky ? `<small>${esc(t('Removing a modifier can hit a good one — the cost may grow'))}</small>` : '')}</div>`;
-  } else if (goalValue === undefined && now != null && known >= Math.max(1, 20 * now)) {
+  } else if (goalValue === undefined && now != null && spend >= Math.max(1, 20 * now)) {
     // The goal is still being priced, but the currency alone dwarfs the item: say it now, not after the search.
-    verdict = `<div class="verdict">${esc(t('Currency ≈ {cost} — {n}× what the item is worth now ({now}); it pays only if the goal sells for more', { cost: m(known), n: fmt(Math.round(known / now)), now: m(now) }))}</div>`;
+    verdict = `<div class="verdict">${esc(t('Currency ≈ {cost} — {n}× what the item is worth now ({now}); it pays only if the goal sells for more', { cost: m(spend), n: fmt(Math.round(spend / now)), now: m(now) }))}</div>`;
   } else if (now == null) {
-    verdict = `<div class="verdict">${esc(t('Price this item on the Price tab first'))}</div>`;
+    verdict = `<div class="verdict">${esc(t(state.estThin ? 'Too few listings like this item to price it — the verdict needs its price' : 'Price this item on the Price tab first'))}</div>`;
   }
   // Headline and its one reason stay; the simulation, the gamble and hit notes go under «why».
   verdictBad = verdict.startsWith('<div class="verdict bad">');
@@ -907,7 +918,7 @@ const VARIANT_NAME = { cheap: 'Cheap', balanced: 'Balanced', ideal: 'Ideal' };
 // What a variant costs and earns. With both prices known the gain is the simulated average (src/shared/plancost.js simulate):
 // a lottery step counts with its rough odds, so the card agrees with the verdict; without the item price — «if it works».
 function variantEarn(v) {
-  const now = state.est;
+  const now = estNow();
   const value = v.key === 'ideal' ? goalValue : v.value;
   // Each card under its own goal price: a step dearer than this variant's goal is a single attempt here, whatever the
   // chosen variant's goal says (the card and its simulation agree).
@@ -1020,7 +1031,7 @@ function renderNormalCraft(r, head) {
   craftPrices = r.prices || {};
   craftThin = new Set(r.thin || []);
   const p = (n) => craftPrices[n];
-  const base = state.est;
+  const base = estNow();
   const retry = base != null ? Math.min(base, p('Orb of Annulment') ?? base) : 0;
   const opts = r.normal.map((o) => {
     const orb = p(o.name);
@@ -1133,7 +1144,7 @@ function renderUniqueCraft(r, head) {
 }
 
 function uniqueVerdictHtml(tries) {
-  const now = state.est;
+  const now = estNow();
   const div = craftPrices['Divine Orb'];
   const cost = div != null ? tries * div : null;
   const rows = [
@@ -1149,7 +1160,7 @@ function uniqueVerdictHtml(tries) {
       ? `✅ ${esc(t('Divine: ≈ {gain} more than selling as is', { gain: approx(gain) }))}`
       : `✖ ${esc(t('Selling as is is better'))}`}<small>${esc(t('Each Divine can also make the rolls worse — this is the average over many tries'))}</small></div>`;
   } else if (now == null) {
-    verdict = `<div class="verdict">${esc(t('Price this item on the Price tab first'))}</div>`;
+    verdict = `<div class="verdict">${esc(t(state.estThin ? 'Too few listings like this item to price it — the verdict needs its price' : 'Price this item on the Price tab first'))}</div>`;
   }
   return `<div class="profit">${rows.join('')}</div>${verdict}`;
 }
