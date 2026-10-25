@@ -450,7 +450,7 @@ const GAME_TITLE = /^Path of Exile( 2)?$/;
 let hotkeyOn = false;
 let hotkeyBound = null; // which combination is currently grabbed — to release it on change
 
-const { DEFAULT: DEFAULT_HOTKEY, validHotkey, hotkeyText } = require('./hotkeys');
+const { DEFAULT: DEFAULT_HOTKEY, validHotkey, reservedHotkey, hotkeyText } = require('./hotkeys');
 const curHotkey = () => (validHotkey(settings.get().hotkey) ? settings.get().hotkey : DEFAULT_HOTKEY);
 const hotkeyLabel = () => hotkeyText(curHotkey());
 
@@ -592,7 +592,8 @@ function applySettings(patch) {
     api.loadNinja(p.league).catch(() => {});
   }
   if (p.hotkey !== undefined && p.hotkey !== curHotkey()) {
-    if (!validHotkey(p.hotkey)) error = t('Use Ctrl or Alt with a letter, digit or F1–F12');
+    if (reservedHotkey(p.hotkey)) error = t('{key} is used by the game or for copying the item — pick another', { key: hotkeyText(p.hotkey) });
+    else if (!validHotkey(p.hotkey)) error = t('Use Ctrl or Alt with a letter, digit or F1–F12');
     else if (!setHotkey(p.hotkey)) error = t('{key} is taken by another program', { key: hotkeyText(p.hotkey) });
   }
   if (typeof p.hotkeyGameOnly === 'boolean') { settings.set({ hotkeyGameOnly: p.hotkeyGameOnly }); syncHotkey(); }

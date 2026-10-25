@@ -128,7 +128,7 @@ document.addEventListener('click', (e) => {
   if (act === 'plananyway') { planAnyway = true; refreshPlan(); }
   if (act === 'bases') findBases();
   if (act === 'bases-open') window.pc.openUrl(b.dataset.url);
-  if (act === 'session-stop') { craftSession = null; window.pc.pin(userPinned); craftFor = null; loadCraft(); }
+  if (act === 'session-stop') { craftSession = null; window.pc.pin(userPinned); $('pinBtn').classList.toggle('on', userPinned); craftFor = null; loadCraft(); }
 });
 
 // ---- Aldur runes: the same item in another element (Passion / Ire / Breath / Betrayal) ----

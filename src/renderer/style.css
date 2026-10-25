@@ -3,7 +3,7 @@
   /* --g-mod slightly lighter than the in-game #8888ff: the original reads poorly on the dark blue background */
   color-scheme: dark;
   --bg: #0b1017; --line2: #1c222c; --hover: #161d28;
-  --text: #b6b6b6; --muted: #8c8c8c; --note: #a6a6a6; /* note — explanations a decision depends on (risk, chance, "not an estimate") */ --gold: #dac18e; --cream: #f1e4c2; --bronze: #837053; --label: #a99a7c;
+  --text: #b6b6b6; --muted: #8c8c8c; --note: #a6a6a6; /* note — explanations a decision depends on (risk, chance, "not an estimate") */ --gold: #dac18e; --cream: #f1e4c2; --bronze: #8f7a5b; /* 4.6:1 on the background (was 4.0 — inactive tabs, footer) */ --label: #a99a7c;
   /* Green — "good for you / your item has it", red — "bad / missing"; price rise and fall — also
      green and red (the usual way to read price charts); listing freshness — just brighter. */
   --good: #6fcf7a; --bad: #e0675a; --warn: #e0b35a; --rise: var(--good); --fall: var(--bad);

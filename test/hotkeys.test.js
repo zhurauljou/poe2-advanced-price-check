@@ -12,3 +12,12 @@ test('label — "Ctrl" instead of CommandOrControl', () => {
   assert.equal(hotkeyText('CommandOrControl+Shift+E'), 'Ctrl+Shift+E');
   assert.equal(hotkeyText('Alt+F2'), 'Alt+F2');
 });
+
+test('combinations taken by Windows, the game or the item copy are refused', () => {
+  const { reservedHotkey } = require('../src/main/hotkeys');
+  for (const k of ['CommandOrControl+C', 'CommandOrControl+Alt+C', 'CommandOrControl+V', 'CommandOrControl+X', 'CommandOrControl+A', 'Alt+F4']) {
+    assert.ok(reservedHotkey(k), k);
+    assert.ok(!validHotkey(k), k);
+  }
+  assert.ok(validHotkey('CommandOrControl+Shift+C'), 'Ctrl+Shift+C is free');
+});

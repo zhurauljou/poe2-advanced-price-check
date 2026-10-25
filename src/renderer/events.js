@@ -54,6 +54,8 @@ window.pc.onItem((data) => {
   // (the session stays: return to that item and it's pinned again).
   const inSession = !!(craftSession && sessionMatches());
   window.pc.pin(inSession || userPinned);
+  // The pin shows what holds the window: during a step-by-step session it stays open without the button pressed.
+  $('pinBtn').classList.toggle('on', inSession || userPinned);
   setTab(inSession ? 'craft' : 'price');
   if (state.searchable) runSearch(true);
   loadBuilds();
@@ -329,8 +331,9 @@ $('wideBtn').addEventListener('click', () => {
 let userPinned = false;
 $('pinBtn').addEventListener('click', () => {
   userPinned = !userPinned;
-  $('pinBtn').classList.toggle('on', userPinned);
-  window.pc.pin(userPinned || !!(craftSession && sessionMatches()));
+  const held = userPinned || !!(craftSession && sessionMatches());
+  $('pinBtn').classList.toggle('on', held);
+  window.pc.pin(held);
 });
 
 window.pc.onUiLang((lang) => {

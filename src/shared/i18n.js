@@ -305,6 +305,7 @@
     '{key} is taken by another program — choose another hotkey in Settings': '{key} занята другой программой — выберите другую горячую клавишу в настройках',
     '{key} is taken by another program': '{key} занята другой программой',
     'Use Ctrl or Alt with a letter, digit or F1–F12': 'Нужен Ctrl или Alt и буква, цифра или F1–F12',
+    '{key} is used by the game or for copying the item — pick another': '{key} занята игрой или копированием предмета — выберите другую',
     Settings: 'Настройки',
     'Settings…': 'Настройки…',
     'Welcome! Three things to know': 'Добро пожаловать! Три вещи, которые нужно знать',
