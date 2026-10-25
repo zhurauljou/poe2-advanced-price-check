@@ -268,7 +268,7 @@ function renderNotes() {
     notes.push(t('Too few listings — relaxed: {list}', { list: dropped.map((d) => (typeof d === 'string' ? d : t(d.t, d.v))).join(' · ') }));
   }
   if (relaxStopped) notes.push(t("Couldn't relax filters further: {why}", { why: relaxStopped }));
-  if (unpriced) notes.push(t('{n} listings in other currencies are not counted: no poe.ninja exchange rates for this league yet', { n: unpriced }));
+  if (unpriced) notes.push(t('{n} listings in other currencies skipped: no rates for this league yet', { n: unpriced }));
   setNote(notes.join('\n'));
 }
 

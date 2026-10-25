@@ -427,7 +427,7 @@ function removeRisk(s, c) {
   if (!K || !names.length) return '';
   const odds = K / (J + K);
   const fmtOdds = odds >= 0.5 ? `~${Math.round(odds * 100)}%` : oneIn(odds);
-  return `<div class="ps-risk">⚠ ${esc(t('{odds} on the first attempt: it removes {mods} instead of the junk (then fewer mods are left) · on average ≈{hits} of them are lost before it is done', { odds: fmtOdds, mods: names.join(t(' or ')), hits: fmt(Math.round(c.hits * 10) / 10) }))}</div>`;
+  return `<div class="ps-risk">⚠ ${esc(t('{odds} first try: it removes {mods}, not the junk · ≈{hits} lost on average', { odds: fmtOdds, mods: names.join(t(' or ')), hits: fmt(Math.round(c.hits * 10) / 10) }))}</div>`;
 }
 
 // Not worth crafting: the steps of a craft you are told not to do are only reading — folded behind a link.
@@ -461,7 +461,7 @@ function planHtml(plan) {
     const notes = [];
     const key = []; // the step can't be done without these, shown up front; the rest goes under "details"
     // Regal's random mod: room on one side only — it stays unless it lands on the tight side (craft.js planGoal).
-    if (s.act === 'regal' && s.tightSide) key.push(t('If the random modifier lands on the {side}es, remove it before adding — there is no room for it there; otherwise it stays', { side: t(s.tightSide) }));
+    if (s.act === 'regal' && s.tightSide) key.push(t('If the random modifier lands on the {side}es, remove it before adding — no room there', { side: t(s.tightSide) }));
     if (c.two) key.push(t('one Exalted Orb adds both modifiers'));
     // A step that accepts alternatives: its odds are for any of them — the wanted mod alone is rarer, say so.
     const os = s.exaltOwn ? s : s.add && s.add.exaltOwn ? s.add : null;
@@ -478,11 +478,11 @@ function planHtml(plan) {
     else if (s.act !== 'remove' && c.k !== 'desecrate' && c.k !== 'essence' && (s.onSide || s.onItem)) notes.push(t('the average includes misses: an Annulment may hit a needed modifier, which then has to be added again'));
     if (c.k === 'essence') notes.push(t('Uses the only crafted-modifier slot (one per item; Alloys too)'));
     if (c.k === 'chaos') {
-      key.push(c.currencies.includes('Omen of Whittling') && !c.then
-        ? t('Omen of Whittling makes the {orb} remove the lowest-level modifier — {junk} — and a random modifier takes its place', { orb: c.currencies[0], junk: c.junk.join(', ') })
-        : c.currencies.includes('Omen of Whittling')
-        ? t('Omen of Whittling makes the {orb} remove the lowest-level modifier — {junk} — and a random modifier takes its place. Sure only once: if it is not {mod}, the new modifier is not the lowest — go on with {then}', { orb: c.currencies[0], junk: c.junk.join(', '), mod: s.mod, then: (c.then || []).join(' + ') })
-        : t('{orb} removes a random modifier and adds a random one: repeat until it removes {junk} and adds {mod}', { orb: c.currencies[0], junk: c.junk.join(', '), mod: s.mod }));
+      // One short line up front; «sure only once» — the follow-up — under details.
+      key.push(c.currencies.includes('Omen of Whittling')
+        ? t('{orb} + Whittling removes the lowest-level modifier ({junk}) and adds a random one', { orb: c.currencies[0], junk: c.junk.join(', ') })
+        : t('{orb}: repeat until it removes {junk} and adds {mod}', { orb: c.currencies[0], junk: c.junk.join(', '), mod: s.mod }));
+      if (c.currencies.includes('Omen of Whittling') && c.then) notes.push(t('Sure only once: if the new modifier is not {mod}, it is no longer the lowest — go on with {then}', { mod: s.mod, then: c.then.join(' + ') }));
       if (c.currencies[0] !== 'Chaos Orb') key.push(t('{orb}: the new modifier is level {level}+ — a better shot at a good tier', { orb: c.currencies[0], level: /^Perfect/.test(c.currencies[0]) ? 50 : 35 }));
       if (c.land < 1) notes.push(t('The item has a free slot: the new modifier lands on this side about half the time'));
     }
@@ -498,7 +498,7 @@ function planHtml(plan) {
       if (c.echo) notes.push(t('Omen of Abyssal Echoes — reroll the 3 options once'));
       if (c.bone === 'Altered Collarbone') notes.push(t('Altered Collarbone: desecrates jewellery with a chance for otherworldly (Breach) modifiers — how often they show up among the options is unknown'));
       if (c.lich) notes.push(t(c.lich.n <= 3 ? 'Lich omen: all options come from {lich}\'s pool — {n} on this side, so the modifier is guaranteed' : 'Lich omen: all options come from {lich}\'s pool — {n} on this side', { lich: c.lich.name[0].toUpperCase() + c.lich.name.slice(1), n: c.lich.n }));
-      if (s.desFirst) key.push(t('The {side}es are full: with {omen} the desecration itself removes a random {side} — the same as one Annulment attempt, so do this before removing', { side: t(s.side), omen: s.necro }));
+      if (s.desFirst) key.push(t('Do this before removing: with {omen} the desecration itself removes a random {side}', { side: t(s.side), omen: s.necro }));
       key.push(t('At the reveal pick: {mods}', { mods: [s.mod, ...(s.orMods || [])].join(' › ') }));
       notes.push(t('A miss → Orb of Annulment + Omen of Light removes it ({cost})', { cost: approx((craftPrices['Orb of Annulment'] || 0) + (craftPrices['Omen of Light'] || 0)) }));
     }
@@ -585,10 +585,10 @@ function verdictHtml(plan) {
   if (planBusy()) {
     verdictBad = false;
     return `<div class="verdict pending"><span class="spin"></span>${esc(t('Checking prices on trade… {done} of {total}', { done: planPricing.done, total: planPricing.total }))}
-      <small>${esc(t('The plan and the verdict appear once the goal and its variants are priced — the first numbers would change.'))}</small>
+      <small>${esc(t('The plan appears once the goal is priced'))}</small>
       <button class="link" data-act="plandraft">${esc(t('Show the draft now'))}</button></div>`;
   }
-  const draft = planPricing ? `<div class="verdict draft">${esc(t('Draft: prices are still loading ({done} of {total}) — the numbers and the chosen variant may change', { done: planPricing.done, total: planPricing.total }))}</div>` : '';
+  const draft = planPricing ? `<div class="verdict draft">${esc(t('Draft: prices still loading ({done} of {total})', { done: planPricing.done, total: planPricing.total }))}</div>` : '';
   return draft + verdictBody(plan);
 }
 
@@ -618,7 +618,7 @@ function verdictBody(plan) {
   let verdict = '';
   // Removing extras with Annulments will on average hit needed mods: on such an item it's almost always unprofitable.
   const hits = Math.max(0, ...costs.map((c) => c.hits || 0));
-  const hitNote = hits >= 1 ? `<small>${hlNums(t('Removing the unwanted modifiers would hit ≈{n} needed ones on average — on an item like this it is rarely worth it', { n: fmt(Math.round(hits * 10) / 10) }))}</small>` : '';
+  const hitNote = hits >= 1 ? `<small>${hlNums(t('Removing the junk would hit ≈{n} good modifiers on average', { n: fmt(Math.round(hits * 10) / 10) }))}</small>` : '';
   // Currency costs more than the finished goal: crafting won't pay off at any item price (item price may not be computed yet).
   // known — the plan's cost: currency plus the expected loss of wanted mods a removal hits (a quarter of the goal each, the
   // essence's sacrifice). The headline names which it is: «the currency costs more» next to «currency ≈ 2» read as a lie.
@@ -626,16 +626,17 @@ function verdictBody(plan) {
   if (goalValue != null && known >= goalValue) {
     // The numbers are in the line above: the headline says what they mean, and what to do instead.
     const head = goalBasis === 'partial'
-      ? (withLosses ? 'Probably not worth it: the currency and the good modifiers it may destroy cost more than the goal is worth at least' : 'Probably not worth it: the currency costs more than the goal is worth at least')
-      : (withLosses ? 'Not worth it: the currency and the good modifiers it may destroy cost more than the finished item' : 'Not worth it: the currency costs more than the finished item');
+      ? (withLosses ? 'Probably not worth it: currency and likely losses exceed the lowest goal price' : 'Probably not worth it: the currency costs more than the goal is worth at least')
+      : (withLosses ? 'Not worth it: currency and likely losses exceed the finished item' : 'Not worth it: the currency costs more than the finished item');
     verdict = `<div class="verdict bad">✖ ${esc(t(head))}${now != null ? `<small>${esc(t('Better: sell it as is'))}</small>` : ''}${hitNote}</div>`;
   } else if (goalValue === null && now != null) {
     // No finished equivalents on trade (or only 1–2): goal price unknown. Costs already reach the item price: simpler to sell.
     const why = goalThin ? t('Only {n} listings like the goal — too few to judge the craft by', { n: goalThin.n }) : t('No finished items like the goal are listed — its price is unknown');
     verdict = known >= now * 0.5
-      ? `<div class="verdict bad">✖ ${esc(withLosses
-        ? t('Selling as is is better: the currency and the good modifiers it may destroy cost ≈ {cost}, the item sells for ≈ {now}', { cost: m(known), now: m(now) })
-        : t('Selling as is is better: the currency alone costs ≈ {cost}, the item sells for ≈ {now}', { cost: m(spend), now: m(now) }))}<small>${esc(why)}</small>${hitNote}</div>`
+      // A short headline; the numbers behind it on the line below (the long sentence wrapped to three lines).
+      ? `<div class="verdict bad">✖ ${esc(t('Selling as is is better'))}<small>${hlNums(withLosses
+        ? t('Currency and likely losses ≈ {cost} · it sells for ≈ {now}', { cost: m(known), now: m(now) })
+        : t('Currency alone ≈ {cost} · it sells for ≈ {now}', { cost: m(spend), now: m(now) }))}</small><small>${esc(why)}</small>${hitNote}</div>`
       : `<div class="verdict">${esc(why)}${hitNote}</div>`;
   } else if (goalValue != null && now != null) {
     // Whole-plan simulation: outcome distribution and the chance crafting beats selling now (src/shared/plancost.js).
@@ -655,7 +656,7 @@ function verdictBody(plan) {
       : `✖ ${esc(t('Selling as is is better'))}`}${plain}${simNote}${lottery ? `<small>${esc(gambleNote)}</small>` : ''}${hitNote || (risky ? `<small>${esc(t('Removing a modifier can hit a good one — the cost may grow'))}</small>` : '')}</div>`;
   } else if (goalValue === undefined && now != null && spend >= Math.max(1, 20 * now)) {
     // The goal is still being priced, but the currency alone dwarfs the item: say it now, not after the search.
-    verdict = `<div class="verdict">${esc(t('Currency ≈ {cost} — {n}× what the item is worth now ({now}); it pays only if the goal sells for more', { cost: m(spend), n: fmt(Math.round(spend / now)), now: m(now) }))}</div>`;
+    verdict = `<div class="verdict">${esc(t('Currency ≈ {cost} — {n}× what the item sells for now ({now})', { cost: m(spend), n: fmt(Math.round(spend / now)), now: m(now) }))}</div>`;
   } else if (now == null) {
     verdict = `<div class="verdict">${esc(t(state.estThin ? 'Too few listings like this item to price it — the verdict needs its price' : 'Price this item on the Price tab first'))}</div>`;
   }
@@ -1036,7 +1037,10 @@ function chanceLine(m) {
 function ilvlHintHtml(h) {
   if (!h) return '';
   const junk = h.junk.join(', ') + (h.more ? ` ${t('and {n} more', { n: h.more })}` : '');
-  return `<div class="craft-chance-note" title="${esc(t('A modifier family weighs more with each tier it has — extra tiers of unwanted modifiers slightly lower the odds of the wanted ones (community observation, not exact)'))}">ⓘ ${esc(t('Item level {ilvl}: for the wanted modifiers no better than {from} — above it only unwanted ones got new tiers ({junk})', { ilvl: h.ilvl, from: h.from, junk }))}</div>`;
+  // One line up front; which unwanted modifiers gained tiers — in the tooltip with the why.
+  const tip = `${t('Above it only unwanted modifiers got new tiers: {junk}', { junk })}
+${t('A modifier family weighs more with each tier it has — extra tiers of unwanted modifiers slightly lower the odds of the wanted ones (community observation, not exact)')}`;
+  return `<div class="craft-chance-note" title="${esc(tip)}">ⓘ ${esc(t('Item level {ilvl}: no better than {from} for the wanted modifiers', { ilvl: h.ilvl, from: h.from }))}</div>`;
 }
 
 // ---- white base: Transmutation (regular / Greater 44+ / Perfect 70+) → magic with one mod ----
@@ -1070,7 +1074,7 @@ function renderNormalCraft(r, head) {
     <span class="oo-odds"><b>${pct(o.top)}</b> ${esc(t('a popular modifier in a goal tier'))}</span>
     <span class="oo-cost">${o.cost != null ? moneyHtml(`≈ ${approx(o.cost)}`) : '—'}${o === best ? `<small class="rec">${esc(t('recommended'))}</small>` : ''}</span></div>`).join('');
   const warn = base != null && base >= BASE_PRICEY
-    ? `<div class="ps-flag risk"><span class="fi">${FLAG_ICON.risk}</span><span>${esc(t('The base itself sells for ≈ {price} — a miss costs a base like this. Selling it as is may be the better deal.', { price: approx(base) }))}</span></div>` : '';
+    ? `<div class="ps-flag risk"><span class="fi">${FLAG_ICON.risk}</span><span>${esc(t('The base sells for ≈ {price} — a miss costs one like it', { price: approx(base) }))}</span></div>` : '';
   const miss = base != null && base < (p('Orb of Annulment') ?? Infinity)
     ? t('A miss → take another base: it is cheaper than fixing this one')
     : t('A miss → Orb of Annulment removes the modifier, then Orb of Augmentation');
@@ -1081,7 +1085,7 @@ function renderNormalCraft(r, head) {
     card(t('Make it magic'), '', curChips([best.name]), best.cost != null ? `<div class="ps-side"><b class="ps-cost">${moneyHtml(`≈ ${approx(best.cost)}`)}</b><small>${esc(t('on average'))}</small></div>` : '', miss),
     card(t('Add a modifier to the other side'), '', curChips(['Orb of Augmentation']), '', t('Greater / Perfect: the same, low tiers cut off')),
     card(t('Make it rare'), '', curChips(['Regal Orb']), '', t('or an Essence of a wanted modifier — then open Craft again for the next steps'),
-      t('Alternative: Orb of Alchemy — straight to rare with 4 random modifiers (Omen of Sinistral / Dextral Alchemy — as many prefixes / suffixes as possible)')),
+      t('Or Orb of Alchemy: rare at once with 4 random modifiers (an Alchemy side omen: more prefixes or suffixes)')),
   ];
   const popular = (r.popular || []).map((c, i) => ({ name: `${c.text}${c.tier ? ` · T${c.tier}` : ''}`, pct: c.pct, rank: i + 1 }));
   $('craft').innerHTML = head + `<div class="craft-sec plan-box"><div class="k">${esc(t('White base → magic'))}</div>
@@ -1138,7 +1142,7 @@ function renderUniqueCraft(r, head) {
   if (!rolls.length) {
     const noRanges = state.item.mods && state.item.mods.some((m) => (m.tag === 'explicit' || m.tag === 'desecrated') && m.statId && !m.range && /\d/.test(m.text));
     top.push(`<div class="craft-sec"><div class="craft-how">${esc(noRanges
-      ? t('No roll ranges in the copied text — turn on "Advanced Mod Descriptions" (or copy with Ctrl+Alt+C) to see how good the rolls are')
+      ? t('No roll ranges in the copy — turn on "Advanced Mod Descriptions" or use Ctrl+Alt+C')
       : t('This unique has no variable values — Divine Orb changes nothing'))}</div></div>`);
   } else {
     const qs = rolls.filter((m) => !m.categorical).map(rollOf);
@@ -1300,7 +1304,7 @@ function renderCraft(r) {
   if (chanceNote) parts.push(chanceNote); // there were no tables with odds, but the plan has odds: the line goes at the end
   if (r.gamble && r.goal && r.goal.plan && r.goal.plan.length) parts.push(gambleHtml(r.gamble)); // at the end, after all the safe methods
   // Sources are reference, not a decision: an icon with a tooltip.
-  parts.push(`<div class="craft-beta"><b>${esc(t('Beta'))}</b> · ${esc(t('Craft advice is in beta: modifier odds are estimates from samples we are still collecting, and unusual items can get a wrong plan. Check expensive steps yourself.'))}</div>`);
+  parts.push(`<div class="craft-beta"><b>${esc(t('Beta'))}</b> · ${esc(t('Odds are estimates — check expensive steps yourself'))}</div>`);
   parts.push(`<div class="craft-foot"><span class="ages-i" title="${esc(t(r.chanceMeta ? 'Mod pool: game files (RePoE).' : "Mod pool: game files (RePoE). Roll chances aren't shown — PoE 2 files have no modifier weights."))} ${esc(t('Demand: builds on poe.ninja. Prices: poe.ninja and the trade site.'))}">ⓘ ${esc(t('Sources'))}</span></div>`);
   // Wide window: plan on the left, all methods on the right (expanded).
   $('craft').innerHTML = head + `<div class="craft-cols"><div class="craft-l">${top.join('')}</div>`

@@ -277,7 +277,7 @@ function renderTradeHero(r) {
   const median = mid(divs);
   const ageInfo = ageSummary(priced, fresh.length >= 3 && fresh.length < priced.length);
   // A callout, not a text line; the "more ▲ than ▼" reasoning goes to the tooltip.
-  const ageHtml = (mostlyStronger ? `<div class="callout warn" title="${esc(t('Most listings are stronger than your item (more ▲ than ▼) — estimated from the weaker ones; your item is likely worth less than the list suggests'))}">${esc(t('Most listings are stronger than your item — estimated from the weaker ones; your item is likely worth less than the list suggests'))}</div>` : '');
+  const ageHtml = (mostlyStronger ? `<div class="callout warn" title="${esc(t('Most listings are stronger than your item (more ▲ than ▼) — estimated from the weaker ones; your item is likely worth less than the list suggests'))}">${esc(t('Most listings are stronger than yours — priced from the weaker ones'))}</div>` : '');
   // Second price: the same mods with any roll of their tier, i.e. how much the market pays extra for your rolls.
   let floorHtml = '';
   const fl = r.floor;
