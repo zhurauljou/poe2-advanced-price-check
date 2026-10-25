@@ -17,9 +17,10 @@ function meter(m) {
 // Tier range and roll quality: "36–40", a near-max roll gets a gold max mark.
 function rollInfo(m) {
   if (!m.range || m.roll == null) return '';
-  // The max mark — only on a max roll of the best tier (T1): on other tiers it means little.
-  const max = m.tier === 1 && m.roll >= 0.9 ? `<span class="maxroll" title="${t('Near max roll of the top tier — usually worth more')}">${t('max roll')}</span>` : '';
-  return ` <span class="rng" title="${t('Tier range · roll {n}%', { n: Math.round(m.roll * 100) })}">${fmt(m.range.lo)}${m.range.lo < 0 ? t(' to ') : '–'}${fmt(m.range.hi)}</span>${max}`;
+  // A near-max roll of the best tier (T1) — the range itself turns gold (a separate «max» word made the column jump).
+  const max = m.tier === 1 && m.roll >= 0.9;
+  const title = `${t('Tier range · roll {n}%', { n: Math.round(m.roll * 100) })}${max ? ` · ${t('Near max roll of the top tier — usually worth more')}` : ''}`;
+  return `<span class="rng${max ? ' atmax' : ''}" title="${title}">${fmt(m.range.lo)}${m.range.lo < 0 ? t(' to ') : '–'}${fmt(m.range.hi)}</span>`;
 }
 
 // Which sums are expanded (reset on a new item).
@@ -38,21 +39,30 @@ function modRow(m, i) {
   const demand = m.demand >= 30 ? t('{pct}% of level {lvl}+ builds wearing this item class have this modifier (poe.ninja)', { pct: fmt(m.demand), lvl: demandLevel }) : '';
   const title = m.parts ? m.parts.map((p) => `${p.text}${p.tier ? ` (T${p.tier})` : ''}`).join('\n') : demand;
   const from = title ? ` title="${esc(title)}"` : '';
-  // The kind (fractured, crafted…) as a quiet word in its colour, not a framed badge; the mod text has that colour too.
-  const cat = m.tag !== 'explicit' && m.tag !== 'pseudo' ? ` <span class="kind ${esc(m.tag)}">${esc(t(m.tag))}</span>` : '';
   const fire = m.demand >= 60 ? `<span class="dem hot" title="${esc(demand)}">🔥</span>` : '';
   const text = m.tag === 'pseudo' ? m.text.replace(/^Σ /, '') : m.text;
-  // The tier range, max roll and 🔥 sit in their own column on the right: inside the text they pushed it onto a second line.
+  // The kind (fractured, crafted…) as a quiet word in its colour, glued to the mod's last word: alone it wrapped onto a
+  // line of its own.
+  const kind = m.tag !== 'explicit' && m.tag !== 'pseudo' ? ` <span class="kind ${esc(m.tag)}">${esc(t(m.tag))}</span>` : '';
+  const cut = text.search(/\S+\s*$/);
+  const body = kind && cut > 0 ? `${esc(text.slice(0, cut))}<span class="glue">${esc(text.slice(cut))}${kind}</span>` : esc(text) + kind;
+  // One fixed cell on the right (🔥 and the tier range) and fixed-width bounds: every row keeps the same grid.
   return `<div class="mod t-${esc(m.tag)}${m.enabled ? '' : ' off'}" data-i="${i}">
       <label><input type="checkbox" data-k="enabled"${m.enabled ? ' checked' : ''}>${meter(m) || '<span class="imp"></span>'}${tier}
-        <span class="txt"${from}>${esc(text)}${m.merged ? `<span class="sum-v"> = ${fmt(m.value)}</span>` : ''}${cat}${driveChip(i)}</span>
-        <span class="meta">${fire}${rollInfo(m).trim()}</span></label>
-      ${m.option ? '' : `<span class="range-in"><input type="number" data-k="min" step="any" placeholder="${t('min')}" value="${m.min == null ? '' : m.min}"><input type="number" class="max${m.max == null ? ' empty' : ''}" data-k="max" step="any" placeholder="${t('max')}" title="${esc(t('Upper limit (optional): e.g. exactly +4, so +5 items do not count'))}" value="${m.max == null ? '' : m.max}"></span>`}
+        <span class="txt"${from}>${body}${m.merged ? `<span class="sum-v"> = ${fmt(m.value)}</span>` : ''}${driveChip(i)}</span>
+        <span class="m-meta">${fire}${rollInfo(m)}</span></label>
+      ${m.option ? '<span class="range-in"></span>' : `<span class="range-in"><input type="number" data-k="min" step="any" placeholder="${t('min')}" value="${m.min == null ? '' : m.min}"><input type="number" class="max${m.max == null ? ' empty' : ''}" data-k="max" step="any" placeholder="${t('max')}" title="${esc(t('Upper limit (optional): e.g. exactly +4, so +5 items do not count'))}" value="${m.max == null ? '' : m.max}"></span>`}
     </div>`;
 }
 
 // Price currency on trade: any (converted) or only listings in a specific currency.
 const CURRENCIES = [['any', 'Any'], ['divine', 'Divine'], ['chaos', 'Chaos'], ['exalted', 'Exalted']];
+
+// The «max» column exists for every row only while some row has a max: otherwise an empty column on every row took the
+// width from the mod text, and the max field shows over the tier range on hover.
+function syncMaxColumn() {
+  $('mods').classList.toggle('has-max', state.filters.mods.some((m) => !m.inSum && m.max != null && m.max !== ''));
+}
 
 function renderFilters() {
   const box = $('filters');
@@ -77,6 +87,7 @@ function renderFilters() {
         <span class="txt">${esc(t('Without: {mod}', { mod: x.text }))} <span class="dem hot">🔥 ${esc(t('{pct}% builds', { pct: fmt(x.pct) }))}</span></span></label></div>`));
   if (f.hiddenFixed) rows.push(`<div class="muted small center">${esc(t('{n} fixed modifiers hidden — every copy has them', { n: f.hiddenFixed }))}</div>`);
   $('mods').innerHTML = rows.join('');
+  syncMaxColumn();
   // Defence/DPS, levels and sockets are picked right in the tooltip under the header — here, price currency and "online".
   $('misc').innerHTML = `
     <div class="seg" title="${t('Which currency listings to search')}">${CURRENCIES.map(([id, label]) =>

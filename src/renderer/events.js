@@ -155,6 +155,7 @@ $('mods').addEventListener('input', (e) => {
   } else if (e.target.dataset.k === 'max') {
     m.max = e.target.value === '' ? null : Number(e.target.value);
     e.target.classList.toggle('empty', m.max == null);
+    syncMaxColumn();
   }
 });
 
