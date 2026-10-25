@@ -34,6 +34,7 @@ contextBridge.exposeInMainWorld('pc', {
   historyPrice: (id, est) => ipcRenderer.invoke('history-price', id, est),
   setSearchDefaults: (p) => ipcRenderer.invoke('set-search-defaults', p),
   onRefit: (cb) => ipcRenderer.on('refit', (_e, d) => cb(d)),
+  onLeague: (cb) => ipcRenderer.on('league', (_e, l) => cb(l)),
   elementVariants: (item, filters) => ipcRenderer.invoke('element-variants', item, filters),
   pin: (on) => ipcRenderer.invoke('pin', on),
   setWide: (on) => ipcRenderer.invoke('set-wide', on),

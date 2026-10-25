@@ -138,8 +138,8 @@ function renderTooltip() {
   if (!state.exchange) {
     const plines = item.properties.map((p) => {
       const v = `<b class="${p.aug ? 'aug' : ''}">${esc(p.v)}</b>`;
-      if (p.k === 'Quality') return pick('m:quality', 'Quality', v, f.quality, '≥', 'min');
-      if (p.k === 'Grants Skill') return pick('m:skill', 'Grants Skill', v, f.skill, t('level ≥'), 'min');
+      if (p.k === 'Quality') return pick('m:quality', t('Quality'), v, f.quality, '≥', 'min');
+      if (p.k === 'Grants Skill') return pick('m:skill', t('Grants Skill'), v, f.skill, t('level ≥'), 'min');
       // Waystone properties — by the in-game label (pricing.propFilters puts it in label).
       let i = propIdx(PROP_KEY[p.k]);
       if (i < 0) i = props.findIndex((x) => x.group === 'map' && x.label === p.k);
@@ -156,36 +156,37 @@ function renderTooltip() {
     if (item.requires) {
       const rest = esc(item.requires.replace(/^Level \d+,?\s*/, ''));
       meta.push(item.reqLevel
-        ? `Requires: ${pick('m:reqLevel', 'Level', `<b>${item.reqLevel}</b>`, f.reqLevel, '≤', 'max')}${rest ? `<span class="req-rest">, <b>${rest}</b></span>` : ''}`
-        : `Requires: <b>${esc(item.requires)}</b>`);
+        ? `${t('Requires:')} ${pick('m:reqLevel', t('Level'), `<b>${item.reqLevel}</b>`, f.reqLevel, '≤', 'max')}${rest ? `<span class="req-rest">, <b>${rest}</b></span>` : ''}`
+        : `${t('Requires:')} <b>${esc(item.requires)}</b>`);
     }
     if (item.ilvl) {
       // Crafting base: bounds are tier steps (main: craft.ilvlBand); the hint — what unlocks at the next one.
-      let il = pick('m:ilvl', 'Item Level', `<b>${item.ilvl}</b>`, f.ilvl, '≥', 'min');
+      let il = pick('m:ilvl', t('Item Level'), `<b>${item.ilvl}</b>`, f.ilvl, '≥', 'min');
       if (f.ilvl && f.ilvl.enabled && state.searchable && f.ilvl.max) il += ` <span class="tp-op">≤</span><input type="number" class="tp-in" data-ref="m:ilvl" data-f="max" value="${f.ilvl.max}">`;
       if (f.ilvl && f.ilvl.next) il = `<span title="${esc(t('Same modifier tiers up to {max}; at {level} unlocks: {mods}', { max: f.ilvl.next.level - 1, level: f.ilvl.next.level, mods: f.ilvl.next.mods.slice(0, 4).join(', ') }))}">${il}</span>`;
       meta.push(il);
     }
-    if (item.gemLevel) meta.push(pick('m:gemLevel', 'Level', `<b>${item.gemLevel}</b>`, f.gemLevel, '≥', 'min'));
-    if (item.sockets) meta.push(pick('m:sockets', 'Sockets', `<b>${'◆ '.repeat(item.sockets).trim()}</b>`, f.sockets, '≥', 'min'));
+    if (item.gemLevel) meta.push(pick('m:gemLevel', t('Level'), `<b>${item.gemLevel}</b>`, f.gemLevel, '≥', 'min'));
+    if (item.sockets) meta.push(pick('m:sockets', t('Sockets'), `<b>${'◆ '.repeat(item.sockets).trim()}</b>`, f.sockets, '≥', 'min'));
     if (meta.length) lines.push(row(meta));
   }
   const flags = [];
   // States (Corrupted, Sanctified, Mirrored…) are toggles: an enabled one requires the same on the listing.
   const fl = (state.searchable && f.flags) || [];
-  if (item.unidentified && !fl.some((x) => x.key === 'identified')) flags.push('<span class="corrupt">Unidentified</span>');
+  if (item.unidentified && !fl.some((x) => x.key === 'identified')) flags.push(`<span class="corrupt">${esc(t('Unidentified'))}</span>`);
   // State — three positions by click: only as on your item → only the opposite → doesn't matter.
   fl.forEach((x, i) => {
     const v = x.enabled ? x.value : x.own;
-    const not = t('Not {lname}', { name: x.name, lname: x.name.toLowerCase() });
-    const label = v ? x.name : not;
-    const next = !x.enabled ? t('only such items') : x.value === x.own ? t('only "{label}"', { label: x.value ? not : x.name }) : t('any');
+    const name = t(x.name);
+    const not = t('Not {lname}', { name, lname: name.toLowerCase() });
+    const label = v ? name : not;
+    const next = !x.enabled ? t('only such items') : x.value === x.own ? t('only "{label}"', { label: x.value ? not : name }) : t('any');
     flags.push(`<span class="tp flag ${x.key === 'corrupted' && v ? 'corrupt' : 'cls'}${x.enabled ? ' on' : ''}${v ? '' : ' neg'}" data-ref="f:${i}"
       title="${esc(x.enabled ? t('Searching only: {label}', { label }) : t('Ignored — any'))} · ${t('click:')} ${esc(next)}">${esc(label)}${x.enabled ? '' : ` <small>· ${t('any')}</small>`}</span>`);
   });
   if (!fl.length) {
-    if (item.corrupted) flags.push(`<span class="corrupt">${item.twiceCorrupted ? 'Twice Corrupted' : 'Corrupted'}</span>`);
-    if (item.mirrored) flags.push('<span class="cls">Mirrored</span>');
+    if (item.corrupted) flags.push(`<span class="corrupt">${esc(t(item.twiceCorrupted ? 'Twice Corrupted' : 'Corrupted'))}</span>`);
+    if (item.mirrored) flags.push(`<span class="cls">${esc(t('Mirrored'))}</span>`);
   }
   if (flags.length) lines.push(row(flags));
   // Waystone: mods dangerous for many builds — visible before buying or running it.

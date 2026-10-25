@@ -264,12 +264,16 @@ $('leagueMenu').addEventListener('click', async (e) => {
   if (!b) return;
   toggleLeagueMenu(false);
   if (b.dataset.league === state.league) return;
+  const prev = state.league;
   state.league = b.dataset.league;
   renderLeagues();
   setStatus(t('Loading prices for {league}…', { league: state.league }));
   try {
     await window.pc.setLeague(state.league);
   } catch (err) {
+    // The switch failed: the header must not claim the new league while searches still go to the old one.
+    state.league = prev;
+    renderLeagues();
     setStatus(errText(err), true);
     return;
   }
@@ -301,6 +305,14 @@ function applyLang() {
 applyLang();
 
 // Scale or layout changed in settings: the window fits itself to the content.
+// League chosen in the tray or Settings while the window is open: the header follows, the shown prices are for the old one.
+window.pc.onLeague((l) => {
+  if (!state || state.league === l) return;
+  state.league = l;
+  renderLeagues();
+  if (state.searchable) markDirty();
+});
+
 window.pc.onRefit((d) => {
   if (d && typeof d.wide === 'boolean') setWide(d.wide);
   fit();

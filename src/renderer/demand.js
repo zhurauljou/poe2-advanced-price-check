@@ -118,6 +118,7 @@ function setTab(name) {
   $('tab-price').hidden = name !== 'price';
   $('tab-demand').hidden = name !== 'demand';
   $('tab-craft').hidden = name !== 'craft';
+  document.body.dataset.tab = name; // the header's search bounds are for the Price tab only (style.css)
   // Enter searches on the Price tab only (events.js): its hint in the footer goes with it.
   document.querySelectorAll('.keys .k-enter').forEach((e) => { e.hidden = name !== 'price'; });
   if (name === 'craft') loadCraft();

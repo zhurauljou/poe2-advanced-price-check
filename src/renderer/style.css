@@ -168,6 +168,9 @@ footer { display: flex; justify-content: space-between; gap: 8px; padding: 6px 1
 .tp:hover { border-color: #3d3a33; background: rgba(255, 255, 255, .03); }
 .tp.on { border-color: #6b5a3a; background: rgba(218, 193, 142, .08); box-shadow: 0 0 8px rgba(218, 193, 142, .12); }
 .tp-op { color: var(--label); }
+/* The header values double as price-search filters: on Demand and Craft they search nothing — plain text there. */
+body:not([data-tab="price"]) .tp { pointer-events: none; border-color: transparent; background: none; box-shadow: none; text-decoration: none; }
+body:not([data-tab="price"]) .tp .tp-op, body:not([data-tab="price"]) .tp .tp-in { display: none; }
 .tt .flag.corrupt { color: var(--g-corrupt); }
 .tt .flag.neg:not(.on) { color: #7d7d8a; } /* "Not corrupted" — a hint until enabled */
 .tp-in { width: 54px; height: 22px; margin-left: 2px; padding: 0 4px; font: 700 var(--fs-s) var(--body); vertical-align: 1px; }

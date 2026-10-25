@@ -411,6 +411,7 @@ async function refreshLeagues() {
     const main = leagues.find((l) => !/^(HC |Hardcore|Standard)/.test(l)) || leagues[0];
     if (settings.get().league) log('league ended:', settings.get().league, '→', main);
     settings.set({ league: main });
+    send('league', main);
   }
   if (changed) refreshTray();
 }
@@ -586,6 +587,8 @@ function applySettings(patch) {
   if (CLIENT_LANGS.includes(p.clientLang)) settings.set({ clientLang: p.clientLang });
   if (p.league !== undefined && leagues.includes(p.league) && p.league !== settings.get().league) {
     settings.set({ league: p.league });
+    // The open window shows the league in its header and searched in the old one: tell it.
+    send('league', p.league);
     api.loadNinja(p.league).catch(() => {});
   }
   if (p.hotkey !== undefined && p.hotkey !== curHotkey()) {
