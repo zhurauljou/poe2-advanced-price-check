@@ -282,7 +282,7 @@ function renderTradeHero(r) {
   let floorHtml = '';
   const fl = r.floor;
   if (fl && fl.divs.length) {
-    const fest = fl.lots ? estimate(fl.lots) : mid(fl.divs.slice(0, 5)); // same rule as the main price
+    const fest = fl.lots ? estimate(fl.lots) : mid(fl.divs.slice(0, 5).map((v) => v * k));
     const premium = fest > 0 ? Math.round((est / fest - 1) * 100) : 0;
     floorHtml = `<div class="floor" title="${t('Same modifiers with any roll of the same tier')}">
       ${t('Any roll in tier:')} <b>${money(fest)}</b> · ${t('{n} listed', { n: fl.total })}
@@ -307,7 +307,7 @@ function renderTradeHero(r) {
         <div class="alt">${moneyHtml(alt(est))}</div>
         ${k < 1 ? `<div class="alt" title="${esc(t('Partly used tablets are rarely listed — priced as a full one, scaled by the uses left (an assumption)'))}">${moneyHtml(t('a full one ({full} uses) ≈ {price}', { full: Math.round(state.item.props.uses / k), price: money(est / k) }))}</div>` : ''}
       </div>
-      ${confidence(r.total, head, priced.slice(0, 5), ageInfo)}
+      ${confidence(r.total, head, (fresh.length >= 3 ? fresh : pool).slice(0, 5), ageInfo)}
     </div>
     ${sellHtml(priced, est, divs[0], median, divs.length)}
     ${missingKeyHtml()}
@@ -371,10 +371,12 @@ function missingKeyHtml() {
     <small>${esc(t(miss.some((x) => x.enabled) ? 'Compared with listings that lack it too; with it the item would be worth much more — see Craft' : 'Listings with it are included — the estimate is likely too high'))}</small></div>`;
 }
 
-// Estimate from listings [{ div, indexed }], same rule as the main price: enough fresh (≤ 3 days) ones, use them;
-// median of up to 5 cheapest.
+// Estimate from listings [{ div, indexed }] for the secondary prices (any roll in tier, what drives the price, other
+// elements): enough fresh (≤ 3 days) ones — those; median of up to 5 cheapest; a used tablet scaled like the main price.
+// Unlike the main price it can't set aside listings stronger than yours (no mod comparison here) — a rougher number.
 function estimate(lots) {
-  const sorted = (lots || []).filter((l) => l.div != null).sort((a, b) => a.div - b.div);
+  const k = usesScale();
+  const sorted = (lots || []).filter((l) => l.div != null).map((l) => ({ ...l, div: l.div * k })).sort((a, b) => a.div - b.div);
   const fresh = sorted.filter((l) => ageDays(l.indexed) <= 3);
   const head = (fresh.length >= 3 ? fresh : sorted).slice(0, 5).map((l) => l.div);
   return head.length ? mid(head) : null;

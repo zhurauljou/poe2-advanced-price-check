@@ -451,6 +451,7 @@
     'With {n}: {price}': 'С {n}: {price}',
     '+1 ≈ {n}% of price': '+1 ≈ {n}% цены',
     '{state} — yours is not': '{state} — у вашей вещи нет',
+    'Not {state} — yours is': 'Не {state} — а ваш да',
     'yours is not': 'у вашей — нет',
     'Copy link': 'Копировать ссылку',
     'Copy the trade search link': 'Скопировать ссылку на этот поиск на трейде',

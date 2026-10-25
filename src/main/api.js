@@ -269,7 +269,12 @@ async function fetchNinja(league) {
       byId.set(ln.id, row);
     }
   });
-  if (!byName.size) throw new Error('poe.ninja returned no prices for league ' + league);
+  if (!byName.size) {
+    // Another league's prices must not stand in for this one (league start: poe.ninja has nothing yet) — drop them, so
+    // conversions say «no rates for this league» instead of using the old league's quietly.
+    if (league === ninjaWanted && ninja.league !== league) Object.assign(ninja, { league, at: 0, byName: new Map(), byId: new Map(), rates: {} });
+    throw new Error('poe.ninja returned no prices for league ' + league);
+  }
   if (league !== ninjaWanted) return ninja; // the league was switched while downloading — this league's rates are no longer needed
   Object.assign(ninja, {
     league, at: Date.now(), byName, byId,

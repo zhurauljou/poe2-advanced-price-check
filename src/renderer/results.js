@@ -153,8 +153,12 @@ function myStates() {
   const it = state.item;
   return new Set([it.corrupted && 'Corrupted', it.sanctified && 'Sanctified', it.mirrored && 'Mirrored', it.unidentified && 'Unidentified'].filter(Boolean));
 }
+// The other way too: your item is corrupted (sanctified, mirrored), this listing is not — it can still be crafted and is
+// worth more; without a mark the corrupted item was compared with clean ones silently.
+const missingStates = (l) => (l.tip && l.tip.states ? [...myStates()].filter((s) => s !== 'Unidentified' && !l.tip.states.includes(s)) : []);
 function stateBadge(l) {
-  return diffStates(l).map((s) => `<span class="lstate s-${s.toLowerCase()}" title="${esc(t('{state} — yours is not', { state: s }))}">${esc(STATE_SHORT[s] || s)}</span>`).join('');
+  return diffStates(l).map((s) => `<span class="lstate s-${s.toLowerCase()}" title="${esc(t('{state} — yours is not', { state: t(s) }))}">${esc(STATE_SHORT[s] || s)}</span>`).join('')
+    + missingStates(l).map((s) => `<span class="lstate s-not" title="${esc(t('Not {state} — yours is', { state: t(s).toLowerCase() }))}">¬${esc(STATE_SHORT[s] || s)}</span>`).join('');
 }
 
 // Listing states at the top of the card, prominently: they change the price more than rolls (a sanctified or desecrated

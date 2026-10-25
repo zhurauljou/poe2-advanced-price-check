@@ -822,6 +822,7 @@ footer .keys .k-enter[hidden] { display: none; }
 .lot .eq i { font: 700 var(--fs-s) var(--body); font-style: normal; text-align: left; }
 .lot .eq i.b { color: var(--good); } .lot .eq i.w { color: var(--bad); }
 .lot .lstate { display: inline-block; width: 16px; margin: 0; padding: 0; text-align: center; font-size: 11px; line-height: 15px; }
+.lot .lstate.s-not { width: auto; min-width: 16px; padding: 0 2px; border-color: rgba(154, 154, 168, .5); color: var(--muted); background: none; }
 .lot.st-sanctified { box-shadow: inset 3px 0 #f1d79a; }
 .lot.st-corrupted { box-shadow: inset 3px 0 var(--g-corrupted); }
 .lot.st-mirrored, .lot.st-unidentified { box-shadow: inset 3px 0 var(--muted); }
