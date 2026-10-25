@@ -39,9 +39,10 @@ function tierUpWay(m) {
   const S = m.side === 'prefix' ? 'Sinistral' : 'Dextral';
   const ann = (craftPrices['Orb of Annulment'] ?? 0) + (craftPrices[`Omen of ${S} Annulment`] ?? 0);
   const ex = (craftPrices['Exalted Orb'] ?? 0) + (craftPrices[`Omen of ${S} Exaltation`] ?? 0);
-  // Expected: N Annulments to hit it (the others it hits are lost too — not counted), then 1 / again Exalts, each miss
-  // removed with one more side Annulment.
-  const cost = ann && ex ? m.sameSide * ann + (1 / m.again) * ex + (1 / m.again - 1) * ann : null;
+  // Expected: (N + 1) / 2 Annulments to hit it — the side shrinks with each one, as in the removal step (plancost
+  // removeCost); the others it hits on the way are lost too, not counted. Then 1 / again Exalts, each miss removed with one
+  // more side Annulment.
+  const cost = ann && ex ? ((m.sameSide + 1) / 2) * ann + (1 / m.again) * ex + (1 / m.again - 1) * ann : null;
   return `<div class="craft-sub">${esc(t('To {goal}: Orb of Annulment + Omen of {s} Annulment hits it 1 in {n}, then Exalted Orb + Omen of {s} Exaltation gives {goal} {odds}', { goal: m.goal, s: S, n: m.sameSide, odds: oneIn(m.again) }))}${cost != null ? ` · ${esc(t('≈ {cost} on average', { cost: approx(cost) }))}` : ''}</div>`;
 }
 
@@ -1049,9 +1050,14 @@ function renderNormalCraft(r, head) {
   const p = (n) => craftPrices[n];
   const base = estNow();
   const retry = base != null ? Math.min(base, p('Orb of Annulment') ?? base) : 0;
+  // A miss on a new base is a Transmutation again; after an Annulment the item is magic with no mod — the next try is
+  // the same tier's Augmentation (priced as such), not a Transmutation.
+  const annulled = base != null && (p('Orb of Annulment') ?? Infinity) <= base;
   const opts = r.normal.map((o) => {
     const orb = p(o.name);
-    const cost = orb == null || !o.top ? null : (orb + (1 - o.top) * retry) / o.top;
+    const aug = annulled ? p(o.name.replace('Transmutation', 'Augmentation')) : null;
+    const next = aug ?? orb;
+    const cost = orb == null || !o.top ? null : orb + (1 / o.top - 1) * (retry + next);
     return { ...o, orb, cost };
   });
   const known = opts.filter((o) => o.cost != null);

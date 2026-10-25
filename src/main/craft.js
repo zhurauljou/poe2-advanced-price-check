@@ -599,14 +599,14 @@ async function advise(item, demandMods, cached, { priceKeys = [] } = {}) {
   // 2. All taken — replace the weakest mod: worst tier and not in demand. Fractured cannot be removed.
   if (!open.prefix && !open.suffix) {
     // The same rules as the plan (planGoal), so the two never disagree: a good tier (T1–T2) stays if some builds use it
-    // (≥ 5%), an in-demand mod (≥ KEY_PCT%) and a mod that holds the price (priceKeys) are never swapped; the weakest is
+    // (≥ WANT_PCT), an in-demand mod (≥ KEY_PCT%) and a mod that holds the price (priceKeys) are never swapped; the weakest is
     // the lowest by demand × tier quality. (Here T1–T2 were skipped outright: «nothing worth replacing» next to a plan
     // removing a T2 Dexterity nobody uses.)
     const priceKey = new Set(priceKeys.map(keyLine));
     const scored = mine.filter((a) => a.mod && a.tag !== 'fractured' && !a.mod.lines.some((l) => priceKey.has(keyLine(l)))).map((a) => {
       const pct = Math.max(0, ...a.mod.lines.map((l) => want.get(l) || 0));
       return { ...a, pct, score: pct * tierFactor(a.tier || null) };
-    }).filter((a) => a.pct < KEY_PCT && !(a.tier && a.tier <= 2 && !a.mod.lines.every((l) => isWeak(l)) && a.pct >= 5)).sort((a, b) => a.score - b.score);
+    }).filter((a) => a.pct < KEY_PCT && !(a.tier && a.tier <= 2 && !a.mod.lines.every((l) => isWeak(l)) && a.pct >= WANT_PCT)).sort((a, b) => a.score - b.score);
     const weak = scored[0];
     if (!weak) { if (!tierUps.length) sections.push({ kind: 'keep' }); }
     else {
@@ -646,7 +646,7 @@ async function advise(item, demandMods, cached, { priceKeys = [] } = {}) {
     const second = (c) => c.text.split(' / ').filter((l) => l !== lineOf(c)).reduce((s, l) => Math.max(s, want.get(l) || 0), 0);
     const oneHybrid = (list) => list.filter((c) => !list.some((x) => x !== c && lineOf(x) === lineOf(c) && (second(x) > second(c) || (second(x) === second(c) && list.indexOf(x) < list.indexOf(c)))));
     const des = jewel
-      ? oneHybrid([...candidates('desecrated'), ...normal.filter((c) => !c.craftedOnly && !c.desecrateOnly && !c.needs).map((c) => ({ ...c, fromNormal: true, chance: null, chanceUnknown: false, essence: null }))])
+      ? oneHybrid([...candidates('desecrated'), ...normal.filter((c) => !c.craftedOnly && !c.desecrateOnly && !c.needs).map((c) => ({ ...c, fromNormal: true, chance: null, chanceGoal: null, chanceUnknown: false, essence: null }))])
         .filter(fits).sort((a, b) => b.pct - a.pct).slice(0, 6)
       : candidates('desecrated').filter(fits).slice(0, 4);
     if (des.length) {
@@ -988,7 +988,9 @@ function planGoal(mine, candidates, max, want, magic, magicFree = [], itemClass 
       if (spentQuality) return { kind: 'cur', a, pct: 0, v: 0, spentQuality: true };
       // A mod the price search keeps whatever happens holds the item's price (three minion mods on a ring worth 600 ex):
       // swapping it for something builds wear a bit more often would sell for less — desecrated or not.
-      const locked = over || a.tag === 'fractured' || a.tag === 'crafted' || !a.mod || (a.tier && a.tier <= 2 && !weak && pct >= 5) || pct >= KEY_PCT || holdsPrice(a);
+      // «Some builds» is WANT_PCT (15%): want holds nothing below it, so the «≥ 5%» written here never was the line —
+      // and a T2 Dexterity worn by 5–14% (tests: spear, gloves) is meant to go.
+      const locked = over || a.tag === 'fractured' || a.tag === 'crafted' || !a.mod || (a.tier && a.tier <= 2 && !weak && pct >= WANT_PCT) || pct >= KEY_PCT || holdsPrice(a);
       // A non-key desecrated mod holds the only desecrate slot; it can be removed for sure (Omen of Light) and
       // a 1-of-3–6 choice revealed in its place for the wanted mod — so it is held at half strength.
       const desSlot = a.tag === 'desecrated' ? 0.5 : 1;

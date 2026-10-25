@@ -57,7 +57,8 @@ const CATEGORY = {
 function minOf(v) {
   if (v == null || v <= 0) return null;
   if (Number.isInteger(v) && v <= 5) return v;
-  return v >= 5 ? Math.floor(v * 0.8) : Math.floor(v * 8) / 10;
+  // No lower than 5 for a bigger whole number: a +6 searched «≥ 4» took in worse items than a +5 searched «≥ 5».
+  return v >= 5 ? Math.max(Number.isInteger(v) ? 5 : 0, Math.floor(v * 0.8)) : Math.floor(v * 8) / 10;
 }
 
 // Roll quality within the tier: 0 — bottom of the range, 1 — max. No range (simple copy format) — null.
@@ -534,7 +535,8 @@ function flagFilters(item) {
 const LEVELS = /^\+?# to Level of all .*Skills$/i;
 
 function isMinor(m) {
-  return m.tag !== 'pseudo' && !m.option && !m.key && !m.forged && (m.importance == null || m.importance < 2.4);
+  // The same line as auto-relax (KEEP_FROM): a mod too important ever to drop is not «minor» enough to go missing either.
+  return m.tag !== 'pseudo' && !m.option && !m.key && !m.forged && (m.importance == null || m.importance < KEEP_FROM);
 }
 
 function toDivine(amount, currency) {
