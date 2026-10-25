@@ -679,10 +679,14 @@
     const putOn = (side) => kept.filter((x) => x.side === side).length + plan.filter((s) => s.act === 'essence' && s.side === side).length;
     const desOnly = kept.some((x) => x.desecrateOnly);
     let noDes = false;
-    // Fewer mods no longer fill every free slot: a lottery fill's dropped side omens come back.
-    const fix = (x) => ({ ...x, ...(x.fillOmen ? { sideOmen: x.fillOmen, otherOpen: true } : {}), ...(noDes && !x.desecrateOnly ? { desecrate: null } : {}) });
+    // Free slots per side when the variant's additions start: the full plan's (step.room) less the junk this variant
+    // leaves on the item (filled below from the removal step).
+    const room0 = (kept.find((x) => x.room) || {}).room;
+    const room = room0 ? { ...room0 } : null;
     const out = [];
     for (const s of plan) {
+      // The rune opens the pool of one goal mod: a variant without it does not socket it for nothing.
+      if (s.act === 'rune' && s.for && !keep.has(s.for)) continue;
       if (s.act === 'remove' && s.targeted && s.side) {
         if (sides.has(s.side) || desOnly) out.push(s); else if (s.currencies.includes('Omen of Light')) noDes = true;
         continue;
@@ -694,6 +698,7 @@
         const r = desKept ? s : { ...s, des: null, sides: Object.fromEntries(Object.entries(s.sides).map(([sd, x]) => [sd, { ...x, des: 0 }])) };
         // Per side: remove only as many as the variant's mods do not fit into the free slots (no data on free — all of them).
         const J = Object.fromEntries(Object.entries(r.sides).map(([sd, x]) => [sd, x.free == null ? (sides.has(sd) ? x.J : 0) : Math.min(x.J, Math.max(0, putOn(sd) - x.free))]));
+        if (room) for (const [sd, x] of Object.entries(r.sides)) room[sd] -= x.J - J[sd]; // the junk left takes its slots
         if (!Object.values(J).some(Boolean)) {
           // No other junk left to Annul: the desecrated one is removed for sure, Annulment + Omen of Light.
           if (desKept) out.push({ act: 'remove', side: s.des.side, mod: s.des.mod, currencies: ['Orb of Annulment', 'Omen of Light'], chance: 1, targeted: true });
@@ -714,11 +719,27 @@
       }
       out.push(s);
     }
+    // Side omens decided again for the variant: the full plan's choice («the other side is full») is wrong once fewer mods
+    // go on — an Exalted without the omen lands half the time on the side the variant leaves open. When the variant's
+    // mods fill every free slot of both sides, no omen is needed at all (the lottery-fill rule of craft.js).
+    const fills = room && ['prefix', 'suffix'].every((sd) => kept.filter((x) => x.side === sd).length === room[sd]);
+    const used = { prefix: 0, suffix: 0 };
+    const fix = (x) => {
+      let y = noDes && !x.desecrateOnly ? { ...x, desecrate: null } : x;
+      if (room && x.side && x.omenName && !x.craftedOnly && !x.desecrateOnly) {
+        const other = x.side === 'prefix' ? 'suffix' : 'prefix';
+        const open = !fills && room[other] - used[other] > 0;
+        y = { ...y, sideOmen: open ? x.omenName : null, otherOpen: open };
+      } else if (x.fillOmen) y = { ...y, sideOmen: x.fillOmen, otherOpen: true };
+      if (x.side) used[x.side]++;
+      return y;
+    };
     return out.flatMap((s) => {
       if (s.act === 'add') return keep.has(s.mod) ? [fix(s)] : [];
       if (s.act !== 'add2') return [s];
       const xs = s.steps.filter((x) => keep.has(x.mod)).map(fix);
-      return xs.length === 2 ? [{ ...s, steps: xs }] : xs;
+      if (xs.length === 2) return [s.cross ? { ...s, steps: xs } : { ...s, steps: xs, sideOmen: xs[0].sideOmen, otherOpen: xs[0].otherOpen }];
+      return xs;
     });
   }
 

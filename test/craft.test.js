@@ -186,6 +186,18 @@ test('magic boots: the removal after the essence counts the essence mod among th
   assert.ok(rm.sides.suffix.names.some((n) => /rarity/.test(n)), 'the essence mod is named at risk');
 });
 
+test('a smaller variant keeps the side omen it needs and skips a rune it does not use', { skip }, async () => {
+  // Full plan: suffix then a prefix pair — the prefix steps saw the suffix full, so no Sinistral omen. A variant with only
+  // «# to spirit» leaves the suffix open: half the Exalts would land there without the omen; the rune is for the hybrid.
+  await init();
+  const r = await craft.advise(item('mantle-desecrated'), json('mantle-desecrated.demand.json').mods, cached);
+  const planner = PlanCost.create(() => ({ prices, goalValue: 20, est: 2 }));
+  const sp = planner.subPlan(r.goal.plan, new Set(['# to spirit']));
+  const add = sp.find((s) => s.act === 'add');
+  assert.equal(add.sideOmen, 'Omen of Sinistral Exaltation');
+  assert.ok(!sp.some((s) => s.act === 'rune'), 'no rune for a mod the variant does not add');
+});
+
 test('magic jewel: no Augmentation when the goal fills that side — its random mod would only be annulled again', { skip }, async () => {
   await init();
   const demand = [{ name: '#% increased Critical Hit Chance for Attacks', pct: 70 }, { name: '#% increased Critical Damage Bonus for Attack Damage', pct: 65 },

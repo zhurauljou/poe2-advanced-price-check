@@ -725,7 +725,15 @@ async function computeGoal(g) {
   goalValue = undefined;
   goalBasis = 'exact';
   goalThin = null;
-  if (variantsItem !== state) { planVariant = 'ideal'; variantPicked = false; planAnyway = false; variantsItem = state; }
+  if (variantsItem !== state) {
+    // A new copy of the item during a step-by-step session keeps the session's variant and the shown plan: each hotkey
+    // press used to reset them, and «Next» jumped back to the Ideal plan.
+    const keepSession = craftSession && sessionMatches();
+    planVariant = keepSession ? craftSession.variant : 'ideal';
+    variantPicked = !!keepSession;
+    planAnyway = !!keepSession;
+    variantsItem = state;
+  }
   variants = null;
   try {
     const r = await priceGoal(g, g.add, true);
@@ -976,9 +984,14 @@ function startSession() {
   const g = craftGoal;
   if (!g) return;
   const keys = modKeys();
+  // The removals of the chosen variant, not of Ideal: a Cheap variant that keeps junk never reached «Goal reached».
+  // Regal's random mod is not a row: it is not on the item yet, the row showed ✓ from the start.
+  const v = curVariant();
+  const vRemoves = v && v.key !== 'ideal' ? new Set(expandPlan(v.plan).flatMap((x) => (x.act === 'remove' ? (x.mods || (x.mod ? [x.mod] : [])) : []))) : null;
+  const removes = g.remove.filter((r) => r.tag !== 'random' && (!vRemoves || vRemoves.has(r.text))).map((r) => ({ text: r.text }));
   craftSession = { base: state.item.baseType, ilvl: state.item.ilvl, name: state.item.name, rarity: state.item.rarity,
-    goal: { add: (curVariant() ? curVariant().adds : g.add).map((a) => ({ text: a.text, or: a.orMods || [] })), remove: g.remove.map((r) => ({ text: r.text })) },
-    start: keys, before: keys, current: keys, seen: state };
+    goal: { add: (v ? v.adds : g.add).map((a) => ({ text: a.text, or: a.orMods || [] })), remove: removes },
+    start: keys, before: keys, current: keys, seen: state, variant: v ? v.key : 'ideal' };
 }
 function sessionHtml(r) {
   const s = craftSession;
@@ -998,7 +1011,10 @@ function sessionHtml(r) {
     ...s.goal.remove.map((x) => `<div class="ss ${has(x.text) ? '' : 'done'}">${has(x.text) ? '○' : '✓'} ${esc(t('remove {mod}', { mod: x.text }))}</div>`),
   ];
   const done = s.goal.add.every((a) => has(a.text)) && s.goal.remove.every((x) => !has(x.text));
-  const next = r.goal && r.goal.plan && r.goal.plan.length ? expandPlan(r.goal.plan)[0] : null;
+  // «Next» from the session's variant (the same plan the window shows), not from the full goal.
+  const sv = s.variant && s.variant !== 'ideal' && variants ? variants.find((x) => x.key === s.variant) : null;
+  const splan = sv ? sv.plan : r.goal && r.goal.plan;
+  const next = splan && splan.length ? expandPlan(splan)[0] : null;
   return `<div class="craft-sec session"><div class="k">${esc(t('Crafting step by step'))} <button class="link" data-act="session-stop">■ ${esc(t('Stop'))}</button></div>
     <div class="ss-how">📌 ${esc(t('The window stays open while you craft. Do a step in the game, hover the item and press'))} <kbd>${esc(state.hotkey || 'Ctrl+E')}</kbd></div>
     ${news.length ? `<div class="ss-news">${esc(t('Since the last check:'))}${news.join('')}</div>` : ''}

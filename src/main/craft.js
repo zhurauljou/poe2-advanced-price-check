@@ -1014,7 +1014,10 @@ function planGoal(mine, candidates, max, want, magic, magicFree = [], itemClass 
   // retry — what removes a failed result so you can try again.
   const plan = [];
   const needRune = add.find((c) => c.needs);
-  if (needRune) plan.push({ act: 'rune', mod: needRune.needs.line, free: needRune.needs.free, currencies: [needRune.needs.rune], chance: 1 });
+  // The rune opens the pool of one goal mod (for — its text): a plan variant without that mod skips it. No free augment
+  // socket — an Artificer's Orb adds one first, and its price is part of the step.
+  if (needRune) plan.push({ act: 'rune', mod: needRune.needs.line, for: needRune.text, free: needRune.needs.free, chance: 1,
+    currencies: [needRune.needs.rune, ...(needRune.needs.free ? [] : ["Artificer's Orb"])] });
   let essenceMod = null; // mod the magic → rare essence will add — do not add it a second time
   if (magicFree.length) plan.push({ act: 'augment', side: magicFree[0], currencies: ['Orb of Augmentation'], chance: 1 });
   if (magic) {
@@ -1202,6 +1205,9 @@ function planGoal(mine, candidates, max, want, magic, magicFree = [], itemClass 
       necroEarly: max[other] - startFilled[other] > 0 ? `Omen of ${S} Necromancy` : null,
       // A lottery fill dropped the side omen; a plan variant that leaves some goal mods out restores it (craft.js renderer).
       fillOmen: lotteryFill && otherRoom ? `Omen of ${S} Exaltation` : null,
+      // Free slots per side when the additions start, and this side's omen: a plan variant with fewer mods (plancost
+      // subPlan) decides from them whether the other side still has room — and so whether the step needs the omen.
+      room: { prefix: max.prefix - startFilled.prefix, suffix: max.suffix - startFilled.suffix }, omenName: `Omen of ${S} Exaltation`,
       // Perfect/corrupted essence with this mod: a sacrificial Exalted on the side → the side's Crystallisation + essence.
       crafted: craftedFree && c.crafted && c.crafted.length ? c.crafted : null, essTier: c.essTier || null,
       // Best tier the item can roll (T1 may need a higher item level: topLevel / topRange).
