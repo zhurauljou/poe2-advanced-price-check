@@ -237,8 +237,8 @@
     'Full — all modifiers are top tier': 'Всё занято — все моды топ-тира',
     'Nothing worth replacing.': 'Менять нечего.',
     'Cheap and safe': 'Дёшево и без риска',
-    'Demand % below is among {n} builds that wear this item class with these modifiers': 'Спрос в % ниже — среди {n} билдов, которые носят вещь этого класса с этими модами',
-    'Demand among builds using': 'Спрос среди билдов с',
+    'Demand % in this plan is among {n} builds that wear this item class with this modifier': 'Спрос в % в этом плане — среди {n} билдов, которые носят вещь этого класса с этим модом',
+    'demand basis': 'основа спроса',
     "Mod pool: game files (RePoE). Roll chances aren't shown — PoE 2 files have no modifier weights.":
       'Пул модов: файлы игры (RePoE). Шансов выпадения нет — в файлах PoE 2 нет весов модов.',
     '% = share of those builds using the modifier (poe.ninja). «price?» — what your item would cost with it.':

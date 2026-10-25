@@ -171,10 +171,14 @@ async function priceCraft(b) {
 
 // Craft goal: what to keep / remove / add and the steps; the button prices the finished item.
 let craftGoal = null;
-function goalHtml(g) {
+// theme — the item's mods demand was narrowed by (poe.ninja: builds wearing this class with them); marked on the kept rows.
+function goalHtml(g, theme = [], themeBuilds = null) {
   const row = (cls, mark, x, extra = '') => `<div class="g ${cls}"><i>${mark}</i>${esc(x.text)}${x.tier ? ` <span class="craft-tier">T${x.tier}</span>` : ''}${extra}</div>`;
+  const themeKeys = new Set(theme.map(tplKey));
+  const basis = (x) => ((x.templates || []).some((l) => themeKeys.has(tplKey(l)))
+    ? ` <span class="basis" title="${esc(t('Demand % in this plan is among {n} builds that wear this item class with this modifier', { n: themeBuilds ?? '?' }))}">${esc(t('demand basis'))}</span>` : '');
   return `<div class="craft-sec goal"><div class="k" title="${esc(t('The best item this base can become — most wanted modifiers for its slots'))}">${esc(t('Goal'))}</div>
-    ${g.keep.map((x) => row('keep', '✓', x, x.up ? ` <span class="tierup" title="${esc(t('Key modifier with a weak tier — a higher tier is worth more'))}">↑ ${esc(t('tier'))}</span>` : '')).join('')}
+    ${g.keep.map((x) => row('keep', '✓', x, (x.up ? ` <span class="tierup" title="${esc(t('Key modifier with a weak tier — a higher tier is worth more'))}">↑ ${esc(t('tier'))}</span>` : '') + basis(x))).join('')}
     ${g.remove.map((x) => row('remove', '✗', x)).join('')}
     ${g.add.map((x) => row('add', '+', x, ` <span class="dem${demPct(x) >= 60 ? ' hot' : ''}" title="${esc(demTitle(x))}">${demPct(x) >= 60 ? '🔥 ' : ''}${esc(t('{pct}% builds', { pct: fmt(demPct(x)) }))}</span>${chanceTag(x.chanceGoal ?? x.chance, x.chanceUnknown, false, x.chanceGoal != null ? x.target : null)}${x.essence ? ` <span class="ess">◈ ${esc(x.essence.short)}</span>` : ''}`)).join('')}
 </div>`;
@@ -1213,7 +1217,7 @@ function renderCraft(r) {
     planPricing = { done: 0, total: 1 }; // computeGoal below prices the goal, then the variants
     planDraft = false;
     top.push(`<div class="craft-sec plan-box"><div class="k">${t('Plan')}${inSession ? '' : ` <button class="link session-btn" data-act="session" title="${esc(t('Do a step, check the item again with the hotkey — the window stays open and shows what you got and the next step'))}">▶ ${esc(t('Craft step by step'))}</button>`}</div><div class="variants-box">${variantsHtml()}</div><div class="verdict-box">${verdictHtml(curVariant() ? curVariant().plan : r.goal.plan)}</div><div class="bases-box">${basesHtml(curVariant() ? curVariant().plan : r.goal.plan)}</div>
-      ${planHtml(curVariant() ? curVariant().plan : r.goal.plan)}<details class="why"><summary>${t('Why this plan')}</summary>${goalHtml(r.goal)}</details></div>`);
+      ${planHtml(curVariant() ? curVariant().plan : r.goal.plan)}<details class="why"><summary>${t('Why this plan')}</summary>${goalHtml(r.goal, r.theme || [], r.themeBuilds)}</details></div>`);
   } else {
     top.push(`<div class="craft-sec plan-box"><div class="verdict">${esc(t('No clear upgrade for this item — selling as is is the simple choice'))}</div></div>`);
     if (r.gamble) top.push(gambleHtml(r.gamble, true)); // nothing to improve: risky finish in view
@@ -1259,9 +1263,6 @@ function renderCraft(r) {
     const sock = r.freeSockets ? t('{n} free augment socket(s)', { n: r.freeSockets }) : t("no free augment socket — Artificer's Orb adds one");
     parts.push(`<div class="craft-sec"><div class="k">${esc(t('Runes and soul cores for the sockets'))} <small class="muted">· ${esc(sock)}</small></div>
       ${r.augments.map((a) => `<div class="craft-how"><span><span class="game">${esc(a.name)}</span>${craftPrices[a.name] != null ? ` ≈ ${approx(craftPrices[a.name])}` : ''} — ${esc(a.lines.join(', '))} <span class="dem">· ${esc(t('{pct}% builds', { pct: fmt(a.pct) }))}</span>${a.ancient ? ` <small class="muted">(${esc(t('Ancient Augment: one per item'))})</small>` : ''}</span></div>`).join('')}</div>`);
-  }
-  if (r.theme && r.theme.length) {
-    top.splice(1, 0, `<div class="craft-theme" title="${t('Demand % below is among {n} builds that wear this item class with these modifiers', { n: r.themeBuilds })}">${t('Demand among builds using')}${r.theme.map((m, i) => `${i ? '<span class="plus">+</span>' : ''}<b>${esc(m)}</b>`).join('')}</div>`);
   }
   if (chanceNote) parts.push(chanceNote); // there were no tables with odds, but the plan has odds: the line goes at the end
   if (r.gamble && r.goal && r.goal.plan && r.goal.plan.length) parts.push(gambleHtml(r.gamble)); // at the end, after all the safe methods

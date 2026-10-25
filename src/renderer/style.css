@@ -284,10 +284,6 @@ body.cmp-page { background: #0a0d12; }
 /* ---- Craft tab ---- */
 .craft-slots { text-align: center; color: var(--label); font-size: var(--fs-s); }
 .craft-slots b { color: var(--cream); }
-.craft-theme { text-align: center; font-size: var(--fs-s); color: var(--muted); margin-top: 2px; }
-.craft-theme b { display: block; color: var(--g-mod); font-weight: normal; line-height: 1.35; }
-/* Each mod of the build theme on its own line; "+" between them — the builds wear them together, not one or the other. */
-.craft-theme .plus { display: block; font-size: var(--fs-xs); line-height: 1; color: var(--muted); }
 .craft-sec { margin-top: 6px; }
 .craft-sec .k { font: 700 var(--fs-s) var(--body); letter-spacing: .2px; color: var(--cream); margin-bottom: 3px; }
 .craft-how { display: flex; gap: 6px; font-size: var(--fs-s); color: var(--text); margin: 2px 0; }
@@ -577,6 +573,8 @@ body.upd-page { height: auto; }
 .goal-steps li { margin: 2px 0; }
 .goal .goal-price { font-size: var(--fs-s); }
 .goal .tierup { margin-left: 4px; font: 700 var(--fs-xs) var(--body); color: var(--warn); }
+/* A mod the demand was narrowed by (builds wearing this class with it): the plan's percentages are among those builds. */
+.goal .basis { margin-left: 4px; font: 700 var(--fs-xs) var(--body); color: var(--g-mod); white-space: nowrap; }
 /* Approximate mod chance (estimated from trade) and an accuracy warning */
 .chance { margin-left: 6px; font: 700 var(--fs-xs) var(--body); white-space: nowrap; letter-spacing: 0; }
 .chance.common { color: var(--good); } .chance.uncommon { color: var(--warn); } .chance.rare { color: var(--bad); }
