@@ -136,7 +136,9 @@ const topValue = (text) => {
 };
 
 // item — the parsed item (item.affixes from the advanced format), demandMods — [{ name, pct }] from poe.ninja.
-async function advise(item, demandMods, cached) {
+// priceKeys — templates the price search keeps whatever happens (src/main/pricing.js key mods): they hold the item's price,
+// so the plan never removes them.
+async function advise(item, demandMods, cached, { priceKeys = [] } = {}) {
   if (!['Rare', 'Magic', 'Unique', 'Normal'].includes(item.rarity)) return { note: t('Craft tips are for rare, magic, unique items and white bases.') };
   // Tablets: their mods and pool differ from equipment (corruption with sockets, 3 + 3 slots) — tips would be wrong.
   if (item.itemClass === 'Tablet') return { note: t('No craft tips for tablets yet. The Price tab searches by their modifiers and uses left.') };
@@ -796,7 +798,7 @@ async function advise(item, demandMods, cached) {
     u.again = (nOf(m.type) / total) * (sumW(w, goalLv) / sumW(w, levels));
     u.sameSide = mine.filter((a) => a.side === side && a.tag !== 'fractured').length;
   }
-  const goal = planGoal(mine, normal, max, want, magic, magicFree, item.itemClass, craftedSources, item.quality || 0, craftedCap, reroll);
+  const goal = planGoal(mine, normal, max, want, magic, magicFree, item.itemClass, craftedSources, item.quality || 0, craftedCap, reroll, priceKeys);
   // Runes / Soul Cores for sockets: augments for the class whose stats builds use (demand ≥ 15%) — the best per stat family.
   const augments = [];
   if (!jewel) {
@@ -930,8 +932,12 @@ const EXALT_KEYS = ['base', 'greater', 'perfect'];
 const EXALT_MIN = Object.fromEntries(methods.tiers('exalt').map(([, lv], i) => [EXALT_KEYS[i], lv]));
 const EXALT_NAME = Object.fromEntries(methods.tiers('exalt').map(([n], i) => [EXALT_KEYS[i], n]));
 const KEY_PCT = 30; // a mod used by this % of builds is not swapped for another
+// A trade / poe.ninja template as a RePoE mod line: lowercase, no "+" before the number, no "(Local)".
+const keyLine = (s) => String(s).toLowerCase().replace(/\+#/g, '#').replace(/ \(local\)$/, '');
 const KEEP_BONUS = 1.5;
-function planGoal(mine, candidates, max, want, magic, magicFree = [], itemClass = '', craftedSources = [], itemQuality = 0, craftedCap = 1, reroll = () => null) {
+function planGoal(mine, candidates, max, want, magic, magicFree = [], itemClass = '', craftedSources = [], itemQuality = 0, craftedCap = 1, reroll = () => null, priceKeys = []) {
+  const priceKey = new Set(priceKeys.map(keyLine));
+  const holdsPrice = (a) => !!a.mod && a.mod.lines.some((l) => priceKey.has(keyLine(l)));
   // A key mod for the slot (skill levels, Spirit, speed on boots…) raises the price more than its popularity
   // suggests: "+2 to minions" on a sceptre is worth more than Mana Regeneration, even if the latter is more common.
   const KEY_BONUS = 2;
@@ -972,7 +978,9 @@ function planGoal(mine, candidates, max, want, magic, magicFree = [], itemClass 
       // A good tier is kept only if someone needs the mod at all (+28 Dexterity T2 at 0% of builds is no reason).
       const spentQuality = a.mod && a.mod.lines.some((l) => /to maximum quality$/.test(l)) && itemQuality > 20;
       if (spentQuality) return { kind: 'cur', a, pct: 0, v: 0, spentQuality: true };
-      const locked = over || a.tag === 'fractured' || a.tag === 'crafted' || !a.mod || (a.tier && a.tier <= 2 && !weak && pct >= 5) || pct >= KEY_PCT;
+      // A mod the price search keeps whatever happens holds the item's price (three minion mods on a ring worth 600 ex):
+      // swapping it for something builds wear a bit more often would sell for less — desecrated or not.
+      const locked = over || a.tag === 'fractured' || a.tag === 'crafted' || !a.mod || (a.tier && a.tier <= 2 && !weak && pct >= 5) || pct >= KEY_PCT || holdsPrice(a);
       // A non-key desecrated mod holds the only desecrate slot; it can be removed for sure (Omen of Light) and
       // a 1-of-3–6 choice revealed in its place for the wanted mod — so it is held at half strength.
       const desSlot = a.tag === 'desecrated' ? 0.5 : 1;

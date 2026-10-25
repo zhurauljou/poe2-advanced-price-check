@@ -1,7 +1,7 @@
 // Item pricing: exchange items via poe.ninja, everything else via a trade search.
 const api = require('./api');
 const stats = require('./stats');
-const { weight, ENABLE_FROM, KEEP_FROM } = require('./weights');
+const { weight, ENABLE_FROM, KEEP_FROM, nicheOf } = require('./weights');
 const { log } = require('./log');
 
 let types = null; // Set of base types from trade — to pull the base out of a magic item's name
@@ -291,10 +291,8 @@ function prepare(item, demand, rollsOn) {
   const searchMods = item.rarity === 'Rare' || item.rarity === 'Magic';
   const props = propFilters(item);
   const covered = props.filter((p) => p.enabled).map((p) => LOCAL_COVERED[p.covers]).filter(Boolean);
-  // Item niche: 2+ mods of one theme — they're key regardless of demand across the whole class.
-  // Puppet Master and Command Skills are minion mechanics, even though the word «Minion» isn't in the text.
-  const NICHES = [/\bMinions?\b|\bPuppet Master\b|\bCommand Skills?\b/, /\bTotems?\b/, /\bCompanions?\b/];
-  const niche = searchMods ? NICHES.find((re) => item.mods.filter((m) => m.statId && m.tag !== 'implicit' && re.test(m.text)).length >= 2) || null : null;
+  // Item niche (weights.js nicheOf): 2+ mods of one theme — they're key regardless of demand across the whole class.
+  const niche = searchMods ? nicheOf(item.mods) : null;
   const mods = item.mods.map((m) => {
     const dp = demandOf(m.template);
     // Demand is loaded (top 80 mods of the class) and this mod isn't in it — almost nobody wears it: 0% for importance.

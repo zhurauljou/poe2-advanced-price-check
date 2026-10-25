@@ -89,10 +89,20 @@ const isWeak = (template) => WEAK_CI.test(template);
 // (Dexterity on ES gloves is not an archer's sign) and are skipped. → up to n mod texts (first lines).
 const DEFENCE = /(increased (Energy Shield|Armour|Evasion Rating)|to maximum Energy Shield|to Armour|to Evasion Rating)/i;
 const ATTRIBUTE = /to (Strength|Dexterity|Intelligence|all Attributes)\b/i;
+
+// Item niche: 2+ explicit mods of one theme — the item is for those builds, whatever the whole class wears. The price search
+// keeps them all (src/main/pricing.js), and the demand theme takes them alone: a stray «Adds Physical Damage to Attacks» on a
+// minion ring would otherwise narrow the demand to the few builds wearing both. Puppet Master and Command Skills are
+// minion mechanics, even though the word «Minion» isn't in the text.
+const NICHES = [/\bMinions?\b|\bPuppet Master\b|\bCommand Skills?\b/, /\bTotems?\b/, /\bCompanions?\b/];
+const nicheOf = (mods) => NICHES.find((re) => mods.filter((m) => m.statId && m.tag !== 'implicit' && re.test(m.text)).length >= 2) || null;
+
 function themeMods(mods, itemClass, n = 2) {
   const rank = (m) => (isKey(itemClass, m.template || m.text) ? 2 : 0) + (DEFENCE.test(m.text) ? 1 : 0);
-  return mods.filter((m) => m.statId && !['pseudo', 'implicit', 'rune', 'enchant'].includes(m.tag) && !m.option && !ATTRIBUTE.test(m.text))
+  const niche = nicheOf(mods.filter((m) => !['pseudo', 'rune', 'enchant'].includes(m.tag)));
+  return mods.filter((m) => m.statId && !['pseudo', 'implicit', 'rune', 'enchant'].includes(m.tag) && !m.option && !ATTRIBUTE.test(m.text)
+    && (!niche || niche.test(m.text)))
     .sort((a, b) => rank(b) - rank(a) || (b.importance || 0) - (a.importance || 0)).slice(0, n).map((m) => m.text.split('\n')[0]);
 }
 
-module.exports = { weight, tierFactor, ENABLE_FROM, KEEP_FROM, isKey, isWeak, themeMods };
+module.exports = { weight, tierFactor, ENABLE_FROM, KEEP_FROM, isKey, isWeak, themeMods, nicheOf };

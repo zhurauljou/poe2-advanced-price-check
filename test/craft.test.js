@@ -186,6 +186,30 @@ test('minion ring: three minion mods are checked and key', { skip }, async () =>
   }
 });
 
+test('minion ring: the demand theme is its minion mods, not the stray Adds Physical Damage to Attacks', { skip }, async () => {
+  // Player's ring (2026-10-25): the theme was «Adds Physical Damage to Attacks + minion Critical Damage» — 599 builds wearing
+  // both, where the ring's own Cooldown Recovery (29.7%) lost to all resistances (29.5%).
+  const f = await filters('ring-minion', 'ring-minion.demand.json');
+  const theme = require('../src/main/weights').themeMods(f.mods, 'Rings');
+  assert.equal(theme.length, 2);
+  for (const m of theme) assert.match(m, /^Minions have/, `«${m}» is not a minion mod`);
+});
+
+test('minion ring: the plan keeps the mods that hold its price, even desecrated and below the key demand', { skip }, async () => {
+  // The same ring under the mixed theme's demand: Cooldown Recovery 29.7% (under KEY_PCT), all resistances 29.5%, and the
+  // desecrated mod held at half strength — the plan swapped a 600 ex ring's minion mod for resistances.
+  await init();
+  const demand = json('ring-minion-themed.demand.json').mods.map((m) => (/Cooldown Recovery Rate$/.test(m.name) && /^Minions/.test(m.name) ? { ...m, pct: 29.7 }
+    : m.name === '#% to all Elemental Resistances' ? { ...m, pct: 29.5 } : m));
+  const cooldown = (r) => r.goal && r.goal.remove.some((x) => /cooldown recovery/.test(x.text));
+  assert.ok(cooldown(await craft.advise(item('ring-minion'), demand, cached)), 'without the price keys the case reproduces');
+  const f = await filters('ring-minion', 'ring-minion.demand.json');
+  const priceKeys = f.mods.filter((m) => m.key && m.tag !== 'pseudo' && m.template).map((m) => m.template);
+  const r = await craft.advise(item('ring-minion'), demand, cached, { priceKeys });
+  assert.ok(!cooldown(r), 'Cooldown Recovery holds the price — it stays');
+  for (const re of [/critical damage bonus/, /critical hit chance/, /cooldown recovery/]) assert.ok(r.goal == null || r.goal.keep.some((x) => re.test(x.text)), `${re} kept`);
+});
+
 test('ES boots: life (low demand) and Stun Threshold are unchecked, total life is off', { skip }, async () => {
   const f = await filters('boots-es', 'boots-es.demand.json');
   assert.equal(mod(f, /^\+137 to maximum Life/).enabled, false);

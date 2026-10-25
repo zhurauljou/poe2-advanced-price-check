@@ -16,6 +16,7 @@ const { themeMods } = require('./weights');
 const history = require('./history');
 let lastItem = null; // last parsed item — for crafting advice
 let lastThemeMods = []; // its key mods — crafting demand is computed among builds that have them
+let lastPriceKeys = []; // templates the price search never relaxes — the mods that hold the item's price; the craft plan keeps them
 const { parseItem } = require('./parser');
 const stats = require('./stats');
 const clientLang = require('./clientLang');
@@ -327,6 +328,7 @@ async function priceCheck(text, refresh = false, historyId = null) {
   // Item theme for crafting advice: the mods that define its archetype (src/main/weights.js themeMods) — not just the ones
   // the price search enabled (local ES on gloves is folded into the property, which left «Rarity + Dexterity» as the theme).
   lastThemeMods = themeMods(prepared.filters.mods, item.itemClass);
+  lastPriceKeys = prepared.filters.mods.filter((m) => m.key && m.tag !== 'pseudo' && m.template).map((m) => m.template);
   const entry = { name: item.name, baseType: item.baseType, rarity: item.rarity, league };
   lastHistoryId = historyId || history.add({ ...entry, text: rawText });
   const prev = history.previous(entry, lastHistoryId);
@@ -702,7 +704,7 @@ app.whenReady().then(singleInstance).then((ok) => {
     const rarity = 'Rare'; // normal and magic items are craft bases: look at demand for rares of that class
     const d = await categoryDemand({ league, itemClass: lastItem.itemClass, rarity, limit: 80, minLevel: demandLevel(), ...demandScope(lastItem, lastThemeMods) },
       api.fetchBuffer).catch(() => null);
-    const r = await craft.advise(lastItem, d && d.mods, api.cached);
+    const r = await craft.advise(lastItem, d && d.mods, api.cached, { priceKeys: lastPriceKeys });
     // Currency prices for crafting cost estimates (div each; not on poe.ninja — null).
     const prices = {};
     for (const name of ['Vaal Orb', 'Omen of Sanctification', 'Divine Orb', 'Orb of Transmutation', 'Greater Orb of Transmutation', 'Perfect Orb of Transmutation', 'Orb of Annulment', 'Fracturing Orb', "Hinekora's Lock", 'Omen of Putrefaction', 'Chaos Orb', 'Greater Chaos Orb', 'Perfect Chaos Orb', 'Omen of Whittling', 'Omen of Sinistral Erasure', 'Omen of Dextral Erasure', 'Regal Orb', 'Greater Regal Orb', 'Perfect Regal Orb']) { const row = api.ninja.byName.get(name); prices[name] = row ? row.divine : null; }
