@@ -919,3 +919,29 @@ body.wide .craft-cols > .more-ways > summary { pointer-events: none; }
 .erow .ename .cur { white-space: normal; }
 .erow .ename .cur, .erow .ename .plus { display: inline-block; padding: 0 5px; border-radius: 3px; border: 1px solid; font-size: var(--fs-s); line-height: 1.4;
   color: #ff9bd8; border-color: rgba(255, 155, 216, .45); background: rgba(255, 155, 216, .08); }
+
+/* ---- Calmer window: less framing, one-line filter rows ---- */
+/* Header values: no dotted underline — the hover frame tells they can be clicked; diamond separators become air. */
+.tp:not(.on) { text-decoration: none; }
+.tt .sep { height: 6px; margin: 0 auto; background: none; }
+/* Section titles without the gold rules on both sides. */
+.sect { justify-content: center; margin: 10px 0 6px; }
+.sect::before, .sect::after { display: none; }
+/* Listings: no frame and no rule under every row — quiet zebra rows instead. */
+.lots { border: 0; border-radius: 4px; background: rgba(10, 13, 18, .6); overflow: hidden; }
+.lot { border-bottom: 0; }
+.lot:nth-child(even):not(:hover) { background: rgba(255, 255, 255, .025); }
+/* Filter rows: the kind as a quiet word in its colour; range, max roll and 🔥 in a right column, the text keeps one line. */
+.mod .kind { margin-left: 5px; font: 600 var(--fs-xs) var(--body); letter-spacing: .2px; color: var(--c, var(--muted)); opacity: .8; }
+.mod .kind.implicit { --c: var(--g-mod); } .mod .kind.crafted { --c: var(--g-crafted); } .mod .kind.enchant { --c: var(--g-enchant); }
+.mod .kind.rune { --c: var(--g-rune); } .mod .kind.desecrated { --c: var(--g-desecrated); } .mod .kind.fractured { --c: var(--g-fractured); }
+.mod .kind.corrupted { --c: var(--g-corrupted); }
+.mod .meta { flex: none; display: inline-flex; align-items: center; gap: 5px; margin-left: 6px; }
+.mod .meta:empty { display: none; }
+.mod .meta .dem { font-size: var(--fs-s); }
+.mod .meta .rng { font-size: var(--fs-xs); }
+.mod .maxroll { margin-left: 0; padding: 0; background: none; border: 0; color: var(--gold); }
+/* max: hidden until wanted — on hover, focus or when set (its slot stays, so the row doesn't jump). */
+.mod .range-in input.max.empty { opacity: 0; }
+.mod:hover .range-in input.max.empty, .mod .range-in input.max:focus { opacity: 1; }
+.mod.off .meta { opacity: .6; }

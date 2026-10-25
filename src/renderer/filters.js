@@ -33,14 +33,20 @@ function modRow(m, i) {
   const tier = m.tag === 'pseudo' ? `<span class="tcol sigma" title="${t('Total from all modifiers')}">Σ</span>`
     : `<span class="tcol">${m.tier ? `<span class="tag tier${m.tier <= 2 ? ' top' : ''}">T${m.tier}</span>` : ''}</span>`;
   // Identical mods — each on its own row, the filter is shared: trade searches by the sum.
-  const from = m.parts ? ` title="${esc(m.parts.map((p) => `${p.text}${p.tier ? ` (T${p.tier})` : ''}`).join('\n'))}"` : '';
-  const cat = (m.tag !== 'explicit' && m.tag !== 'pseudo' ? ` <span class="tag ${esc(m.tag)}">${esc(t(m.tag))}</span>` : '')
-    // Demand from poe.ninja: a widely used mod is a reason to enable it, even if the tier is weak.
-    + (m.demand >= 30 ? ` <span class="dem${m.demand >= 60 ? ' hot' : ''}" title="${t('{pct}% of level {lvl}+ builds wearing this item class have this modifier (poe.ninja)', { pct: fmt(m.demand), lvl: demandLevel })}">${m.demand >= 60 ? '🔥 ' : ''}${t('{pct}% builds', { pct: fmt(m.demand) })}</span>` : '');
+  // Demand from poe.ninja: a widely used mod is a reason to enable it, even if the tier is weak. On the row only 🔥 for
+  // most builds (60%+); the number is in the tooltip — «85.1% builds» on every row pulled the eye off the mod itself.
+  const demand = m.demand >= 30 ? t('{pct}% of level {lvl}+ builds wearing this item class have this modifier (poe.ninja)', { pct: fmt(m.demand), lvl: demandLevel }) : '';
+  const title = m.parts ? m.parts.map((p) => `${p.text}${p.tier ? ` (T${p.tier})` : ''}`).join('\n') : demand;
+  const from = title ? ` title="${esc(title)}"` : '';
+  // The kind (fractured, crafted…) as a quiet word in its colour, not a framed badge; the mod text has that colour too.
+  const cat = m.tag !== 'explicit' && m.tag !== 'pseudo' ? ` <span class="kind ${esc(m.tag)}">${esc(t(m.tag))}</span>` : '';
+  const fire = m.demand >= 60 ? `<span class="dem hot" title="${esc(demand)}">🔥</span>` : '';
   const text = m.tag === 'pseudo' ? m.text.replace(/^Σ /, '') : m.text;
+  // The tier range, max roll and 🔥 sit in their own column on the right: inside the text they pushed it onto a second line.
   return `<div class="mod t-${esc(m.tag)}${m.enabled ? '' : ' off'}" data-i="${i}">
       <label><input type="checkbox" data-k="enabled"${m.enabled ? ' checked' : ''}>${meter(m) || '<span class="imp"></span>'}${tier}
-        <span class="txt"${from}>${esc(text)}${m.merged ? `<span class="sum-v"> = ${fmt(m.value)}</span>` : ''}${cat}${rollInfo(m)}${driveChip(i)}</span></label>
+        <span class="txt"${from}>${esc(text)}${m.merged ? `<span class="sum-v"> = ${fmt(m.value)}</span>` : ''}${cat}${driveChip(i)}</span>
+        <span class="meta">${fire}${rollInfo(m).trim()}</span></label>
       ${m.option ? '' : `<span class="range-in"><input type="number" data-k="min" step="any" placeholder="${t('min')}" value="${m.min == null ? '' : m.min}"><input type="number" class="max${m.max == null ? ' empty' : ''}" data-k="max" step="any" placeholder="${t('max')}" title="${esc(t('Upper limit (optional): e.g. exactly +4, so +5 items do not count'))}" value="${m.max == null ? '' : m.max}"></span>`}
     </div>`;
 }
