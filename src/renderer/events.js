@@ -14,7 +14,10 @@ window.pc.onItem((data) => {
   openDemand.clear();
   showAllLots = false;
   hideCompare();
-  if (state.filters) state.filters.priceCurrency = data.priceCurrency || 'any';
+  // The listing currency is a filter of this search, not a setting: «Exalted» chosen for a cheap item left every later
+  // item (an expensive one too) searched among exalted-priced listings only.
+  if (state.filters) state.filters.priceCurrency = 'any';
+  demandAll = false; // the same for «all builds» on the Demand tab
   searchSeq++;
   setStatus('');
   setNote('');
@@ -192,7 +195,6 @@ $('misc').addEventListener('click', (e) => {
   if (!b) return;
   markDirty();
   state.filters.priceCurrency = b.dataset.cur;
-  window.pc.setPriceCurrency(b.dataset.cur);
   renderFilters();
 });
 

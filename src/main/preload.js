@@ -23,7 +23,6 @@ contextBridge.exposeInMainWorld('pc', {
   builds: (opts) => ipcRenderer.invoke('builds', opts),
   demand: (opts) => ipcRenderer.invoke('demand', opts),
   craft: () => ipcRenderer.invoke('craft'),
-  setPriceCurrency: (c) => ipcRenderer.invoke('set-price-currency', c),
   copy: (text) => ipcRenderer.invoke('copy', text),
   openUrl: (url) => ipcRenderer.invoke('open-url', url),
   hide: () => ipcRenderer.invoke('hide'),

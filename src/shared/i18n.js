@@ -161,6 +161,7 @@
     'Open this listing on the trade site': 'Открыть этот лот на трейде',
     'Show fewer': 'Свернуть',
     'Show all {n}': 'Показать все {n}',
+    'Show the {n} cheapest': 'Показать {n} самых дешёвых',
     'Whisper copied — switch to the game and paste it into chat (Enter, Ctrl+V)': 'Шёпот скопирован — переключитесь в игру и вставьте в чат (Enter, Ctrl+V)',
     'Whisper copied — paste it into game chat (Enter, Ctrl+V)': 'Шёпот скопирован — вставьте в чат игры (Enter, Ctrl+V)',
     'Opened on the trade site': 'Открыто на трейде',

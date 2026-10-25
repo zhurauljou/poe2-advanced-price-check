@@ -329,10 +329,11 @@ async function priceCheck(text, refresh = false, historyId = null) {
   // the price search enabled (local ES on gloves is folded into the property, which left «Rarity + Dexterity» as the theme).
   lastThemeMods = themeMods(prepared.filters.mods, item.itemClass);
   lastPriceKeys = prepared.filters.mods.filter((m) => m.key && m.tag !== 'pseudo' && m.template).map((m) => m.template);
-  const entry = { name: item.name, baseType: item.baseType, rarity: item.rarity, league };
+  // Item level and quality too: every white base of a type shares name and base, so «Last check» showed another base's price.
+  const entry = { name: item.name, baseType: item.baseType, rarity: item.rarity, league, ilvl: item.ilvl || null, quality: item.quality || 0 };
   lastHistoryId = historyId || history.add({ ...entry, text: rawText });
   const prev = history.previous(entry, lastHistoryId);
-  send('item', { ...prepared, theme: lastThemeMods, league, leagues, historyId: lastHistoryId, offline: api.offline.host, previous: prev && { est: prev.est, at: prev.estAt || prev.at }, priceCurrency: settings.get().priceCurrency || 'any', hotkey: hotkeyLabel(), wide: settings.get().wideWindow === 'on' });
+  send('item', { ...prepared, theme: lastThemeMods, league, leagues, historyId: lastHistoryId, offline: api.offline.host, previous: prev && { est: prev.est, at: prev.estAt || prev.at }, hotkey: hotkeyLabel(), wide: settings.get().wideWindow === 'on' });
   if (!refresh || !win.isVisible()) show();
   if (unknownToTrade(item)) refreshTradeData(rawText).catch((e) => log('trade data refresh', e.message));
 }
@@ -642,7 +643,6 @@ function handle(channel, allowed, fn) {
     return fn(e, ...args);
   });
 }
-const PRICE_CURRENCIES = ['any', 'divine', 'chaos', 'exalted'];
 const DEMAND_LEVELS = [80, 90, 95, 98];
 
 app.whenReady().then(singleInstance).then((ok) => {
@@ -723,7 +723,6 @@ app.whenReady().then(singleInstance).then((ok) => {
     return { ...r, prices, thin, theme: d ? d.themed : [], themeBuilds: d ? d.total : null };
   });
   handle('demand', FROM.overlay, async (_e, opts) => forBase(await categoryDemand({ ...opts, league: curLeague(), limit: 80, minLevel: demandLevel(), ...demandScope(lastItem, opts && opts.withMods) }, api.fetchBuffer), lastItem)); // 80 — to also find the item's mods outside the top 10
-  handle('set-price-currency', FROM.overlay, (_e, c) => { if (PRICE_CURRENCIES.includes(c)) settings.set({ priceCurrency: c }); });
   handle('copy', FROM.overlay, (_e, t) => clipboard.writeText(String(t).slice(0, 4000)));
   handle('demand-level', FROM.overlay, () => settings.get().demandLevel || 90);
   handle('set-demand-level', FROM.overlay, (_e, l) => { if (DEMAND_LEVELS.includes(l)) settings.set({ demandLevel: l }); });

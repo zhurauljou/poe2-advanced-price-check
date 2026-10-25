@@ -29,7 +29,7 @@ function renderResults(r) {
         <span class="acts">${l.whisper ? `<i data-a="whisper" title="${t('Whisper in game — opens chat with the message, you press Enter')}"><svg viewBox="0 0 16 16"><path d="M2 3h12v8H7l-3 3v-3H2z" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linejoin="round"/></svg></i>` : ''}<i data-a="site" title="${t('Open this listing on the trade site')}">↗</i>${l.tip ? `<i data-a="pin" title="${t('Pin the comparison card')}"><svg viewBox="0 0 16 16"><path d="M10 2l4 4-2 1-2 3 1 2-1 1-3-3-4 4-1-1 4-4-3-3 1-1 2 1 3-2z" fill="none" stroke="currentColor" stroke-width="1.3" stroke-linejoin="round"/></svg></i>` : ''}</span>
       </div>`).join('')}
     </div>
-    ${r.listings.length > LOTS_SHOWN ? `<button class="link lots-more">${showAllLots ? t('Show fewer') : t('Show all {n}', { n: r.listings.length })}</button>` : ''}`;
+    ${r.listings.length > LOTS_SHOWN ? `<button class="link lots-more">${showAllLots ? t('Show fewer') : r.total > r.listings.length ? t('Show the {n} cheapest', { n: r.listings.length }) : t('Show all {n}', { n: r.listings.length })}</button>` : ''}`;
   const more = box.querySelector('.lots-more');
   if (more) more.addEventListener('click', () => { showAllLots = !showAllLots; renderResults(r); fit(); });
   box.querySelectorAll('.lot').forEach((row) => row.addEventListener('click', async (e) => {
@@ -300,7 +300,8 @@ async function runSearch(relax = false) {
     $('copyLink').hidden = false;
     heroRender = () => { renderTradeHero(r); ($('hero').querySelector('.th-foot') || $('hero')).insertAdjacentHTML('beforeend', prevCheckHtml()); renderResults(r); renderElements(); };
     heroRender();
-    if (!state.estThin) recordPrice(state.est);
+    // History keeps the automatic check's price: a manual search with half the filters unchecked is another question.
+    if (!state.estThin && relax) recordPrice(state.est);
     loadElements(seq, false);
     // Craft advice was computed as "sell as is" without an estimate (tab opened before the search finished; in step-by-step crafting
     // always) or with the old filters: recompute, right away if the tab is open, otherwise when it opens.

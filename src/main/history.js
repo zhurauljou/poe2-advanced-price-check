@@ -53,7 +53,7 @@ const get = (id) => load().find((x) => x.id === id) || null;
 // Previous check of the same item (name, base, rarity, league) with a valuation.
 function previous(entry, exceptId) {
   return load().find((x) => x.id !== exceptId && x.est != null && x.name === entry.name && x.baseType === entry.baseType
-    && x.rarity === entry.rarity && x.league === entry.league) || null;
+    && x.rarity === entry.rarity && x.league === entry.league && (x.ilvl ?? null) === (entry.ilvl ?? null) && (x.quality || 0) === (entry.quality || 0)) || null;
 }
 
 // For the list in the window — without the item text.
