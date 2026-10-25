@@ -1,0 +1,15 @@
+Item Class: Boots
+Rarity: Rare
+Grim Stride
+Drakeskin Boots
+--------
+Evasion Rating: 120
+--------
+Item Level: 80
+--------
+{ Prefix Modifier "Agile" (Tier: 1) — Speed }
+30(30-32)% increased Movement Speed
+{ Suffix Modifier "of the Ox" (Tier: 3) — Attribute }
++25(25-27) to Strength
+{ Suffix Modifier "of Freedom" (Tier: 2) }
+25(20-30)% reduced Slowing Potency of Debuffs on You

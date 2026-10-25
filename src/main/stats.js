@@ -171,7 +171,7 @@ function matchMods(item) {
     const m = lookupAny(l.text);
     const c = m && pick(m.cands, l.tag, localItem);
     // Unmatched ones are shown grey, without a checkbox: the mod is visible, but you can't search by it.
-    out.push(c ? { text: l.text, tag: l.tag, tier: l.tier, statId: c.id, template: c.text, value: m.value, range: l.range, textRange: l.textRange }
+    out.push(c ? { text: l.text, tag: l.tag, tier: l.tier, statId: c.id, template: c.text, value: m.value, range: l.range, textRange: l.textRange, ...(m.flipped ? { flipped: true } : {}) }
       : { text: l.text, tag: l.tag, tier: l.tier, statId: null });
   }
   return mergeSame(out);

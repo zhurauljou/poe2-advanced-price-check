@@ -308,6 +308,10 @@ function prepare(item, demand, rollsOn) {
     if (item.rarity === 'Unique' && m.tag === 'desecrated' && dp >= UNIQUE_KEY) { w.key = true; w.importance = Math.max(w.importance, 2.4); } // and relaxing doesn't remove it
     // A variant mod (Legacy of … on Mageblood) is exactly what people pay for on a unique — search by it right away.
     const option = !!m.statId && m.statId.includes('|');
+    // «25(20-30)% reduced Slowing Potency of Debuffs on You»: trade has only «#% increased …», searched with −25, while the
+    // tier range stays the magnitude (20–30). An affix's reduction is what it is worth: search «at most −22» (max), the roll
+    // by the magnitude — a min from the positive range came out ≈ −3, excluding the item itself and letting in worse ones.
+    const reduced = !!m.flipped && m.value != null && m.value < 0 && !!m.range && m.range.lo >= 0;
     // A unique's price comes from its rolls: a mod with a value spread («(60-80)%») — in the search right away, else search just by name.
     // A hot implicit (≥ 60% of builds: Spirit on a sceptre) — also right away, any roll: with the exact base everyone has it anyway,
     // and when relaxing drops the base and searches by category — it won't get lost.
@@ -338,15 +342,15 @@ function prepare(item, demand, rollsOn) {
         && w.importance >= ENABLE_FROM && !covered.some((re) => re.test(m.template))),
       option,
       // max ("up to") filter: skill levels — exactly our value (+5 and +4 are different goods, especially on a magic base).
-      max: !option && m.value != null && Number.isInteger(m.value) && LEVELS.test(m.template || '') ? m.value : null,
+      max: reduced ? -minFor(-m.value, m.range, w.importance) : !option && m.value != null && Number.isInteger(m.value) && LEVELS.test(m.template || '') ? m.value : null,
       forged: !!m.forged || infRune,
       // A variant with a text range (ring size) — an ordinal "roll": the window accounts for it with Divine.
       ...((o) => (o ? { ordinal: o } : {}))(option ? stats.ordinal(m.statId, m.template, m.textRange) : null),
       ...(option && item.rarity === 'Unique' && !stats.ordinal(m.statId, m.template, m.textRange) ? { categorical: { n: stats.optionCount(m.statId) } } : {}),
       range: m.range || null,
-      roll: rollQuality(m.value, m.range),
+      roll: reduced ? rollQuality(-m.value, m.range) : rollQuality(m.value, m.range),
       // A variant with a number («Glorifying … # souls» — timeless seed, «+# to Level of all X Skills») is searched by the number too.
-      min: m.forged || infRune ? null : option ? (m.value != null && /#/.test(m.template || '') ? m.value : null) : hotImplicit ? (m.range ? Math.ceil(m.range.lo) : minOf(m.value)) : minFor(m.value, m.range, rolls ? Math.max(w.importance, 1.2) : w.importance),
+      min: m.forged || infRune || reduced ? null : option ? (m.value != null && /#/.test(m.template || '') ? m.value : null) : hotImplicit ? (m.range ? Math.ceil(m.range.lo) : minOf(m.value)) : minFor(m.value, m.range, rolls ? Math.max(w.importance, 1.2) : w.importance),
     };
   });
   const pseudo = searchMods ? pseudoFilters(mods) : [];
