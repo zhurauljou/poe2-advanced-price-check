@@ -598,12 +598,15 @@ async function advise(item, demandMods, cached, { priceKeys = [] } = {}) {
 
   // 2. All taken — replace the weakest mod: worst tier and not in demand. Fractured cannot be removed.
   if (!open.prefix && !open.suffix) {
-    // Good tiers (T1–T2) are never replaced: even an unwanted T1 is worth more than an Annulment lottery.
-    // In-demand mods (≥ KEY_PCT% of builds) are not swapped for others either — even with a weak tier: they need a higher tier (block below).
-    const scored = mine.filter((a) => a.mod && a.tag !== 'fractured' && !(a.tier && a.tier <= 2)).map((a) => {
+    // The same rules as the plan (planGoal), so the two never disagree: a good tier (T1–T2) stays if some builds use it
+    // (≥ 5%), an in-demand mod (≥ KEY_PCT%) and a mod that holds the price (priceKeys) are never swapped; the weakest is
+    // the lowest by demand × tier quality. (Here T1–T2 were skipped outright: «nothing worth replacing» next to a plan
+    // removing a T2 Dexterity nobody uses.)
+    const priceKey = new Set(priceKeys.map(keyLine));
+    const scored = mine.filter((a) => a.mod && a.tag !== 'fractured' && !a.mod.lines.some((l) => priceKey.has(keyLine(l)))).map((a) => {
       const pct = Math.max(0, ...a.mod.lines.map((l) => want.get(l) || 0));
-      return { ...a, pct, score: pct / 100 * 3 - (a.tier || 3) / 3 };
-    }).filter((a) => a.pct < KEY_PCT).sort((a, b) => a.score - b.score);
+      return { ...a, pct, score: pct * tierFactor(a.tier || null) };
+    }).filter((a) => a.pct < KEY_PCT && !(a.tier && a.tier <= 2 && !a.mod.lines.every((l) => isWeak(l)) && a.pct >= 5)).sort((a, b) => a.score - b.score);
     const weak = scored[0];
     if (!weak) { if (!tierUps.length) sections.push({ kind: 'keep' }); }
     else {
@@ -799,6 +802,11 @@ async function advise(item, demandMods, cached, { priceKeys = [] } = {}) {
     u.sameSide = mine.filter((a) => a.side === side && a.tag !== 'fractured').length;
   }
   const goal = planGoal(mine, normal, max, want, magic, magicFree, item.itemClass, craftedSources, item.quality || 0, craftedCap, reroll, priceKeys);
+  // The plan removes a mod: «Full — nothing worth replacing» would contradict it right above.
+  if (goal && goal.remove.some((r) => r.tag !== 'random')) {
+    const k = sections.findIndex((s) => s.kind === 'keep');
+    if (k >= 0) sections.splice(k, 1);
+  }
   // Runes / Soul Cores for sockets: augments for the class whose stats builds use (demand ≥ 15%) — the best per stat family.
   const augments = [];
   if (!jewel) {
@@ -1101,16 +1109,18 @@ function planGoal(mine, candidates, max, want, magic, magicFree = [], itemClass 
     const sides = {};
     const removed = (a, side) => remove.some((x) => x.side === side && x.text === (a.mod ? a.mod.lines.join(' / ') : a.name));
     const spare = (a, side) => keep.some((x) => x.stays && x.side === side && x.text === (a.mod ? a.mod.lines.join(' / ') : a.name));
+    // The magic → rare essence comes before the removal: its mod is on the item by then and an Annulment can hit it too.
+    const essOn = (side) => (essenceMod && essenceMod.side === side ? 1 : 0);
     for (const side of ['prefix', 'suffix']) {
       const J = junk.filter((x) => x.side === side).length;
       const des = desInRun && desInRun.side === side ? 1 : 0;
       const spares = mine.filter((a) => a.side === side && a.tag !== 'fractured' && spare(a, side));
       const S = spares.length;
-      const K = filled[side] - fixed[side] - J - des - S;
+      const K = filled[side] + essOn(side) - fixed[side] - J - des - S;
       // How to restore each wanted mod of the side if Annulment hits it: a crafted one — with its essence / Alloy.
       // Every mod being removed (desecrated junk too) is junk here, not a wanted one; nor is the spare junk.
       const keepers = mine.filter((a) => a.side === side && a.tag !== 'fractured' && !removed(a, side) && !spare(a, side));
-      const again = keepers.map((a) => (a.tag !== 'crafted' ? reroll(a) : null));
+      const again = [...keepers.map((a) => (a.tag !== 'crafted' ? reroll(a) : null)), ...(essOn(side) ? [null] : [])];
       const restore = keepers.map((a, i) => {
         if (a.tag !== 'crafted' || !a.mod) {
           // Key (used by ≥ KEY_PCT% or a good tier) — losing it is costly, unless one Exalted Orb gives it back often
@@ -1121,12 +1131,12 @@ function planGoal(mine, candidates, max, want, magic, magicFree = [], itemClass 
         }
         const src = craftedSources.find((x) => templates(x.text.replace(/–/g, '-').replace(/ \/ /g, '\n')).some((l) => a.mod.lines.includes(l)));
         return src ? src.name : null;
-      });
+      }).concat(essOn(side) ? [null] : []); // the essence mod: on a rare it comes back only by Exalted — the full loss
       // full — no room on the side: Desecrate with this side's Necromancy removes a random mod by itself (verified in game).
       // free — empty slots before the removal: a plan variant with fewer mods may not need to remove anything here.
-      sides[side] = { J, K, S, des, restore, omen: `Omen of ${side === 'prefix' ? 'Sinistral' : 'Dextral'} Annulment`, full: filled[side] - des >= max[side], free: max[side] - filled[side] + des,
+      sides[side] = { J, K, S, des, restore, omen: `Omen of ${side === 'prefix' ? 'Sinistral' : 'Dextral'} Annulment`, full: filled[side] + essOn(side) - des >= max[side], free: max[side] - filled[side] - essOn(side) + des,
         // The wanted mods an Annulment can hit instead of the junk — named in the step's warning, with the odds of getting each back.
-        names: keepers.map((a) => ((a.lines || []).length ? a.lines.join(' / ') : a.mod ? a.mod.lines.join(' / ') : a.name)), again,
+        names: [...keepers.map((a) => ((a.lines || []).length ? a.lines.join(' / ') : a.mod ? a.mod.lines.join(' / ') : a.name)), ...(essOn(side) ? [essenceMod.text] : [])], again,
         spareNames: spares.map((a) => ((a.lines || []).length ? a.lines.join(' / ') : a.mod.lines.join(' / '))),
         necro: `Omen of ${side === 'prefix' ? 'Sinistral' : 'Dextral'} Necromancy` };
     }
@@ -1135,7 +1145,8 @@ function planGoal(mine, candidates, max, want, magic, magicFree = [], itemClass 
     // «+20% to Maximum Quality» (level 1 too) next to a kept «of Invigoration» is a coin flip, not a sure removal.
     // The level is known only for matched mods: if even one is unknown — Whittling is not evaluated.
     const removable = mine.filter((a) => a.tag !== 'fractured');
-    const known = removable.every((a) => a.mod);
+    // An essence mod added before the removal has a level we don't track here — Whittling is not judged then.
+    const known = removable.every((a) => a.mod) && !essenceMod;
     const levels = removable.map((a) => (a.mod ? a.mod.required_level : 0));
     const low = Math.min(...levels);
     const lowJunk = junk.filter((x) => x.level === low);

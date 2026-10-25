@@ -751,7 +751,10 @@
     const per = (list) => spendOf(list.map((a) => a.mod)) / list.reduce((x, a) => x + a.worth, 0);
     const same = (a, b) => a.length === b.length && a.every((m) => b.includes(m));
     const sure = adds.filter((a) => a.sure);
-    const cheap = sure.length ? sure : [[...adds].sort((a, b) => per([a]) - per([b]))[0]]; // else the single mod with the best value per price
+    // Else the single mod with the best value per price — among those with known odds: a step of unknown odds is priced as
+    // one attempt, so it always looked cheapest and «Cheap» became the gamble.
+    const known = adds.filter((a) => !a.lottery);
+    const cheap = sure.length ? sure : [[...(known.length ? known : adds)].sort((a, b) => per([a]) - per([b]))[0]];
     let balanced = adds.filter((a) => !a.lottery);
     if ((!balanced.length || balanced.length === adds.length || same(balanced, cheap)) && adds.length >= 3) {
       // Drop the mod that saves the most currency per value lost.

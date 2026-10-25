@@ -311,3 +311,15 @@ test('magic → rare essence: of the tiers that reach the goal, the cheapest one
   assert.deepEqual(c.currencies, ['Greater Essence of the Body']);
   near(c.cost, 0.01, 'cost');
 });
+
+test('Cheap variant: the known-odds mod, not the unknown-odds gamble priced as one attempt', () => {
+  const p = planner({ goalValue: 10, est: 1 });
+  // The gamble only by Perfect Exalted (1 div an attempt) — Cheap must not drop below the 10% gap to Balanced.
+  const lottery = { perfect: { chance: null, guess: 0.1, rough: 0.1, pool: 10 } };
+  const g = { plan: [add(0.2, { mod: 'Known', side: 'prefix', worth: 10 }), add(null, { mod: 'Gamble', side: 'suffix', worth: 50, exalt: lottery }),
+    add(0.05, { mod: 'Other', side: 'suffix', worth: 5 })], add: [{ text: 'Known' }, { text: 'Gamble' }, { text: 'Other' }] };
+  const v = p.variants(g);
+  const cheap = v && v.find((x) => x.key === 'cheap');
+  assert.ok(cheap, 'a Cheap variant');
+  assert.deepEqual(cheap.mods, ['Known']);
+});

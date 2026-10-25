@@ -162,6 +162,30 @@ test('rare spear: Celestial Alloy (Accuracy / Attack Speed) via the crafted slot
   assert.ok(alloy && alloy.c.k === 'essence' && /Alloy/.test(alloy.c.currencies[0]));
 });
 
+test('All methods agree with the plan: the T2 Dexterity nobody uses is the mod to replace, not «nothing worth replacing»', { skip }, async () => {
+  await init();
+  const r = await craft.advise(item('boots-t2-dex'), json('boots-no-ms.demand.json').mods, cached);
+  assert.ok(r.goal.remove.some((x) => /dexterity/.test(x.text)), 'the plan removes Dexterity');
+  assert.ok(!r.sections.some((s) => s.kind === 'keep'), 'no «nothing worth replacing»');
+  const rep = r.sections.find((s) => s.kind === 'replace');
+  assert.ok(rep && /dexterity/.test(rep.weak.text), 'the replace section names Dexterity');
+});
+
+test('magic boots: the removal after the essence counts the essence mod among the ones an Annulment can hit', { skip }, async () => {
+  // The essence makes it rare with Rarity on the suffix side, then the junk Dexterity is removed from the same side:
+  // the risk said «only unwanted modifiers can be hit» while it was 1 in 2 to lose the Rarity.
+  await init();
+  const demand = [{ name: '#% increased Rarity of Items found', pct: 95 }, { name: '#% to Fire Resistance', pct: 85 }, { name: '#% to Cold Resistance', pct: 85 },
+    { name: '#% increased Movement Speed', pct: 90 }, { name: '# to maximum Life', pct: 70 }, { name: '# to Evasion Rating', pct: 60 }];
+  const it = item('boots-magic-dex');
+  const r = await craft.advise(it, demand, cached);
+  const ess = r.goal.plan.find((s) => s.act === 'essence');
+  assert.ok(ess && ess.side === 'suffix', 'essence on the suffix side');
+  const rm = r.goal.plan.find((s) => s.act === 'remove' && s.sides);
+  assert.equal(rm.sides.suffix.K, 1);
+  assert.ok(rm.sides.suffix.names.some((n) => /rarity/.test(n)), 'the essence mod is named at risk');
+});
+
 test('magic jewel: no Augmentation when the goal fills that side — its random mod would only be annulled again', { skip }, async () => {
   await init();
   const demand = [{ name: '#% increased Critical Hit Chance for Attacks', pct: 70 }, { name: '#% increased Critical Damage Bonus for Attack Damage', pct: 65 },

@@ -1,0 +1,23 @@
+Item Class: Boots
+Rarity: Rare
+Storm Stride
+Drakeskin Boots
+--------
+Evasion Rating: 400 (augmented)
+--------
+Requires: Level 82
+--------
+Item Level: 82
+--------
+{ Prefix Modifier "Hellion's" (Tier: 1) — Speed }
+35% increased Movement Speed
+{ Prefix Modifier "Athlete's" (Tier: 1) — Life }
++130(120-149) to maximum Life
+{ Prefix Modifier "Vaporous" (Tier: 1) — Defences, Evasion }
++160(147-176) to Evasion Rating
+{ Suffix Modifier "of Tzteosh" (Tier: 1) — Elemental, Fire, Resistance }
++43(41-45)% to Fire Resistance
+{ Suffix Modifier "of Haast" (Tier: 1) — Elemental, Cold, Resistance }
++44(41-45)% to Cold Resistance
+{ Suffix Modifier "of the Jaguar" (Tier: 2) — Attribute }
++29(28-30) to Dexterity
