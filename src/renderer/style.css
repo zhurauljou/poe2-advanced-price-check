@@ -789,6 +789,8 @@ footer > span:first-child { min-width: 0; overflow: hidden; text-overflow: ellip
 footer .keys { display: inline-flex; align-items: center; gap: 5px; color: var(--muted); }
 footer .keys kbd { padding: 0 5px; border-color: rgba(218, 193, 142, .35); font-size: var(--fs-xs); line-height: 1.5; background: none; color: var(--bronze); }
 footer .keys kbd:not(:first-child) { margin-left: 6px; }
+footer .keys .k-enter { display: inline-flex; align-items: center; gap: 5px; margin-left: 6px; }
+footer .keys .k-enter[hidden] { display: none; }
 /* First run: "what you need to know" card in the settings window */
 .welcome { padding: 10px 12px; border: 1px solid var(--label); border-radius: 4px; background: rgba(218, 193, 142, .05); }
 .welcome-title { font: 700 16px var(--sc); letter-spacing: .4px; color: var(--cream); }

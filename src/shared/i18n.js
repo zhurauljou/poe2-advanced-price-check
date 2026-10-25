@@ -198,7 +198,7 @@
     '{pct}% of builds': '{pct}% билдов',
     'one build archetype dominates': 'преобладает один архетип билда',
     '{n} characters': ['{n} персонаж', '{n} персонажа', '{n} персонажей'],
-    '<b>{pct}%</b> of builds': '<b>{pct}%</b> билдов',
+    '<b>{pct}%</b> of builds wear an item like yours': '<b>{pct}%</b> билдов носят такую же вещь',
     'poe.ninja filter': 'Фильтр poe.ninja',
     Ascendancy: 'Асцендант',
     'Main skill': 'Основной скилл',

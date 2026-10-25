@@ -118,6 +118,8 @@ function setTab(name) {
   $('tab-price').hidden = name !== 'price';
   $('tab-demand').hidden = name !== 'demand';
   $('tab-craft').hidden = name !== 'craft';
+  // Enter searches on the Price tab only (events.js): its hint in the footer goes with it.
+  document.querySelectorAll('.keys .k-enter').forEach((e) => { e.hidden = name !== 'price'; });
   if (name === 'craft') loadCraft();
   fit();
 }
@@ -147,10 +149,12 @@ function renderBuilds(b) {
   const lvl = !b.total ? null : b.total >= 2500 ? 'high' : b.total >= 300 ? 'med' : 'low';
   const badge = $('demandBadge');
   badge.className = `badge ${lvl || ''}`;
-  badge.textContent = lvl ? { high: `🔥 ${t('High')}`, med: t('Med'), low: t('Low') }[lvl] : '';
+  // No 🔥 here: across the window 🔥 means «≥ 60% of builds have this»; the badge is a character count, often next to «3% of builds».
+  badge.textContent = lvl ? { high: t('High'), med: t('Med'), low: t('Low') }[lvl] : '';
   badge.title = lvl ? `${t('{n} level {lvl}+ characters on poe.ninja use this', { n: b.total, lvl: demandLevel })}${pct != null ? ` (${t('{pct}% of builds', { pct: fmt(pct) })})` : ''}${anyHot ? ` · ${t('one build archetype dominates')}` : ''}` : '';
   const chars = t('{n} characters', { n: b.total });
-  const share = b.allTotal ? `${t('<b>{pct}%</b> of builds', { pct: fmt(b.total / b.allTotal * 100) })} · ${chars}` : chars;
+  // Which builds: this base with the item's main mods (the line below) — not the class-wide share the Price tab's chips use.
+  const share = b.allTotal ? `${t('<b>{pct}%</b> of builds wear an item like yours', { pct: fmt(b.total / b.allTotal * 100) })} · ${chars}` : chars;
   const what = b.filters.filter(([k]) => k !== 'min-level').map(([, v]) => v).join(' + ');
   $('builds').innerHTML = `
     <div class="sect"><span>${t('Popular builds')}</span></div>
