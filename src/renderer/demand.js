@@ -86,7 +86,8 @@ function renderDemand(d) {
   const all = d.mods.filter((r) => !themeSet.has(r.name.toLowerCase())).map((r, i) => ({ ...r, rank: i + 1, mine: mine.has(ninjaTemplate(r.name)) }));
   const modRows = all.filter((r) => r.rank <= TOP || r.mine);
   const hits = all.filter((r) => r.mine && r.rank <= TOP).length;
-  const baseRows = d.bases.slice(0, TOP).map((r) => ({ ...r, mine: r.name === item.baseType }));
+  // Your base below the top is listed too, with its rank — «base #15» in the line above had no row to point at.
+  const baseRows = d.bases.map((r, i) => ({ ...r, rank: i + 1, mine: r.name === item.baseType })).filter((r) => r.rank <= TOP || r.mine);
   const baseRank = d.bases.findIndex((b) => b.name === item.baseType);
   $('demand').innerHTML = `
     <div class="sect"><span>${t('Demand')} · ${esc(d.category)}</span></div>
@@ -95,7 +96,7 @@ function renderDemand(d) {
       ? `<div class="bwhat">${t('Among builds wearing it with')} <b class="theme">${d.themed.map(esc).join(' + ')}</b> · <button class="link" data-dall="1">${t('all builds')}</button></div>`
       : `<div class="bwhat muted">${demandAll ? `${t('All builds')} · <button class="link" data-dall="0">${t('builds like your item')}</button>` : t("Too few builds with your item's modifiers — showing all builds")}</div>`}
     <div class="bshare">${t('Worn by <b>{pct}%</b> of level {lvl}+ builds', { pct: fmt(d.total / d.allTotal * 100), lvl: demandLevel })}</div>
-    <div class="bwhat muted">${t('Your item:')} ${baseRank >= 0 ? t('base #{n}', { n: baseRank + 1 }) : t('base not in top 10')} · ${t('{n} of top {m} modifiers', { n: hits, m: Math.min(TOP, all.length) })}</div>
+    <div class="bwhat muted">${t('Your item:')} ${baseRank >= 0 ? t('base #{n}', { n: baseRank + 1 }) : t('base rarely worn')} · ${t('{n} of top {m} modifiers', { n: hits, m: Math.min(TOP, all.length) })}</div>
     ${demandList('bases', t('Most worn bases'), baseRows)}
     ${demandList('mods', t('Most common modifiers'), modRows)}
     <button class="link bopen" data-url="${esc(d.page)}">poe.ninja ↗</button>`;
@@ -108,7 +109,7 @@ function demandList(key, title, rows) {
   const hidden = rows.filter((r, i) => i >= DEMAND_SHOWN && !r.mine).length;
   const open = openDemand.has(key);
   return `<div class="dcol${open ? ' all' : ''}"><div class="k">${title}</div>${rows.map((r, i) => `
-    <div class="brow ${heat(r.pct)}${r.mine ? ' mine' : ''}${i >= DEMAND_SHOWN && !r.mine ? ' more' : ''}"${r.mine ? ` title="${t('Your item has this')}"` : ''}><span class="bname">${r.mine ? '✓ ' : ''}${esc(r.name)}${r.rank > 10 ? ` <span class="rank">#${r.rank}</span>` : ''}</span><span class="bpct">${hot(r.pct)}${fmt(r.pct)}%</span>
+    <div class="brow ${heat(r.pct)}${r.mine ? ' mine' : ''}${i >= DEMAND_SHOWN && !r.mine ? ' more' : ''}"${r.mine ? ` title="${t('Your item has this')}"` : ''}><span class="bname">${r.mine ? '✓ ' : ''}${esc(r.name)}${r.rank > 10 || (r.mine && r.rank) ? ` <span class="rank">#${r.rank}</span>` : ''}</span><span class="bpct">${hot(r.pct)}${fmt(r.pct)}%</span>
       <span class="bbar"><i data-w="${Math.min(100, r.pct)}%"></i></span></div>`).join('')}
     ${hidden ? `<button class="link bmore" data-dmore="${key}">${open ? t('Show fewer') : t('Show all {n}', { n: rows.length })}</button>` : ''}</div>`;
 }

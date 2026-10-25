@@ -187,7 +187,7 @@
     'Worn by <b>{pct}%</b> of level {lvl}+ builds': 'Носят <b>{pct}%</b> билдов {lvl}+ уровня',
     'Your item:': 'Ваша вещь:',
     'base #{n}': 'база №{n}',
-    'base not in top 10': 'базы нет в топ-10',
+    'base rarely worn': 'база редко встречается',
     '{n} of top {m} modifiers': '{n} из топ-{m} модов',
     'Most worn bases': 'Самые носимые базы',
     'Most common modifiers': 'Самые частые моды',

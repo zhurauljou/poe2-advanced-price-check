@@ -252,6 +252,8 @@ body:not([data-tab="price"]) .tp .tp-op, body:not([data-tab="price"]) .tp .tp-in
 .brow.mine .bname { color: var(--good); }
 /* Popularity: rare — dimmed, widespread — glowing. */
 .brow.cold { opacity: .6; }
+/* Your own rows stay bright even when rare — they are what you look for in the list. */
+.brow.cold.mine { opacity: 1; }
 .brow.hot .bname { color: #ffe3a3; font-weight: 700; text-shadow: 0 0 10px rgba(255, 190, 80, .35); }
 .brow.hot .bpct { color: #ffd27a; text-shadow: 0 0 10px rgba(255, 190, 80, .5); }
 .brow.hot .bbar i { border-right-color: #ffd27a; background: linear-gradient(90deg, rgba(176, 122, 40, .2), rgba(255, 210, 122, .34)); }
