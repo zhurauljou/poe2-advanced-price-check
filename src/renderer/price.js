@@ -316,6 +316,7 @@ function renderTradeHero(r) {
     <div class="ninja-u">${ninjaLine()}</div>
     <div class="th-foot">${drivable ? `<button class="link drive-btn" data-act="impact" title="${t('Searches again without each key modifier (a few trade requests)')}">${t('What drives the price?')}</button>` : '<span></span>'}</div>
   </div>`;
+  glidePrice(est);
 }
 
 // Rare: how far rolls are from max and what raising them would cost. Divine rerolls the values of all mods
@@ -483,4 +484,108 @@ function driveChip(i) {
   const without = d.step != null ? t('With {n}: {price}', { n: d.step, price: money(d.without) }) : t('Without it: {price}', { price: money(d.without) });
   const label = pct < 5 ? t('adds ~0') : d.step != null ? t('+1 ≈ {n}% of price', { n: pct }) : t('≈{n}% of price', { n: pct });
   return ` <span class="drive${pct >= 50 ? ' big' : pct < 10 ? ' low' : ''}" title="${esc(without)} · ${t('{n} listed', { n: d.total })}">${label}</span>`;
+}
+
+// ---- price in motion: the number glides to a new value; a filter change previews the price from the loaded listings ----
+let shownEst = null; // the price the card shows now (div): the next one glides from it — reset for a new item
+let lastResult = null; // the last search's result: its listings feed the preview
+const calm = window.matchMedia('(prefers-reduced-motion: reduce)');
+
+// The big number from the shown value to `to`, ~0.4 s ease-out, in the new value's unit (no unit flip mid-way), and a
+// short «+12%» next to it when it moved by 3%+. A re-render with the same value stays still.
+function glidePrice(to) {
+  const el = $('hero').querySelector('.th-price .big');
+  const from = shownEst;
+  shownEst = to;
+  if (!el || from == null || to == null || Math.abs(to - from) <= Math.abs(to) * 1e-6) return;
+  const k = to / from - 1;
+  if (Math.abs(k) >= 0.03) {
+    el.insertAdjacentHTML('afterend', `<span class="pdelta ${k > 0 ? 'up' : 'down'}">${k > 0 ? '+' : '−'}${Math.round(Math.abs(k) * 100)}%</span>`);
+  }
+  if (calm.matches) return;
+  const end = el.innerHTML;
+  const u = moneyUnit(to);
+  const tail = el.classList.contains('thin') ? '?' : '';
+  const t0 = performance.now();
+  const step = (now) => {
+    if (!el.isConnected) return;
+    const p = Math.min(1, (now - t0) / 420);
+    if (p >= 1) { el.innerHTML = end; return; }
+    const x = from + (to - from) * (1 - (1 - p) ** 3);
+    el.innerHTML = moneyHtml(`${fmt(divIn(x, u))} ${u}`) + tail;
+    requestAnimationFrame(step);
+  };
+  requestAnimationFrame(step);
+}
+
+// What a filter change did to the search compared with the last one: 'tight' — only narrower (the result is a subset of
+// the loaded listings, so they can price it), 'wider' — something loosened (cheaper items may appear that were never
+// loaded), 'other' — a header value, base, state or currency changed (not previewable here).
+function changeKind(was, now) {
+  const rest = (f) => JSON.stringify({ ...f, mods: 0, exclude: 0, rollsLoosened: 0, propsLoosened: 0 });
+  if (rest(was) !== rest(now)) return 'other';
+  const n = (v) => (v == null || v === '' ? null : Number(v));
+  // Sums, variants and negative bounds can't be checked against a listing here (fitsNow skips them): a change to one of
+  // them would preview as «no change» — it needs the search.
+  const unchecked = (m) => m.tag === 'pseudo' || m.option || (n(m.min) ?? 0) < 0 || (n(m.max) ?? 0) < 0;
+  if (now.mods.some((m, i) => { const o = was.mods[i]; return o && (unchecked(m) || unchecked(o))
+    && (m.enabled !== o.enabled || n(m.min) !== n(o.min) || n(m.max) !== n(o.max)); })) return 'other';
+  const wider = now.mods.some((m, i) => {
+    const o = was.mods[i];
+    if (!o) return true;
+    if (!m.enabled) return o.enabled;
+    if (!o.enabled) return false;
+    if (n(o.min) != null && (n(m.min) == null || n(m.min) < n(o.min))) return true;
+    return n(o.max) != null && (n(m.max) == null || n(m.max) > n(o.max));
+  }) || (was.exclude || []).some((x, j) => x.enabled && !((now.exclude || [])[j] || {}).enabled);
+  return wider ? 'wider' : 'tight';
+}
+
+// Does a loaded listing meet the current filters? null — can't tell (no mods in the listing).
+function fitsNow(l) {
+  if (!l.tip || !l.tip.mods) return null;
+  const key = (id) => id.replace(/^\w+\./, '');
+  const vals = new Map();
+  for (const m of l.tip.mods) if (m.statId) vals.set(key(m.statId), (vals.get(key(m.statId)) || 0) + (modValue(m.text) || 0));
+  const f = state.filters;
+  const n = (v) => (v == null || v === '' ? null : Number(v));
+  for (const m of f.mods) {
+    // Options, sums and negative bounds (a reduction searched as «at most −22») are not checked here — the search does.
+    if (!m.enabled || !m.statId || m.option || m.tag === 'pseudo' || (n(m.min) ?? 0) < 0 || (n(m.max) ?? 0) < 0) continue;
+    const v = vals.get(key(m.statId));
+    if (v == null) return false;
+    if (n(m.min) != null && v < n(m.min)) return false;
+    if (n(m.max) != null && v > n(m.max)) return false;
+  }
+  for (const x of f.exclude || []) if (x.enabled && vals.has(key(x.statId))) return false;
+  return true;
+}
+
+let previewTimer = null;
+function schedulePreview() {
+  clearTimeout(previewTimer);
+  previewTimer = setTimeout(previewPrice, 140); // after the change lands (markDirty runs before it) and while typing
+}
+
+// The price as it would be with the edited filters — from the listings already loaded, no trade request: the number glides
+// there and a quiet line says it's a preview. Wider searches can't be previewed (unloaded cheaper items): said so.
+function previewPrice() {
+  const box = $('hero').querySelector('.th-price');
+  if (!box || !lastResult || !state.searchedFilters || state.est == null) return;
+  const big = box.querySelector('.big');
+  const kind = changeKind(state.searchedFilters, state.filters);
+  let note;
+  if (kind === 'tight') {
+    const fit = lastResult.listings.filter((l) => l.divine != null && fitsNow(l) === true);
+    if (fit.length >= MIN_LOTS) {
+      const v = estimate(fit.map((l) => ({ div: l.divine, indexed: l.indexed })));
+      big.classList.add('preview');
+      box.querySelectorAll('.pdelta').forEach((x) => x.remove());
+      glidePrice(v);
+      note = t('Preview from {n} loaded listings — Search for the real price', { n: fit.length });
+    } else note = t('Only {n} of the loaded listings fit — press Search', { n: fit.length });
+  } else note = kind === 'wider' ? t('A wider search — the price may drop; press Search') : t('Filters changed — press Search');
+  let line = box.querySelector('.pv-note');
+  if (!line) { box.insertAdjacentHTML('beforeend', '<div class="pv-note"></div>'); line = box.querySelector('.pv-note'); }
+  line.textContent = note;
 }

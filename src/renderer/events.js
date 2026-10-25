@@ -13,6 +13,8 @@ window.pc.onItem((data) => {
   openSums.clear();
   openDemand.clear();
   showAllLots = false;
+  shownEst = null; // a new item: its price appears, it does not glide from the previous one
+  lastResult = null;
   hideCompare();
   // The listing currency is a filter of this search, not a setting: «Exalted» chosen for a cheap item left every later
   // item (an expensive one too) searched among exalted-priced listings only.

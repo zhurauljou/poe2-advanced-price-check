@@ -945,3 +945,25 @@ body.wide .craft-cols > .more-ways > summary { pointer-events: none; }
 .mod .range-in input.max.empty { opacity: 0; }
 .mod:hover .range-in input.max.empty, .mod .range-in input.max:focus { opacity: 1; }
 .mod.off .meta { opacity: .6; }
+
+/* ---- Motion: quiet and short ---- */
+/* A fresh search: rows fade up one after another (30 ms apart, ~0.3 s each). */
+@keyframes lotIn { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: none; } }
+.lots.enter .lot { animation: lotIn .32s cubic-bezier(.2, .7, .2, 1) both; }
+.lots.enter .lot:nth-child(2) { animation-delay: 30ms; } .lots.enter .lot:nth-child(3) { animation-delay: 60ms; }
+.lots.enter .lot:nth-child(4) { animation-delay: 90ms; } .lots.enter .lot:nth-child(5) { animation-delay: 120ms; }
+.lots.enter .lot:nth-child(6) { animation-delay: 150ms; } .lots.enter .lot:nth-child(7) { animation-delay: 170ms; }
+.lots.enter .lot:nth-child(8) { animation-delay: 190ms; } .lots.enter .lot:nth-child(9) { animation-delay: 210ms; }
+.lots.enter .lot:nth-child(10) { animation-delay: 230ms; }
+/* The price moved: «+12%» beside it, fading out after a moment. */
+@keyframes pdelta { 0% { opacity: 0; transform: translateY(3px); } 12%, 70% { opacity: 1; transform: none; } 100% { opacity: 0; } }
+.th-price .pdelta { display: inline-block; margin-left: 8px; font: 700 var(--fs-s) var(--body); vertical-align: middle; animation: pdelta 2.6s ease forwards; }
+.th-price .pdelta.up { color: var(--good); } .th-price .pdelta.down { color: var(--bad); }
+/* A preview from the loaded listings: the number is provisional until Search. */
+.th-price .big.preview { opacity: .78; }
+.th-price .pv-note { margin-top: 2px; font-size: var(--fs-xs); color: var(--note); }
+.th-price .big { transition: opacity .2s; }
+@media (prefers-reduced-motion: reduce) {
+  .lots.enter .lot, .th-price .pdelta { animation: none; }
+  .th-price .big { transition: none; }
+}

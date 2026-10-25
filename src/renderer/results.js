@@ -14,13 +14,16 @@ let showAllLots = false;
 // A fresh listing (≤ 1 day) is highlighted; a stale one (≥ 7 days) is dimmed: that price most likely doesn't sell.
 const ageClass = (iso) => { const d = ageDays(iso); return d <= 1 ? ' fresh' : d >= 7 ? ' stale' : ''; };
 
+let lotsShownFor = null;
 function renderResults(r) {
   const box = $('results');
   box.hidden = !r.listings.length;
   if (!r.listings.length) return;
+  // A fresh search fades its rows in (style.css .lots.enter); a re-render of the same result stays still.
+  const fresh = r !== lotsShownFor;
   box.innerHTML = `
     <div class="sect"><span>${t('Cheapest listings')} <b class="cnt">${r.total.toLocaleString('en-US')}</b></span></div>
-    <div class="lots${showAllLots ? ' all' : ''}">${r.listings.map((l, i) => `
+    <div class="lots${showAllLots ? ' all' : ''}${fresh ? ' enter' : ''}">${r.listings.map((l, i) => `
       <div class="lot${i >= LOTS_SHOWN ? ' more' : ''}${ageClass(l.indexed)}${stateRowClass(l)}" data-i="${i}" title="${l.whisper ? t('Copy whisper to seller') : t('Instant buyout — opens the trade site (Travel to Hideout)')}">
         <span class="chip">${fmt(l.amount)} ${curIcon(l.currency, l.currencyName)}</span>
         <span class="eq"><span class="st">${stateBadge(l)}</span>${cmpBadge(l)}<span class="ap">${l.divine != null && !sameUnit(l) ? moneyHtml(`≈ ${money(l.divine)}`) : ''}</span></span>
@@ -30,6 +33,7 @@ function renderResults(r) {
       </div>`).join('')}
     </div>
     ${r.listings.length > LOTS_SHOWN ? `<button class="link lots-more">${showAllLots ? t('Show fewer') : r.total > r.listings.length ? t('Show the {n} cheapest', { n: r.listings.length }) : t('Show all {n}', { n: r.listings.length })}</button>` : ''}`;
+  lotsShownFor = r; // re-renders of the same result (show all, hover) don't replay the entrance
   const more = box.querySelector('.lots-more');
   if (more) more.addEventListener('click', () => { showAllLots = !showAllLots; renderResults(r); fit(); });
   box.querySelectorAll('.lot').forEach((row) => row.addEventListener('click', async (e) => {
@@ -251,6 +255,7 @@ function markDirty() {
   if (state.impact) { impactSeq++; state.impact = null; document.querySelectorAll('#mods .drive').forEach((x) => x.remove()); }
   const b = $('search');
   if (!b.classList.contains('dirty')) { b.classList.add('dirty'); b.textContent = t('Search · filters changed'); }
+  schedulePreview();
 }
 
 // Note above the filters after auto-relaxing: dropped = lines (mod text) or { t, v } for translation.
@@ -302,6 +307,9 @@ async function runSearch(relax = false) {
     state.tradeUrl = r.url;
     $('open').hidden = false;
     $('copyLink').hidden = false;
+    // The preview of edited filters prices from these listings, against the filters they were found with.
+    lastResult = r;
+    state.searchedFilters = JSON.parse(JSON.stringify(state.filters));
     heroRender = () => { renderTradeHero(r); ($('hero').querySelector('.th-foot') || $('hero')).insertAdjacentHTML('beforeend', prevCheckHtml()); renderResults(r); renderElements(); };
     heroRender();
     // History keeps the automatic check's price: a manual search with half the filters unchecked is another question.
