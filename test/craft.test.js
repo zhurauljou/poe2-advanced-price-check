@@ -210,6 +210,15 @@ test('minion ring: the plan keeps the mods that hold its price, even desecrated 
   for (const re of [/critical damage bonus/, /critical hit chance/, /cooldown recovery/]) assert.ok(r.goal == null || r.goal.keep.some((x) => re.test(x.text)), `${re} kept`);
 });
 
+test('a «reduced» affix searched only as «increased» on trade: «at most» its reduction, the item itself included', { skip }, async () => {
+  // «25(20-30)% reduced Slowing Potency» is −25 on trade with the tier range 20–30: the min used to come out ≈ −3.
+  const f = await filters('boots-reduced-slow.txt');
+  const m = mod(f, /Slowing Potency/);
+  assert.equal(m.min, null);
+  assert.ok(m.max <= -20 && m.max >= -25, `max ${m.max}: between the tier floor and the item's own −25`);
+  assert.equal(m.roll, 0.5);
+});
+
 test('ES boots: life (low demand) and Stun Threshold are unchecked, total life is off', { skip }, async () => {
   const f = await filters('boots-es', 'boots-es.demand.json');
   assert.equal(mod(f, /^\+137 to maximum Life/).enabled, false);
