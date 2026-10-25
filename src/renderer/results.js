@@ -22,8 +22,8 @@ function renderResults(r) {
     <div class="sect"><span>${t('Cheapest listings')} <b class="cnt">${r.total.toLocaleString('en-US')}</b></span></div>
     <div class="lots${showAllLots ? ' all' : ''}">${r.listings.map((l, i) => `
       <div class="lot${i >= LOTS_SHOWN ? ' more' : ''}${ageClass(l.indexed)}${stateRowClass(l)}" data-i="${i}" title="${l.whisper ? t('Copy whisper to seller') : t('Instant buyout — opens the trade site (Travel to Hideout)')}">
-        <span class="chip">${l.currencyImage ? `<img src="${esc(l.currencyImage)}" alt="">` : ''}${fmt(l.amount)}${l.currencyImage ? '' : ' ' + esc(l.currencyName)}</span>
-        <span class="eq"><span class="st">${stateBadge(l)}</span>${cmpBadge(l)}<span class="ap">${l.divine != null && !sameUnit(l) ? '≈ ' + money(l.divine) : ''}</span></span>
+        <span class="chip">${fmt(l.amount)} ${curIcon(l.currency, l.currencyName)}</span>
+        <span class="eq"><span class="st">${stateBadge(l)}</span>${cmpBadge(l)}<span class="ap">${l.divine != null && !sameUnit(l) ? moneyHtml(`≈ ${money(l.divine)}`) : ''}</span></span>
         <span class="seller">${l.whisper ? '' : `<b class="ib" title="${t('Instant buyout')}">⚡</b>`}<span class="dot${l.online ? ' on' : ''}"></span>${esc(l.seller)}</span>
         <span class="age">${l.indexed ? ago(l.indexed) : ''}</span>
         <span class="acts">${l.whisper ? `<i data-a="whisper" title="${t('Whisper in game — opens chat with the message, you press Enter')}"><svg viewBox="0 0 16 16"><path d="M2 3h12v8H7l-3 3v-3H2z" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linejoin="round"/></svg></i>` : ''}<i data-a="site" title="${t('Open this listing on the trade site')}">↗</i>${l.tip ? `<i data-a="pin" title="${t('Pin the comparison card')}"><svg viewBox="0 0 16 16"><path d="M10 2l4 4-2 1-2 3 1 2-1 1-3-3-4 4-1-1 4-4-3-3 1-1 2 1 3-2z" fill="none" stroke="currentColor" stroke-width="1.3" stroke-linejoin="round"/></svg></i>` : ''}</span>

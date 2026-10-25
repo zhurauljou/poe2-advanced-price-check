@@ -208,7 +208,8 @@ function confidence(total, head, cheapest = [], extra = '') {
   else if (allStale) why = t('all cheapest listings are a week+ old — those prices may not be real');
   else if (spread > 4) why = t('cheapest prices differ ×{x} — someone may be underpricing', { x: fmt(spread) });
   const label = t({ 3: 'Reliable', 2: 'Some data', 1: 'Few listings' }[level]);
-  return `<div class="conf c${level}"><span title="${esc(why)}">${'●'.repeat(level)}${'○'.repeat(3 - level)} ${label}</span>${extra}</div>`;
+  // Three rising bars, like demand strength: a calm gauge — not a red warning for a price that is merely thin.
+  return `<div class="conf c${level}"><span title="${esc(why)}"><i class="cb">${[1, 2, 3].map((i) => `<b${i <= level ? ' class="on"' : ''}></b>`).join('')}</i>${label}</span>${extra}</div>`;
 }
 
 // How many days ago the listing was posted or repriced (trade: listing.indexed).
@@ -295,9 +296,9 @@ function renderTradeHero(r) {
     <div class="th-top">
       <div class="th-price">
         <div class="k">${fl ? t('Like yours') : t('Estimated price')}</div>
-        <div class="big copy" data-note="~price ${market.amount} ${market.cur}" title="${esc(t('Market price — click to copy the price note'))}">${money(est)}</div>
-        <div class="alt">${alt(est)}</div>
-        ${k < 1 ? `<div class="alt" title="${esc(t('Partly used tablets are rarely listed — priced as a full one, scaled by the uses left (an assumption)'))}">${esc(t('a full one ({full} uses) ≈ {price}', { full: Math.round(state.item.props.uses / k), price: money(est / k) }))}</div>` : ''}
+        <div class="big copy" data-note="~price ${market.amount} ${market.cur}" title="${esc(t('Market price — click to copy the price note'))}">${moneyHtml(money(est))}</div>
+        <div class="alt">${moneyHtml(alt(est))}</div>
+        ${k < 1 ? `<div class="alt" title="${esc(t('Partly used tablets are rarely listed — priced as a full one, scaled by the uses left (an assumption)'))}">${moneyHtml(t('a full one ({full} uses) ≈ {price}', { full: Math.round(state.item.props.uses / k), price: money(est / k) }))}</div>` : ''}
       </div>
       ${confidence(r.total, head, priced.slice(0, 5), ageInfo)}
     </div>
@@ -407,7 +408,7 @@ function sellHtml(priced, est, cheapest, median, n) {
     .filter((o, i, a) => o.label !== mkt && !a.slice(0, i).some((p) => p.label === o.label));
   if (!opts.length) return '';
   return `<div class="sell-inline">${opts.map((o) => `<span class="so"><span class="k">${t(o.k)}</span><span class="v copy" data-note="~price ${o.amount} ${o.cur}" title="${o.title}
-${t('Click to copy the price note')}">${o.label}</span></span>`).join('<span class="sep"></span>')}</div>`;
+${t('Click to copy the price note')}">${moneyHtml(o.label)}</span></span>`).join('')}</div>`;
 }
 
 // Mod contributions to price: search in turn without each of the main mods (up to 4), how much the price drops.

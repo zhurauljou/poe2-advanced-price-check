@@ -17,6 +17,7 @@ contextBridge.exposeInMainWorld('pc', {
   setDemandLevel: (l) => ipcRenderer.invoke('set-demand-level', l),
   listingUrl: (item, filters, account) => ipcRenderer.invoke('listing-url', item, filters, account),
   quickPrice: (item, filters) => ipcRenderer.invoke('quick-price', item, filters),
+  icons: (keys) => ipcRenderer.invoke('icons', keys),
   search: (item, filters, relax) => ipcRenderer.invoke('search', item, filters, relax),
   setLeague: (league) => ipcRenderer.invoke('set-league', league),
   builds: (opts) => ipcRenderer.invoke('builds', opts),

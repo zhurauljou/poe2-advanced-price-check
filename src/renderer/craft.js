@@ -250,7 +250,7 @@ function curKind(n) {
   return 'orb';
 }
 let craftThin = new Set(); // currency priced from a handful of trades (poe.ninja volume) — marked on its chip
-const curChips = (list) => list.map((n) => `<span class="cur ${curKind(n)}${craftThin.has(n) ? ' thin' : ''}"${craftThin.has(n) ? ` title="${esc(t('Price from only a few trades on poe.ninja — a guess'))}"` : ''}>${esc(n)}</span>`).join('<span class="plus">+</span>');
+const curChips = (list) => list.map((n) => `<span class="cur ${curKind(n)}${craftThin.has(n) ? ' thin' : ''}"${craftThin.has(n) ? ` title="${esc(t('Price from only a few trades on poe.ninja — a guess'))}"` : ''}>${curIcon(n, n, true)}</span>`).join('<span class="plus">+</span>');
 
 // Essence / Alloy on a rare: order matters. First a sacrificial mod via Exalted on that side, then the omen
 // Crystallisation + essence (removes a random mod of that side). Without a sacrifice one of your mods goes: steps, numbered.
@@ -559,7 +559,7 @@ function planHtml(plan) {
     // «guaranteed» is the green badge below — not repeated next to the currencies.
     // The badge carries the number (and the goal tier) — the odds are not repeated next to the currencies.
     const how = [(c.k === 'essence' && !c.cross) || c.viaAbyss ? '' : curChips(c.currencies), flags[si] ? '' : esc(odds)].filter(Boolean).join(' · ');
-    const sideHtml = side ? `<div class="ps-side${side.per ? ' per' : ''}"><b class="ps-cost">≈ ${approx(side.cost)}</b>${side.per ? `<small>${esc(t('per attempt'))}</small>` : side.sub ? `<small>${esc(side.sub)}</small>` : ''}</div>` : '';
+    const sideHtml = side ? `<div class="ps-side${side.per ? ' per' : ''}"><b class="ps-cost">${moneyHtml(`≈ ${approx(side.cost)}`)}</b>${side.per ? `<small>${esc(t('per attempt'))}</small>` : side.sub ? `<small>${esc(side.sub)}</small>` : ''}</div>` : '';
     const flag = flags[si];
     const cls = [side ? 'has-side' : '', flag ? `flag-${flag.kind}` : ''].filter(Boolean).join(' ');
     return `<li${cls ? ` class="${cls}"` : ''}><div class="ps-main"><div class="ps-what">${title}</div>
@@ -572,7 +572,7 @@ function planHtml(plan) {
 }
 
 // Verdict explanations: the "≈ N" figures are highlighted so the text reads at a glance (only numbers — more would lose the accent).
-const hlNums = (s) => esc(s).replace(/≈\s?[\d.,]+(?:\s?(?:div|chaos|ex|exalted))?/g, (m) => `<b>${m}</b>`);
+const hlNums = (s) => esc(s).replace(/≈\s?[\d.,]+(?:\s?(?:div|chaos|ex|exalted))?/g, (m) => `<b>${unitIcons(m)}</b>`);
 
 // Verdict: sell as is or craft (goal price − currency cost).
 function verdictHtml(plan) {
@@ -603,11 +603,12 @@ function verdictBody(plan) {
   const spend = sim ? sim.spent.mean : planSpend(costs);
   const u = unitFor([now, goalValue != null ? goalValue : goalThin && goalThin.value, spend]);
   const m = (x) => moneyIn(x, u);
+  const mh = (x) => moneyHtml(m(x)); // the same with unit icons, for the line of numbers
   // The three numbers the decision rests on, in one line: the item now, the goal, the currency.
-  const goalText = goalValue === undefined ? '…' : goalValue == null ? (goalThin ? `${m(goalThin.value)}?` : t('none listed')) : (goalBasis === 'partial' ? '≥ ' : '≈ ') + m(goalValue);
+  const goalText = goalValue === undefined ? '…' : goalValue == null ? (goalThin ? `${mh(goalThin.value)}?` : esc(t('none listed'))) : (goalBasis === 'partial' ? '≥ ' : '≈ ') + mh(goalValue);
   const goalTitle = goalValue != null && goalBasis !== 'exact' ? t(goalBasis === 'similar' ? 'No exact matches — priced by similar items: the added modifiers required, the rest at their tier floor' : 'No similar items either — priced by items with only the most valuable added modifier: the real goal is worth more')
     : goalThin ? `${t('Too few listings to price the goal — one or two prices can be anything')} · ${t('{n} listings', { n: goalThin.n })}` : '';
-  const rows = [`<div class="profit-line"><span>${esc(t('now'))} <b>${now != null ? m(now) : '—'}</b></span><span${goalTitle ? ` title="${esc(goalTitle)}"` : ''}>${esc(t('goal'))} <b>${goalText}</b></span><span>${esc(t('currency'))} <b>${tiny(spend) ? '< 1 ex' : `${lottery && !sim ? `${esc(t('from'))} ` : '≈ '}${m(spend)}`}</b></span></div>`];
+  const rows = [`<div class="profit-line"><span>${esc(t('now'))} <b>${now != null ? mh(now) : '—'}</b></span><span${goalTitle ? ` title="${esc(goalTitle)}"` : ''}>${esc(t('goal'))} <b>${goalText}</b></span><span>${esc(t('currency'))} <b>${tiny(spend) ? '< 1 ex' : `${lottery && !sim ? `${esc(t('from'))} ` : '≈ '}${mh(spend)}`}</b></span></div>`];
   let verdict = '';
   // Removing extras with Annulments will on average hit needed mods: on such an item it's almost always unprofitable.
   const hits = Math.max(0, ...costs.map((c) => c.hits || 0));
@@ -926,7 +927,7 @@ function variantsHtml() {
   if (!variants || planBusy()) return '';
   // No variant has a gain to show (no goal or item price): the cards would be columns of dashes — a compact switch.
   if (variants.every((v) => variantEarn(v).gain == null)) {
-    return `<div class="variants mini">${variants.map((v) => { const { spend, lottery } = variantEarn(v); return `<button class="variant mini${v.key === planVariant ? ' on' : ''}" data-act="variant" data-v="${v.key}">${esc(t(VARIANT_NAME[v.key]))} <small>${tiny(spend) ? '< 1 ex' : `${lottery ? `${esc(t('from'))} ` : ''}${approx(spend)}`}</small></button>`; }).join('')}</div>`;
+    return `<div class="variants mini">${variants.map((v) => { const { spend, lottery } = variantEarn(v); return `<button class="variant mini${v.key === planVariant ? ' on' : ''}" data-act="variant" data-v="${v.key}">${esc(t(VARIANT_NAME[v.key]))} <small>${tiny(spend) ? '< 1 ex' : `${lottery ? `${esc(t('from'))} ` : ''}${moneyHtml(approx(spend))}`}</small></button>`; }).join('')}</div>`;
   }
   // Every variant loses against selling as is: nothing to choose — the verdict says so, the switch would only add numbers.
   const rows = variants.map((v) => ({ v, ...variantEarn(v) }));
@@ -937,7 +938,7 @@ function variantsHtml() {
   const cards = rows.map(({ v, value, lottery, unknownOdds, gain, expected }) => {
     const zero = gain != null && tiny(Math.abs(gain)); // rounds to nothing — no sign, no colour
     const earn = value === undefined ? '…' : gain == null ? '—' : zero ? '≈ 0'
-      : `<span class="${gain > 0 ? 'good' : 'bad'}">${lottery && !expected && gain > 0 ? `${esc(t('up to'))} ` : ''}${gain > 0 ? '+' : '−'}${moneyIn(Math.abs(gain), u)}</span>`;
+      : `<span class="${gain > 0 ? 'good' : 'bad'}">${lottery && !expected && gain > 0 ? `${esc(t('up to'))} ` : ''}${gain > 0 ? '+' : '−'}${moneyHtml(moneyIn(Math.abs(gain), u))}</span>`;
     return `<button class="variant mini${v.key === planVariant ? ' on' : ''}" data-act="variant" data-v="${v.key}"${lottery ? ` title="${esc(t(unknownOdds ? 'A key modifier has unknown odds — this is a gamble' : 'A step is a single attempt: a miss stays on the item — this is a gamble'))}"` : ''}>${esc(t(VARIANT_NAME[v.key]))} <small>${earn}</small></button>`;
   }).join('');
   const v = curVariant();
@@ -1025,23 +1026,30 @@ function renderNormalCraft(r, head) {
   const known = opts.filter((o) => o.cost != null);
   const best = known.length ? known.reduce((a, b) => (b.cost < a.cost ? b : a)) : opts[opts.length - 1];
   const pct = (x) => `${x >= 0.1 ? Math.round(x * 100) : Math.round(x * 1000) / 10}%`;
-  const rows = opts.map((o) => `<div class="profit-row${o === best ? ' best' : ''}"><div><span class="game">${esc(o.name)}</span>${o.orb != null ? ` <small>≈ ${approx(o.orb)}</small>` : ''}${o === best ? ` <b class="rec">${esc(t('recommended'))}</b>` : ''}</div>
-    <div class="ps-how">${esc(t('{n} possible modifiers · popular: {any} · popular in a goal tier: {top}', { n: o.pool, any: pct(o.any), top: pct(o.top) }))}${o.cost != null ? ` · <b>${esc(t('≈ {cost} on average', { cost: approx(o.cost) }))}</b>` : ''}</div>
-    ${o.minLevel ? `<div class="ps-note">${esc(t('low tiers cut off (level {n}+; a family without such tiers rolls its best one)', { n: o.minLevel }))}</div>` : ''}</div>`).join('');
+  // The same parts as the rare plan: the orbs as compact rows (chip, the odds that matter, the average cost; the best one
+  // outlined), the steps as numbered cards with currency chips.
+  const rows = opts.map((o) => `<div class="orb-opt${o === best ? ' best' : ''}" title="${esc([t('{n} possible · popular: {any}', { n: o.pool, any: pct(o.any) }), o.minLevel ? t('low tiers cut off (level {n}+; a family without such tiers rolls its best one)', { n: o.minLevel }) : ''].filter(Boolean).join('\n'))}">
+    <span class="oo-cur">${curChips([o.name])}</span>
+    <span class="oo-odds"><b>${pct(o.top)}</b> ${esc(t('a popular modifier in a goal tier'))}</span>
+    <span class="oo-cost">${o.cost != null ? moneyHtml(`≈ ${approx(o.cost)}`) : '—'}${o === best ? `<small class="rec">${esc(t('recommended'))}</small>` : ''}</span></div>`).join('');
   const warn = base != null && base >= BASE_PRICEY
-    ? `<div class="craft-warn">⚠ ${esc(t('The base itself sells for ≈ {price} — a miss costs a base like this. Selling it as is may be the better deal.', { price: approx(base) }))}</div>` : '';
+    ? `<div class="ps-flag risk"><span class="fi">${FLAG_ICON.risk}</span><span>${esc(t('The base itself sells for ≈ {price} — a miss costs a base like this. Selling it as is may be the better deal.', { price: approx(base) }))}</span></div>` : '';
+  const miss = base != null && base < (p('Orb of Annulment') ?? Infinity)
+    ? t('A miss → take another base: it is cheaper than fixing this one')
+    : t('A miss → Orb of Annulment removes the modifier, then Orb of Augmentation');
+  const card = (verb, what, chips, side, key = '', more = '') => `<li${side ? ' class="has-side"' : ''}><div class="ps-main"><div class="ps-what"><span class="ps-verb">${esc(verb)}</span>${what ? `<span class="ps-mod">${esc(what)}</span>` : ''}</div>
+      <div class="ps-how">${chips}</div>${key ? `<div class="ps-key">${esc(key)}</div>` : ''}${more ? `<details class="ps-more"><summary>${esc(t('details'))}</summary><div class="ps-note">${esc(more)}</div></details>` : ''}</div>
+      ${side || ''}</li>`;
   const steps = [
-    t('{orb} — makes it magic with one random modifier', { orb: best.name }),
-    t('A popular modifier → Orb of Augmentation (Greater / Perfect — same idea) for the other side, then an Essence or Regal Orb → rare; open Craft again for the next steps'),
-    base != null && base < (p('Orb of Annulment') ?? Infinity)
-      ? t('A miss → take another base: it is cheaper than fixing this one')
-      : t('A miss → Orb of Annulment removes the modifier, then Orb of Augmentation'),
-    t('Alternative: Orb of Alchemy — straight to rare with 4 random modifiers (Omen of Sinistral / Dextral Alchemy — as many prefixes / suffixes as possible)'),
+    card(t('Make it magic'), '', curChips([best.name]), best.cost != null ? `<div class="ps-side"><b class="ps-cost">${moneyHtml(`≈ ${approx(best.cost)}`)}</b><small>${esc(t('on average'))}</small></div>` : '', miss),
+    card(t('Add a modifier to the other side'), '', curChips(['Orb of Augmentation']), '', t('Greater / Perfect: the same, low tiers cut off')),
+    card(t('Make it rare'), '', curChips(['Regal Orb']), '', t('or an Essence of a wanted modifier — then open Craft again for the next steps'),
+      t('Alternative: Orb of Alchemy — straight to rare with 4 random modifiers (Omen of Sinistral / Dextral Alchemy — as many prefixes / suffixes as possible)')),
   ];
   const popular = (r.popular || []).map((c, i) => ({ name: `${c.text}${c.tier ? ` · T${c.tier}` : ''}`, pct: c.pct, rank: i + 1 }));
   $('craft').innerHTML = head + `<div class="craft-sec plan-box"><div class="k">${esc(t('White base → magic'))}</div>
-    ${warn}${rows}${ilvlHintHtml(r.ilvlHint)}
-    <ol class="plan">${steps.map((s) => `<li><div class="ps-how">${esc(s)}</div></li>`).join('')}</ol></div>
+    ${warn}<div class="orb-opts">${rows}</div>${ilvlHintHtml(r.ilvlHint)}
+    <ol class="plan">${steps.join('')}</ol></div>
     ${popular.length ? demandList('npop', t('Popular modifiers that can roll here'), popular) : ''}
     ${r.chanceMeta ? chanceLine(r.chanceMeta) : ''}`;
 }

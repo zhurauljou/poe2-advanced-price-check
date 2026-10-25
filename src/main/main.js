@@ -684,6 +684,7 @@ app.whenReady().then(singleInstance).then((ok) => {
 
   handle('search', FROM.overlay, (_e, item, filters, relax) => (demo.mockTrade()
     ? demo.mockSearch(api.ninja.rates) : api.forCurrent(() => pricing.search(curLeague(), item, filters, relax))));
+  handle('icons', FROM.overlay, (_e, keys) => require('./icons').icons(keys));
   handle('unique-price', FROM.overlay, (_e, name, base) => api.uniquePrice(curLeague(), name, base));
   handle('quick-price', FROM.overlay, (_e, item, filters) => (demo.mockTrade()
     ? demo.mockQuick() : api.forCurrent(() => pricing.quick(curLeague(), item, filters))));

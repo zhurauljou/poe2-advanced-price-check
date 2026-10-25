@@ -112,6 +112,44 @@ function moneyIn(div, u) {
   return `${fmt(r != null ? r : Math.round(v * 10) / 10)} ${u}`;
 }
 
+// ---- currency icons (src/main/icons.js): an orb reads faster than its name ----
+// An <img> of a currency by its trade id («exalted») or name («Omen of Whittling»). Until the icon arrives — or if there
+// is none — the name shows instead (CSS: .ci.on + .cn). Unknown icons are fetched in one batch and filled into every
+// image of that currency on the page, so no render waits for them.
+const ICONS = {}; // key → data URL | null; undefined while requested
+const UNIT_KEY = { div: 'divine', chaos: 'chaos', ex: 'exalted', exalted: 'exalted', mirror: 'mirror' };
+let iconBatch = null;
+function wantIcon(key) {
+  if (key in ICONS || !window.pc || !window.pc.icons) return;
+  ICONS[key] = undefined;
+  if (!iconBatch) {
+    iconBatch = new Set();
+    setTimeout(() => {
+      const keys = [...iconBatch];
+      iconBatch = null;
+      window.pc.icons(keys).then((got) => {
+        Object.assign(ICONS, got);
+        for (const [k, src] of Object.entries(got)) {
+          if (src) document.querySelectorAll(`img.ci[data-k="${CSS.escape(k)}"]`).forEach((n) => { n.src = src; n.classList.add('on'); });
+        }
+        fit();
+      }).catch(() => {});
+    }, 0);
+  }
+  iconBatch.add(key);
+}
+// named — the name stays next to the icon (currency chips: omens look alike); otherwise the icon replaces it.
+function curIcon(key, label = key, named = false) {
+  wantIcon(key);
+  const src = ICONS[key];
+  const img = `<img class="ci${src ? ' on' : ''}" data-k="${esc(key)}" alt=""${named ? '' : ` title="${esc(label)}"`}${src ? ` src="${src}"` : ''}>`;
+  return named ? `${img}${esc(label)}` : `${img}<span class="cn">${esc(label)}</span>`;
+}
+// A formatted price («≈ 5 chaos», «from 2 div», «< 1 ex») with its units as icons: «≈ 5 ⬤». unitIcons — the same for
+// text that is already escaped HTML.
+const unitIcons = (html) => html.replace(/(\d[\d,.]*\s?)(div|chaos|exalted|ex|mirror)\b/g, (m, n, u) => `${n}${curIcon(UNIT_KEY[u], u)}`);
+const moneyHtml = (text) => unitIcons(esc(text));
+
 function ago(iso) {
   const s = (Date.now() - new Date(iso).getTime()) / 1000;
   if (s < 3600) return t('{n}m', { n: Math.max(1, Math.round(s / 60)) });

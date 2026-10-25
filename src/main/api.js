@@ -52,7 +52,9 @@ function tapeKey(url, opts) { return require('crypto').createHash('sha1').update
 async function tapeFetch(url, opts) {
   const f = path.join(tape.dir, `${tapeKey(url, opts)}.gz`);
   const zlib = require('zlib');
-  if (!tape.record) {
+  // A static image (currency icon) missing from the recording is recorded on first use: it never changes, so the
+  // snapshots stay repeatable — unlike trade or poe.ninja responses, which only a deliberate --record refreshes.
+  if (!tape.record && !(!fs.existsSync(f) && /^https:\/\/web\.poecdn\.com\/gen\/image\//.test(url))) {
     if (!fs.existsSync(f)) throw new Error(`no recording for ${url}`);
     const { status, headers, body } = JSON.parse(zlib.gunzipSync(fs.readFileSync(f)));
     // The body is stored already decompressed — compression and length headers don't fit it.

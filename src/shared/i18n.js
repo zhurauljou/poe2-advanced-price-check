@@ -5,6 +5,7 @@
 (function (root) {
   // English singular forms for keys with {n}.
   const EN = {
+    'key: close': 'close', 'key: search': 'search',
     'only {n} similar listings': ['only {n} similar listing', 'only {n} similar listings'],
     '{n} free prefixes': ['{n} free prefix', '{n} free prefixes'],
     '{n} free suffixes': ['{n} free suffix', '{n} free suffixes'],
@@ -31,6 +32,8 @@
     'Search filters': 'Фильтры поиска',
     Search: 'Поиск',
     'Search · filters changed': 'Поиск · фильтры изменены',
+    'key: close': 'закрыть',
+    'key: search': 'поиск',
     'Esc — close · Enter — search · click a listing — copy whisper': 'Esc — закрыть · Enter — поиск · клик по лоту — копировать шёпот',
     'Trade site ↗': 'Трейд ↗',
     'Current league': 'Текущая лига',
@@ -406,6 +409,13 @@
     'Omen of Whittling makes the {orb} remove the lowest-level modifier — {junk} — and a random modifier takes its place. Sure only once: if it is not {mod}, the new modifier is not the lowest — go on with {then}': 'Omen of Whittling заставляет {orb} снять мод самого низкого уровня — {junk} — и на его место встаёт случайный. Гарантированно только раз: если выпал не {mod}, новый мод уже не самый низкий — дальше {then}',
     'Omen of Whittling makes the {orb} remove the lowest-level modifier — {junk} — and a random modifier takes its place': 'Omen of Whittling заставляет {orb} снять мод самого низкого уровня — {junk} — и на его место встаёт случайный',
     '{odds} — any of them; {mod} alone — {own}': '{odds} — любой из них; только {mod} — {own}',
+    'a popular modifier in a goal tier': 'популярный мод в нужном тире',
+    '{n} possible · popular: {any}': 'возможных модов: {n} · популярных: {any}',
+    'Make it magic': 'Сделать магической',
+    'Add a modifier to the other side': 'Добавить мод на другую сторону',
+    'Greater / Perfect: the same, low tiers cut off': 'Greater / Perfect — то же самое, без низких тиров',
+    'or an Essence of a wanted modifier — then open Craft again for the next steps': 'или эссенция нужного мода — затем снова откройте Крафт для следующих шагов',
+    'on average': 'в среднем',
     'Show the plan anyway': 'Всё равно показать план',
     'Not worth it: the currency costs more than the finished item': 'Не стоит: валюта дороже готового предмета',
     'Probably not worth it: the currency costs more than the goal is worth at least': 'Скорее не стоит: валюта дороже нижней оценки цели',

@@ -6,6 +6,9 @@ const { log } = require('./log');
 
 let types = null; // Set of base types from trade — to pull the base out of a magic item's name
 let currencyInfo = null; // trade currency id -> { text, image }
+let currencyByText = new Map(); // «Exalted Orb», «Omen of Whittling», «Perfect Essence of Enhancement» → image URL
+// Image of a currency by its trade id («exalted») or name («Exalted Orb»); null if the trade data has none.
+const currencyImage = (key) => (currencyInfo && currencyInfo.has(key) ? currencyInfo.get(key).image : currencyByText.get(key) || null);
 
 async function init() {
   const [st, items, stat] = await Promise.all([api.tradeStats(), api.tradeItems(), api.tradeStatic()]);
@@ -13,11 +16,13 @@ async function init() {
   types = new Set();
   for (const g of items.result) for (const e of g.entries) if (!e.name) types.add(e.type);
   currencyInfo = new Map();
+  currencyByText = new Map();
   for (const g of stat.result) {
     for (const e of g.entries) {
       if (e.id && !currencyInfo.has(e.id)) {
         currencyInfo.set(e.id, { text: e.text, image: e.image ? `https://web.poecdn.com${e.image}` : null });
       }
+      if (e.text && e.image && !currencyByText.has(e.text)) currencyByText.set(e.text, `https://web.poecdn.com${e.image}`);
     }
   }
 }
@@ -744,4 +749,4 @@ async function exchangeOffers(league, want, have) {
 // The base is in the trade dictionary (dictionary not loaded — unknown, assume it is).
 const knownBase = (b) => !types || !b || types.has(b);
 
-module.exports = { init, knownBase, prepare, search, quick, listingUrl, elementVariants, exchangeOffers, isExchangeable };
+module.exports = { init, knownBase, prepare, search, quick, listingUrl, elementVariants, exchangeOffers, isExchangeable, currencyImage };
