@@ -304,7 +304,7 @@ function tick() {
     el.removeAttribute('data-until');
     if (el.closest('#status')) setStatus('');
     const then = el.dataset.then;
-    if (then && then === `search:${searchSeq}` && !document.hidden) runSearch();
+    if (then && then === `search:${searchSeq}` && !document.hidden) runSearch(!!state.lastRelax);
   }
 }
 setInterval(tick, 500);

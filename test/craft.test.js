@@ -232,6 +232,17 @@ test('a «reduced» affix searched only as «increased» on trade: «at most» i
   assert.equal(m.roll, 0.5);
 });
 
+test('a key mod is checked even without demand data (T5 Movement Speed, poe.ninja late)', { skip }, async () => {
+  const f = await filters('boots-ms-t5.txt');
+  const ms = mod(f, /Movement Speed/);
+  assert.ok(ms.key && ms.enabled, 'key and checked');
+});
+
+test('unidentified item: no «missing key mod» warning or exclusion — its mods are unknown', { skip }, async () => {
+  const f = await filters('unid-boots.txt', 'boots-es.demand.json');
+  assert.deepEqual(f.exclude, []);
+});
+
 test('ES boots: life (low demand) and Stun Threshold are unchecked, total life is off', { skip }, async () => {
   const f = await filters('boots-es', 'boots-es.demand.json');
   assert.equal(mod(f, /^\+137 to maximum Life/).enabled, false);

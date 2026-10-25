@@ -268,6 +268,9 @@ let heroRender = null;
 
 async function runSearch(relax = false) {
   const seq = ++searchSeq;
+  // A retry after the rate limit repeats this search as it was: the automatic first one relaxes filters, a strict retry
+  // of it found nothing for a rare item a normal check prices.
+  state.lastRelax = relax;
   impactSeq++;
   state.impact = null;
   state.est = null;

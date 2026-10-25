@@ -1,0 +1,9 @@
+Item Class: Boots
+Rarity: Rare
+Drakeskin Boots
+--------
+Evasion Rating: 120
+--------
+Item Level: 80
+--------
+Unidentified

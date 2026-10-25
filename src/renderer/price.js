@@ -113,7 +113,7 @@ document.addEventListener('click', (e) => {
   const b = e.target.closest('[data-act]');
   if (!b || !state) return;
   const act = b.dataset.act;
-  if (act === 'retry') { setNote(''); runSearch(); }
+  if (act === 'retry') { setNote(''); runSearch(!!state.lastRelax); }
   if (act === 'relax') { setNote(''); runSearch(true); }
   if (act === 'trade' && state.tradeUrl) window.pc.openUrl(state.tradeUrl);
   if (act === 'price') setTab('price');

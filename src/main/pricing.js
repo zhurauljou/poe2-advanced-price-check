@@ -339,7 +339,7 @@ function prepare(item, demand, rollsOn) {
       // An influence rune in a socket («Can roll Destruction modifiers») is permanent; like a Rune of Aldur, compare with the same.
       enabled: !!m.forged || infRune || (option && m.tag === 'explicit') || rolls || uniqueRandom || hotImplicit || (!!m.statId && searchMods
         && ['explicit', 'fractured', 'desecrated', 'crafted'].includes(m.tag)
-        && w.importance >= ENABLE_FROM && !covered.some((re) => re.test(m.template))),
+        && (w.importance >= ENABLE_FROM || w.key) && !covered.some((re) => re.test(m.template))),
       option,
       // max ("up to") filter: skill levels — exactly our value (+5 and +4 are different goods, especially on a magic base).
       max: reduced ? -minFor(-m.value, m.range, w.importance) : !option && m.value != null && Number.isInteger(m.value) && LEVELS.test(m.template || '') ? m.value : null,
@@ -358,7 +358,8 @@ function prepare(item, demand, rollsOn) {
   // Similar listings with it cost many times more — so by default we search for items WITHOUT it (a fair comparison).
   const key = stats.templateKey;
   const have = new Set(item.mods.map((m) => key(m.template)));
-  const exclude = !searchMods ? [] : (demand && demand.mods || [])
+  // Not for an unidentified item: its mods are unknown, nothing is «missing» — and it is compared with unidentified ones anyway.
+  const exclude = !searchMods || item.unidentified ? [] : (demand && demand.mods || [])
     .filter((r) => r.pct >= KEY_MISSING && !have.has(key(r.name)) && (!rollsOn || rollsOn(r.name) !== false))
     .map((r) => { const s = stats.statFor(r.name, 'explicit', item.itemClass); return s && { statId: s.statId, text: r.name, pct: r.pct, enabled: true }; })
     .filter(Boolean).slice(0, 2);
@@ -555,6 +556,8 @@ function strength(f) {
   if (f.kind === 'prop') return f.exact ? Infinity : 2.5; // waystone tier is never dropped — that's a different product
   if (f.kind === 'options') return 2.8;
   if (f.tag === 'pseudo') return 1.8;
+  // A key mod (slot key, 60%+ demand, the item's niche) is never dropped: the craft plan treats these as holding the price.
+  if (f.key) return Infinity;
   return f.importance >= KEEP_FROM ? Infinity : f.importance;
 }
 
