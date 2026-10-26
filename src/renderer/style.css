@@ -1036,3 +1036,20 @@ details.why > summary, details.more-ways > summary, details.vmore > summary, det
 :is(details.why, details.more-ways, details.vmore, details.ps-more) > summary:hover, .plan-steps.folded > .link:hover {
   background: var(--hover); color: var(--ink-1); }
 .plan-steps.folded > .link { width: calc(100% + 16px); }
+
+/* Craft blocks: a currency chain is a chip row over its explanation; footnotes (prices, odds, sources) are quiet lines. */
+.craft-how.chain { display: block; margin: 6px 0; }
+.craft-how.chain::before { display: none; }
+.ch-chips { display: flex; flex-wrap: wrap; align-items: center; gap: 3px; }
+.ch-chips .plus { margin: 0 1px; }
+.ch-chips .game { color: var(--ink-1); }
+.ch-chips .ch-price { margin-left: 4px; color: var(--ink-3); }
+.ch-note { margin-top: 2px; color: var(--ink-2); }
+.craft-how.chips { color: var(--ink-2); line-height: 1.7; }
+.craft-sec .k-sub { margin: -2px 0 4px; font-size: var(--t-12); color: var(--ink-3); }
+.craft-prices { display: flex; flex-wrap: wrap; gap: 2px 14px; margin: 6px 0 2px; font-size: var(--t-12); color: var(--ink-3); }
+.craft-prices b { font-weight: 400; color: var(--ink-2); }
+.craft-chance-note { padding: 0; font-size: var(--t-12); color: var(--ink-3); }
+.craft-foot { margin-top: 12px; font-size: var(--t-12); color: var(--ink-3); text-align: left; }
+.craft-foot b { color: var(--warn); font-weight: 700; }
+.craft-foot .ages-i { margin-left: 12px; }

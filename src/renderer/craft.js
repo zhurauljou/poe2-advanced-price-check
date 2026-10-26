@@ -88,6 +88,37 @@ function chipify(text) {
   return { html, chips: true };
 }
 
+// A method line "currencies — what they do": the chips get a row of their own and the explanation goes under it — chips
+// inside a sentence read as one glued line. A plain-text aside after the chips ("(preview the result first)") moves down
+// with the explanation; chips in brackets lose the brackets ("Sanctify (Divine Orb + Omen…)" → "Sanctify: …").
+function howLine(h) {
+  const s = String(h);
+  const cut = s.indexOf(' — ');
+  if (cut > 0) {
+    let head = s.slice(0, cut);
+    let note = s.slice(cut + 3);
+    const par = head.match(/^(.*\S)\s*\(([^()]+)\)$/);
+    if (par) {
+      if (chipify(par[2]).chips) head = `${par[1]}: ${par[2]}`;
+      else { head = par[1]; note = `${par[2]} — ${note}`; }
+    }
+    // Only a head that is mostly currency: "Before corrupting: Divine Orb, quality and runes" stays one sentence.
+    const rest = head.split(CUR_RE).filter((p, i) => i % 2 === 0).join('').replace(/[\s+/:,]/g, '');
+    const c = chipify(head);
+    if (c.chips && rest.length <= 16) {
+      return `<div class="craft-how chain"><div class="ch-chips">${c.html}</div><div class="ch-note">${esc(note)}</div></div>`;
+    }
+  }
+  const c = chipify(s);
+  return `<div class="craft-how${c.chips ? ' chips' : ''}">${c.html}</div>`;
+}
+
+// "Prices": one quiet line, each currency a separate item — "A ≈ 10 div · B ≈ 1,906 div" ran together.
+function pricesLine(names) {
+  const items = names.filter((n) => craftPrices[n] != null).map((n) => `<span>${esc(n)} ≈ <b>${esc(approx(craftPrices[n]))}</b></span>`);
+  return items.length ? `<div class="craft-prices"><span class="lbl">${esc(t('Prices'))}</span>${items.join('')}</div>` : '';
+}
+
 async function priceAll(btn) {
   const list = btn.closest('.clist');
   btn.disabled = true;
@@ -1220,10 +1251,9 @@ async function computeUniqueTop(rolls) {
 // "Risky finish": corruption and sanctification are irreversible, odds are community estimates.
 // Collapsed: the last step, rarely reached. Nothing to improve (open): expanded.
 function gambleHtml(g, open = false) {
-  const p = (n) => (craftPrices[n] != null && (n !== 'Omen of Sanctification' || state.item.rarity === 'Rare') ? ` · ${n} ≈ ${approx(craftPrices[n])}` : '');
   const list = (xs) => xs.map((h) => `<div class="craft-how">${esc(h)}</div>`).join('');
-  return `<details class="craft-sec gamble"${open ? ' open' : ''}><summary class="k">⚠ ${esc(t('Risky final step: corruption and sanctification'))}</summary>${list(g.how)}
-    <div class="craft-sub">${esc(t('Prices'))}${esc(p('Vaal Orb') + p('Omen of Sanctification') + p('Omen of Putrefaction'))}</div>
+  return `<details class="craft-sec gamble"${open ? ' open' : ''}><summary class="k">⚠ ${esc(t('Risky final step: corruption and sanctification'))}</summary>${g.how.map(howLine).join('')}
+    ${pricesLine(['Vaal Orb', ...(state.item.rarity === 'Rare' ? ['Omen of Sanctification'] : []), 'Omen of Putrefaction'])}
     ${g.enchants.length ? `<details class="why"><summary>${esc(t('Possible corruption enchants ({n})', { n: g.enchants.length }))}</summary>${list(g.enchants)}</details>` : ''}</details>`;
 }
 
@@ -1244,7 +1274,7 @@ function renderCraft(r) {
   if (r.unique) { renderUniqueCraft(r, head); return; }
   if (r.normal) { renderNormalCraft(r, head); return; }
   // Method lines: currency names as chips (no bullet then); plain advice keeps its ◆.
-  const how = (list) => list.map((h) => { const c = chipify(h); return `<div class="craft-how${c.chips ? ' chips' : ''}">${c.html}</div>`; }).join('');
+  const how = (list) => list.map(howLine).join('');
   // On top, brief for beginners: slots on the item, "sell or craft", step-by-step plan with costs.
   // Everything else (all methods, mod options) is collapsed below.
   const top = [slotsHtml(r) + (state.item.rarity === 'Magic' ? ilvlHintHtml(r.ilvlHint) : '')];
@@ -1288,8 +1318,7 @@ function renderCraft(r) {
     } else if (s.kind === 'magicfill') {
       parts.push(`<div class="craft-sec"><div class="k">${t('While it is magic')}</div>${how(s.how)}${s.candidates.length ? craftRows(s.candidates, t('Popular modifiers for the free slot:')) : ''}</div>`);
     } else if (s.kind === 'risky') {
-      const pr = (s.prices || []).filter((n) => craftPrices[n] != null).map((n) => `${n} ≈ ${approx(craftPrices[n])}`).join(' · ');
-      parts.push(`<div class="craft-sec alt"><div class="k">${t('Risky')}</div>${how(s.how)}${pr ? `<div class="craft-sub">${esc(t('Prices'))} · ${esc(pr)}</div>` : ''}</div>`);
+      parts.push(`<div class="craft-sec alt"><div class="k">${t('Risky')}</div>${how(s.how)}${pricesLine(s.prices || [])}</div>`);
     } else if (s.kind === 'keep') {
       parts.push(`<div class="craft-sec"><div class="k">${t('Full — all modifiers are top tier')}</div><div class="craft-sub">${t('Nothing worth replacing.')}</div></div>`);
     } else if (s.kind === 'cheap') {
@@ -1298,14 +1327,13 @@ function renderCraft(r) {
   }
   if (r.augments && r.augments.length) {
     const sock = r.freeSockets ? t('{n} free augment socket(s)', { n: r.freeSockets }) : t("no free augment socket — Artificer's Orb adds one");
-    parts.push(`<div class="craft-sec"><div class="k">${esc(t('Runes and soul cores for the sockets'))} <small class="muted">· ${esc(sock)}</small></div>
-      ${r.augments.map((a) => `<div class="craft-how"><span><span class="game">${esc(a.name)}</span>${craftPrices[a.name] != null ? ` ≈ ${approx(craftPrices[a.name])}` : ''} — ${esc(a.lines.join(', '))} <span class="dem">· ${esc(t('{pct}% builds', { pct: fmt(a.pct) }))}</span>${a.ancient ? ` <small class="muted">(${esc(t('Ancient Augment: one per item'))})</small>` : ''}</span></div>`).join('')}</div>`);
+    parts.push(`<div class="craft-sec"><div class="k">${esc(t('Runes and soul cores for the sockets'))}</div><div class="k-sub">${esc(sock)}</div>
+      ${r.augments.map((a) => `<div class="craft-how chain"><div class="ch-chips"><span class="game">${esc(a.name)}</span>${craftPrices[a.name] != null ? `<span class="ch-price">≈ ${esc(approx(craftPrices[a.name]))}</span>` : ''}</div><div class="ch-note">${esc(a.lines.join(', '))} · ${esc(t('{pct}% builds', { pct: fmt(a.pct) }))}${a.ancient ? ` · ${esc(t('Ancient Augment: one per item'))}` : ''}</div></div>`).join('')}</div>`);
   }
   if (chanceNote) parts.push(chanceNote); // there were no tables with odds, but the plan has odds: the line goes at the end
   if (r.gamble && r.goal && r.goal.plan && r.goal.plan.length) parts.push(gambleHtml(r.gamble)); // at the end, after all the safe methods
   // Sources are reference, not a decision: an icon with a tooltip.
-  parts.push(`<div class="craft-beta"><b>${esc(t('Beta'))}</b> · ${esc(t('Odds are estimates — check expensive steps yourself'))}</div>`);
-  parts.push(`<div class="craft-foot"><span class="ages-i" title="${esc(t(r.chanceMeta ? 'Mod pool: game files (RePoE).' : "Mod pool: game files (RePoE). Roll chances aren't shown — PoE 2 files have no modifier weights."))} ${esc(t('Demand: builds on poe.ninja. Prices: poe.ninja and the trade site.'))}">ⓘ ${esc(t('Sources'))}</span></div>`);
+  parts.push(`<div class="craft-foot"><b>${esc(t('Beta'))}</b> · ${esc(t('Odds are estimates — check expensive steps yourself'))}<span class="ages-i" title="${esc(t(r.chanceMeta ? 'Mod pool: game files (RePoE).' : "Mod pool: game files (RePoE). Roll chances aren't shown — PoE 2 files have no modifier weights."))} ${esc(t('Demand: builds on poe.ninja. Prices: poe.ninja and the trade site.'))}">ⓘ ${esc(t('Sources'))}</span></div>`);
   // Wide window: plan on the left, all methods on the right (expanded).
   $('craft').innerHTML = head + `<div class="craft-cols"><div class="craft-l">${top.join('')}</div>`
     + `<details class="more-ways"${wide ? ' open' : ''}><summary>${t('All methods and modifier options')}</summary>${parts.join('')}</details></div>`;
