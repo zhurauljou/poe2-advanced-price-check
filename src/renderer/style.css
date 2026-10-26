@@ -1068,3 +1068,17 @@ details.why > summary, details.more-ways > summary, details.vmore > summary, det
 .craft-foot { margin-top: 12px; font-size: var(--t-12); color: var(--ink-3); text-align: left; }
 .craft-foot b { color: var(--warn); font-weight: 700; }
 .craft-foot .ages-i { margin-left: 12px; }
+
+/* Double corruption (Craft, a corrupted item): framed like the plan — the orb, a 50/50 bar, a short ledger, the enchants open. */
+.dc-locked { margin: 2px 0 8px; text-align: center; font-size: var(--fs-s); color: var(--muted); }
+.craft-sec.dcor { padding: 8px 10px 6px; border: 1px solid #4a3f2c; border-radius: 3px; background: rgba(218, 193, 142, .04); }
+.dc-head { display: flex; align-items: center; gap: 8px; }
+.dc-head .k { margin: 0 auto 0 0; }
+.dc-head b { color: var(--cream); font-size: var(--fs-s); }
+.dc-odds { display: grid; grid-template-columns: 1fr 1fr; gap: 2px; margin: 8px 0 6px; font-size: var(--fs-xs); text-align: center; }
+.dc-odds span { padding: 3px 4px; }
+.dc-odds .win { border-radius: 3px 0 0 3px; background: rgba(111, 207, 122, .12); color: var(--good); }
+.dc-odds .lose { border-radius: 0 3px 3px 0; background: rgba(224, 103, 90, .12); color: #e6a59c; }
+.dcor .clist { margin-top: 4px; }
+.crow.dc { grid-template-columns: minmax(0, 1fr) 64px 76px; }
+.crow.dc:not(.chead) .bname { color: var(--g-enchant); }

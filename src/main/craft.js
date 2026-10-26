@@ -6,6 +6,7 @@
 const fsW = require('fs');
 const pathW = require('path');
 const craftData = require('./craft-data');
+const stats = require('./stats');
 const { load, templates, tradeStats, weights, exaltWeights, guaranteedFor, corruptedFor, emotionsFor, canRoll } = craftData;
 // Odds in words: "1 in 3"; better than 1 in 2 — as a percentage ("~60%"): "1 in 1.7" reads badly.
 const oddsOf = (p) => (p >= 0.5 ? `~${Math.round(Math.min(1, p) * 100)}%` : t('1 in {n}', { n: Math.round(10 / p) / 10 }));
@@ -102,7 +103,11 @@ function doubleCorruptFor(item) {
   const pool = (gambleData && gambleData.corruptedEnchants && gambleData.corruptedEnchants[item.itemClass]) || [];
   if (!orb || !pool.length) return null; // gems, flasks, tablets — other currencies or none
   const have = new Set((item.modLines || []).filter((l) => l.tag === 'enchant' || l.tag === 'corrupted').map((l) => shape(l.text)));
-  const enchants = pool.map((e) => e.replace(/\s*\(only \w+ bases\)/, '')).filter((e) => !have.has(shape(e)));
+  // Each with its trade stat at the lowest roll — the window prices a Twice Corrupted copy with it.
+  const enchants = pool.map((e) => e.replace(/\s*\(only \w+ bases\)/, '')).filter((e) => !have.has(shape(e))).map((text) => {
+    const s = stats.statFor(text.replace(/\((-?[\d.]+)--?[\d.]+\)/g, '$1'), 'enchant', item.itemClass);
+    return { text, stats: s && s.statId.startsWith('enchant.') ? [{ statId: s.statId, min: s.value }] : null };
+  });
   return { orb: orb.name, enchants };
 }
 

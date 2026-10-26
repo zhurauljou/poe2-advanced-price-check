@@ -76,8 +76,10 @@ test('corrupted Grand Spectrum: Craft offers double corruption (Architect\'s Orb
   const r = await craft.advise(it, null, async () => ({}));
   assert.equal(r.blocked, 'Corrupted');
   assert.equal(r.doubleCorrupt.orb, "Architect's Orb");
-  assert.ok(r.doubleCorrupt.enchants.includes('+(5-10)% to Fire Resistance'));
-  assert.ok(!r.doubleCorrupt.enchants.some((e) => /Cold Resistance/.test(e)));
+  const fire = r.doubleCorrupt.enchants.find((e) => e.text === '+(5-10)% to Fire Resistance');
+  assert.ok(fire, 'Fire Resistance is offered');
+  assert.deepEqual(fire.stats, [{ statId: 'enchant.stat_3372524247', min: 5 }], 'priced as an enchant from its lowest roll');
+  assert.ok(!r.doubleCorrupt.enchants.some((e) => /Cold Resistance/.test(e.text)));
   const twice = parseItem(fs.readFileSync(path.join(__dirname, 'fixtures', 'unique-grand-spectrum-corrupted.txt'), 'utf8').replace(/Corrupted\s*$/,'Twice Corrupted'));
   assert.equal((await craft.advise(twice, null, async () => ({}))).doubleCorrupt, null);
 });

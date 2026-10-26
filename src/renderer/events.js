@@ -375,6 +375,9 @@ window.pc.onUiLang((lang) => {
   fit();
 });
 
+// Opening or closing a fold changes the content height: the window follows it («toggle» doesn't bubble — caught on the way down).
+document.addEventListener('toggle', () => fit(), true);
+
 // The window's CSP forbids inline styles (style="…"), so bar and placeholder widths are set via data-w after insertion.
 // Only the inserted elements are scanned: the countdown's text nodes (every 500 ms) and the rest of the page are skipped.
 const applyW = (el) => { el.style.width = el.dataset.w; el.removeAttribute('data-w'); };
