@@ -106,13 +106,16 @@ const LOCAL_COVERED = {
   // but not «#% increased Energy Shield Recharge Rate».
   defence: /^(#% increased|# to) (maximum )?(Armour|Evasion Rating|Evasion|Energy Shield)((,| and) (Armour|Evasion|Energy Shield))*( \(Local\))?$/,
   damage: /^(Adds # to # (Physical|Fire|Cold|Lightning|Chaos) Damage|#% increased (Physical Damage|Attack Speed))( \(Local\))?$/,
+  // A sceptre's «#% increased Spirit» is in its Spirit (every sceptre has the same base Spirit).
+  spirit: /^#% increased Spirit( \(Local\))?$/,
 };
 
 const PROPS = [
   { key: 'ar', label: 'Armour', covers: 'defence' },
   { key: 'ev', label: 'Evasion', covers: 'defence' },
   { key: 'es', label: 'Energy Shield', covers: 'defence' },
-  { key: 'spirit', label: 'Spirit', covers: 'spirit' },
+  // tight: the number players compare a sceptre by — searched no less than ours, relaxing goes only to −3% and never drops it.
+  { key: 'spirit', label: 'Spirit', covers: 'spirit', tight: true },
   { key: 'dps', label: 'DPS', covers: 'damage' },
   { key: 'pdps', label: 'Physical DPS', covers: 'damage' },
   { key: 'edps', label: 'Elemental DPS', covers: 'damage' },
@@ -168,9 +171,9 @@ function propFilters(item) {
     ...p,
     value: item.props[p.key],
     // Defence/DPS is the main price factor for armour and weapons: search near-identical (−3%); with too few listings relaxing lowers it to −15%.
-    min: propMin(item.props[p.key], PROP_MIN),
+    min: propMin(item.props[p.key], p.tight ? 1 : PROP_MIN),
     // For weapons we search by total DPS, phys/elemental — optional.
-    enabled: !unique && !magic && !['pdps', 'edps', 'spirit', 'crit', 'aps'].includes(p.key),
+    enabled: !unique && !magic && !['pdps', 'edps', 'crit', 'aps'].includes(p.key),
   }));
 }
 
@@ -590,7 +593,7 @@ function strength(f) {
   if (f.kind === 'cheap') return 0.3; // socket and quality are dirt cheap to add — drop them first
   if (f.kind === 'proploose') return 1.7; // defence/DPS −3% → −15%: before dropping sums and the defence itself
   if (f.kind === 'base') return 1.75; // exact base → whole category: after weak mods, before sums and defence/DPS
-  if (f.kind === 'prop') return f.exact ? Infinity : 2.5; // waystone tier is never dropped — that's a different product
+  if (f.kind === 'prop') return f.exact || f.tight ? Infinity : 2.5; // waystone tier, Spirit are never dropped — a different product
   if (f.kind === 'options') return 2.8;
   if (f.tag === 'pseudo') return 1.8;
   // A key mod (slot key, 60%+ demand, the item's niche) is never dropped: the craft plan treats these as holding the price.
@@ -621,12 +624,13 @@ function weakest(filters) {
       filters.rollsLoosened = !v;
     } });
   }
-  // Defence/DPS: first lower the threshold to −15%, drop the filter only after that.
-  const strict = (filters.props || []).filter((p) => p.enabled && !p.exact && p.min > propMin(p.value, PROP_LOOSE));
+  // Defence/DPS: first lower the threshold to −15%, drop the filter only after that (Spirit: to −3%, never dropped).
+  const loose = (p) => propMin(p.value, p.tight ? PROP_MIN : PROP_LOOSE);
+  const strict = (filters.props || []).filter((p) => p.enabled && !p.exact && p.min > loose(p));
   if (strict.length && !filters.propsLoosened) {
     const saved = strict.map((p) => p.min);
     all.push({ kind: 'proploose', label: strict.map((p) => p.label).join(', '), set enabled(v) {
-      strict.forEach((p, i) => { p.min = v ? saved[i] : propMin(p.value, PROP_LOOSE); });
+      strict.forEach((p, i) => { p.min = v ? saved[i] : loose(p); });
       filters.propsLoosened = !v;
     } });
   }
@@ -794,4 +798,4 @@ async function exchangeOffers(league, want, have) {
 // The base is in the trade dictionary (dictionary not loaded — unknown, assume it is).
 const knownBase = (b) => !types || !b || types.has(b);
 
-module.exports = { init, knownBase, nameUnidUnique, prepare, search, quick, listingUrl, elementVariants, exchangeOffers, isExchangeable, currencyImage, buildQuery };
+module.exports = { init, knownBase, nameUnidUnique, prepare, search, quick, listingUrl, elementVariants, exchangeOffers, isExchangeable, currencyImage, buildQuery, weakest };

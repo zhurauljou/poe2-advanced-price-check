@@ -453,6 +453,25 @@ test("minion sceptre: Allies' Damage is a key even at T6, Minions' Life is no ni
   assert.ok(!ids.some((id) => id.startsWith('desecrated.')), 'no desecrated id in the query');
 });
 
+test('sceptre: its Spirit is searched 1 in 1, «increased Spirit» counts as already in it, relaxing stops at −3%', { skip }, async () => {
+  await init();
+  const it = parseItem(['Item Class: Sceptres', 'Rarity: Rare', 'Agony Smasher', 'Rattling Sceptre', '--------', 'Spirit: 148 (augmented)', '--------',
+    'Item Level: 84', '--------', '{ Prefix Modifier "Prince\'s" (Tier: 4) — }', '48(45-50)% increased Spirit',
+    '{ Prefix Modifier "Taskmaster\'s" (Tier: 1) — Minion, Gem }', '+4(4-4) to Level of all Minion Skills'].join('\n'));
+  const p = pricing.prepare(it, { mods: json('sceptre-minion.demand.json').mods }, () => true);
+  const spirit = p.filters.props.find((x) => x.key === 'spirit');
+  assert.ok(spirit && spirit.enabled && spirit.min === 148, `Spirit on from 148: ${JSON.stringify(spirit)}`);
+  assert.ok(!mod(p.filters, /increased Spirit/).enabled, '«increased Spirit» is off — it is in the Spirit');
+  assert.equal(pricing.buildQuery(p.item, p.filters).query.filters.equipment_filters.filters.spirit.min, 148);
+  // Relaxing: the first step that touches Spirit lowers it to −3% — and no step drops it.
+  for (let i = 0; i < 6; i++) {
+    const w = pricing.weakest(p.filters);
+    if (!w) break;
+    w.enabled = false;
+  }
+  assert.ok(spirit.enabled && spirit.min === 143, `Spirit still on, at −3%: ${spirit.min}`);
+});
+
 test('wand and staff weights use bases of the same element if there are 100+ such items', { skip }, async () => {
   await init();
   const d = await craft.load(cached);
