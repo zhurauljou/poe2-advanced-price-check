@@ -272,7 +272,8 @@ function elementVariants(item, filters) {
   return out.sort((a, b) => b.score - a.score);
 }
 
-function prepare(item, demand, rollsOn) {
+// tierShare(template, tier, range) — the tier's strength next to the best of its family on the base (craft.tierShare), or null.
+function prepare(item, demand, rollsOn, tierShare = null) {
   const demandPct = new Map((demand && demand.mods || []).map((r) => [r.name.toLowerCase().replace(/\+#/g, '#'), r.pct]));
   const demandOf = (tpl) => {
     if (!tpl) return undefined;
@@ -319,7 +320,8 @@ function prepare(item, demand, rollsOn) {
     const searchable = ['explicit', 'fractured', 'desecrated', 'crafted'].includes(m.tag);
     // Jewel mods have one tier («T1» for all) — tier doesn't make a mod more important, importance is by demand only.
     const jewel = item.itemClass === 'Jewels';
-    const w = weight(item.itemClass, m.template, jewel ? null : m.tier, dp ?? (searchMods && searchable && demandPct.size >= 40 ? 0 : undefined));
+    const share = !jewel && searchMods && tierShare && !m.parts ? tierShare(m.template, m.tier, m.range) : null;
+    const w = weight(item.itemClass, m.template, jewel ? null : m.tier, dp ?? (searchMods && searchable && demandPct.size >= 40 ? 0 : undefined), share);
     // The Potent Ferocity («Effect of Suffixes / Prefixes») and Contempt («+1 … Modifier allowed») emotions on a jewel are the main
     // price multipliers (docs/jewels-crafting.md §4): always search by them, relaxing doesn't remove them.
     if (jewel && /increased Effect of (Suffixes|Prefixes)$|(Suffix|Prefix) Modifiers? allowed$/.test(m.template || '')) { w.key = true; w.importance = Math.max(w.importance, 2.6); }

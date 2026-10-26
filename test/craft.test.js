@@ -403,6 +403,24 @@ test('fire staff (Ashen Staff, +Fire Spell Skills): other element mods are not f
   assert.ok(p.goal, 'there is a plan');
 });
 
+test('tier strength: share of the best tier of the same family, not the tier number', { skip }, async () => {
+  await init();
+  // Regular %ES on sandals: T1 92–100 (110 does not roll there), T2 80–91 — 91% of the best.
+  assert.equal(craft.tierShare('Sandsworn Sandals', '#% increased Energy Shield', 1, { lo: 92, hi: 100 }), 1);
+  assert.equal(craft.tierShare('Sandsworn Sandals', '#% increased Energy Shield', 2, { lo: 80, hi: 91 }), 0.91);
+  // A desecrated «Unholy» T1 39–42% (not in RePoE) is no tier of that ladder — unknown, not 42% of the regular best.
+  assert.equal(craft.tierShare('Sandsworn Sandals', '#% increased Energy Shield', 1, { lo: 39, hi: 42 }), null);
+  // Physical damage has many tiers: T4 110–134% is near the top — stronger than the tier-number table's 0.7.
+  const it = item('spear-rare-destruction');
+  const share = craft.tierShare(it.baseType, '#% increased Physical Damage (Local)', 4, { lo: 110, hi: 134 });
+  assert.ok(share > 0.7 && share < 1, `share ${share}`);
+  const w = (s) => pricing.prepare(item('spear-rare-destruction'), json('spear-rare-destruction.demand.json'), () => true, s).filters;
+  const phys = (f) => mod(f, /increased Physical Damage/).importance;
+  assert.ok(phys(w((tpl, tier, range) => craft.tierShare(it.baseType, tpl, tier, range))) > phys(w(null)), 'T4 physical counts for more');
+  // A range no family has at that tier (a hybrid's line) — unknown, the tier number decides.
+  assert.equal(craft.tierShare(it.baseType, '#% increased Physical Damage (Local)', 4, { lo: 1, hi: 2 }), null);
+});
+
 test('minion sceptre: crafted "maximum stacks of Puppet Master" is on, even though few across the whole class have it', { skip }, async () => {
   await init();
   const it = parseItem(['Item Class: Sceptres', 'Rarity: Rare', 'Doom Call', 'Rattling Sceptre', '--------', 'Item Level: 80', '--------',

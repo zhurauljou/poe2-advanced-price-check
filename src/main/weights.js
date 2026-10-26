@@ -45,7 +45,12 @@ function slotKey(itemClass) {
   return SLOT_KEY[itemClass] || [];
 }
 
-function tierFactor(tier) {
+// share — the tier's top value over the best tier's on the base (craft.tierShare): when known it replaces the tier number,
+// which says nothing about how far below the best a tier is (+3 of +4 minion levels and life 199 of 214 are both T2).
+// The power keeps the scale close to the old one where tiers are evenly spaced (life T3 ≈ 0.88 → 0.83, old 0.85).
+const SHARE_POW = 1.5;
+function tierFactor(tier, share = null) {
+  if (share != null) return Math.max(0.15, Math.round(share ** SHARE_POW * 100) / 100);
   if (tier == null) return UNKNOWN_TIER;
   return tier < TIER_FACTOR.length ? TIER_FACTOR[tier] : 0.15;
 }
@@ -56,12 +61,12 @@ const DEMAND_KEY = 60; // % — the mod counts "as key"
 const DEMAND_HIGH = 30;
 
 // → { importance: 0…3, key: whether the mod is key for the slot (ignoring tier) }
-function weight(itemClass, template, tier, demandPct) {
+function weight(itemClass, template, tier, demandPct, share = null) {
   if (!template) return { importance: 0, key: false };
   const t = template.replace(/ \(Local\)$/, '');
   let key = ANY_KEY.some((re) => re.test(t)) || slotKey(itemClass).some((re) => re.test(t));
   let base = key ? 3 : WEAK.test(t) ? 0.5 : 2;
-  let factor = tierFactor(tier);
+  let factor = tierFactor(tier, share);
   if (demandPct >= DEMAND_KEY) {
     key = true;
     base = 3;

@@ -317,7 +317,8 @@ async function priceCheck(text, refresh = false, historyId = null) {
     demand = await Promise.race([q, new Promise((r) => setTimeout(() => r(null), 4000))]);
   }
   lastItem = item;
-  const prepared = pricing.prepare(item, demand, (tpl) => craft.rollsOn(item.baseType, tpl));
+  const prepared = pricing.prepare(item, demand, (tpl) => craft.rollsOn(item.baseType, tpl),
+    (tpl, tier, range) => craft.tierShare(item.baseType, tpl, tier, range));
   // Search toggles — as the user chose last time.
   const sd = settings.get();
   if (typeof sd.searchOnline === 'boolean') prepared.filters.online = sd.searchOnline;

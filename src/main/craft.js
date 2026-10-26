@@ -1306,6 +1306,36 @@ function rollsOn(baseType, template) {
   return data.pool.some((m) => (m.domain === 'item' || m.domain === 'desecrated') && m.lines.includes(want) && canRoll(m, base.tags || []));
 }
 
+// How strong a mod's tier is next to the best tier of its family on this base: the top of our tier's range over the best
+// tier's top. Life T2 199 / 214 ≈ 0.93, +3 / +4 minion levels = 0.75 — tier numbers alone count both as «T2». Not capped by
+// item level: a buyer compares with the best copies on the market, not with what this ilvl allowed.
+// The family is the one whose tier number `tier` (the game's «Tier: N», T1 the highest on the base) has exactly our range:
+// one line of text is shared by several families (a desecrated «Unholy» 39–42% Energy Shield beside the regular one up to
+// 100%). No such family (a hybrid's line, an unknown mod) — null, the tier number decides as before.
+const laddersCache = new Map(); // base|line → [[{ lo, hi }] best first] — one-line families that roll on the base
+craftData.onReset(() => laddersCache.clear());
+function tierShare(baseType, template, tier, range) {
+  const data = craftData.current();
+  const base = data && data.bases.get(baseType);
+  if (!base || !tier || !range || !(range.hi > 0)) return null;
+  const want = templates(String(template || '').replace(/ \(Local\)$/, ''))[0];
+  const k = `${baseType}|${want}`;
+  if (!laddersCache.has(k)) {
+    const byType = new Map();
+    for (const m of data.pool) {
+      if ((m.domain !== 'item' && m.domain !== 'desecrated') || m.lines.length !== 1 || m.lines[0] !== want || !canRoll(m, base.tags || [])) continue;
+      const r = String(m.text).match(/\((-?[\d.]+)-(-?[\d.]+)\)/);
+      if (!r) continue;
+      const key = `${m.domain}|${m.type}`;
+      if (!byType.has(key)) byType.set(key, []);
+      byType.get(key).push({ level: m.required_level, lo: +r[1], hi: +r[2] });
+    }
+    laddersCache.set(k, [...byType.values()].map((l) => l.sort((a, b) => b.level - a.level)));
+  }
+  const ladder = laddersCache.get(k).find((l) => l[tier - 1] && l[tier - 1].lo === range.lo && l[tier - 1].hi === range.hi);
+  return ladder ? Math.min(1, range.hi / ladder[0].hi) : null;
+}
+
 // Item levels at which the base unlocks new mod tiers. A white / magic base at ilvl 84 is no better than
 // a base at 82 if there are no tiers above 82 — we look for "same by tiers": from the last step up to the next (exclusive).
 // null — no data on the base. next — the next step and what unlocks on it (for the hint).
@@ -1351,4 +1381,4 @@ function sameClass(a, b) {
   return x && y ? x.item_class === y.item_class : null;
 }
 
-module.exports = { advise, load, reset: craftData.reset, rollsOn, ilvlBand, canAppear, sameClass, gambleFor, classWeights };
+module.exports = { advise, load, reset: craftData.reset, rollsOn, tierShare, ilvlBand, canAppear, sameClass, gambleFor, classWeights };
