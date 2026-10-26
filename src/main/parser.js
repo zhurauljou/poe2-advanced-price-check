@@ -208,7 +208,9 @@ function parseItem(text) {
           if (head.side) { head.affix = { side: head.side, name: head.name, tag: head.tag, tier: head.tier, lines: [] }; item.affixes.push(head.affix); }
           continue;
         }
-        const l = boostLine(raw.replace(RANGE, '$1').replace(/ — Unscalable Value$/, '').replace(/(\S)\([^()]*\)$/, '$1') /* "()" and a text range like "Massive Ring(Very Small-Massive Ring)" */, head ? head.boost : 0);
+        // "()" and a text range like "Massive Ring(Very Small-Massive Ring)" glued to a variant's name — anywhere in the line:
+        // From Nothing copies «Passives in Radius of Blackflame Covenant() can be Allocated», the name mid-line.
+        const l = boostLine(raw.replace(RANGE, '$1').replace(/ — Unscalable Value$/, '').replace(/(\S)\(([^()]*[A-Za-z][^()]*)?\)/g, '$1'), head ? head.boost : 0);
         const t = l.match(TAGGED);
         // An Aldur rune in a socket — no { … } header, but it's an item property (stats.forged), not flavour.
         if (/^Forged by the \w+ of Aldur$/.test(l)) { item.modLines.push({ text: l, tag: 'rune', tier: null, range: null }); continue; }

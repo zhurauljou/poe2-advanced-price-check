@@ -83,3 +83,17 @@ test('corrupted Grand Spectrum: Craft offers double corruption (Architect\'s Orb
   const twice = parseItem(fs.readFileSync(path.join(__dirname, 'fixtures', 'unique-grand-spectrum-corrupted.txt'), 'utf8').replace(/Corrupted\s*$/,'Twice Corrupted'));
   assert.equal((await craft.advise(twice, null, async () => ({}))).doubleCorrupt, null);
 });
+
+test('From Nothing: the keystone name mid-line («Blackflame Covenant() can be Allocated») is matched and searched', { skip }, async () => {
+  // Player's copy (2026-10-27): the game puts «()» after the variant's name, here in the middle of the line; only a «()» at the
+  // end was stripped — the mod matched nothing and the search went by name alone (9,788 listings of every keystone).
+  await init();
+  const it = parseItem(fs.readFileSync(path.join(__dirname, 'fixtures', 'unique-from-nothing.txt'), 'utf8'));
+  const { filters } = pricing.prepare(it, null, () => true);
+  const m = filters.mods.find((x) => /Blackflame Covenant/.test(x.text));
+  assert.ok(m, 'the mod is there');
+  assert.equal(m.statId, 'explicit.stat_2422708892|42680');
+  assert.ok(m.enabled, 'searched right away: the keystone is what the jewel is bought for');
+  const ids = pricing.buildQuery(it, filters).query.stats.flatMap((g) => g.filters.map((x) => x.id));
+  assert.ok(ids.includes(m.statId), `in the query: ${ids.join(', ')}`);
+});
