@@ -113,6 +113,7 @@
     'newer listings are cheaper': 'новые лоты дешевле',
     'newer listings are pricier': 'новые лоты дороже',
     'estimate from listings ≤ 3 days old': 'оценка по лотам не старше 3 дней',
+    'estimate from instant-buyout listings only': 'оценка только по лотам с мгновенным выкупом',
     'No similar items listed right now': 'Похожих вещей сейчас не продают',
     'It may be a rare high-end item. Uncheck filters or lower the minimums to widen the search.':
       'Возможно, это редкая дорогая вещь. Снимите галочки или уменьшите минимумы, чтобы расширить поиск.',

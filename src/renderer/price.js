@@ -222,12 +222,16 @@ function confidence(total, head, cheapest = [], extra = '') {
 // How many days ago the listing was posted or repriced (trade: listing.indexed).
 // Median of a sorted list (for an even count, the lower of the two middle values).
 const mid = (a) => a[Math.floor((a.length - 1) / 2)];
+// Instant-buyout listings (ib) are a price one can actually pay now; «in person» ones are often forgotten or bait. Enough
+// (≥ 3) buyout listings — the estimate uses only those; fewer — all of them.
+const BUYOUT_MIN = 3;
+const buyoutFirst = (lots) => { const ib = lots.filter((l) => l.ib); return ib.length >= BUYOUT_MIN ? ib : lots; };
 const ageDays = (iso) => (iso ? (Date.now() - new Date(iso).getTime()) / 86400e3 : 99);
 
 // Listing age line: fresh within a day, stale cheapest, trend "fresh ones cheaper/pricier".
 // Collapsed into an ⓘ icon by the estimate reliability (details in the tooltip): the full line overloaded the price block.
 // Stale cheapest listing: an icon in the warning color.
-function ageSummary(priced, usedFresh) {
+function ageSummary(priced, usedFresh, usedBuyout) {
   if (priced.length < 2) return '';
   const bits = [];
   const day = priced.filter((l) => l.age <= 1);
@@ -242,6 +246,7 @@ function ageSummary(priced, usedFresh) {
     else if (k > 1.15) bits.push(`↑ ${t('newer listings are pricier')}`);
   }
   if (usedFresh) bits.push(t('estimate from listings ≤ 3 days old'));
+  if (usedBuyout) bits.push(t('estimate from instant-buyout listings only'));
   return bits.length ? ` <span class="ages-i${stale ? ' warn' : ''}" title="${esc(bits.join('\n'))}">ⓘ</span>` : '';
 }
 
@@ -268,12 +273,13 @@ function renderTradeHero(r) {
   // Listing age: a stale cheap listing (unsold for a week+) inflates the picture, nobody buys at that price.
   // If there are enough fresh (≤ 3 days) listings, the estimate uses them; otherwise all, but with lower reliability.
   // edge = how much stronger a listing is than your item (▲ minus ▼ by mods): notably stronger (≥ 2) mustn't pull the estimate up.
-  const priced = r.listings.filter((l) => l.divine != null).map((l) => { const c = cmpCounts(l); return { div: l.divine * k, age: ageDays(l.indexed), edge: c.better - c.worse, dominates: c.better > 0 && !c.worse }; })
+  const priced = r.listings.filter((l) => l.divine != null).map((l) => { const c = cmpCounts(l); return { div: l.divine * k, age: ageDays(l.indexed), edge: c.better - c.worse, dominates: c.better > 0 && !c.worse, ib: !l.whisper }; })
     .sort((a, b) => a.div - b.div);
   const stronger = (l) => l.edge >= STRONGER;
   // Most cheap listings are stronger than your item: estimate from those that aren't; if none, from the cheapest.
   const mostlyStronger = priced.length >= 3 && priced.slice(0, 5).filter(stronger).length * 2 > Math.min(5, priced.length);
-  const pool = mostlyStronger ? priced.filter((l) => !stronger(l)) : priced;
+  const weaker = mostlyStronger ? priced.filter((l) => !stronger(l)) : priced;
+  const pool = buyoutFirst(weaker);
   const fresh = pool.filter((l) => l.age <= 3);
   const basis = mostlyStronger && pool.length < 2 ? [priced[0].div] : fresh.length >= 3 ? fresh.map((l) => l.div) : pool.map((l) => l.div);
   const head = basis.slice(0, 5);
@@ -282,7 +288,7 @@ function renderTradeHero(r) {
   const dominant = priced.find((l) => l.dominates);
   const est = dominant ? Math.min(mid(head), dominant.div) : mid(head);
   const median = mid(divs);
-  const ageInfo = ageSummary(priced, fresh.length >= 3 && fresh.length < priced.length);
+  const ageInfo = ageSummary(priced, fresh.length >= 3 && fresh.length < priced.length, pool.length < weaker.length);
   // A callout, not a text line; the "more ▲ than ▼" reasoning goes to the tooltip.
   const ageHtml = (mostlyStronger ? `<div class="callout warn" title="${esc(t('Most listings are stronger than your item (more ▲ than ▼) — estimated from the weaker ones; your item is likely worth less than the list suggests'))}">${esc(t('Most listings are stronger than yours — priced from the weaker ones'))}</div>` : '');
   // Second price: the same mods with any roll of their tier, i.e. how much the market pays extra for your rolls.
@@ -429,7 +435,7 @@ function missingKeyHtml() {
 // Unlike the main price it can't set aside listings stronger than yours (no mod comparison here) — a rougher number.
 function estimate(lots) {
   const k = usesScale();
-  const sorted = (lots || []).filter((l) => l.div != null).map((l) => ({ ...l, div: l.div * k })).sort((a, b) => a.div - b.div);
+  const sorted = buyoutFirst((lots || []).filter((l) => l.div != null).map((l) => ({ ...l, div: l.div * k })).sort((a, b) => a.div - b.div));
   const fresh = sorted.filter((l) => ageDays(l.indexed) <= 3);
   const head = (fresh.length >= 3 ? fresh : sorted).slice(0, 5).map((l) => l.div);
   return head.length ? mid(head) : null;
@@ -631,7 +637,7 @@ function previewPrice() {
   if (kind === 'tight') {
     const fit = lastResult.listings.filter((l) => l.divine != null && fitsNow(l) === true);
     if (fit.length >= MIN_LOTS) {
-      const v = estimate(fit.map((l) => ({ div: l.divine, indexed: l.indexed })));
+      const v = estimate(fit.map((l) => ({ div: l.divine, indexed: l.indexed, ib: !l.whisper })));
       big.classList.add('preview');
       box.querySelectorAll('.pdelta').forEach((x) => x.remove());
       glidePrice(v);

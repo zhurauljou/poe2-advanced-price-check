@@ -476,10 +476,11 @@ function buildQuery(item, f) {
   const minor = f.flex ? regular.filter(isMinor) : [];
   for (const m of regular) if (minor.length < 3 || !minor.includes(m)) query.stats[0].filters.push(flt(m));
   if (minor.length >= 3) query.stats.push({ type: 'count', value: { min: minor.length - 1 }, filters: minor.map(flt) });
+  // One listing per account (trade's «Collapse listings by account»): a seller with five copies at one price would
+  // otherwise fill the cheapest five alone and set the median by themselves.
+  query.filters.trade_filters = { filters: { collapse: { option: 'true' } } };
   // Price currency: 'any' — any, converted (trade's default), else only listings in this currency.
-  if (f.priceCurrency && f.priceCurrency !== 'any') {
-    query.filters.trade_filters = { filters: { price: { option: f.priceCurrency } } };
-  }
+  if (f.priceCurrency && f.priceCurrency !== 'any') query.filters.trade_filters.filters.price = { option: f.priceCurrency };
   const equip = {};
   const mapF = {};
   for (const p of f.props || []) {
@@ -745,8 +746,9 @@ async function quickPrices(L, item, f) {
     const first = (fr.result || []).find(Boolean);
     icon = (first && first.item && first.item.icon) || null;
     // With listing age — so the second price is also computed from fresh listings, like the main one.
-    lots = (fr.result || []).filter(Boolean).map((r) => ({ p: r.listing.price || {}, indexed: r.listing.indexed }))
-      .map(({ p, indexed }) => ({ div: p.amount != null ? toDivine(p.amount, p.currency) : null, indexed }))
+    // ib — instant buyout (no whisper): the estimate prefers those, like the main price.
+    lots = (fr.result || []).filter(Boolean).map((r) => ({ p: r.listing.price || {}, indexed: r.listing.indexed, ib: !r.listing.whisper }))
+      .map(({ p, indexed, ib }) => ({ div: p.amount != null ? toDivine(p.amount, p.currency) : null, indexed, ib }))
       .filter((l) => l.div != null).sort((a, b) => a.div - b.div);
   }
   return { total: s.total, divs: lots.map((l) => l.div), lots, icon, url: `${api.TRADE}/trade2/search/poe2/${L}/${s.id}` };
@@ -759,7 +761,6 @@ const quick = (league, item, filters) => quickPrices(encodeURIComponent(league),
 async function listingUrl(league, item, filters, account) {
   const L = encodeURIComponent(league);
   const q = buildQuery(item, filters);
-  q.query.filters.trade_filters = q.query.filters.trade_filters || { filters: {} };
   q.query.filters.trade_filters.filters.account = { input: account };
   const s = await api.tradeRequest('search', `${api.TRADE}/api/trade2/search/poe2/${L}`, q);
   return `${api.TRADE}/trade2/search/poe2/${L}/${s.id}`;
