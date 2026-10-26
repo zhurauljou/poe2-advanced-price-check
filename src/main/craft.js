@@ -92,6 +92,20 @@ function gambleFor(item, tags) {
 }
 
 
+// Corrupted once (not mirrored or sanctified): Architect's Orb corrupts equipment or a jewel a second time — ~50% a second
+// corruption enchant, not of a group already on the item, ~50% the item is destroyed (docs/corruption-sanctification.md).
+const shape = (s) => s.replace(/\(-?[\d.]+--?[\d.]+\)|-?[\d.]+/g, '#');
+function doubleCorruptFor(item) {
+  if (!item.corrupted || item.twiceCorrupted || item.mirrored || item.sanctified) return null;
+  gambleFor(item, []); // loads gambleData
+  const orb = gambleData && (gambleData.doubleCorruption || []).find((x) => x.name === "Architect's Orb");
+  const pool = (gambleData && gambleData.corruptedEnchants && gambleData.corruptedEnchants[item.itemClass]) || [];
+  if (!orb || !pool.length) return null; // gems, flasks, tablets — other currencies or none
+  const have = new Set((item.modLines || []).filter((l) => l.tag === 'enchant' || l.tag === 'corrupted').map((l) => shape(l.text)));
+  const enchants = pool.map((e) => e.replace(/\s*\(only \w+ bases\)/, '')).filter((e) => !have.has(shape(e)));
+  return { orb: orb.name, enchants };
+}
+
 // Bones for Desecration by slot (poe2db): Gnawed — only up to ilvl 64, Preserved — any, Ancient — mods of level 40+.
 // Cranium (jewels) is only Preserved.
 // Wands, staves and sceptres have no "weapon" tag, but desecrate works on them (sceptres do show
@@ -143,7 +157,7 @@ async function advise(item, demandMods, cached, { priceKeys = [] } = {}) {
   // Tablets: their mods and pool differ from equipment (corruption with sockets, 3 + 3 slots) — tips would be wrong.
   if (item.itemClass === 'Tablet') return { note: t('No craft tips for tablets yet. The Price tab searches by their modifiers and uses left.') };
   if (item.corrupted || item.mirrored || item.sanctified) {
-    return { blocked: item.corrupted ? 'Corrupted' : item.mirrored ? 'Mirrored' : 'Sanctified' };
+    return { blocked: item.corrupted ? 'Corrupted' : item.mirrored ? 'Mirrored' : 'Sanctified', doubleCorrupt: doubleCorruptFor(item) };
   }
   // Unique: mods do not change — only values (Divine) and the risky finish (Vaal). The window computes rolls from filters.
   if (item.rarity === 'Unique') {

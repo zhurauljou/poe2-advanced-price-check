@@ -68,3 +68,16 @@ test('corrupted Grand Spectrum: «{ Corruption Enhancement }» is searched as an
   assert.equal(cold.statId, 'enchant.stat_4220027924');
   assert.ok(cold.enabled);
 });
+
+test('corrupted Grand Spectrum: Craft offers double corruption (Architect\'s Orb) without the enchant group it already has', { skip }, async () => {
+  await init();
+  const craft = require('../src/main/craft');
+  const it = parseItem(fs.readFileSync(path.join(__dirname, 'fixtures', 'unique-grand-spectrum-corrupted.txt'), 'utf8'));
+  const r = await craft.advise(it, null, async () => ({}));
+  assert.equal(r.blocked, 'Corrupted');
+  assert.equal(r.doubleCorrupt.orb, "Architect's Orb");
+  assert.ok(r.doubleCorrupt.enchants.includes('+(5-10)% to Fire Resistance'));
+  assert.ok(!r.doubleCorrupt.enchants.some((e) => /Cold Resistance/.test(e)));
+  const twice = parseItem(fs.readFileSync(path.join(__dirname, 'fixtures', 'unique-grand-spectrum-corrupted.txt'), 'utf8').replace(/Corrupted\s*$/,'Twice Corrupted'));
+  assert.equal((await craft.advise(twice, null, async () => ({}))).doubleCorrupt, null);
+});

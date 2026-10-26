@@ -1257,6 +1257,19 @@ function gambleHtml(g, open = false) {
     ${g.enchants.length ? `<details class="why"><summary>${esc(t('Possible corruption enchants ({n})', { n: g.enchants.length }))}</summary>${list(g.enchants)}</details>` : ''}</details>`;
 }
 
+// Corrupted once: one more corruption is still possible — a coin flip between a second enchant and losing the item.
+// Break-even: the item is gone half the time, so a Twice Corrupted copy must sell for more than 2 × its price now + 2 orbs.
+function doubleCorruptHtml(d) {
+  const orb = craftPrices[d.orb];
+  const now = state.est != null && !state.estThin ? state.est : null;
+  const even = now != null && orb != null ? 2 * (now + orb) : null;
+  return `<div class="craft-sec gamble"><div class="k">⚠ ${esc(t('Double corruption'))}</div>
+    ${howLine(t("{orb} — ~50% a second corruption enchant (Twice Corrupted), ~50% the item is destroyed; odds are community estimates", { orb: d.orb }))}
+    ${even != null ? `<div class="craft-how">${esc(t('Worth it if a Twice Corrupted copy sells for more than {price}: (price now + orb) × 2, as the item is lost half the time', { price: money(even) }))}</div>` : ''}
+    ${pricesLine([d.orb])}
+    ${d.enchants.length ? `<details class="why"><summary>${esc(t('Possible second enchants ({n})', { n: d.enchants.length }))}</summary>${d.enchants.map((e) => `<div class="craft-how">${esc(e)}</div>`).join('')}</details>` : ''}</div>`;
+}
+
 function renderCraft(r) {
   baseSearch = null; // another item (or its plan rebuilt): the bases found were for the previous one
   craftGoal = r.goal || null;
@@ -1267,7 +1280,8 @@ function renderCraft(r) {
   const head = `<div class="sect"><span>${t('Craft')}</span></div>`;
   if (r.blocked) {
     $('craft').innerHTML = head + voidState('⛓', t("{state} — can't be modified", { state: r.blocked }),
-      t('Its modifiers are locked. The Price tab shows what it is worth as is.'), [['price', t('See price')]]);
+      t('Its modifiers are locked. The Price tab shows what it is worth as is.'), [['price', t('See price')]])
+      + (r.doubleCorrupt ? doubleCorruptHtml(r.doubleCorrupt) : '');
     return;
   }
   if (r.note) { $('craft').innerHTML = head + voidState('◇', t('No craft tips'), esc(r.note)); return; }
