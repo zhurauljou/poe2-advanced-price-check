@@ -27,6 +27,8 @@
   /* Type scale: 15px body (above), secondary text, fine print — three steps instead of eight near-equal sizes */
   --fs-s: var(--t-14);
   --fs-xs: var(--t-12);
+  /* 16px — body, 14px (--fs-s) — the smallest text one reads to decide (odds, demand, labels, toggles, column heads);
+     12px (--fs-xs) — only footnotes, captions under a number, hints and badges. */
   /* Small caps (Cormorant SC) draw lowercase as caps ~25% shorter: at 14px they read as 10px. Never below 16px — the
      floor of the rest of the text (12px) in their terms. Nothing in the window goes below 12px: scroll beats squinting. */
   --fs-sc: var(--t-16);
@@ -339,7 +341,7 @@ ol.plan > li.flag-sure { box-shadow: inset 3px 0 var(--good); }
 .ps-flag.unknown { color: var(--muted); background: rgba(107, 114, 128, .16); }
 .ps-flag.sure { color: #9fd8a5; background: rgba(110, 200, 120, .10); }
 .ps-flag.risk .fi { color: #e0675a; } .ps-flag.shot .fi { color: #e0a24a; } .ps-flag.sure .fi { color: var(--good); }
-.ps-summary { margin: 2px 0 6px; font-size: var(--fs-xs); color: var(--warn); }
+.ps-summary { margin: 2px 0 6px; font-size: var(--fs-s); color: var(--warn); }
 .ps-flag .fi { display: inline-flex; flex: none; }
 .ps-flag.fi-only { padding: 0; margin: 0 6px 0 0; background: none; vertical-align: -3px; }
 /* A craft resting on luck: buy a base with the hard mod instead */
@@ -353,7 +355,7 @@ ol.plan > li.flag-sure { box-shadow: inset 3px 0 var(--good); }
 .craft-bases .cb-row b { color: var(--cream); font-weight: 700; white-space: nowrap; }
 .craft-bases .cb-cmp { margin-top: 4px; }
 .plan-steps.folded { margin: 2px 0 4px; }
-details.vmore summary { cursor: pointer; font-size: var(--fs-xs); color: var(--muted); margin-top: 3px; }
+details.vmore summary { cursor: pointer; font-size: var(--fs-s); color: var(--muted); margin-top: 3px; }
 .craft-beta { margin-top: 8px; padding: 5px 8px; border-left: 2px solid var(--warn); background: rgba(224, 179, 90, .05);
               font-size: var(--fs-s); color: var(--muted); }
 .craft-beta b { color: var(--warn); font-weight: 700; }
@@ -390,7 +392,7 @@ details.vmore summary { cursor: pointer; font-size: var(--fs-xs); color: var(--m
 .mod .tcol.sigma { color: var(--label); font: 700 var(--t-16) var(--body); }
 .mod .txt { flex: 1; min-width: 0; white-space: pre-line; }
 .mod .txt .tag { font-size: var(--t-12); padding: 0 3px; vertical-align: 2px; }
-.mod .dem { font: 700 var(--fs-xs) var(--body); color: #b89a5e; letter-spacing: 0; white-space: nowrap; }
+.mod .dem { font: 700 var(--fs-s) var(--body); color: #b89a5e; letter-spacing: 0; white-space: nowrap; }
 .mod .dem.hot { color: #ffd27a; text-shadow: 0 0 8px rgba(255, 190, 80, .35); }
 .mod .rng { font: var(--fs-s) var(--body); color: var(--ink-3); letter-spacing: 0; white-space: nowrap; }
 .mod .maxroll { margin-left: 4px; padding: 0 4px; border-radius: 2px; font: 700 var(--t-12)/1.5 var(--body); letter-spacing: .04em;
@@ -544,7 +546,7 @@ body.upd-page { height: auto; }
 .sell-inline { display: grid; grid-auto-flow: column; grid-auto-columns: minmax(0, 1fr); margin-top: 8px; color: var(--muted); }
 .sell-inline .so { display: flex; flex-direction: column; gap: 1px; padding: 0 10px; border-left: 1px solid rgba(241, 228, 194, .1); }
 .sell-inline .so:first-child { padding-left: 0; border-left: 0; }
-.hero .sell-inline .k { font: 400 var(--fs-xs) var(--body); letter-spacing: 0; color: var(--muted); }
+.hero .sell-inline .k { font: 400 var(--fs-s) var(--body); letter-spacing: 0; color: var(--muted); }
 .sell-inline .v { font-size: var(--t-16); color: var(--cream); font-weight: 700; font-variant-numeric: tabular-nums; }
 .sell-inline .v.copy { width: fit-content; cursor: pointer; text-decoration: underline dotted #6b5a3a; text-underline-offset: 3px; }
 .sell-inline .v.copy:hover { color: #fff4b4; text-decoration-color: var(--gold); }
@@ -573,7 +575,7 @@ body.upd-page { height: auto; }
 /* Competitor card — mods left-aligned, as in the filters: easier to compare line by line */
 .cmp-body .tt, .cmp-miss, .cmp-legend { text-align: center; }
 .cm .yours { margin-left: 6px; font: var(--fs-s) var(--body); color: var(--muted); white-space: nowrap; }
-.ess { margin-left: 6px; font: 700 var(--fs-xs) var(--body); color: #c9a0e8; white-space: nowrap; } /* the essence guarantees the mod */
+.ess { margin-left: 6px; font: 700 var(--fs-s) var(--body); color: #c9a0e8; white-space: nowrap; } /* the essence guarantees the mod */
 .hero .ninja-u { margin-top: 4px; font-size: var(--fs-s); color: var(--label); } .hero .ninja-u b { color: var(--cream); } .hero .ninja-u:empty { display: none; }
 /* Listing actions: in-game whisper and going to trade — appear on hover */
 .lot .acts { display: flex; justify-content: flex-end; gap: 6px; opacity: 0; transition: opacity .12s; }
@@ -604,11 +606,11 @@ body.upd-page { height: auto; }
 .goal-steps { margin: 2px 0 4px 18px; padding: 0; font-size: var(--fs-s); color: var(--label); }
 .goal-steps li { margin: 2px 0; }
 .goal .goal-price { font-size: var(--fs-s); }
-.goal .tierup { margin-left: 4px; font: 700 var(--fs-xs) var(--body); color: var(--warn); }
+.goal .tierup { margin-left: 4px; font: 700 var(--fs-s) var(--body); color: var(--warn); }
 /* A mod the demand was narrowed by (builds wearing this class with it): the plan's percentages are among those builds. */
 .goal .basis { margin-left: 4px; font: 700 var(--fs-xs) var(--body); color: var(--g-mod); white-space: nowrap; }
 /* Approximate mod chance (estimated from trade) and an accuracy warning */
-.chance { margin-left: 6px; font: 700 var(--fs-xs) var(--body); white-space: nowrap; letter-spacing: 0; }
+.chance { margin-left: 6px; font: 700 var(--fs-s) var(--body); white-space: nowrap; letter-spacing: 0; }
 .chance.common { color: var(--good); } .chance.uncommon { color: var(--warn); } .chance.rare { color: var(--bad); }
 .craft-warn { margin-top: 8px; padding: 5px 8px; border-left: 2px solid var(--warn); background: rgba(224, 179, 90, .06);
               font-size: var(--fs-s); color: #e6c98a; }
@@ -864,7 +866,7 @@ footer .keys .k-enter[hidden] { display: none; }
 /* Craft candidates — a table: mod | wanted by builds | chance per attempt | price with it */
 .crow { display: grid; grid-template-columns: 1fr 66px 70px 76px; column-gap: 8px; align-items: center; padding: 4px 6px; }
 .crow .bname { white-space: normal; color: var(--g-mod); font-weight: 700; } /* mods in the mod colour, as in the plan */
-.crow .bname .craft-tier { margin-left: 4px; font-weight: 400; font-size: var(--fs-xs); color: var(--muted); }
+.crow .bname .craft-tier { margin-left: 4px; font-weight: 400; font-size: var(--fs-s); color: var(--muted); }
 /* Rows separated by the same dots as the plan's profit rows */
 .clist .crow:not(.chead) { background: radial-gradient(circle, rgba(218, 193, 142, .25) 1px, transparent 1.4px) left bottom / 5px 2px repeat-x; padding: 5px 6px; }
 .clist .crow:not(.chead):last-of-type { background: none; }
@@ -875,8 +877,8 @@ footer .keys .k-enter[hidden] { display: none; }
 .craft-how.chips { display: block; font-size: var(--fs-s); color: var(--note); line-height: 1.9; }
 .craft-how.chips::before { display: none; }
 .ctop { display: flex; justify-content: space-between; align-items: baseline; gap: 8px; margin: 8px 0 2px; }
-.ctop .craft-sub { margin: 0; font-size: var(--fs-xs); }
-.ctop .cprice-all { display: inline; margin: 0; flex: none; font-size: var(--fs-xs); }
+.ctop .craft-sub { margin: 0; font-size: var(--fs-s); }
+.ctop .cprice-all { display: inline; margin: 0; flex: none; font-size: var(--fs-s); }
 .crow .cdem { text-align: right; color: var(--text); font-variant-numeric: tabular-nums; white-space: nowrap; }
 .crow .cch { text-align: right; }
 .crow .cch .chance { margin-left: 0; font-size: var(--fs-s); }
@@ -890,7 +892,7 @@ footer .keys .k-enter[hidden] { display: none; }
 .crow .cpx .cper { display: block; font: 400 var(--t-12)/1.2 var(--body); color: var(--muted); white-space: nowrap; }
 .crow .cpx .cprice, .crow .cpx .cpr { margin-left: 0; }
 .crow .cvia { display: block; margin-top: 1px; font-size: var(--fs-s); color: #c9a0e8; }
-.crow.chead { padding: 0 6px 3px; border-bottom: 1px solid var(--line2); font: 700 var(--fs-xs)/1.2 var(--body); letter-spacing: .04em;
+.crow.chead { padding: 0 6px 3px; border-bottom: 1px solid var(--line2); font: 700 var(--fs-s)/1.2 var(--body); letter-spacing: .04em;
               text-transform: uppercase; color: var(--bronze); }
 .crow.chead span:not(:first-child) { text-align: right; }
 /* "Evaluate" buttons — grey until pressed: gold highlights a price already found, not four identical links */
@@ -952,7 +954,7 @@ body.wide .craft-cols > .more-ways > summary { pointer-events: none; }
 .erows { margin: 4px 0; }
 .erow { display: grid; grid-template-columns: 150px 1fr 56px 64px; column-gap: 8px; align-items: center; padding: 3px 6px; font-size: var(--fs-s); }
 .erow + .erow { border-top: 1px solid var(--line2); }
-.erow.ehead { font: 700 var(--fs-xs)/1.2 var(--body); text-transform: uppercase; letter-spacing: .04em; color: var(--muted); border-bottom: 1px solid var(--line2); }
+.erow.ehead { font: 700 var(--fs-s)/1.2 var(--body); text-transform: uppercase; letter-spacing: .04em; color: var(--muted); border-bottom: 1px solid var(--line2); }
 .erow .edem, .erow .epx, .erow.ehead span:nth-child(n+3) { text-align: right; white-space: nowrap; }
 .erow .ename .cur { white-space: normal; }
 .erow .ename .cur, .erow .ename .plus { display: inline-block; padding: 0 5px; border-radius: 3px; border: 1px solid; font-size: var(--fs-s); line-height: 1.4;
@@ -1045,7 +1047,7 @@ body.wide .craft-cols > .more-ways > summary { pointer-events: none; }
 /* ---- Craft tables (Could become, All methods): one grid, right-aligned numbers, quiet labels ---- */
 .crow { grid-template-columns: minmax(0, 1fr) 54px 64px 56px; column-gap: 10px; }
 .crow > span:not(:first-child) { justify-self: end; text-align: right; font-variant-numeric: tabular-nums; }
-.crow.chead { border-bottom: 0; font: 400 var(--t-12)/1.2 var(--body); letter-spacing: 0; text-transform: none; color: var(--muted); }
+.crow.chead { border-bottom: 0; font: 400 var(--fs-s)/1.2 var(--body); letter-spacing: 0; text-transform: none; color: var(--muted); }
 /* Mod names in their colour, regular weight: a column of bold blue lines was the loudest thing on the tab. */
 .crow .bname { font-weight: 400; }
 .crow .bname .craft-tier { margin-left: 6px; }
