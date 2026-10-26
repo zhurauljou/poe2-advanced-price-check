@@ -435,7 +435,7 @@ let verdictBad = false; // set by verdictBody, drawn just before the steps
 let planAnyway = false;
 function planHtml(plan) {
   if (planBusy()) return '<div class="plan-steps pending"></div>'; // the class stays: refreshPlan swaps it for the steps
-  if (verdictBad && !planAnyway) return `<div class="plan-steps folded"><button class="link" data-act="plananyway">${esc(t('Show the plan anyway'))} ▾</button></div>`;
+  if (verdictBad && !planAnyway) return `<div class="plan-steps folded"><button class="link" data-act="plananyway">${esc(t('Show the plan anyway'))}</button></div>`;
   const steps = expandPlan(plan);
   const costs = steps.map(stepCost);
   // What each step must not hide (a badge and a stripe) and, above the steps, how many of each.
