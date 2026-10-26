@@ -19,17 +19,17 @@ const update = process.argv.includes('--update');
 const only = (process.argv.find((a) => a.startsWith('--only=')) || '').slice(7);
 
 const fx = (f) => path.join(ROOT, 'test', 'fixtures', f);
-const tab = (name, extra = '') => `new Promise(r=>setTimeout(r,2000)).then(()=>setTab('${name}')).then(()=>new Promise(r=>setTimeout(r,4000)))${extra}`;
+// [name, item file, tab, js run after the tab opens]; each step waits until the window settles (demo.js SETTLE).
 const SCENES = [
   ['price-boots', fx('rare-boots-advanced.txt')],
-  ['demand-boots', fx('rare-boots-advanced.txt'), tab('demand')],
-  ['craft-wand', fx('craft/wand-open-prefixes.txt'), tab('craft')],
-  ['craft-wand-all', fx('craft/wand-open-prefixes.txt'), tab('craft', ".then(()=>{document.querySelector('#craft .more-ways').open=true; document.querySelector('#craft .more-ways').scrollIntoView();})")],
-  ['craft-sceptre', fx('craft/sceptre-minion.txt'), tab('craft', ".then(()=>{document.querySelector('#craft .more-ways').open=true; document.querySelector('.craft-foot').scrollIntoView();})")],
-  ['craft-magic', fx('magic-helmet.txt'), tab('craft')],
-  ['craft-white', fx('normal-boots.txt'), tab('craft')],
+  ['demand-boots', fx('rare-boots-advanced.txt'), 'demand'],
+  ['craft-wand', fx('craft/wand-open-prefixes.txt'), 'craft'],
+  ['craft-wand-all', fx('craft/wand-open-prefixes.txt'), 'craft', "document.querySelector('#craft .more-ways').open=true; document.querySelector('#craft .more-ways').scrollIntoView();"],
+  ['craft-sceptre', fx('craft/sceptre-minion.txt'), 'craft', "document.querySelector('#craft .more-ways').open=true; document.querySelector('.craft-foot').scrollIntoView();"],
+  ['craft-magic', fx('magic-helmet.txt'), 'craft'],
+  ['craft-white', fx('normal-boots.txt'), 'craft'],
   ['unique-mageblood', fx('unique-mageblood.txt')],
-  ['unique-craft', fx('unique-mageblood.txt'), tab('craft')],
+  ['unique-craft', fx('unique-mageblood.txt'), 'craft'],
   ['jewel', fx('rare-jewel-full.txt')],
   ['tablet', fx('tablet-rare.txt')],
   ['ru-armour', fx('ru-rare-armour-advanced.txt')],
@@ -89,38 +89,44 @@ const demoData = path.join(process.env.APPDATA || '', 'PoE 2 Price Checker-demo'
 for (const d of [TAPE, BASE, OUT]) fs.mkdirSync(d, { recursive: true });
 const env = { ...process.env };
 delete env.ELECTRON_RUN_AS_NODE;
-// Screen snapshot: a clean demo profile (references — from the recording, history and settings — from scratch).
-function shoot(file, evalJs, shot, rec) {
-  // Snapshot goes to a temp file: if it fails, the previous one (the reference) isn't lost. If it fails — one more attempt
-  // (Electron sometimes doesn't manage to start while the previous run is closing), the reason — the tail of the output.
-  const tmp = `${shot}.tmp.png`;
-  let err = '';
-  for (let attempt = 0; attempt < 2; attempt++) {
+// Snapshots of all scenes in one Electron run (demo.js --scenes), from a clean demo profile (references — from the recording,
+// history and settings — from scratch). → set of scene names that got a snapshot in dir.
+function shootAll(scenes, dir, rec) {
+  // Snapshots go to temp files: if a scene fails, the previous one (the reference) isn't lost. Scenes left without one get
+  // one more run (Electron sometimes doesn't manage to start while the previous run is closing), the reason — the tail of the output.
+  const tmp = (name) => path.join(dir, `${name}.tmp.png`);
+  const done = new Set();
+  let todo = scenes, err = '';
+  for (let attempt = 0; attempt < 2 && todo.length; attempt++) {
     for (const f of ['data-cache', 'history.json', 'settings.json']) fs.rmSync(path.join(demoData, f), { recursive: true, force: true });
-    fs.rmSync(tmp, { force: true });
-    const args = ['.', `--demo=${file}`, '--mock-trade', `--tape=${TAPE}`, ...(rec ? ['--record'] : []), `--shot=${tmp}`, ...(evalJs ? [`--eval=${evalJs}`] : [])];
-    const r = spawnSync(require('electron'), args, { cwd: ROOT, env, timeout: 150e3, encoding: 'utf8' });
-    if (fs.existsSync(tmp)) { fs.renameSync(tmp, shot); return true; }
+    for (const [name] of todo) fs.rmSync(tmp(name), { force: true });
+    const list = path.join(OUT, 'scenes.json');
+    fs.writeFileSync(list, JSON.stringify(todo.map(([name, demo, tab, js]) => ({ demo, shot: tmp(name), tab, eval: js }))));
+    const args = ['.', `--demo=${todo[0][1]}`, `--scenes=${list}`, '--mock-trade', `--tape=${TAPE}`, ...(rec ? ['--record'] : [])];
+    const r = spawnSync(require('electron'), args, { cwd: ROOT, env, timeout: 60e3 + 30e3 * todo.length, encoding: 'utf8' });
+    for (const [name] of todo) if (fs.existsSync(tmp(name))) { fs.renameSync(tmp(name), path.join(dir, `${name}.png`)); done.add(name); }
+    todo = todo.filter(([name]) => !done.has(name));
     err = `${r.error ? r.error.message : ''} ${(r.stderr || '').trim().split(/\r?\n/).slice(-3).join(' | ')}`.trim();
   }
-  if (err) console.log(`    ${err.slice(0, 300)}`);
-  return false;
+  if (todo.length && err) console.log(`    ${err.slice(0, 300)}`);
+  return done;
 }
 // Recording: network responses first (a snapshot on the live network isn't fit as a reference — demand may not load in time),
 // references after, already from the recording, as during a check.
 if (record) {
   fs.rmSync(TAPE, { recursive: true, force: true });
   fs.mkdirSync(TAPE, { recursive: true });
-  for (const [name, file, evalJs] of SCENES) console.log(`  ${name}: ${shoot(file, evalJs, path.join(OUT, `${name}.png`), true) ? 'записан' : 'не получился'}`);
+  const rec = shootAll(SCENES, OUT, true);
+  for (const [name] of SCENES) console.log(`  ${name}: ${rec.has(name) ? 'записан' : 'не получился'}`);
 }
 let failed = 0;
-for (const [name, file, evalJs] of SCENES) {
-  const shot = path.join(record || update ? BASE : OUT, `${name}.png`);
-  if (!shoot(file, evalJs, shot, false)) { console.log(`✖ ${name}: снимок не получился`); failed++; continue; }
+const shot = shootAll(SCENES, record || update ? BASE : OUT, false);
+for (const [name] of SCENES) {
+  if (!shot.has(name)) { console.log(`✖ ${name}: снимок не получился`); failed++; continue; }
   if (record || update) { console.log(`  ${name}: эталон записан`); continue; }
   const base = path.join(BASE, `${name}.png`);
   if (!fs.existsSync(base)) { console.log(`? ${name}: эталона нет — npm run visual -- --update`); continue; }
-  const r = compare(readPng(shot), readPng(base), path.join(OUT, `${name}-diff.png`));
+  const r = compare(readPng(path.join(OUT, `${name}.png`)), readPng(base), path.join(OUT, `${name}-diff.png`));
   if (r.size) { console.log(`✖ ${name}: размер ${r.size}`); failed++; } else if (r.share > 0.002) { console.log(`✖ ${name}: отличается ${(r.share * 100).toFixed(2)}% пикселей — ${path.join('test', 'visual', 'out', `${name}-diff.png`)}`); failed++; } else console.log(`✓ ${name}`);
 }
 process.exit(failed ? 1 : 0);

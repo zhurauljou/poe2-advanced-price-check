@@ -7,6 +7,7 @@
 //   --upd='{"state":…}'  screenshot of the "Updates" window in the given state
 //   --settings           screenshot of the settings window
 //   --tape=<folder> [--record]  network responses from a recording (offline — screenshots repeat) or record them (scripts/visual.js)
+//   --scenes=<json file>  several screenshots in one run: [{ demo, shot, tab?, eval? }] (scripts/visual.js); --demo is still required
 const { app } = require('electron');
 const fs = require('fs');
 
@@ -43,6 +44,44 @@ const fakeUpdateStatus = () => (enabled && arg('upd') ? JSON.parse(arg('upd')) :
 
 const wait = (ms) => new Promise((r) => setTimeout(r, ms));
 
+// Resolves once the window has settled: no DOM changes and no finite animations (price glide, fade-ins) for 800 ms.
+// Capped at 20 s — a page that never settles is captured as is ('cap' is logged).
+const SETTLE = `new Promise((resolve) => {
+  const t0 = performance.now(); let last = t0;
+  const mo = new MutationObserver(() => { last = performance.now(); });
+  mo.observe(document, { subtree: true, childList: true, attributes: true, characterData: true });
+  const tick = () => {
+    const now = performance.now();
+    if (document.getAnimations().some((a) => a.playState === 'running' && a.effect && a.effect.getTiming().iterations !== Infinity)) last = now;
+    if (now - last >= 800 || now - t0 > 20000) { mo.disconnect(); resolve(now - t0 > 20000 ? 'cap' : 'quiet'); } else setTimeout(tick, 100);
+  };
+  tick();
+})`;
+
+// Scene batch (--scenes): one Electron start for all screenshots. Before each scene the window is reloaded and history
+// and the mock price rotation are reset, so a scene looks the same as in a run of its own.
+async function runScenes({ priceCheck, windows }) {
+  const scenes = JSON.parse(fs.readFileSync(arg('scenes'), 'utf8'));
+  const history = require('./history');
+  for (const [i, s] of scenes.entries()) {
+    const wc = windows().main.webContents;
+    try {
+      if (i) { const done = new Promise((r) => wc.once('did-finish-load', r)); wc.reload(); await done; }
+      history.clear();
+      quickN = 0;
+      const settle = async () => { if (await wc.executeJavaScript(SETTLE) === 'cap') console.error(`demo scene ${s.shot}: did not settle`); };
+      await priceCheck(fs.readFileSync(s.demo, 'utf8'));
+      await settle();
+      if (s.tab) { await wc.executeJavaScript(`setTab(${JSON.stringify(s.tab)})`); await settle(); }
+      if (s.eval) { await wc.executeJavaScript(s.eval); await settle(); }
+      fs.writeFileSync(s.shot, (await wc.capturePage()).toPNG());
+    } catch (e) {
+      console.error(`demo scene ${s.shot}:`, e.message);
+    }
+  }
+  app.quit();
+}
+
 // Scenario: show an item (or the "Updates" window), apply the flags, take a screenshot and exit.
 function run({ ready, priceCheck, openUpdates, openSettings, windows }) {
   if (!enabled) return;
@@ -65,6 +104,7 @@ function run({ ready, priceCheck, openUpdates, openSettings, windows }) {
   }
   // The window must have time to load: offline (--tape) the reference data is ready before it, and the item would be lost.
   const loaded = () => new Promise((r) => { const wc = windows().main && windows().main.webContents; if (!wc || !wc.isLoading()) r(); else wc.once('did-finish-load', r); });
+  if (arg('scenes')) { ready.then(loaded).then(() => runScenes({ priceCheck, windows })); return; }
   ready.then(loaded).then(() => priceCheck(fs.readFileSync(arg('demo'), 'utf8'))).then(() => {
     if (!arg('shot')) return;
     setTimeout(async () => {

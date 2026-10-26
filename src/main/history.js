@@ -59,4 +59,10 @@ function previous(entry, exceptId) {
 // For the list in the window — without the item text.
 const brief = () => load().map(({ text, ...rest }) => rest);
 
-module.exports = { add, setPrice, get, previous, brief };
+// Demo scene batch: each scene starts with no history, as a separate run would.
+function clear() {
+  list = [];
+  save();
+}
+
+module.exports = { add, setPrice, get, previous, brief, clear };
