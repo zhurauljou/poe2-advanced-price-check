@@ -69,7 +69,7 @@ function renderFilters() {
   box.hidden = !state.searchable;
   if (!state.searchable) return;
   const f = state.filters;
-  // Parts of sums (Σ resistances, Σ life) — under their sum, collapsed under "▸ N mods"; an enabled part expands it.
+  // Parts of sums (Σ resistances, Σ life) — under their sum, collapsed under "+ N mods"; an enabled part expands it.
   const rows = [];
   f.mods.forEach((m, i) => {
     if (m.inSum) return;
@@ -78,7 +78,7 @@ function renderFilters() {
     const parts = f.mods.map((p, j) => [p, j]).filter(([p]) => p.inSum === m.statId);
     if (!parts.length) return;
     const open = openSums.has(m.statId) || parts.some(([p]) => p.enabled);
-    rows.push(`<div class="sum-toggle" data-sum="${esc(m.statId)}">${open ? '▾' : '▸'} ${t('{n} mods in this total', { n: parts.length })}</div>`);
+    rows.push(`<div class="sum-toggle" data-sum="${esc(m.statId)}">${open ? '−' : '+'} ${t('{n} mods in this total', { n: parts.length })}</div>`);
     if (open) rows.push(`<div class="sum-parts">${parts.map(([p, j]) => modRow(p, j)).join('')}</div>`);
   });
   // "Without the key mod": almost all builds wear it, but the item lacks it — compare with equally incomplete items.

@@ -413,7 +413,7 @@ function toggleSteps(box) {
   if (b) b.textContent = stepsLabel(+box.dataset.n);
   fit();
 }
-const stepsLabel = (n) => (stepsOpen ? `${t('Collapse')} ▴` : `${t('Show all {n} steps', { n })} ▾`);
+const stepsLabel = (n) => (stepsOpen ? `− ${t('Collapse')}` : `+ ${t('Show all {n} steps', { n })}`);
 
 // Essence of the Abyss removal as two numbered steps; the Mark is removed with Omen of Light — or, if a later step
 // desecrates on the side where the Mark landed, desecrated right away (Desecrate replaces the Mark with an unrevealed mod
@@ -1250,68 +1250,83 @@ async function computeUniqueTop(rolls) {
 
 // "Risky finish": corruption and sanctification are irreversible, odds are community estimates.
 // Collapsed: the last step, rarely reached. Nothing to improve (open): expanded.
+// The risky finish of a clean item: Vaal Orb on top — its price, the outcomes as a bar, the enchants it can give as a table
+// (each priced as a corrupted copy) — then the other irreversible options in short lines.
 function gambleHtml(g, open = false) {
-  const list = (xs) => xs.map((h) => `<div class="craft-how">${esc(h)}</div>`).join('');
-  return `<details class="craft-sec gamble"${open ? ' open' : ''}><summary class="k">⚠ ${esc(t('Risky final step: corruption and sanctification'))}</summary>${g.how.map(howLine).join('')}
-    ${pricesLine(['Vaal Orb', ...(state.item.rarity === 'Rare' ? ['Omen of Sanctification'] : []), 'Omen of Putrefaction'])}
-    ${g.enchants.length ? `<details class="why"><summary>${esc(t('Possible corruption enchants ({n})', { n: g.enchants.length }))}</summary>${list(g.enchants)}</details>` : ''}</details>`;
+  const vaal = craftPrices['Vaal Orb'];
+  const now = state.est != null && !state.estThin ? state.est : null;
+  const enchant = g.outcomes.find((o) => o.k === 'enchant');
+  const each = enchant && enchant.p != null && g.enchants.length ? enchant.p / g.enchants.length : null;
+  return `<details class="craft-sec gamble"${open ? ' open' : ''}><summary class="k">⚠ ${esc(t('Risky final step: corruption and sanctification'))}</summary>
+    <div class="dc-head"><span class="k">${esc(t('Corruption'))}</span><span class="oo-cur">${curChips(['Vaal Orb'])}</span>${vaal != null ? `<b>≈ ${esc(approx(vaal))}</b>` : ''}</div>
+    ${oddsBar(g.outcomes)}
+    <div class="dc-note">${esc(t('The item becomes unmodifiable. Omen of Corruption (always a change) is not obtainable this league.'))}</div>
+    ${g.enchants.length ? enchantTable('vaal', g.enchants, { flag: 'corrupted', each, now }) : ''}
+    ${g.how.length ? `<div class="dc-more">${g.how.map(howLine).join('')}${pricesLine([...(state.item.rarity === 'Rare' ? ['Omen of Sanctification'] : []), 'Omen of Putrefaction'])}</div>` : ''}</details>`;
 }
 
-// Corrupted once: one more corruption is possible — Architect's Orb, a coin flip between a second enchant and losing the
-// item. Laid out like the unique's Divine block: the orb, the odds as a bar, a short ledger (price now, break-even) and
-// the possible enchants as an open table — each priced as a Twice Corrupted copy with it, coloured against the break-even.
-let dcState = null; // { d, now, orb, even, vals: Map(enchant index → div | null) }
-function doubleCorruptHtml(d) {
-  const now = state.est != null && !state.estThin ? state.est : null;
-  const orb = craftPrices[d.orb] ?? null;
-  // The item is lost half the time: a Twice Corrupted copy must cover what you give up and the orb, twice.
-  const even = now != null && orb != null ? 2 * (now + orb) : null;
-  dcState = { d, now, orb, even, vals: new Map() };
-  const n = d.enchants.length;
-  const each = n ? 0.5 / n : null;
-  const priceable = d.enchants.filter((e) => e.stats).length;
-  const rows = d.enchants.map((e, i) => `<div class="brow crow dc" data-dci="${i}">
-      <span class="bname">${esc(e.text)}</span>
-      <span class="cch"><span class="chance ${each >= 0.12 ? 'common' : each >= 0.04 ? 'uncommon' : 'rare'}">${esc(t('1 in {n}', { n: String(Math.round(1 / each)) }))}</span></span>
-      <span class="cpx">${e.stats ? `<button class="link cprice" data-dc="${i}" title="${esc(t('Search for a Twice Corrupted copy of your item with this enchant'))}">${PRICE_ICON}</button>` : ''}</span></div>`).join('');
-  const all = priceable > 1 ? `<button class="link cprice-all" data-dcall title="${esc(t('One trade search per enchant, then the list is sorted by price'))}">⇅ ${esc(t('Price all and sort'))}</button>` : '';
-  return `<div class="craft-sec dcor">
-    <div class="dc-head"><span class="k">${esc(t('Double corruption'))}</span><span class="oo-cur">${curChips([d.orb])}</span>${orb != null ? `<b>≈ ${esc(approx(orb))}</b>` : ''}</div>
-    <div class="dc-odds" title="${esc(t('Odds are community estimates — GGG does not publish them'))}"><span class="win">${esc(t('~50% a second enchant'))}</span><span class="lose">${esc(t('~50% the item is destroyed'))}</span></div>
-    <div class="profit">
-      <div><span>${esc(t('Sell as is'))}</span><b>${now != null ? esc(approx(now)) : '—'}</b></div>
-      <div><span title="${esc(t('(price now + orb) × 2 — the item is lost half the time'))}">${esc(t('Twice Corrupted pays off from'))}</span><b>${even != null ? esc(approx(even)) : '—'}</b></div>
-    </div>
-    <div class="dc-verdict"></div>
-    ${n ? `<div class="clist"><div class="ctop"><span class="craft-sub">${esc(t('Second enchant — one of {n}, not of a group the item has', { n }))}</span>${all}</div>
-      <div class="crow dc chead"><span>${esc(t('Enchant'))}</span><span title="${esc(t('Chance per orb: ~50% for an enchant, split evenly between the possible ones (an assumption)'))}">${esc(t('chance'))}</span><span title="${esc(t('A Twice Corrupted copy of your item with this enchant'))}">${esc(t('price'))}</span></div>${rows}</div>` : ''}
-  </div>`;
+// Corruption enchant tables — Vaal Orb on a clean item, Architect's Orb on a corrupted one. One row per enchant: chance per
+// orb, and a trade search for a corrupted (Twice Corrupted) copy of your item with it, coloured against the price that
+// pays off. Built like the craft candidates table; the outcomes as one bar, widths by their odds.
+const encTables = new Map(); // id → { enchants, flag, now, even, verdict, vals: Map(index → div | null) }
+const OUTCOME = {
+  nothing: ['nothing changes', 'mid'], enchant: ['an enchant', 'win'], reroll: ['modifiers rerolled', 'lose'],
+  values: ['values ×0.78–1.22', 'mid'], socket: ['+1 socket', 'win'], quality: ['quality up to 23%', 'win'],
+  destroyed: ['the item is destroyed', 'lose'],
+};
+function oddsBar(outcomes) {
+  const known = outcomes.every((o) => o.p != null);
+  return `<div class="dc-odds" title="${esc(t('Odds are community estimates — GGG does not publish them'))}">${outcomes.map((o) => {
+    const [label, cls] = OUTCOME[o.k];
+    return `<span class="${cls}" data-w="${known ? o.p * 100 : 100 / outcomes.length}%">${known ? `${Math.round(o.p * 100)}% ` : ''}${esc(t(label))}</span>`;
+  }).join('')}</div>`;
+}
+
+function enchantTable(id, enchants, { flag, each, now, even = null, verdict = false }) {
+  encTables.set(id, { enchants, flag, now, even, verdict, vals: new Map() });
+  const n = enchants.length;
+  const priceable = enchants.filter((e) => e.stats).length;
+  const chance = each == null ? '<span class="chance unknown">—</span>'
+    : `<span class="chance ${each >= 0.12 ? 'common' : each >= 0.04 ? 'uncommon' : 'rare'}">${esc(t('1 in {n}', { n: String(Math.round(1 / each)) }))}</span>`;
+  const what = flag === 'twice_corrupted' ? t('A Twice Corrupted copy of your item with this enchant') : t('A corrupted copy of your item with this enchant');
+  const rows = enchants.map((e, i) => `<div class="brow crow dc" data-enci="${id}:${i}">
+      <span class="bname">${esc(e.text)}</span><span class="cch">${chance}</span>
+      <span class="cpx">${e.stats ? `<button class="link cprice" data-enc="${id}:${i}" title="${esc(what)}">${PRICE_ICON}</button>` : ''}</span></div>`).join('');
+  const all = priceable > 1 ? `<button class="link cprice-all" data-encall="${id}" title="${esc(t('One trade search per enchant, then the list is sorted by price'))}">⇅ ${esc(t('Price all and sort'))}</button>` : '';
+  const sub = flag === 'twice_corrupted' ? t('Second enchant — one of {n}, not of a group the item has', { n }) : t('Corruption enchant — one of {n}', { n });
+  return `<div class="clist" data-encl="${id}"><div class="ctop"><span class="craft-sub">${esc(sub)}</span>${all}</div>
+    <div class="crow dc chead"><span>${esc(t('Enchant'))}</span><span title="${esc(t('Chance per orb: the enchant outcome split evenly between the possible enchants (an assumption)'))}">${esc(t('chance'))}</span><span title="${esc(what)}">${esc(t('price'))}</span></div>${rows}</div>`
+    + (verdict ? '<div class="dc-verdict"></div>' : '');
 }
 
 async function priceEnchant(b) {
-  const i = Number(b.dataset.dc);
-  const dc = dcState;
-  const e = dc && dc.d.enchants[i];
+  const [id, idx] = b.dataset.enc.split(':');
+  const i = Number(idx);
+  const tb = encTables.get(id);
+  const e = tb && tb.enchants[i];
   if (!e || !e.stats || !state) return;
   const mine = state;
   b.disabled = true;
   b.textContent = '…';
   const f = JSON.parse(JSON.stringify(state.filters));
   for (const s of e.stats) f.mods.push({ statId: s.statId, enabled: true, min: s.min, importance: 3, tag: 'enchant', text: e.text });
-  f.flags = (f.flags || []).filter((x) => x.key !== 'twice_corrupted').concat({ key: 'twice_corrupted', enabled: true, value: true });
+  f.flags = (f.flags || []).filter((x) => x.key !== tb.flag && x.key !== 'corrupted')
+    .concat({ key: 'corrupted', enabled: true, value: true }, ...(tb.flag === 'corrupted' ? [] : [{ key: tb.flag, enabled: true, value: true }]));
   try {
     const q = await quickPrice(state.item, f);
-    if (state !== mine || dcState !== dc) return;
+    if (state !== mine || encTables.get(id) !== tb) return;
     const raw = estimate(q.lots);
     const v = q.total >= MIN_LOTS ? raw : null;
-    dc.vals.set(i, v);
-    const cls = v == null || dc.even == null ? '' : v >= dc.even ? ' up' : ' down';
+    tb.vals.set(i, v);
+    // Against what pays off: the break-even of the double corruption, or your price now (±10%).
+    const cls = v == null ? '' : tb.even != null ? (v >= tb.even ? ' up' : ' down')
+      : tb.now != null ? (v > tb.now * 1.1 ? ' up' : v < tb.now * 0.9 ? ' down' : '') : '';
     b.outerHTML = v == null
       ? `<span class="cpr thin" title="${esc(t('Too few listings to price it — one or two prices can be anything'))} · ${esc(t('{n} listings', { n: q.total }))}">${raw != null ? `${esc(approx(raw))}?` : esc(t('none listed'))}</span>`
       : `<span class="cpr${cls}" title="${esc(t('{n} listed with it', { n: q.total }))}">≈ ${esc(approx(v))}</span>`;
-    const row = document.querySelector(`[data-dci="${i}"]`);
+    const row = document.querySelector(`[data-enci="${id}:${i}"]`);
     if (row) row.dataset.v = v ?? '';
-    dcVerdict();
+    if (tb.verdict) dcVerdict(id);
   } catch (err) {
     if (state !== mine) return;
     b.disabled = false;
@@ -1322,30 +1337,12 @@ async function priceEnchant(b) {
   fit();
 }
 
-// Once every enchant is priced: what one orb gives on average against selling as is — half the time one of the enchants
-// (evenly), half the time nothing. Enchants with no estimate count at the price now (a guess, said so).
-function dcVerdict() {
-  const dc = dcState;
-  const box = document.querySelector('.dcor .dc-verdict');
-  if (!dc || !box || dc.now == null || dc.orb == null) return;
-  const priced = dc.d.enchants.map((e, i) => (e.stats ? i : null)).filter((i) => i != null);
-  if (!priced.length || !priced.every((i) => dc.vals.has(i))) return;
-  const vals = priced.map((i) => dc.vals.get(i) ?? dc.now);
-  const avg = vals.reduce((s, v) => s + v, 0) / vals.length;
-  const gain = 0.5 * avg - dc.now - dc.orb;
-  const good = gain > dc.now * 0.15;
-  const guessed = priced.length < dc.d.enchants.length || priced.some((i) => dc.vals.get(i) == null);
-  box.outerHTML = `<div class="verdict ${good ? 'good' : 'bad'}">${good
-    ? `✅ ${esc(t('One orb: ≈ {gain} more than selling as is, on average', { gain: approx(gain) }))}`
-    : `✖ ${esc(t('Selling as is is better'))}`}<small>${esc(t('Average over many tries: half of them destroy the item'))}${guessed ? ` · ${esc(t('enchants with too few listings counted at the price now'))}` : ''}</small></div>`;
-}
-
 async function priceAllEnchants(btn) {
   const list = btn.closest('.clist');
   const mine = state;
   btn.disabled = true;
   btn.textContent = t('pricing…');
-  for (const b of [...list.querySelectorAll('[data-dc]')]) {
+  for (const b of [...list.querySelectorAll('[data-enc]')]) {
     if (state !== mine || !list.isConnected) return;
     if (await priceEnchant(b) === 'limit') { btn.disabled = false; btn.textContent = `⇅ ${t('Price all and sort')}`; return; }
   }
@@ -1357,11 +1354,49 @@ async function priceAllEnchants(btn) {
 }
 
 document.addEventListener('click', (e) => {
-  const one = e.target.closest('[data-dc]');
+  const one = e.target.closest('[data-enc]');
   if (one && !one.disabled) { priceEnchant(one); return; }
-  const all = e.target.closest('[data-dcall]');
+  const all = e.target.closest('[data-encall]');
   if (all && !all.disabled) priceAllEnchants(all);
 });
+
+// Corrupted once: one more corruption is possible — Architect's Orb, a coin flip between a second enchant and losing the
+// item. Framed like the plan: the orb, the odds bar, a short ledger (price now, break-even), the enchants table, and once
+// every enchant is priced — a verdict for one orb against selling as is.
+function doubleCorruptHtml(d) {
+  const now = state.est != null && !state.estThin ? state.est : null;
+  const orb = craftPrices[d.orb] ?? null;
+  // The item is lost half the time: a Twice Corrupted copy must cover what you give up and the orb, twice.
+  const even = now != null && orb != null ? 2 * (now + orb) : null;
+  return `<div class="craft-sec dcor" data-orb="${esc(String(orb ?? ''))}">
+    <div class="dc-head"><span class="k">${esc(t('Double corruption'))}</span><span class="oo-cur">${curChips([d.orb])}</span>${orb != null ? `<b>≈ ${esc(approx(orb))}</b>` : ''}</div>
+    ${oddsBar([{ k: 'enchant', p: 0.5 }, { k: 'destroyed', p: 0.5 }])}
+    <div class="profit">
+      <div><span>${esc(t('Sell as is'))}</span><b>${now != null ? esc(approx(now)) : '—'}</b></div>
+      <div><span title="${esc(t('(price now + orb) × 2 — the item is lost half the time'))}">${esc(t('Twice Corrupted pays off from'))}</span><b>${even != null ? esc(approx(even)) : '—'}</b></div>
+    </div>
+    ${enchantTable('dc', d.enchants, { flag: 'twice_corrupted', each: 0.5 / d.enchants.length, now, even, verdict: true })}
+  </div>`;
+}
+
+// Once every enchant is priced: what one orb gives on average against selling as is — half the time one of the enchants
+// (evenly), half the time nothing. Enchants with no estimate count at the price now (a guess, said so).
+function dcVerdict(id) {
+  const tb = encTables.get(id);
+  const box = document.querySelector(`[data-encl="${id}"] + .dc-verdict`);
+  const orb = craftPrices["Architect's Orb"];
+  if (!tb || !box || tb.now == null || orb == null) return;
+  const priced = tb.enchants.map((e, i) => (e.stats ? i : null)).filter((i) => i != null);
+  if (!priced.length || !priced.every((i) => tb.vals.has(i))) return;
+  const vals = priced.map((i) => tb.vals.get(i) ?? tb.now);
+  const avg = vals.reduce((s, v) => s + v, 0) / vals.length;
+  const gain = 0.5 * avg - tb.now - orb;
+  const good = gain > tb.now * 0.15;
+  const guessed = priced.length < tb.enchants.length || priced.some((i) => tb.vals.get(i) == null);
+  box.outerHTML = `<div class="verdict ${good ? 'good' : 'bad'}">${good
+    ? `✅ ${esc(t('One orb: ≈ {gain} more than selling as is, on average', { gain: approx(gain) }))}`
+    : `✖ ${esc(t('Selling as is is better'))}`}<small>${esc(t('Average over many tries: half of them destroy the item'))}${guessed ? ` · ${esc(t('enchants with too few listings counted at the price now'))}` : ''}</small></div>`;
+}
 
 function renderCraft(r) {
   baseSearch = null; // another item (or its plan rebuilt): the bases found were for the previous one

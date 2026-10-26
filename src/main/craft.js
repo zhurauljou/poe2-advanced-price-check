@@ -63,51 +63,59 @@ function augFits(target, itemClass) {
 // "Risky finish": corruption and sanctification (docs/corruption-sanctification.md, data/gamble-currency.json).
 // Odds are community estimates, GGG does not publish them. Shown with disclaimers.
 let gambleData;
-function gambleFor(item, tags) {
+function loadGamble() {
   if (gambleData === undefined) {
     try { gambleData = JSON.parse(fsW.readFileSync(pathW.join(__dirname, '..', '..', 'data', 'gamble-currency.json'), 'utf8')); } catch { gambleData = null; }
   }
-  const jewellery = tags.includes('ring') || tags.includes('amulet') || tags.includes('belt');
-  const caster = tags.includes('wand') || tags.includes('staff');
-  const how = [t('Irreversible. Odds are community estimates — GGG does not publish them.')];
-  if (item.rarity === 'Unique') {
-    // For uniques, instead of a reroll — mod values ×0.78–1.22 of the current ones (can go beyond the normal range).
-    if (tags.includes('jewel') || jewellery) how.push(t('Vaal Orb — ~50% nothing, ~25% corruption enchant, ~25% modifier values ×0.78–1.22 of the current ones (can go beyond the normal range); the item becomes unmodifiable'));
-    else how.push(t('Vaal Orb — ~25% each: nothing, corruption enchant, modifier values ×0.78–1.22 of the current ones (can go beyond the normal range), +1 augment socket beyond the limit; the item becomes unmodifiable'));
-    how.push(t('Divine to good rolls first: after corruption the values can no longer be rerolled, and ×1.22 of a high roll is worth the most'));
-  } else if (tags.includes('jewel')) how.push(t('Vaal Orb — nothing, a corruption enchant or rerolled modifiers (odds for jewels unverified); the item becomes unmodifiable'));
-  else if (jewellery) how.push(t('Vaal Orb — ~50% nothing, ~25% corruption enchant, ~25% modifiers rerolled (often ruins the item); the item becomes unmodifiable'));
-  else if (caster) how.push(t('Vaal Orb — ~25% each: nothing, corruption enchant, modifiers rerolled (often ruins the item), quality up to ~23%; the item becomes unmodifiable'));
-  else how.push(t('Vaal Orb — ~25% each: nothing, corruption enchant, modifiers rerolled (often ruins the item), +1 augment socket beyond the limit; the item becomes unmodifiable'));
-  if (!tags.includes('jewel')) how.push(t('Before corrupting: Divine Orb, quality and runes — meta-crafting runes cannot be socketed into corrupted or sanctified items'));
-  if (item.rarity === 'Rare') how.push(t('Sanctify (Divine Orb + Omen of Sanctification) — every modifier ×0.78–1.22 of its current value, the item becomes unmodifiable and can no longer be corrupted; only for a near-perfect item, Divine to high rolls first'));
-  const inf = gambleData && (gambleData.infusers || []).find((x) => (x.classes || []).includes(item.itemClass));
-  if (inf && (item.quality || 0) >= 20) how.push(t('{infuser} — up to +10% quality above the maximum (needs 20% quality); may only add the Corrupted tag', { infuser: inf.name }));
-  if (item.rarity === 'Rare' && bonesFor(tags, item.ilvl || 100).length) how.push(t('Omen of Putrefaction + a bone: all modifiers become 6 unrevealed ones (3 prefixes + 3 suffixes), each revealed from 3 options, and the item becomes corrupted — a «slot machine» for cheap bases (quivers, armour)'));
-  how.push(t('Omen of Corruption (a guaranteed change) is not obtainable this league'));
-  // "(only str_armour bases)" — only for bases with that tag; the rest are hidden.
-  const enchants = ((gambleData && gambleData.corruptedEnchants && gambleData.corruptedEnchants[item.itemClass]) || [])
-    .filter((e) => { const m = e.match(/\(only (\w+) bases\)/); return !m || tags.includes(m[1]); })
-    .map((e) => e.replace(/\s*\(only \w+ bases\)/, ''));
-  return { how, enchants };
+  return gambleData;
 }
 
+// Corruption enchants this item can get, each with its trade stat at the lowest roll (the window prices a corrupted copy
+// with it). "(only str_armour bases)" — only for bases with that tag. have — shapes of enchants already on the item.
+const shape = (s) => s.replace(/\(-?[\d.]+--?[\d.]+\)|-?[\d.]+/g, '#');
+function enchantList(item, tags, have = new Set()) {
+  const pool = ((loadGamble() || {}).corruptedEnchants || {})[item.itemClass] || [];
+  return pool.filter((e) => { const m = e.match(/\(only (\w+) bases\)/); return !m || tags.includes(m[1]); })
+    .map((e) => e.replace(/\s*\(only \w+ bases\)/, '')).filter((e) => !have.has(shape(e))).map((text) => {
+      const st = stats.statFor(text.replace(/\((-?[\d.]+)--?[\d.]+\)/g, '$1'), 'enchant', item.itemClass);
+      return { text, stats: st && st.statId.startsWith('enchant.') ? [{ statId: st.statId, min: st.value }] : null };
+    });
+}
+
+// What a Vaal Orb does to this item: outcomes with their (community) odds — the window draws them as one bar.
+// p null — odds unknown (rare jewels). values — a unique's modifier values ×0.78–1.22 of the current ones.
+function vaalOutcomes(item, tags) {
+  const jewellery = tags.includes('ring') || tags.includes('amulet') || tags.includes('belt');
+  const o = (k, p) => ({ k, p });
+  if (item.rarity === 'Unique') {
+    return tags.includes('jewel') || jewellery ? [o('nothing', 0.5), o('enchant', 0.25), o('values', 0.25)]
+      : [o('nothing', 0.25), o('enchant', 0.25), o('values', 0.25), o('socket', 0.25)];
+  }
+  if (tags.includes('jewel')) return [o('nothing', null), o('enchant', null), o('reroll', null)];
+  if (jewellery) return [o('nothing', 0.5), o('enchant', 0.25), o('reroll', 0.25)];
+  if (tags.includes('wand') || tags.includes('staff')) return [o('nothing', 0.25), o('enchant', 0.25), o('reroll', 0.25), o('quality', 0.25)];
+  return [o('nothing', 0.25), o('enchant', 0.25), o('reroll', 0.25), o('socket', 0.25)];
+}
+
+function gambleFor(item, tags) {
+  const how = [];
+  if (item.rarity === 'Unique') how.push(t('Divine to good rolls first: after corruption the values can no longer be rerolled, and ×1.22 of a high roll is worth the most'));
+  if (!tags.includes('jewel')) how.push(t('Before corrupting: Divine Orb, quality and runes — meta-crafting runes cannot be socketed into corrupted or sanctified items'));
+  if (item.rarity === 'Rare') how.push(t('Sanctify (Divine Orb + Omen of Sanctification) — every modifier ×0.78–1.22 of its current value, the item becomes unmodifiable and can no longer be corrupted; only for a near-perfect item, Divine to high rolls first'));
+  const inf = ((loadGamble() || {}).infusers || []).find((x) => (x.classes || []).includes(item.itemClass));
+  if (inf && (item.quality || 0) >= 20) how.push(t('{infuser} — up to +10% quality above the maximum (needs 20% quality); may only add the Corrupted tag', { infuser: inf.name }));
+  if (item.rarity === 'Rare' && bonesFor(tags, item.ilvl || 100).length) how.push(t('Omen of Putrefaction + a bone: all modifiers become 6 unrevealed ones (3 prefixes + 3 suffixes), each revealed from 3 options, and the item becomes corrupted — a «slot machine» for cheap bases (quivers, armour)'));
+  return { outcomes: vaalOutcomes(item, tags), how, enchants: enchantList(item, tags) };
+}
 
 // Corrupted once (not mirrored or sanctified): Architect's Orb corrupts equipment or a jewel a second time — ~50% a second
 // corruption enchant, not of a group already on the item, ~50% the item is destroyed (docs/corruption-sanctification.md).
-const shape = (s) => s.replace(/\(-?[\d.]+--?[\d.]+\)|-?[\d.]+/g, '#');
-function doubleCorruptFor(item) {
+function doubleCorruptFor(item, tags) {
   if (!item.corrupted || item.twiceCorrupted || item.mirrored || item.sanctified) return null;
-  gambleFor(item, []); // loads gambleData
-  const orb = gambleData && (gambleData.doubleCorruption || []).find((x) => x.name === "Architect's Orb");
-  const pool = (gambleData && gambleData.corruptedEnchants && gambleData.corruptedEnchants[item.itemClass]) || [];
-  if (!orb || !pool.length) return null; // gems, flasks, tablets — other currencies or none
+  const orb = ((loadGamble() || {}).doubleCorruption || []).find((x) => x.name === "Architect's Orb");
   const have = new Set((item.modLines || []).filter((l) => l.tag === 'enchant' || l.tag === 'corrupted').map((l) => shape(l.text)));
-  // Each with its trade stat at the lowest roll — the window prices a Twice Corrupted copy with it.
-  const enchants = pool.map((e) => e.replace(/\s*\(only \w+ bases\)/, '')).filter((e) => !have.has(shape(e))).map((text) => {
-    const s = stats.statFor(text.replace(/\((-?[\d.]+)--?[\d.]+\)/g, '$1'), 'enchant', item.itemClass);
-    return { text, stats: s && s.statId.startsWith('enchant.') ? [{ statId: s.statId, min: s.value }] : null };
-  });
+  const enchants = enchantList(item, tags, have);
+  if (!orb || !enchants.length) return null; // gems, flasks, tablets — other currencies or none
   return { orb: orb.name, enchants };
 }
 
@@ -162,7 +170,9 @@ async function advise(item, demandMods, cached, { priceKeys = [] } = {}) {
   // Tablets: their mods and pool differ from equipment (corruption with sockets, 3 + 3 slots) — tips would be wrong.
   if (item.itemClass === 'Tablet') return { note: t('No craft tips for tablets yet. The Price tab searches by their modifiers and uses left.') };
   if (item.corrupted || item.mirrored || item.sanctified) {
-    return { blocked: item.corrupted ? 'Corrupted' : item.mirrored ? 'Mirrored' : 'Sanctified', doubleCorrupt: doubleCorruptFor(item) };
+    // The base's tags pick its enchants («only str_armour bases»); no data — the pool without those.
+    const base = await load(cached).then((d) => d && d.bases && d.bases.get(item.baseType)).catch(() => null);
+    return { blocked: item.corrupted ? 'Corrupted' : item.mirrored ? 'Mirrored' : 'Sanctified', doubleCorrupt: doubleCorruptFor(item, (base && base.tags) || []) };
   }
   // Unique: mods do not change — only values (Divine) and the risky finish (Vaal). The window computes rolls from filters.
   if (item.rarity === 'Unique') {

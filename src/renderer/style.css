@@ -723,8 +723,8 @@ body.wide .steps-toggle { display: none; }
 .ps-note { font-size: var(--fs-s); color: var(--muted); opacity: .85; }
 .why, .more-ways { margin-top: 6px; }
 .why > summary, .more-ways > summary { cursor: pointer; font: 700 var(--fs-s) var(--body); color: var(--label); list-style: none; }
-.why > summary::before, .more-ways > summary::before { content: "▸ "; }
-.why[open] > summary::before, .more-ways[open] > summary::before { content: "▾ "; }
+.why > summary::before, .more-ways > summary::before { content: "+ "; }
+.why[open] > summary::before, .more-ways[open] > summary::before { content: "− "; }
 .more-ways { padding-top: 6px; border-top: 1px solid var(--line2); }
 .gamble { border-left: 2px solid var(--bad); padding-left: 8px; }
 .gamble > .k { color: var(--bad); }
@@ -882,11 +882,11 @@ footer .keys .k-enter[hidden] { display: none; }
 /* Alternatives to the main plan — quieter headings */
 .craft-sec.alt > .k { color: var(--muted); font-size: var(--fs-s); }
 details.gamble > summary { cursor: pointer; list-style: none; }
-details.gamble > summary::before { content: '▸ '; } details.gamble[open] > summary::before { content: '▾ '; }
+details.gamble > summary::before { content: '+ '; } details.gamble[open] > summary::before { content: '− '; }
 /* Plan step: explanations and other methods — under "more" */
 .ps-key { font-size: var(--fs-s); color: var(--text); }
 .ps-more > summary { cursor: pointer; list-style: none; font-size: var(--fs-s); color: var(--label); }
-.ps-more > summary::before { content: '▸ '; } .ps-more[open] > summary::before { content: '▾ '; }
+.ps-more > summary::before { content: '+ '; } .ps-more[open] > summary::before { content: '− '; }
 .ps-more[open] { margin-bottom: 2px; }
 /* Essence / Alloy: the order of actions — numbered rows */
 .ps-seq > div { font-size: var(--fs-s); color: var(--text); margin: 2px 0; }
@@ -1046,8 +1046,8 @@ details.why > summary, details.more-ways > summary, details.vmore > summary, det
   list-style: none; cursor: pointer; text-align: left; text-decoration: none;
   font: 700 var(--fs-s)/1.3 var(--body); letter-spacing: 0; color: var(--label); transition: background .12s, color .12s; }
 :is(details.why, details.more-ways, details.vmore, details.ps-more) > summary::-webkit-details-marker { display: none; }
-:is(details.why, details.more-ways, details.vmore, details.ps-more) > summary::before, .plan-steps.folded > .link::before { content: "▸ "; }
-:is(details.why, details.more-ways, details.vmore, details.ps-more)[open] > summary::before { content: "▾ "; }
+:is(details.why, details.more-ways, details.vmore, details.ps-more) > summary::before, .plan-steps.folded > .link::before { content: "+ "; }
+:is(details.why, details.more-ways, details.vmore, details.ps-more)[open] > summary::before { content: "− "; }
 :is(details.why, details.more-ways, details.vmore, details.ps-more) > summary:hover, .plan-steps.folded > .link:hover {
   background: var(--hover); color: var(--ink-1); }
 .plan-steps.folded > .link { width: calc(100% + 16px); }
@@ -1075,10 +1075,15 @@ details.why > summary, details.more-ways > summary, details.vmore > summary, det
 .dc-head { display: flex; align-items: center; gap: 8px; }
 .dc-head .k { margin: 0 auto 0 0; }
 .dc-head b { color: var(--cream); font-size: var(--fs-s); }
-.dc-odds { display: grid; grid-template-columns: 1fr 1fr; gap: 2px; margin: 8px 0 6px; font-size: var(--fs-xs); text-align: center; }
-.dc-odds span { padding: 3px 4px; }
-.dc-odds .win { border-radius: 3px 0 0 3px; background: rgba(111, 207, 122, .12); color: var(--good); }
-.dc-odds .lose { border-radius: 0 3px 3px 0; background: rgba(224, 103, 90, .12); color: #e6a59c; }
+/* Outcomes of one orb as a bar, each part as wide as its odds (data-w); green — good for you, red — bad, neutral otherwise. */
+.dc-odds { display: flex; gap: 2px; margin: 8px 0 6px; font-size: var(--fs-xs); line-height: 1.25; text-align: center; }
+.dc-odds span { min-width: 0; padding: 3px 4px; background: rgba(241, 228, 194, .06); color: var(--note); }
+.dc-odds span:first-child { border-radius: 3px 0 0 3px; } .dc-odds span:last-child { border-radius: 0 3px 3px 0; }
+.dc-odds .win { background: rgba(111, 207, 122, .12); color: var(--good); }
+.dc-odds .lose { background: rgba(224, 103, 90, .12); color: #e6a59c; }
+.dc-note { font-size: var(--fs-xs); color: var(--muted); }
+.gamble .dc-head { margin-top: 6px; }
+.dc-more { margin-top: 10px; padding-top: 6px; border-top: 1px solid var(--line2); }
 .dcor .clist { margin-top: 4px; }
 .crow.dc { grid-template-columns: minmax(0, 1fr) 64px 76px; }
 .crow.dc:not(.chead) .bname { color: var(--g-enchant); }

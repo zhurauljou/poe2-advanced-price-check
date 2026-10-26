@@ -34,7 +34,7 @@ test('corruption mods in the advice are exactly those that can roll on the base 
       const tags = b.tags || [];
       // Jewels have their own corruption mods (domain misc), everything else — domain item.
       const game = new Set(mods.filter((m) => (m.domain === 'misc') === (cls === 'Jewels') && canRoll(m, tags)).map((m) => norm(m.text)));
-      const app = new Set(gambleFor({ rarity: 'Rare', itemClass: cls, quality: 0, ilvl: 80 }, tags).enchants.map(norm));
+      const app = new Set(gambleFor({ rarity: 'Rare', itemClass: cls, quality: 0, ilvl: 80 }, tags).enchants.map((e) => norm(e.text)));
       const extra = [...app].filter((x) => !game.has(x));
       const missing = [...game].filter((x) => !app.has(x));
       if (extra.length || missing.length) wrong.push(`${cls} / ${b.name}: extra ${JSON.stringify(extra)}, missing ${JSON.stringify(missing)}`);
