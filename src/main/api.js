@@ -308,14 +308,15 @@ async function fetchUniques(league) {
   const map = new Map();
   for (const d of results) {
     for (const ln of (d && d.lines) || []) {
+      // icon and flavour — to tell apart unidentified uniques sharing a base: only the art shows which one it is.
       map.set(`${ln.name}|${ln.baseType}`, { divine: ln.primaryValue, listings: ln.listingCount,
-        change: ln.sparkLine ? ln.sparkLine.totalChange : null });
+        change: ln.sparkLine ? ln.sparkLine.totalChange : null, icon: ln.icon || null, flavour: ln.flavourText || null });
     }
   }
   Object.assign(uniques, { league, at: Date.now(), map });
 }
 
-// Unique price on poe.ninja: { divine, listings, change } or null.
+// Unique price on poe.ninja: { divine, listings, change, icon, flavour } or null.
 async function uniquePrice(league, name, baseType) {
   if (uniques.league !== league || Date.now() - uniques.at > 15 * 60e3) {
     // Loading is per league: a request for another league must not get the first one's prices.

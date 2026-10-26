@@ -118,6 +118,20 @@ body::-webkit-scrollbar { width: 0; height: 0; }
 /* Name/base are search toggles: the selected one glows, the deselected one is dimmed with a dashed strike-through. */
 .pick { cursor: pointer; padding: 0 6px; border-radius: 2px; opacity: .45; text-decoration: line-through 1px; transition: opacity .12s; }
 .pick:hover { opacity: .8; }
+/* Unidentified unique: which of the uniques on this base — art, name and flavour, unidentified / identified price */
+.uchoice { text-align: left; }
+.uchoice > .k { text-align: center; margin-bottom: 6px; }
+.uc { display: grid; grid-template-columns: 44px 1fr 92px 68px; column-gap: 10px; align-items: center; width: 100%; padding: 4px 6px;
+  border: 0; border-radius: 3px; background: none; color: var(--text); font: var(--fs-s) var(--body); text-align: left; cursor: pointer; }
+button.uc:hover { background: var(--hover); }
+.uc-head { cursor: default; padding-block: 0; color: var(--label); font: 700 var(--fs-xs) var(--sc); letter-spacing: .04em; }
+.uc-head span:nth-child(n+3), .uc-p { text-align: right; }
+.uc-art { width: 44px; height: 44px; display: flex; align-items: center; justify-content: center; }
+.uc-art img { max-width: 44px; max-height: 44px; }
+.uc-name { font: var(--t-16)/1.2 var(--game); color: var(--r-unique); min-width: 0; }
+.uc-name i { display: block; font: italic var(--fs-xs)/1.25 var(--body); color: var(--r-unique); opacity: .75; }
+.uc-p b { color: var(--cream); font-weight: 700; }
+.uc-p small { display: block; color: var(--muted); font-size: var(--fs-xs); }
 .pick.u { padding: 0 2px; text-decoration: none; } /* a choice between uniques, not an on/off filter — not struck out */
 .pick.on { opacity: 1; text-decoration: none; text-shadow: 0 1px 2px #000, 0 0 10px currentColor; }
 .pick.on:hover { background: rgba(255, 255, 255, .05); }

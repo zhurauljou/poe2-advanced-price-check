@@ -10,7 +10,8 @@ const mem = new Map(); // key → data URL | null
 
 async function one(key) {
   if (mem.has(key)) return mem.get(key);
-  const url = pricing.currencyImage(key);
+  // An item's art URL (unique jewels on the choice screen) is fetched as is — only from the game's image host.
+  const url = /^https:\/\/web\.poecdn\.com\/gen\/image\//.test(key) ? key : pricing.currencyImage(key);
   if (!url) { mem.set(key, null); return null; }
   const file = path.join(api.cacheDir(), 'icons', `${require('crypto').createHash('sha1').update(url).digest('hex').slice(0, 16)}.png`);
   let buf = null;
@@ -26,7 +27,7 @@ async function one(key) {
   return data;
 }
 
-// { key: data URL | null } for currency ids or names.
+// { key: data URL | null } for currency ids or names, or web.poecdn.com item art URLs.
 async function icons(keys) {
   const out = {};
   await Promise.all([...new Set(keys || [])].slice(0, 200).map(async (k) => { out[k] = await one(String(k)); }));

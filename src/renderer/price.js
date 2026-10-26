@@ -364,6 +364,52 @@ async function loadUniqueNinja() {
   } catch {}
 }
 
+// ---- Unidentified unique on a base several uniques share (Sapphire: Grand Spectrum or Voices) ----
+// The text doesn't say which — only the art does. A row per candidate: its art and flavour, what it sells for unidentified
+// (trade, by name) and identified (poe.ninja); a click picks it and searches as usual.
+let choiceSeq = 0;
+async function loadUniqueChoice() {
+  const seq = ++choiceSeq;
+  const mine = state;
+  const it = state.item;
+  state.uniqueChoice = it.uniqueOptions.map((name) => ({ name }));
+  heroRender = renderUniqueChoice;
+  heroRender();
+  fit();
+  await Promise.all(state.uniqueChoice.map(async (c) => {
+    const [q, n] = await Promise.all([
+      window.pc.quickPrice({ ...it, name: c.name }, { ...state.filters, useName: true }).catch(() => null),
+      window.pc.uniquePrice(c.name, it.baseType).catch(() => null)]);
+    const art = (n && n.icon) || (q && q.icon);
+    const icon = art ? ((await window.pc.icons([art]).catch(() => ({})))[art] || null) : null;
+    Object.assign(c, { q, n, icon, done: true });
+    if (mine === state && seq === choiceSeq && heroRender === renderUniqueChoice) { heroRender(); fit(); }
+  }));
+}
+
+function renderUniqueChoice() {
+  $('hero').hidden = false;
+  $('results').hidden = true;
+  const rows = state.uniqueChoice.map((c) => {
+    const est = c.q ? estimate(c.q.lots) : null;
+    const unid = !c.done ? '<span class="sk" data-w="70px"></span>'
+      : est != null ? `<b>${esc(money(est))}</b><small>${esc(t('{n} listed', { n: c.q.total }))}</small>`
+        : `<small>${esc(t(c.q ? 'none listed' : 'no data'))}</small>`;
+    const ident = !c.done ? '<span class="sk" data-w="50px"></span>' : c.n ? `<b>${esc(money(c.n.divine))}</b>` : '<small>—</small>';
+    return `<button class="uc" data-uc="${esc(c.name)}" title="${esc(t('Click to search this unique only'))}">
+      <span class="uc-art">${c.icon ? `<img src="${c.icon}" alt="">` : ''}</span>
+      <span class="uc-name">${esc(c.name)}${c.n && c.n.flavour ? `<i>${esc(c.n.flavour)}</i>` : ''}</span>
+      <span class="uc-p">${unid}</span><span class="uc-p">${ident}</span></button>`;
+  }).join('');
+  $('hero').innerHTML = `<div class="uchoice"><div class="k">${esc(t('Unidentified — which unique is it? Match the art'))}</div>
+    <div class="uc uc-head"><span></span><span></span><span>${esc(t('unidentified'))}</span><span>${esc(t('identified'))}</span></div>${rows}</div>`;
+}
+
+document.addEventListener('click', (e) => {
+  const b = e.target.closest('[data-uc]');
+  if (b && state) pickUnique(b.dataset.uc);
+});
+
 // Missing a key mod (used by almost all builds): the item is worth far less than "complete" ones, explained right in the estimate.
 function missingKeyHtml() {
   const miss = (state.filters.exclude || []);

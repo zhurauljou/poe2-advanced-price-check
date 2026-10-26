@@ -59,7 +59,8 @@ window.pc.onItem((data) => {
   // The pin shows what holds the window: during a step-by-step session it stays open without the button pressed.
   $('pinBtn').classList.toggle('on', inSession || userPinned);
   setTab(inSession ? 'craft' : 'price');
-  if (state.searchable) runSearch(true);
+  if (state.searchable && state.item.uniqueOptions && !state.filters.useName) loadUniqueChoice();
+  else if (state.searchable) runSearch(true);
   loadBuilds();
   loadDemand();
   loadUniqueNinja();
@@ -219,20 +220,25 @@ $('banner').addEventListener('click', (e) => {
   if (!el || !state || !state.searchable) return;
   markDirty();
   const f = state.filters;
-  if (el.dataset.u) {
-    const off = f.useName && state.item.name === el.dataset.u;
-    state.item.name = off ? '' : el.dataset.u;
-    f.useName = !off;
-    state.uniqueNinja = null;
-    renderBanner();
-    loadUniqueNinja();
-    return;
-  }
+  if (el.dataset.u) { pickUnique(f.useName && state.item.name === el.dataset.u ? null : el.dataset.u); return; }
   const isName = el.id === 'name' && state.item.rarity === 'Unique' && $('base').textContent;
   if (isName) f.useName = !f.useName;
   else f.useType = !f.useType;
   renderBanner();
 });
+
+// Unidentified unique on a shared base: picked (by the art) — search it; unpicked — back to the choice of candidates.
+function pickUnique(name) {
+  state.item.name = name || '';
+  state.filters.useName = !!name;
+  state.uniqueNinja = null;
+  renderBanner();
+  if (!name) { searchSeq++; loadUniqueChoice(); return; }
+  setNote('');
+  runSearch(true);
+  loadBuilds();
+  loadUniqueNinja();
+}
 
 function searchNow() { setNote(''); runSearch(); loadBuilds(); }
 $('search').addEventListener('click', searchNow);

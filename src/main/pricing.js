@@ -724,14 +724,17 @@ async function quickPrices(L, item, f) {
   const s = await api.tradeRequest('search', `${api.TRADE}/api/trade2/search/poe2/${L}`, buildQuery(item, f));
   const ids = (s.result || []).slice(0, 5);
   let lots = [];
+  let icon = null; // the first listing's art — tells unidentified uniques sharing a base apart
   if (ids.length) {
     const fr = await api.tradeRequest('fetch', `${api.TRADE}/api/trade2/fetch/${ids.join(',')}?query=${s.id}`);
+    const first = (fr.result || []).find(Boolean);
+    icon = (first && first.item && first.item.icon) || null;
     // With listing age — so the second price is also computed from fresh listings, like the main one.
     lots = (fr.result || []).filter(Boolean).map((r) => ({ p: r.listing.price || {}, indexed: r.listing.indexed }))
       .map(({ p, indexed }) => ({ div: p.amount != null ? toDivine(p.amount, p.currency) : null, indexed }))
       .filter((l) => l.div != null).sort((a, b) => a.div - b.div);
   }
-  return { total: s.total, divs: lots.map((l) => l.div), lots, url: `${api.TRADE}/trade2/search/poe2/${L}/${s.id}` };
+  return { total: s.total, divs: lots.map((l) => l.div), lots, icon, url: `${api.TRADE}/trade2/search/poe2/${L}/${s.id}` };
 }
 
 // Price with modified filters (without a mod — "mod contribution", with a crafted mod — "price after craft").
