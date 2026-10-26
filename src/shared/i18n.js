@@ -569,6 +569,7 @@
     'free': 'свободно',
     'Plan': 'План',
     'Why this plan': 'Почему этот план',
+    'Hide the plan': 'Скрыть план',
     'All methods and modifier options': 'Все способы и варианты модов',
     'No clear upgrade for this item — selling as is is the simple choice': 'Явного улучшения для этой вещи нет — проще продать как есть',
     'Add a {side} while it is magic': 'Добавить {side}, пока вещь магическая',

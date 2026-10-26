@@ -878,6 +878,9 @@ footer .keys .k-enter[hidden] { display: none; }
 .crow .cch { text-align: right; }
 .crow .cch .chance { margin-left: 0; font-size: var(--fs-s); }
 /* The goal tier a chance is for (T1 for +4 minion levels) — small under the number */
+/* In the goal list the tier goes inline after the odds («1 in 31 · T2–T3»): a block under them broke the row in two. */
+.goal .chance .ctgt { display: inline; font: inherit; font-weight: 400; color: var(--muted); }
+.goal .chance .ctgt::before { content: " · "; }
 .chance .ctgt { display: block; font: 400 var(--t-12)/1.1 var(--body); color: var(--muted); text-align: center; }
 .crow .cpx { text-align: right; }
 /* After «Price all»: the average gain of one attempt under the price */
@@ -1050,7 +1053,7 @@ body.wide .craft-cols > .more-ways > summary { pointer-events: none; }
    «why», «details», «Why this plan», «All methods», «Show the plan anyway» were three sizes and two colours, and only the
    words could be clicked. Now each is a full-width row of the box it sits in, highlighted on hover — within that box's
    edges (no bleed past them: «All methods» stuck out wider than the plan box above it). */
-details.why > summary, details.more-ways > summary, details.vmore > summary, details.ps-more > summary, .plan-steps.folded > .link {
+details.why > summary, details.more-ways > summary, details.vmore > summary, details.ps-more > summary, .plan-steps.folded > .link, .plan-steps > .plan-hide {
   display: block; margin: 2px 0 0; padding: 5px 8px; border: 0; border-radius: 3px; background: none; box-shadow: none;
   list-style: none; cursor: pointer; text-align: left; text-decoration: none;
   font: 700 var(--fs-s)/1.3 var(--body); letter-spacing: 0; color: var(--label); transition: background .12s, color .12s; }
@@ -1059,7 +1062,9 @@ details.why > summary, details.more-ways > summary, details.vmore > summary, det
 :is(details.why, details.more-ways, details.vmore, details.ps-more)[open] > summary::before { content: "− "; }
 :is(details.why, details.more-ways, details.vmore, details.ps-more) > summary:hover, .plan-steps.folded > .link:hover {
   background: var(--hover); color: var(--ink-1); }
-.plan-steps.folded > .link { width: 100%; }
+.plan-steps.folded > .link, .plan-steps > .plan-hide { width: 100%; }
+.plan-steps > .plan-hide::before { content: "− "; }
+.plan-steps > .plan-hide:hover { background: var(--hover); color: var(--ink-1); }
 
 /* Craft blocks: a currency chain is a chip row over its explanation; footnotes (prices, odds, sources) are quiet lines. */
 .craft-how.chain { display: block; margin: 6px 0; }
@@ -1121,13 +1126,14 @@ details.why > summary, details.more-ways > summary, details.vmore > summary, det
 .verdict:has(> .vic) > :not(.vic, .vh) { grid-column: 1 / -1; }
 
 /* Under the verdict: «now → goal (cost …)» and «why» on the right; the cost in red when it exceeds the goal. */
-.pl-nums { display: flex; justify-content: space-between; align-items: baseline; gap: 10px; margin-top: 7px; font-size: var(--fs-s); color: var(--muted); }
-.pl-nums b { color: var(--cream); font-variant-numeric: tabular-nums; }
+/* The numbers the verdict rests on — the size of the price tab's «Fast sell» value, with air above and below. */
+.pl-nums { margin: 12px 0; font-size: var(--fs-s); color: var(--muted); }
+.pl-nums b { font: 700 var(--t-16) var(--body); color: var(--cream); font-variant-numeric: tabular-nums; }
 .pl-cost.bad { color: var(--bad); }
-.pl-nums .vwhy { flex: none; font: 400 var(--fs-s) var(--body); color: var(--muted); }
-.pl-nums .vwhy::before { content: "+ "; } .pl-nums .vwhy.open::before { content: "− "; }
-.vwhy-body small { display: block; margin-top: 4px; font-size: var(--fs-s); color: var(--note); }
-.vwhy-body small b { color: var(--cream); font-weight: 400; }
+/* The verdict's reasons, at the top of «Why this plan» */
+.why-notes { padding: 0 8px; }
+.why-notes small { display: block; margin: 4px 0 6px; font-size: var(--fs-s); color: var(--note); }
+.why-notes small b { color: var(--cream); font-weight: 400; }
 /* The headline typing itself out: the rest is laid out but transparent (no reflow), a thin caret at the edge. */
 .vh .tw-rest { color: transparent; }
 .vh .tw::after { content: ""; display: inline-block; width: 1px; height: 1em; margin: 0 -1px 0 0; background: currentColor; vertical-align: -2px; }

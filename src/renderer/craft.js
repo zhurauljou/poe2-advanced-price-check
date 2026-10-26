@@ -486,7 +486,9 @@ function planHtml(plan) {
   const desAt = (i) => { for (let j = i + 1; j < steps.length; j++) if (costs[j].k === 'desecrate') return steps[j].side; return null; };
   const addsAfter = (i, side) => steps.slice(i + 1).flatMap((x) => (x.act === 'add2' ? x.steps : x.act === 'add' || x.act === 'replace' ? [x] : []))
     .filter((x) => x.side === side).map((x) => x.mod);
-  return `<div class="plan-steps${long ? ' collapsible' : ''}${stepsOpen ? ' open' : ''}" data-n="${steps.length}"><ol class="plan">${steps.map((s, si) => {
+  // Shown anyway: the same toggle folds them back.
+  const hide = verdictBad ? `<button class="link plan-hide" data-act="plananyway">${esc(t('Hide the plan'))}</button>` : '';
+  return `<div class="plan-steps${long ? ' collapsible' : ''}${stepsOpen ? ' open' : ''}" data-n="${steps.length}">${hide}<ol class="plan">${steps.map((s, si) => {
     const c = costs[si];
     // Right column of the card: the expected cost of the whole step, or — for a one-attempt step — the price of one attempt
     // (marked "per attempt": the two are not the same thing). The body keeps only the chance.
@@ -623,12 +625,16 @@ const hlNums = (s) => esc(s).replace(/≈\s?[\d.,]+(?:\s?(?:div|chaos|ex|exalted
 
 // Below this share of simulated runs that beat selling as is, a craft that wins on average is a gamble: amber, not green.
 const GAMBLE_BELOW = 0.5;
-let whyOpen = false; // «why» under the verdict, kept open across redraws (a new price, a variant click)
+// The verdict's reasons (simulation, gamble and hit notes): not under the verdict but at the top of «Why this plan» — one
+// «why» per card, and it closes where it opened. Set by verdictBody, drawn into .why-notes.
+let whyNotes = [];
+const whyNotesHtml = () => whyNotes.map((n) => `<small>${n}</small>`).join('');
 
 // Verdict: sell as is or craft (goal price − currency cost).
 function verdictHtml(plan) {
   if (planBusy()) {
     verdictBad = false;
+    whyNotes = [];
     // The line of numbers is already there as a placeholder: the card keeps its height when the verdict lands.
     return `<div class="verdict pending"><span class="spin"></span>${esc(t('Checking prices on trade… {done} of {total}', { done: planPricing.done, total: planPricing.total }))}
       <small>${esc(t('The plan appears once the goal is priced'))}</small>
@@ -727,10 +733,9 @@ function verdictBody(plan) {
   const goalTitle = goalValue != null && goalBasis !== 'exact' ? t(goalBasis === 'similar' ? 'No exact matches — priced by similar items: the added modifiers required, the rest at their tier floor' : 'No similar items either — priced by items with only the most valuable added modifier: the real goal is worth more')
     : goalThin ? `${t('Too few listings to price the goal — one or two prices can be anything')} · ${t('{n} listings', { n: goalThin.n })}` : '';
   const cost = tiny(spend) ? '< 1 ex' : `${lottery && !sim ? `${esc(t('from'))} ` : ''}${mh(spend)}`;
-  const nums = `<div class="pl-nums"><span${goalTitle ? ` title="${esc(goalTitle)}"` : ''}><b>${now != null ? bare(now) : '?'} → ${goalText}</b> <span class="pl-cost${costBad ? ' bad' : ''}">(${esc(t('cost'))} ${cost})</span></span>`
-    + `${notes.length ? `<button class="link vwhy${whyOpen ? ' open' : ''}" data-act="vwhy">${esc(t('why'))}</button>` : ''}</div>`;
-  const why = notes.length ? `<div class="vwhy-body"${whyOpen ? '' : ' hidden'}>${notes.map((n) => `<small>${n}</small>`).join('')}</div>` : '';
-  return verdict + nums + why;
+  const nums = `<div class="pl-nums"><span${goalTitle ? ` title="${esc(goalTitle)}"` : ''}><b>${now != null ? bare(now) : '?'} → ${goalText}</b> <span class="pl-cost${costBad ? ' bad' : ''}">(${esc(t('cost'))} ${cost})</span></span></div>`;
+  whyNotes = notes;
+  return verdict + nums;
 }
 
 // Price of the item with these mods added (and the plan's removals done): exact matches, then similar ones, then
@@ -958,6 +963,8 @@ function refreshPlan() {
   if (box) box.innerHTML = verdictHtml(plan);
   const bb = document.querySelector('#craft .bases-box');
   if (bb) bb.innerHTML = basesHtml(plan);
+  const wn = document.querySelector('#craft .plan-box .why-notes');
+  if (wn) wn.innerHTML = whyNotesHtml();
   // Steps too: the cost of hitting a needed mod depends on the goal price.
   const ol = document.querySelector('#craft .plan-box .plan-steps');
   if (ol) ol.outerHTML = planHtml(plan);
@@ -1007,17 +1014,6 @@ function typeVerdict() {
   el.innerHTML = `<span class="tw"></span><span class="tw-rest">${esc(text)}</span>`;
   requestAnimationFrame(step);
 }
-
-// «why» under the verdict: shown and hidden in place (a redraw would retype nothing, but needn't rebuild the steps).
-document.addEventListener('click', (e) => {
-  const b = e.target.closest('[data-act="vwhy"]');
-  if (!b) return;
-  whyOpen = !whyOpen;
-  b.classList.toggle('open', whyOpen);
-  const body = b.closest('.verdict-box') && b.closest('.verdict-box').querySelector('.vwhy-body');
-  if (body) body.hidden = !whyOpen;
-  fit();
-});
 
 // The verdict's 2000-run simulation, redone only when its inputs change: the verdict is redrawn on every price that
 // arrives, on variant clicks and on language change — and a fresh random run would make the numbers jitter each time.
@@ -1531,7 +1527,7 @@ function renderCraft(r) {
     planPricing = { done: 0, total: 1 }; // computeGoal below prices the goal, then the variants
     planDraft = false;
     top.push(`<div class="craft-sec plan-box"><div class="k">${t('Plan')}${inSession ? '' : ` <button class="link session-btn" data-act="session" title="${esc(t('Do a step, check the item again with the hotkey — the window stays open and shows what you got and the next step'))}">▶ ${esc(t('Craft step by step'))}</button>`}</div><div class="variants-box">${variantsHtml()}</div><div class="verdict-box">${verdictHtml(curVariant() ? curVariant().plan : r.goal.plan)}</div><div class="bases-box">${basesHtml(curVariant() ? curVariant().plan : r.goal.plan)}</div>
-      ${planHtml(curVariant() ? curVariant().plan : r.goal.plan)}<details class="why"><summary>${t('Why this plan')}</summary>${goalHtml(r.goal, r.theme || [], r.themeBuilds)}</details></div>`);
+      ${planHtml(curVariant() ? curVariant().plan : r.goal.plan)}<details class="why"><summary>${t('Why this plan')}</summary><div class="why-notes">${whyNotesHtml()}</div>${goalHtml(r.goal, r.theme || [], r.themeBuilds)}</details></div>`);
   } else {
     top.push(`<div class="craft-sec plan-box"><div class="verdict info">${vHead('info', esc(t('No clear upgrade for this item — selling as is is the simple choice')))}</div></div>`);
     if (r.gamble) top.push(gambleHtml(r.gamble, true)); // nothing to improve: risky finish in view

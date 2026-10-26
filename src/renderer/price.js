@@ -125,7 +125,7 @@ document.addEventListener('click', (e) => {
   if (act === 'steps') toggleSteps(b.closest('.plan-steps'));
   if (act === 'variant') { planVariant = b.dataset.v; variantPicked = true; typeQuiet = true; refreshPlan(); }
   if (act === 'plandraft') { planDraft = true; refreshPlan(); }
-  if (act === 'plananyway') { planAnyway = true; refreshPlan(); }
+  if (act === 'plananyway') { planAnyway = !planAnyway; refreshPlan(); }
   if (act === 'bases') findBases();
   if (act === 'bases-open') window.pc.openUrl(b.dataset.url);
   if (act === 'session-stop') { craftSession = null; window.pc.pin(userPinned); $('pinBtn').classList.toggle('on', userPinned); craftFor = null; loadCraft(); }
