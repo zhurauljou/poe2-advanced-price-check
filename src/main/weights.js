@@ -6,7 +6,8 @@
 
 const { MARTIAL_WEAPONS } = require('../shared/item-classes');
 const WEAPONS = new Set(MARTIAL_WEAPONS);
-const CASTER = new Set(['Wands', 'Staves', 'Sceptres', 'Foci']);
+// Sceptres are not casters: no spell damage, cast speed or crit rolls on them (RePoE) — their own keys are below.
+const CASTER = new Set(['Wands', 'Staves', 'Foci']);
 
 const ANY_KEY = [/^# to Level of all .*Skills$/, /^# to Spirit$/];
 
@@ -23,6 +24,10 @@ const SLOT_KEY = {
   Quivers: [/^#% increased Attack Speed$/, /^#% increased Projectile Speed$/, ...CRIT],
   Shields: [/Block chance/],
   Bucklers: [/Block chance/],
+  // A sceptre is an aura for allies: damage, attack speed and crit for them, and the Alloy's Puppet Master stacks (minion
+  // levels and Spirit are keys anywhere).
+  Sceptres: [/^Allies in your Presence deal #% increased Damage$/, /^Allies in your Presence have #% increased (Attack Speed|Critical Hit Chance|Critical Damage Bonus)$/,
+    /maximum stacks of Puppet Master$/],
 };
 
 const WEAK = /Attribute Requirements|Light Radius|Stun Threshold|Thorns|Mana Regeneration Rate|^# to Accuracy Rating$|Flask Charges|Charm Charges|Duration on you$/;

@@ -416,6 +416,25 @@ test('minion sceptre: crafted "maximum stacks of Puppet Master" is on, even thou
   assert.ok(m && m.enabled, 'Puppet Master is on');
 });
 
+test("minion sceptre: Allies' Damage is a key even at T6, Minions' Life is no niche key, a desecrated mod is searched in any form", { skip }, async () => {
+  // Player's Agony Smasher (2026-10-27): 3 listings against a competitor's 9. Allies' Damage (T6, desecrated) was off — the
+  // sceptre took the casters' keys, none of which roll on it — Minions' Life was a niche key (191 listings → 5), and the
+  // desecrated id found only items whose mod came from desecration too (trade's explicit id matches both).
+  await init();
+  const it = parseItem(['Item Class: Sceptres', 'Rarity: Rare', 'Agony Smasher', 'Rattling Sceptre', '--------', 'Item Level: 84', '--------',
+    '{ Prefix Modifier "Taskmaster\'s" (Tier: 1) — Minion, Gem }', '+4(4-4) to Level of all Minion Skills',
+    '{ Desecrated Prefix Modifier "Commander\'s" (Tier: 6) — Damage }', 'Allies in your Presence deal 54(45-54)% increased Damage',
+    '{ Suffix Modifier "of the Horde" (Tier: 1) — Minion, Life }', 'Minions have 46(46-50)% increased maximum Life'].join('\n'));
+  const p = pricing.prepare(it, { mods: json('sceptre-minion.demand.json').mods }, () => true);
+  const allies = mod(p.filters, /Allies in your Presence deal/);
+  assert.ok(allies && allies.enabled && allies.key, "Allies' Damage on and key");
+  const life = mod(p.filters, /Minions have .* maximum Life/);
+  assert.ok(life && !life.key, "Minions' Life is not a key");
+  const ids = pricing.buildQuery(p.item, p.filters).query.stats.flatMap((g) => g.filters.map((x) => x.id));
+  assert.ok(ids.includes(allies.statId.replace(/^desecrated\./, 'explicit.')), `searched by the explicit id: ${ids.join(', ')}`);
+  assert.ok(!ids.some((id) => id.startsWith('desecrated.')), 'no desecrated id in the query');
+});
+
 test('wand and staff weights use bases of the same element if there are 100+ such items', { skip }, async () => {
   await init();
   const d = await craft.load(cached);

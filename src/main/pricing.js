@@ -310,7 +310,9 @@ function prepare(item, demand, rollsOn) {
   const props = propFilters(item);
   const covered = props.filter((p) => p.enabled).map((p) => LOCAL_COVERED[p.covers]).filter(Boolean);
   // Item niche (weights.js nicheOf): 2+ mods of one theme — they're key regardless of demand across the whole class.
-  const niche = searchMods ? nicheOf(item.mods) : null;
+  // Not on a class that is that niche itself: every sceptre is for allies and minions, its class demand already is those
+  // builds' — a niche made its weak Minions' Life a key (191 listings cut to 5) while Allies' Damage stayed off.
+  const niche = searchMods && !NICHE_CLASSES.has(item.itemClass) ? nicheOf(item.mods) : null;
   const mods = item.mods.map((m) => {
     const dp = demandOf(m.template);
     // Demand is loaded (top 80 mods of the class) and this mod isn't in it — almost nobody wears it: 0% for importance.
@@ -321,8 +323,8 @@ function prepare(item, demand, rollsOn) {
     // The Potent Ferocity («Effect of Suffixes / Prefixes») and Contempt («+1 … Modifier allowed») emotions on a jewel are the main
     // price multipliers (docs/jewels-crafting.md §4): always search by them, relaxing doesn't remove them.
     if (jewel && /increased Effect of (Suffixes|Prefixes)$|(Suffix|Prefix) Modifiers? allowed$/.test(m.template || '')) { w.key = true; w.importance = Math.max(w.importance, 2.6); }
-    // A unique's random mod worn by a notable share of builds using that unique is key: without it it's a different item.
     if (niche && niche.test(m.text) && ['explicit', 'fractured', 'desecrated', 'crafted'].includes(m.tag)) { w.key = true; w.importance = Math.max(w.importance, 2.4); }
+    // A unique's random mod worn by a notable share of builds using that unique is key: without it it's a different item.
     if (item.rarity === 'Unique' && m.tag === 'desecrated' && dp >= UNIQUE_KEY) { w.key = true; w.importance = Math.max(w.importance, 2.4); } // and relaxing doesn't remove it
     // A variant mod (Legacy of … on Mageblood) is exactly what people pay for on a unique — search by it right away.
     const option = !!m.statId && m.statId.includes('|');
@@ -412,8 +414,20 @@ function prepare(item, demand, rollsOn) {
 }
 
 const KEY_MISSING = 80;
+const NICHE_CLASSES = new Set(['Sceptres']);
 
 const TIMELESS = /stat_3418580811\|/;
+
+// Trade's explicit filter also matches the same mod desecrated or crafted (checked on trade: explicit ∧ desecrated finds
+// exactly what desecrated alone does). The desecrated id alone finds only items whose mod came from desecration too — 3
+// listings instead of 5 on a minion sceptre: a rare's desecrated or crafted mod is searched in any form. A unique keeps
+// its desecrated id: there it is the random mod, a different good.
+function anyForm(item, statId) {
+  const m = item.rarity !== 'Unique' && /^(desecrated|crafted)\.(.+)$/.exec(statId || '');
+  if (!m) return statId;
+  const explicit = `explicit.${m[2]}`;
+  return stats.variantsOf(statId).includes(explicit) ? explicit : statId;
+}
 
 function buildQuery(item, f) {
   const query = {
@@ -456,7 +470,7 @@ function buildQuery(item, f) {
     if (m.min != null && m.min !== '') v.min = Number(m.min);
     // «+# to Level of all … Skills»: +1 changes the price many times over — search exactly our value, not "and higher".
     if (m.max != null && m.max !== '') v.max = Number(m.max);
-    return { id: m.statId, value: v };
+    return { id: anyForm(item, m.statId), value: v };
   };
   const regular = f.mods.filter((m) => m.enabled && m.statId && !m.option);
   const minor = f.flex ? regular.filter(isMinor) : [];
@@ -777,4 +791,4 @@ async function exchangeOffers(league, want, have) {
 // The base is in the trade dictionary (dictionary not loaded — unknown, assume it is).
 const knownBase = (b) => !types || !b || types.has(b);
 
-module.exports = { init, knownBase, nameUnidUnique, prepare, search, quick, listingUrl, elementVariants, exchangeOffers, isExchangeable, currencyImage };
+module.exports = { init, knownBase, nameUnidUnique, prepare, search, quick, listingUrl, elementVariants, exchangeOffers, isExchangeable, currencyImage, buildQuery };
