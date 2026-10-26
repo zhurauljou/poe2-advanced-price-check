@@ -1040,9 +1040,10 @@ body.wide .craft-cols > .more-ways > summary { pointer-events: none; }
 
 /* ---- Fold toggles: one look, the whole row is the target ----
    «why», «details», «Why this plan», «All methods», «Show the plan anyway» were three sizes and two colours, and only the
-   words could be clicked. Now each is a full-width row of the box it sits in, highlighted on hover. */
+   words could be clicked. Now each is a full-width row of the box it sits in, highlighted on hover — within that box's
+   edges (no bleed past them: «All methods» stuck out wider than the plan box above it). */
 details.why > summary, details.more-ways > summary, details.vmore > summary, details.ps-more > summary, .plan-steps.folded > .link {
-  display: block; margin: 2px -8px 0; padding: 5px 8px; border: 0; border-radius: 3px; background: none; box-shadow: none;
+  display: block; margin: 2px 0 0; padding: 5px 8px; border: 0; border-radius: 3px; background: none; box-shadow: none;
   list-style: none; cursor: pointer; text-align: left; text-decoration: none;
   font: 700 var(--fs-s)/1.3 var(--body); letter-spacing: 0; color: var(--label); transition: background .12s, color .12s; }
 :is(details.why, details.more-ways, details.vmore, details.ps-more) > summary::-webkit-details-marker { display: none; }
@@ -1050,7 +1051,7 @@ details.why > summary, details.more-ways > summary, details.vmore > summary, det
 :is(details.why, details.more-ways, details.vmore, details.ps-more)[open] > summary::before { content: "− "; }
 :is(details.why, details.more-ways, details.vmore, details.ps-more) > summary:hover, .plan-steps.folded > .link:hover {
   background: var(--hover); color: var(--ink-1); }
-.plan-steps.folded > .link { width: calc(100% + 16px); }
+.plan-steps.folded > .link { width: 100%; }
 
 /* Craft blocks: a currency chain is a chip row over its explanation; footnotes (prices, odds, sources) are quiet lines. */
 .craft-how.chain { display: block; margin: 6px 0; }
