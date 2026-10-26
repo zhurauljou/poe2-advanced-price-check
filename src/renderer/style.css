@@ -27,6 +27,9 @@
   /* Type scale: 15px body (above), secondary text, fine print — three steps instead of eight near-equal sizes */
   --fs-s: var(--t-14);
   --fs-xs: var(--t-12);
+  /* Small caps (Cormorant SC) draw lowercase as caps ~25% shorter: at 14px they read as 10px. Never below 16px — the
+     floor of the rest of the text (12px) in their terms. Nothing in the window goes below 12px: scroll beats squinting. */
+  --fs-sc: var(--t-16);
 }
 
 * { box-sizing: border-box; }
@@ -124,7 +127,7 @@ body::-webkit-scrollbar { width: 0; height: 0; }
 .uc { display: grid; grid-template-columns: 44px 1fr 92px 68px; column-gap: 10px; align-items: center; width: 100%; padding: 4px 6px;
   border: 0; border-radius: 3px; background: none; color: var(--text); font: var(--fs-s) var(--body); text-align: left; cursor: pointer; }
 button.uc:hover { background: var(--hover); }
-.uc-head { cursor: default; padding-block: 0; color: var(--label); font: 700 var(--fs-xs) var(--sc); letter-spacing: .04em; }
+.uc-head { cursor: default; padding-block: 0; color: var(--label); font: 700 var(--fs-sc) var(--sc); letter-spacing: .04em; }
 .uc-head span:nth-child(n+3), .uc-p { text-align: right; }
 .uc-art { width: 44px; height: 44px; display: flex; align-items: center; justify-content: center; }
 .uc-art img { max-width: 44px; max-height: 44px; }
@@ -171,7 +174,7 @@ footer { display: flex; justify-content: space-between; gap: 8px; padding: 6px 1
 #status.error { color: var(--bad); }
 
 /* Section heading: small caps between two gold lines. */
-.sect { display: flex; align-items: center; gap: 10px; margin: 2px 0 6px; font: 700 var(--fs-s) var(--sc); letter-spacing: .04em; color: var(--label); }
+.sect { display: flex; align-items: center; gap: 10px; margin: 2px 0 6px; font: 700 var(--fs-sc) var(--sc); letter-spacing: .04em; color: var(--label); }
 .sect::before, .sect::after { content: ""; flex: 1; height: 1px; background: linear-gradient(90deg, transparent, #4a3a22 30%, #6b5228 50%, #4a3a22 70%, transparent); }
 
 /* ---- in-game tooltip ---- */
@@ -201,7 +204,7 @@ body:not([data-tab="price"]) .tp .tp-op, body:not([data-tab="price"]) .tp .tp-in
 /* A raised fill, no frame: the window is full of outlined boxes (tabs, fields, Search) — the price reads as the main
    surface, not one more rectangle. */
 .hero { text-align: center; padding: 10px 12px 12px; border-radius: 6px; background: #191b20; }
-.hero .k { font: 700 var(--fs-s) var(--sc); letter-spacing: .04em; color: var(--label); }
+.hero .k { font: 700 var(--fs-sc) var(--sc); letter-spacing: .04em; color: var(--label); }
 .hero .big { display: inline-flex; align-items: center; gap: 10px; margin: 2px 0; font: 700 var(--t-36)/1.15 var(--sc); color: var(--gold);
              font-variant-numeric: tabular-nums; text-shadow: 0 0 14px rgba(255, 190, 80, .3), 0 2px 0 #000; }
 .hero .big img { width: 40px; height: 40px; filter: drop-shadow(0 0 8px rgba(255, 200, 90, .25)); }
@@ -430,7 +433,7 @@ details.vmore summary { cursor: pointer; font-size: var(--fs-xs); color: var(--m
 .misc .opt.off { color: var(--muted); }
 /* Currency switch — segments, like "Safe / Fast / Profit" in the flipper. */
 .seg { display: inline-flex; }
-.seg button { padding: 2px 10px; font: 700 var(--fs-s) var(--sc); letter-spacing: .04em; color: var(--muted); background: var(--input);
+.seg button { padding: 2px 10px; font: 700 var(--fs-sc) var(--sc); letter-spacing: .04em; color: var(--muted); background: var(--input);
               border-color: var(--input-line); box-shadow: none; border-radius: 0; margin-left: -1px; }
 .seg button:first-child { border-radius: 2px 0 0 2px; margin-left: 0; }
 .seg button:last-child { border-radius: 0 2px 2px 0; }
@@ -522,7 +525,7 @@ body.upd-page { height: auto; }
 .grid.sell .v.copy:hover { color: #fff4b4; text-decoration-color: var(--gold); }
 .grid.sell .v.copy::after { position: absolute; left: 100%; margin-left: 4px; content: "⧉"; font-size: var(--fs-xs); color: var(--bronze); opacity: 0; transition: opacity .12s; }
 .grid.sell .v.copy:hover::after { opacity: 1; }
-.sect .cnt { margin-left: 6px; padding: 0 6px; border: 1px solid #3d3a33; border-radius: 8px; font: 700 var(--fs-xs)/1.5 var(--body);
+.sect .cnt { margin-left: 6px; padding: 0 6px; border: 1px solid #3d3a33; border-radius: 8px; font: 700 var(--fs-s)/1.4 var(--body);
              letter-spacing: 0; color: var(--cream); vertical-align: 1px; }
 .drive-btn { display: block; margin: 10px auto 0; }
 /* Trade estimate: left-aligned. Price (click copies the listing note) with reliability on the right; quick / patient
@@ -786,7 +789,7 @@ kbd { display: inline-block; padding: 0 6px; border: 1px solid var(--label); bor
 body.set-page { height: auto; user-select: text; }
 .set { padding: 4px 18px 16px; display: flex; flex-direction: column; gap: 14px; }
 .set section { display: flex; flex-direction: column; gap: 6px; }
-.set-k { font: 700 var(--fs-s) var(--sc); letter-spacing: .04em; color: var(--label); }
+.set-k { font: 700 var(--fs-sc) var(--sc); letter-spacing: .04em; color: var(--label); }
 .set-row { display: flex; align-items: center; gap: 12px; }
 .set-key { min-width: 150px; height: 32px; font: 700 var(--t-16) var(--body); }
 .set-key.wait { color: var(--warn); border-color: var(--warn); }
