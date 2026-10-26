@@ -1133,7 +1133,6 @@ details.why > summary, details.more-ways > summary, details.vmore > summary, det
 .conf.c1 { color: var(--muted); }
 .hero .ninja-u .down { color: var(--warn); }
 .th-foot .drive-btn { font-weight: 400; color: var(--gold); }
-.th-foot .drive-btn::after { content: "\00a0›"; }
 .hero .th :is(.floor, .ninja-u) b { color: var(--text); }
 
 /* Verdict mark: a line icon in the verdict's colour, in its own column — a two-line headline wraps beside the mark, not
