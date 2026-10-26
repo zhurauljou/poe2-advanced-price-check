@@ -341,6 +341,14 @@ const FLAG_ICON = {
   sure: '<svg viewBox="0 0 16 16" width="15" height="15"><circle cx="8" cy="8" r="6.2" fill="none" stroke="currentColor" stroke-width="1.5"/><path d="m5.3 8.2 1.8 1.8 3.6-3.8" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>',
 };
 
+// A verdict's headline with its mark: a line icon in the verdict's colour (✅ / ✖ / 🎉 were emoji from another world —
+// coloured, glossy, a different size on every system). The text sits in its own column, notes under it align with it.
+const VERDICT_ICON = {
+  good: FLAG_ICON.sure,
+  bad: '<svg viewBox="0 0 16 16" width="15" height="15"><circle cx="8" cy="8" r="6.2" fill="none" stroke="currentColor" stroke-width="1.5"/><path d="m5.7 5.7 4.6 4.6m0-4.6-4.6 4.6" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>',
+};
+const vHead = (kind, html) => `<span class="vic">${VERDICT_ICON[kind]}</span><span class="vh">${html}</span>`;
+
 function keyRisk(s) {
   const n = (s.onSide || 0) + 1;
   const r = Math.min(s.atRisk.length, n - 1) / n;
@@ -659,13 +667,13 @@ function verdictBody(plan) {
     const head = goalBasis === 'partial'
       ? (withLosses ? 'Probably not worth it: currency and likely losses exceed the lowest goal price' : 'Probably not worth it: the currency costs more than the goal is worth at least')
       : (withLosses ? 'Not worth it: currency and likely losses exceed the finished item' : 'Not worth it: the currency costs more than the finished item');
-    verdict = `<div class="verdict bad">✖ ${esc(t(head))}${now != null ? `<small>${esc(t('Better: sell it as is'))}</small>` : ''}${hitNote}</div>`;
+    verdict = `<div class="verdict bad">${vHead('bad', esc(t(head)))}${now != null ? `<small>${esc(t('Better: sell it as is'))}</small>` : ''}${hitNote}</div>`;
   } else if (goalValue === null && now != null) {
     // No finished equivalents on trade (or only 1–2): goal price unknown. Costs already reach the item price: simpler to sell.
     const why = goalThin ? t('Only {n} listings like the goal — too few to judge the craft by', { n: goalThin.n }) : t('No finished items like the goal are listed — its price is unknown');
     verdict = known >= now * 0.5
       // A short headline; the numbers behind it on the line below (the long sentence wrapped to three lines).
-      ? `<div class="verdict bad">✖ ${esc(t('Selling as is is better'))}<small>${hlNums(withLosses
+      ? `<div class="verdict bad">${vHead('bad', esc(t('Selling as is is better')))}<small>${hlNums(withLosses
         ? t('Currency and likely losses ≈ {cost} · it sells for ≈ {now}', { cost: m(known), now: m(now) })
         : t('Currency alone ≈ {cost} · it sells for ≈ {now}', { cost: m(spend), now: m(now) }))}</small><small>${esc(why)}</small>${hitNote}</div>`
       : `<div class="verdict">${esc(why)}${hitNote}</div>`;
@@ -683,8 +691,8 @@ function verdictBody(plan) {
     const simNote = sim ? `<small class="sim">${hlNums(t('Simulated {n} crafts: the item ends up ≈ {p50} (10–90%: {p10}–{p90}), currency ≈ {spent} on average; better than selling now in {profit}%, the full goal in {full}%',
       { n: sim.runs, p50: m(sim.value.p50), p10: m(sim.value.p10), p90: m(sim.value.p90), spent: m(sim.spent.mean), profit: Math.round(sim.profit * 100), full: Math.round(sim.full * 100) }))}</small>` : '';
     verdict = `<div class="verdict ${good && (!lottery || sim) ? 'good' : 'bad'}">${good
-      ? `✅ ${esc(sim ? t('Craft: on average ≈ {gain} more than selling as is; better in {pct}% of simulated runs', { gain: m(gain), pct: Math.round(sim.profit * 100) }) : t('Craft: ≈ {gain} more than selling as is', { gain: m(gain) }))}`
-      : `✖ ${esc(t('Selling as is is better'))}`}${plain}${simNote}${lottery ? `<small>${esc(gambleNote)}</small>` : ''}${hitNote || (risky ? `<small>${esc(t('Removing a modifier can hit a good one — the cost may grow'))}</small>` : '')}</div>`;
+      ? vHead('good', esc(sim ? t('Craft: on average ≈ {gain} more than selling as is; better in {pct}% of simulated runs', { gain: m(gain), pct: Math.round(sim.profit * 100) }) : t('Craft: ≈ {gain} more than selling as is', { gain: m(gain) })))
+      : vHead('bad', esc(t('Selling as is is better')))}${plain}${simNote}${lottery ? `<small>${esc(gambleNote)}</small>` : ''}${hitNote || (risky ? `<small>${esc(t('Removing a modifier can hit a good one — the cost may grow'))}</small>` : '')}</div>`;
   } else if (goalValue === undefined && now != null && spend >= Math.max(1, 20 * now)) {
     // The goal is still being priced, but the currency alone dwarfs the item: say it now, not after the search.
     verdict = `<div class="verdict">${esc(t('Currency ≈ {cost} — {n}× what the item sells for now ({now})', { cost: m(spend), n: fmt(Math.round(spend / now)), now: m(now) }))}</div>`;
@@ -1052,7 +1060,7 @@ function sessionHtml(r) {
     <div class="ss-how">📌 ${esc(t('The window stays open while you craft. Do a step in the game, hover the item and press'))} <kbd>${esc(state.hotkey || 'Ctrl+E')}</kbd></div>
     ${news.length ? `<div class="ss-news">${esc(t('Since the last check:'))}${news.join('')}</div>` : ''}
     <div class="ss-list">${rows.join('')}</div>
-    ${done ? `<div class="verdict good">🎉 ${esc(t('Goal reached — check the price on the Price tab'))}</div>` : next ? `<div class="ss-next">${esc(t('Next: {step}', { step: STEP_LABEL[next.act](next) }))}</div>` : ''}</div>`;
+    ${done ? `<div class="verdict good">${vHead('good', esc(t('Goal reached — check the price on the Price tab')))}</div>` : next ? `<div class="ss-next">${esc(t('Next: {step}', { step: STEP_LABEL[next.act](next) }))}</div>` : ''}</div>`;
 }
 
 
@@ -1214,8 +1222,8 @@ function uniqueVerdictHtml(tries) {
     const gain = uniqueTop - now - cost;
     const good = gain > Math.max(now * 0.15, cost * 0.5);
     verdict = `<div class="verdict ${good ? 'good' : 'bad'}">${good
-      ? `✅ ${esc(t('Divine: ≈ {gain} more than selling as is', { gain: approx(gain) }))}`
-      : `✖ ${esc(t('Selling as is is better'))}`}<small>${esc(t('Each Divine can also make the rolls worse — this is the average over many tries'))}</small></div>`;
+      ? vHead('good', esc(t('Divine: ≈ {gain} more than selling as is', { gain: approx(gain) })))
+      : vHead('bad', esc(t('Selling as is is better')))}<small>${esc(t('Each Divine can also make the rolls worse — this is the average over many tries'))}</small></div>`;
   } else if (now == null) {
     verdict = `<div class="verdict">${esc(t(state.estThin ? 'Too few listings like this item to price it — the verdict needs its price' : 'Price this item on the Price tab first'))}</div>`;
   }
@@ -1395,8 +1403,8 @@ function dcVerdict(id) {
   const good = gain > tb.now * 0.15;
   const guessed = priced.length < tb.enchants.length || priced.some((i) => tb.vals.get(i) == null);
   box.outerHTML = `<div class="verdict ${good ? 'good' : 'bad'}">${good
-    ? `✅ ${esc(t('One orb: ≈ {gain} more than selling as is, on average', { gain: approx(gain) }))}`
-    : `✖ ${esc(t('Selling as is is better'))}`}<small>${esc(t('Average over many tries: half of them destroy the item'))}${guessed ? ` · ${esc(t('enchants with too few listings counted at the price now'))}` : ''}</small></div>`;
+    ? vHead('good', esc(t('One orb: ≈ {gain} more than selling as is, on average', { gain: approx(gain) })))
+    : vHead('bad', esc(t('Selling as is is better')))}<small>${esc(t('Average over many tries: half of them destroy the item'))}${guessed ? ` · ${esc(t('enchants with too few listings counted at the price now'))}` : ''}</small></div>`;
 }
 
 function renderCraft(r) {

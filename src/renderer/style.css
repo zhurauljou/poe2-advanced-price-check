@@ -1108,3 +1108,10 @@ details.why > summary, details.more-ways > summary, details.vmore > summary, det
 .th-foot .drive-btn { font-weight: 400; color: var(--gold); }
 .th-foot .drive-btn::after { content: "\00a0›"; }
 .hero .th :is(.floor, .ninja-u) b { color: var(--text); }
+
+/* Verdict mark: a line icon in the verdict's colour, in its own column — a two-line headline wraps beside the mark, not
+   under it; the notes below keep the full width (indented, they wrapped a line more). */
+.verdict:has(> .vic) { display: grid; grid-template-columns: 15px minmax(0, 1fr); column-gap: 7px; align-items: start; }
+.verdict > .vic { display: flex; height: 1.35em; align-items: center; }
+.verdict > .vic svg { display: block; }
+.verdict:has(> .vic) > :not(.vic, .vh) { grid-column: 1 / -1; }
