@@ -200,7 +200,7 @@ body:not([data-tab="price"]) .tp .tp-op, body:not([data-tab="price"]) .tp .tp-in
 /* ---- price block (like "Give / Get" in the flipper) ---- */
 /* A raised fill, no frame: the window is full of outlined boxes (tabs, fields, Search) — the price reads as the main
    surface, not one more rectangle. */
-.hero { text-align: center; padding: 10px 12px; border-radius: 6px; background: #191b20; }
+.hero { text-align: center; padding: 10px 12px 12px; border-radius: 6px; background: #191b20; }
 .hero .k { font: 700 var(--fs-s) var(--sc); letter-spacing: .04em; color: var(--label); }
 .hero .big { display: inline-flex; align-items: center; gap: 10px; margin: 2px 0; font: 700 var(--t-36)/1.15 var(--sc); color: var(--gold);
              font-variant-numeric: tabular-nums; text-shadow: 0 0 14px rgba(255, 190, 80, .3), 0 2px 0 #000; }
@@ -553,6 +553,11 @@ body.upd-page { height: auto; }
 .sell-inline .v.copy { width: fit-content; cursor: pointer; text-decoration: underline dotted #6b5a3a; text-underline-offset: 3px; }
 .sell-inline .v.copy:hover { color: #fff4b4; text-decoration-color: var(--gold); }
 .hero .th .floor, .hero .th .ninja-u { text-align: left; }
+/* Vertical rhythm of the card: the strip, then the notes under it as a group 12px below (the poe.ninja line sat 4px
+   under the strip and read as glued to it), notes 6px apart, the foot 12px below the last one. */
+.hero .th :is(.floor, .ninja-u) { margin-top: 6px; }
+.hero .th .th-foot { margin-top: 12px; }
+.hero .th .sell-inline + * { margin-top: 12px; }
 .th-foot { display: flex; justify-content: space-between; align-items: baseline; gap: 10px; margin-top: 8px; padding-top: 8px;
   border-top: 1px solid rgba(218, 193, 142, .1); }
 .th-foot .drive-btn { margin: 0; }
