@@ -1094,3 +1094,17 @@ details.why > summary, details.more-ways > summary, details.vmore > summary, det
 .dcor .clist { margin-top: 4px; }
 .crow.dc { grid-template-columns: minmax(0, 1fr) 64px 76px; }
 .crow.dc:not(.chead) .bname { color: var(--g-enchant); }
+
+/* ---- Price card accents: gold only for the price and actions ----
+   The strip's numbers were bold cream — brighter than the gold price; reliability spoke in amber like the price; a red
+   «below poe.ninja» was the loudest thing in the card. Now: the price is the one bright gold; strip values are the
+   reading ink, copyable ones light up on hover (no dotted rule); the gauge colours only its bars; warnings are amber;
+   «What drives the price?» is an action in gold, not a bold grey heading. */
+.sell-inline .v { color: var(--text); }
+.sell-inline .v.copy { text-decoration: none; }
+.sell-inline .v.copy:hover { color: #fff4b4; }
+.conf.c1 { color: var(--muted); }
+.hero .ninja-u .down { color: var(--warn); }
+.th-foot .drive-btn { font-weight: 400; color: var(--gold); }
+.th-foot .drive-btn::after { content: "\00a0›"; }
+.hero .th :is(.floor, .ninja-u) b { color: var(--text); }
