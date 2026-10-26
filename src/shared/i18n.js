@@ -131,6 +131,7 @@
     'Quick sale': 'Быстро',
     Market: 'По рынку',
     Patient: 'Подождать',
+    Listings: 'Лотов',
     'Just under the cheapest active listing — sells fastest. Cheapest listed: {price}':
       'Чуть ниже самого дешёвого живого лота — уйдёт быстрее всего. Самый дешёвый: {price}',
     'The estimate above': 'Оценка выше',

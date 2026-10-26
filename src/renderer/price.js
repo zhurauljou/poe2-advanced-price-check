@@ -181,11 +181,11 @@ function renderSearchingHero() {
   // Same layout as renderTradeHero: price on the left, reliability on the right, quick / patient line, bottom row.
   $('hero').innerHTML = `<div class="th">
     <div class="th-top">
-      <div class="th-price"><div class="k">${t('Estimated price')}</div><span class="sk big"></span>
+      <div class="th-price"><span class="sk big"></span>
         <div class="alt">${t('Searching the trade site…')}</div></div>
       <span class="sk" data-w="96px"></span>
     </div>
-    <div class="sell-inline"><span class="sk" data-w="110px"></span><span class="sep"></span><span class="sk" data-w="100px"></span></div>
+    <div class="sell-inline">${['60px', '60px', '30px'].map((w) => `<span class="so"><span class="sk" data-w="${w}"></span></span>`).join('')}</div>
     <div class="th-foot"><span class="sk" data-w="130px"></span><span class="sk" data-w="110px"></span></div>
   </div>`;
   $('results').hidden = false;
@@ -298,21 +298,20 @@ function renderTradeHero(r) {
   state.est = est;
   state.estThin = thin;
   const drivable = !thin && state.filters.mods.some((m) => m.enabled && m.statId && !m.option && !m.inSum);
-  // Layout: the price on the left (a click copies it as the listing note) with reliability on the right; the quick and
-  // patient prices in one line under it; callouts (missing key mod, stronger listings, rolls) in one style; at the
+  // Layout: the price on the left (a click copies it as the listing note; its caption is in the tooltip, a caption row
+  // cost a line) with reliability on the right; a stat strip under it (quick | patient | listings); callouts (missing key mod, stronger listings, rolls) in one style; at the
   // bottom "What drives the price?" and the last check (header.js prevCheckHtml lands in .th-foot).
   const market = listPrice(est);
   $('hero').innerHTML = `<div class="th">
     <div class="th-top">
       <div class="th-price">
-        <div class="k">${fl ? t('Like yours') : t('Estimated price')}</div>
-        <div class="big copy${thin ? ' thin' : ''}" data-note="~price ${market.amount} ${market.cur}" title="${esc(thin ? t('Too few listings to estimate — one or two prices can be anything') : t('Market price — click to copy the price note'))}">${moneyHtml(money(est))}${thin ? '?' : ''}</div>
+        <div class="big copy${thin ? ' thin' : ''}" data-note="~price ${market.amount} ${market.cur}" title="${esc(`${fl ? t('Like yours') : t('Estimated price')}\n${thin ? t('Too few listings to estimate — one or two prices can be anything') : t('Market price — click to copy the price note')}`)}">${moneyHtml(money(est))}${thin ? '?' : ''}</div>
         <div class="alt">${moneyHtml(alt(est))}</div>
         ${k < 1 ? `<div class="alt" title="${esc(t('Partly used tablets are rarely listed — priced as a full one, scaled by the uses left (an assumption)'))}">${moneyHtml(t('a full one ({full} uses) ≈ {price}', { full: Math.round(state.item.props.uses / k), price: money(est / k) }))}</div>` : ''}
       </div>
       ${confidence(r.total, head, (fresh.length >= 3 ? fresh : pool).slice(0, 5), ageInfo)}
     </div>
-    ${sellHtml(priced, est, divs[0], median, divs.length)}
+    ${sellHtml(priced, est, divs[0], median, divs.length, r.total)}
     ${missingKeyHtml()}
     ${ageHtml}
     ${floorHtml}
@@ -450,7 +449,9 @@ function listPrice(div, cur = null) {
 
 // Three sell prices: fast (just under the cheapest live listing), market (the estimate), wait (above market,
 // no higher than the next listings by price). A click copies "~price N currency" for a stash note.
-function sellHtml(priced, est, cheapest, median, n) {
+// Shown as a stat strip under the estimate — quick | patient | listings, a caption over each value, rules between them
+// (as poe.ninja and exchanges do): the listing count was only in the list header below.
+function sellHtml(priced, est, cheapest, median, n, total) {
   if (!est || !priced.length) return '';
   const active = priced.filter((l) => l.age < 7);
   // One undercutting listing mustn't drag the "fast" price down: no lower than 60% of market.
@@ -467,9 +468,8 @@ function sellHtml(priced, est, cheapest, median, n) {
     ['Patient', patient, t('Above the market — wait for a buyer. Median of {n}: {price}', { n, price: money(median) })]]
     .map(([k, div, title]) => ({ k, title, ...listPrice(div, cur) }))
     .filter((o, i, a) => o.label !== mkt && !a.slice(0, i).some((p) => p.label === o.label));
-  if (!opts.length) return '';
   return `<div class="sell-inline">${opts.map((o) => `<span class="so"><span class="k">${t(o.k)}</span><span class="v copy" data-note="~price ${o.amount} ${o.cur}" title="${o.title}
-${t('Click to copy the price note')}">${moneyHtml(o.label)}</span></span>`).join('')}</div>`;
+${t('Click to copy the price note')}">${moneyHtml(o.label)}</span></span>`).join('')}<span class="so"><span class="k">${t('Listings')}</span><span class="v">${fmt(total)}</span></span></div>`;
 }
 
 // Mod contributions to price: search in turn without each of the main mods (up to 4), how much the price drops.

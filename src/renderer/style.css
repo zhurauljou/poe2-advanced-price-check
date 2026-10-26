@@ -198,8 +198,9 @@ body:not([data-tab="price"]) .tp .tp-op, body:not([data-tab="price"]) .tp .tp-in
            background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='200' height='9' viewBox='0 0 200 9'%3E%3Cpath d='M0 4.5H92M108 4.5H200' stroke='%23584a30'/%3E%3Cpath d='M100 .5l4 4-4 4-4-4z' fill='%239a7a3e'/%3E%3C/svg%3E") center / 100% 9px no-repeat; }
 
 /* ---- price block (like "Give / Get" in the flipper) ---- */
-.hero { text-align: center; padding: 12px 10px 10px; border: 1px solid #2c2a25; border-radius: 4px;
-        background: radial-gradient(ellipse 80% 70% at 50% 0%, rgba(218, 193, 142, .07), transparent 70%), linear-gradient(#13161b, #0c0e12); }
+/* A raised fill, no frame: the window is full of outlined boxes (tabs, fields, Search) — the price reads as the main
+   surface, not one more rectangle. */
+.hero { text-align: center; padding: 10px 12px; border-radius: 6px; background: #191b20; }
 .hero .k { font: 700 var(--fs-s) var(--sc); letter-spacing: .04em; color: var(--label); }
 .hero .big { display: inline-flex; align-items: center; gap: 10px; margin: 2px 0; font: 700 var(--t-36)/1.15 var(--sc); color: var(--gold);
              font-variant-numeric: tabular-nums; text-shadow: 0 0 14px rgba(255, 190, 80, .3), 0 2px 0 #000; }
@@ -534,24 +535,25 @@ body.upd-page { height: auto; }
 /* Trade estimate: left-aligned. Price (click copies the listing note) with reliability on the right; quick / patient
    prices in one line; a bottom row with "What drives the price?" and the last check. */
 .hero .th { text-align: left; }
-.th-top { display: flex; justify-content: space-between; align-items: flex-start; gap: 10px; }
-.th-top .conf { margin-top: 2px; white-space: nowrap; }
+.th-top { display: flex; justify-content: space-between; align-items: center; gap: 10px; }
+.th-top .conf { margin-top: 0; white-space: nowrap; }
 .th-price .big.copy { cursor: pointer; margin: 0; gap: 2px; font-size: var(--t-36); }
 .th-price .big img.ci { width: 32px; height: 32px; transform: translateY(4px); }
 .th-price .big.copy:hover { color: #fff4b4; }
 /* 1–2 listings behind the median: not an estimate (core.js MIN_LOTS) — grey, with «?». */
 .th-price .big.copy.thin, .th-price .big.copy.thin:hover { color: var(--muted); }
 .th-price .big.copy.thin img.ci { opacity: .6; }
-/* Quick and patient prices: two equal cells under the estimate — a caption over the price to copy */
-.sell-inline { display: grid; grid-template-columns: repeat(auto-fit, minmax(0, 1fr)); gap: 6px; margin-top: 8px; color: var(--muted); }
-.sell-inline .so { display: flex; flex-direction: column; gap: 1px; padding: 5px 9px 6px; border-radius: 4px; background: rgba(255, 255, 255, .035); }
+/* Stat strip under the estimate: quick | patient | listings — a caption over each value, thin rules between, no cells
+   (a fill inside the card's fill read as boxes in a box). */
+.sell-inline { display: grid; grid-auto-flow: column; grid-auto-columns: minmax(0, 1fr); margin-top: 8px; color: var(--muted); }
+.sell-inline .so { display: flex; flex-direction: column; gap: 1px; padding: 0 10px; border-left: 1px solid rgba(241, 228, 194, .1); }
+.sell-inline .so:first-child { padding-left: 0; border-left: 0; }
 .hero .sell-inline .k { font: 400 var(--fs-xs) var(--body); letter-spacing: 0; color: var(--muted); }
-.sell-inline .v.copy { font-size: var(--t-16); }
-.sell-inline .v.copy { color: var(--cream); font-weight: 700; font-variant-numeric: tabular-nums; cursor: pointer;
-  text-decoration: underline dotted #6b5a3a; text-underline-offset: 3px; }
+.sell-inline .v { font-size: var(--t-16); color: var(--cream); font-weight: 700; font-variant-numeric: tabular-nums; }
+.sell-inline .v.copy { width: fit-content; cursor: pointer; text-decoration: underline dotted #6b5a3a; text-underline-offset: 3px; }
 .sell-inline .v.copy:hover { color: #fff4b4; text-decoration-color: var(--gold); }
 .hero .th .floor, .hero .th .ninja-u { text-align: left; }
-.th-foot { display: flex; justify-content: space-between; align-items: baseline; gap: 10px; margin-top: 10px; padding-top: 8px;
+.th-foot { display: flex; justify-content: space-between; align-items: baseline; gap: 10px; margin-top: 8px; padding-top: 8px;
   border-top: 1px solid rgba(218, 193, 142, .1); }
 .th-foot .drive-btn { margin: 0; }
 .th-foot .prev-check { margin-top: 0; }
