@@ -118,6 +118,7 @@ body::-webkit-scrollbar { width: 0; height: 0; }
 /* Name/base are search toggles: the selected one glows, the deselected one is dimmed with a dashed strike-through. */
 .pick { cursor: pointer; padding: 0 6px; border-radius: 2px; opacity: .45; text-decoration: line-through 1px; transition: opacity .12s; }
 .pick:hover { opacity: .8; }
+.pick.u { padding: 0 2px; text-decoration: none; } /* a choice between uniques, not an on/off filter — not struck out */
 .pick.on { opacity: 1; text-decoration: none; text-shadow: 0 1px 2px #000, 0 0 10px currentColor; }
 .pick.on:hover { background: rgba(255, 255, 255, .05); }
 /* The rarity frame is recoloured from yellow (rare) with a filter — the text is left untouched. */

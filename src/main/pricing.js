@@ -5,6 +5,7 @@ const { weight, ENABLE_FROM, KEEP_FROM, nicheOf } = require('./weights');
 const { log } = require('./log');
 
 let types = null; // Set of base types from trade — to pull the base out of a magic item's name
+let uniquesByBase = new Map(); // base type → names of the uniques on it: an unidentified unique shows only its base
 let currencyInfo = null; // trade currency id -> { text, image }
 let currencyByText = new Map(); // «Exalted Orb», «Omen of Whittling», «Perfect Essence of Enhancement» → image URL
 // Image of a currency by its trade id («exalted») or name («Exalted Orb»); null if the trade data has none.
@@ -14,7 +15,13 @@ async function init() {
   const [st, items, stat] = await Promise.all([api.tradeStats(), api.tradeItems(), api.tradeStatic()]);
   stats.build(st);
   types = new Set();
-  for (const g of items.result) for (const e of g.entries) if (!e.name) types.add(e.type);
+  uniquesByBase = new Map();
+  for (const g of items.result) {
+    for (const e of g.entries) {
+      if (!e.name) types.add(e.type);
+      else if (!(uniquesByBase.get(e.type) || []).includes(e.name)) uniquesByBase.set(e.type, [...(uniquesByBase.get(e.type) || []), e.name]);
+    }
+  }
   currencyInfo = new Map();
   currencyByText = new Map();
   for (const g of stat.result) {
@@ -38,6 +45,16 @@ function resolveBase(item) {
     if (t.length > len && text.includes(t)) { best = t; len = t.length; }
   }
   return best;
+}
+
+// An unidentified unique shows only its base. One unique on that base — it is that one (trade finds unidentified copies
+// by name); several (Grand Spectrum and Voices are both Sapphires) — the player tells them by the art, the header asks.
+// Unidentified copies often sell for more than identified ones, so mixing them with another unique hides the real price.
+function nameUnidUnique(item) {
+  if (item.rarity !== 'Unique' || !item.unidentified || item.name !== item.baseType) return;
+  const names = uniquesByBase.get(resolveBase(item)) || [];
+  item.name = names.length === 1 ? names[0] : '';
+  if (names.length > 1) item.uniqueOptions = names;
 }
 
 // Item class → trade category: search for "any body armour" when the base doesn't matter.
@@ -367,7 +384,7 @@ function prepare(item, demand, rollsOn) {
   const filters = {
     // Header toggles: search exactly this base (expensive bases!) / exactly this unique.
     useType: true,
-    useName: item.rarity === 'Unique' && !item.unidentified,
+    useName: item.rarity === 'Unique' && (!item.unidentified || !!item.name),
     category: CATEGORY[item.itemClass] || null,
     mods: [...pseudo, ...mods],
     hiddenFixed, // how many fixed unique mods are hidden
@@ -756,4 +773,4 @@ async function exchangeOffers(league, want, have) {
 // The base is in the trade dictionary (dictionary not loaded — unknown, assume it is).
 const knownBase = (b) => !types || !b || types.has(b);
 
-module.exports = { init, knownBase, prepare, search, quick, listingUrl, elementVariants, exchangeOffers, isExchangeable, currencyImage };
+module.exports = { init, knownBase, nameUnidUnique, prepare, search, quick, listingUrl, elementVariants, exchangeOffers, isExchangeable, currencyImage };

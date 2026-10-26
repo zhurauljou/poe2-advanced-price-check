@@ -40,6 +40,7 @@
     current: 'текущая',
     'Searching this unique only — click to search any unique on this base': 'Ищем только этот уник — клик: любой уник на этой базе',
     'Click to search this unique only': 'Клик: искать только этот уник',
+    'Unidentified — which unique is it? Tell by the art; click to search only it': 'Неопознан — какой это уник? Видно по картинке; клик — искать только его',
     'Searching this base only — click to search any item of this class': 'Ищем только эту базу — клик: любая вещь этого класса',
     'Searching any item of this class — click to search this base only': 'Ищем любую вещь этого класса — клик: только эта база',
     '{n}m': '{n}м',

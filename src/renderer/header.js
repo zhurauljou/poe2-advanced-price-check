@@ -15,7 +15,13 @@ function renderBanner() {
   $('base').textContent = two ? item.baseType : '';
   for (const el of [$('name'), $('base')]) { el.className = el.id === 'name' ? 'bn-name' : 'bn-base'; el.removeAttribute('title'); }
   if (!state.searchable) return;
-  if (f.useName) {
+  // Unidentified unique on a base several uniques share: the name is unknown, the player picks it by the art.
+  if (item.uniqueOptions) {
+    nameEl.innerHTML = item.uniqueOptions.map((u) => `<span class="pick u${f.useName && item.name === u ? ' on' : ''}" data-u="${esc(u)}"
+      title="${esc(t('Unidentified — which unique is it? Tell by the art; click to search only it'))}">${esc(u)}</span>`).join(' · ');
+    $('base').textContent = item.baseType;
+    b.className = `banner ${item.rarity}`;
+  } else if (f.useName) {
     nameEl.classList.add('pick', 'on');
     nameEl.title = t('Searching this unique only — click to search any unique on this base');
   } else if (item.rarity === 'Unique' && two) {
@@ -70,7 +76,7 @@ async function toggleHistory(open) {
   toggleLeagueMenu(false);
   const list = await window.pc.history().catch(() => []);
   $('histMenu').innerHTML = list.length ? list.map((h) => `<button data-hist="${esc(h.id)}"${state && h.id === state.historyId ? ' class="on"' : ''}>
-      <span class="h-name">${esc(h.rarity === 'Rare' || h.rarity === 'Unique' ? h.name : h.baseType || h.name)}</span>
+      <span class="h-name">${esc((h.rarity === 'Rare' || h.rarity === 'Unique') && h.name ? h.name : h.baseType || h.name)}</span>
       ${h.rarity === 'Rare' || h.rarity === 'Unique' ? `<span class="h-base">${esc(h.baseType)}</span>` : ''}
       <span class="h-est">${h.est != null ? money(h.est) : '—'}</span><span class="h-ago">${ago(h.at)}</span></button>`).join('')
     : `<div class="h-empty">${esc(t('No checks yet'))}</div>`;

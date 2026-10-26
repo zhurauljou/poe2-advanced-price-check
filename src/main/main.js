@@ -293,6 +293,7 @@ async function priceCheck(text, refresh = false, historyId = null) {
   } catch (e) {
     send('status', { error: t('Failed to load data: {msg}', { msg: e.message }) });
   }
+  pricing.nameUnidUnique(item); // before demand: builds are looked up by the unique's name
   refreshLeagues().catch((e) => log('leagues', e.message)); // from cache (6 h) — instant; stale — refreshed in the background
   const league = settings.get().league;
   // Prices for this league are already there — show right away, fresh ones load in the background. None — wait (else nothing to show).

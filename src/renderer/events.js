@@ -219,6 +219,15 @@ $('banner').addEventListener('click', (e) => {
   if (!el || !state || !state.searchable) return;
   markDirty();
   const f = state.filters;
+  if (el.dataset.u) {
+    const off = f.useName && state.item.name === el.dataset.u;
+    state.item.name = off ? '' : el.dataset.u;
+    f.useName = !off;
+    state.uniqueNinja = null;
+    renderBanner();
+    loadUniqueNinja();
+    return;
+  }
   const isName = el.id === 'name' && state.item.rarity === 'Unique' && $('base').textContent;
   if (isName) f.useName = !f.useName;
   else f.useType = !f.useType;
