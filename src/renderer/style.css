@@ -1077,8 +1077,10 @@ details.why > summary, details.more-ways > summary, details.vmore > summary, det
 .dc-head b { color: var(--cream); font-size: var(--fs-s); }
 /* Outcomes of one orb as a bar, each part as wide as its odds (data-w); green — good for you, red — bad, neutral otherwise. */
 .dc-odds { display: flex; gap: 2px; margin: 8px 0 6px; font-size: var(--fs-xs); line-height: 1.25; text-align: center; }
-.dc-odds span { min-width: 0; padding: 3px 4px; background: rgba(241, 228, 194, .06); color: var(--note); }
-.dc-odds span:first-child { border-radius: 3px 0 0 3px; } .dc-odds span:last-child { border-radius: 0 3px 3px 0; }
+.dc-odds > span { display: flex; flex-direction: column; align-items: center; justify-content: center; min-width: 0; padding: 4px 4px 5px;
+  background: rgba(241, 228, 194, .06); color: var(--note); }
+.dc-odds > span b { font-size: var(--fs-s); line-height: 1.2; }
+.dc-odds > span:first-child { border-radius: 3px 0 0 3px; } .dc-odds > span:last-child { border-radius: 0 3px 3px 0; }
 .dc-odds .win { background: rgba(111, 207, 122, .12); color: var(--good); }
 .dc-odds .lose { background: rgba(224, 103, 90, .12); color: #e6a59c; }
 .dc-note { font-size: var(--fs-xs); color: var(--muted); }

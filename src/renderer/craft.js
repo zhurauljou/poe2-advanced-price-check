@@ -1278,7 +1278,8 @@ function oddsBar(outcomes) {
   const known = outcomes.every((o) => o.p != null);
   return `<div class="dc-odds" title="${esc(t('Odds are community estimates — GGG does not publish them'))}">${outcomes.map((o) => {
     const [label, cls] = OUTCOME[o.k];
-    return `<span class="${cls}" data-w="${known ? o.p * 100 : 100 / outcomes.length}%">${known ? `${Math.round(o.p * 100)}% ` : ''}${esc(t(label))}</span>`;
+    // Two lines in every part: the odds, then what happens — parts line up whatever the label's length.
+    return `<span class="${cls}" data-w="${known ? o.p * 100 : 100 / outcomes.length}%"><b>${known ? `${Math.round(o.p * 100)}%` : '?'}</b>${esc(t(label))}</span>`;
   }).join('')}</div>`;
 }
 
