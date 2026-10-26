@@ -345,6 +345,8 @@ const FLAG_ICON = {
 // coloured, glossy, a different size on every system). The text sits in its own column, notes under it align with it.
 const VERDICT_ICON = {
   good: FLAG_ICON.sure,
+  lot: FLAG_ICON.unknown, // wins on average, loses in most runs
+  info: '<svg viewBox="0 0 16 16" width="15" height="15"><circle cx="8" cy="8" r="6.2" fill="none" stroke="currentColor" stroke-width="1.5"/><path d="M8 7.2v4M8 4.8v.3" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>',
   bad: '<svg viewBox="0 0 16 16" width="15" height="15"><circle cx="8" cy="8" r="6.2" fill="none" stroke="currentColor" stroke-width="1.5"/><path d="m5.7 5.7 4.6 4.6m0-4.6-4.6 4.6" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>',
 };
 const vHead = (kind, html) => `<span class="vic">${VERDICT_ICON[kind]}</span><span class="vh">${html}</span>`;
@@ -619,13 +621,18 @@ function planHtml(plan) {
 // Verdict explanations: the "≈ N" figures are highlighted so the text reads at a glance (only numbers — more would lose the accent).
 const hlNums = (s) => esc(s).replace(/≈\s?[\d.,]+(?:\s?(?:div|chaos|ex|exalted))?/g, (m) => `<b>${unitIcons(m)}</b>`);
 
+// Below this share of simulated runs that beat selling as is, a craft that wins on average is a gamble: amber, not green.
+const GAMBLE_BELOW = 0.5;
+let whyOpen = false; // «why» under the verdict, kept open across redraws (a new price, a variant click)
+
 // Verdict: sell as is or craft (goal price − currency cost).
 function verdictHtml(plan) {
   if (planBusy()) {
     verdictBad = false;
+    // The line of numbers is already there as a placeholder: the card keeps its height when the verdict lands.
     return `<div class="verdict pending"><span class="spin"></span>${esc(t('Checking prices on trade… {done} of {total}', { done: planPricing.done, total: planPricing.total }))}
       <small>${esc(t('The plan appears once the goal is priced'))}</small>
-      <button class="link" data-act="plandraft">${esc(t('Show the draft now'))}</button></div>`;
+      <button class="link" data-act="plandraft">${esc(t('Show the draft now'))}</button></div><div class="pl-nums"><span class="sk" data-w="150px"></span></div>`;
   }
   const draft = planPricing ? `<div class="verdict draft">${esc(t('Draft: prices still loading ({done} of {total})', { done: planPricing.done, total: planPricing.total }))}</div>` : '';
   return draft + verdictBody(plan);
@@ -649,60 +656,81 @@ function verdictBody(plan) {
   const u = unitFor([now, goalValue != null ? goalValue : goalThin && goalThin.value, spend]);
   const m = (x) => moneyIn(x, u);
   const mh = (x) => moneyHtml(m(x)); // the same with unit icons, for the line of numbers
-  // The three numbers the decision rests on, in one line: the item now, the goal, the currency.
-  const goalText = goalValue === undefined ? '…' : goalValue == null ? (goalThin ? `${mh(goalThin.value)}?` : esc(t('none listed'))) : (goalBasis === 'partial' ? '≥ ' : '≈ ') + mh(goalValue);
-  const goalTitle = goalValue != null && goalBasis !== 'exact' ? t(goalBasis === 'similar' ? 'No exact matches — priced by similar items: the added modifiers required, the rest at their tier floor' : 'No similar items either — priced by items with only the most valuable added modifier: the real goal is worth more')
-    : goalThin ? `${t('Too few listings to price the goal — one or two prices can be anything')} · ${t('{n} listings', { n: goalThin.n })}` : '';
-  const rows = [`<div class="profit-line"><span>${esc(t('now'))} <b>${now != null ? mh(now) : '—'}</b></span><span${goalTitle ? ` title="${esc(goalTitle)}"` : ''}>${esc(t('goal'))} <b>${goalText}</b></span><span>${esc(t('currency'))} <b>${tiny(spend) ? '< 1 ex' : `${lottery && !sim ? `${esc(t('from'))} ` : '≈ '}${mh(spend)}`}</b></span></div>`];
-  let verdict = '';
   // Removing extras with Annulments will on average hit needed mods: on such an item it's almost always unprofitable.
   const hits = Math.max(0, ...costs.map((c) => c.hits || 0));
-  const hitNote = hits >= 1 ? `<small>${hlNums(t('Removing the junk would hit ≈{n} good modifiers on average', { n: fmt(Math.round(hits * 10) / 10) }))}</small>` : '';
+  const hitNote = hits >= 1 ? hlNums(t('Removing the junk would hit ≈{n} good modifiers on average', { n: fmt(Math.round(hits * 10) / 10) })) : '';
   // Currency costs more than the finished goal: crafting won't pay off at any item price (item price may not be computed yet).
   // known — the plan's cost: currency plus the expected loss of wanted mods a removal hits (a quarter of the goal each, the
-  // essence's sacrifice). The headline names which it is: «the currency costs more» next to «currency ≈ 2» read as a lie.
+  // essence's sacrifice). The reason names which it is: «the currency costs more» next to «cost 2» read as a lie.
   const withLosses = spend < known * 0.9;
-  if (goalValue != null && known >= goalValue) {
-    // The numbers are in the line above: the headline says what they mean, and what to do instead.
-    const head = goalBasis === 'partial'
-      ? (withLosses ? 'Probably not worth it: currency and likely losses exceed the lowest goal price' : 'Probably not worth it: the currency costs more than the goal is worth at least')
-      : (withLosses ? 'Not worth it: currency and likely losses exceed the finished item' : 'Not worth it: the currency costs more than the finished item');
-    verdict = `<div class="verdict bad">${vHead('bad', esc(t(head)))}${now != null ? `<small>${esc(t('Better: sell it as is'))}</small>` : ''}${hitNote}</div>`;
+  const costBad = goalValue != null && known >= goalValue;
+  // A verdict: tone (good / lot — wins on average but loses in most runs / bad / info), a short headline, its one reason
+  // under it, and the rest (simulation, gamble and hit notes) under «why». fold — the steps fold behind «Show the plan anyway».
+  let v = null;
+  let fold = false;
+  if (costBad) {
+    const partial = goalBasis === 'partial';
+    v = { tone: 'bad', head: now != null ? (partial ? 'Probably not worth it — sell it as is' : 'Not worth it — sell it as is') : (partial ? 'Probably not worth it' : 'Not worth it'),
+      sub: esc(t(partial
+        ? (withLosses ? 'currency and likely losses cost more than the lowest goal price' : 'the currency costs more than the goal is worth at least')
+        : (withLosses ? 'currency and likely losses cost more than the finished item' : 'the currency costs more than the finished item'))),
+      notes: [hitNote] };
+    fold = true;
   } else if (goalValue === null && now != null) {
     // No finished equivalents on trade (or only 1–2): goal price unknown. Costs already reach the item price: simpler to sell.
     const why = goalThin ? t('Only {n} listings like the goal — too few to judge the craft by', { n: goalThin.n }) : t('No finished items like the goal are listed — its price is unknown');
-    verdict = known >= now * 0.5
-      // A short headline; the numbers behind it on the line below (the long sentence wrapped to three lines).
-      ? `<div class="verdict bad">${vHead('bad', esc(t('Selling as is is better')))}<small>${hlNums(withLosses
-        ? t('Currency and likely losses ≈ {cost} · it sells for ≈ {now}', { cost: m(known), now: m(now) })
-        : t('Currency alone ≈ {cost} · it sells for ≈ {now}', { cost: m(spend), now: m(now) }))}</small><small>${esc(why)}</small>${hitNote}</div>`
-      : `<div class="verdict">${esc(why)}${hitNote}</div>`;
+    if (known >= now * 0.5) {
+      v = { tone: 'bad', head: 'Selling as is is better',
+        sub: hlNums(withLosses ? t('Currency and likely losses ≈ {cost} · it sells for ≈ {now}', { cost: m(known), now: m(now) }) : t('Currency alone ≈ {cost} · it sells for ≈ {now}', { cost: m(spend), now: m(now) })),
+        notes: [esc(why), hitNote] };
+      fold = true;
+    } else v = { tone: 'info', headText: why, notes: [hitNote] };
   } else if (goalValue != null && now != null) {
     // Whole-plan simulation: outcome distribution and the chance crafting beats selling now (src/shared/plancost.js).
-    // The verdict and the variant cards judge by the same number — the average gain over selling as is (variantEarn): a
-    // green «+0.6» card next to «Selling as is is better» (more than half the runs lose) read as a contradiction.
+    // The verdict and the variant switch judge by the same number — the average gain over selling as is (variantEarn): a
+    // green «+0.6» next to «Selling as is is better» (more than half the runs lose) read as a contradiction.
     const gain = sim ? sim.value.mean - now - sim.spent.mean : goalValue - now - known;
     const good = sim ? gain > 0 : gain > Math.max(now * 0.15, known * 0.5);
-    // The reason in plain words first; the simulation behind it goes under «why».
     // Its two numbers in their own unit: a gain of 0.03 chaos reads as nothing, 1 ex against 38 ex reads at once.
     const add = sim ? Math.max(0, sim.value.mean - now) : 0;
     const pu = sim ? unitFor([add, sim.spent.mean]) : null;
-    const plain = sim ? `<small>${hlNums(t('On average the craft adds ≈ {add} to the price and costs ≈ {cost} in currency', { add: moneyIn(add, pu), cost: moneyIn(sim.spent.mean, pu) }))}</small>` : '';
-    const simNote = sim ? `<small class="sim">${hlNums(t('Simulated {n} crafts: the item ends up ≈ {p50} (10–90%: {p10}–{p90}), currency ≈ {spent} on average; better than selling now in {profit}%, the full goal in {full}%',
-      { n: sim.runs, p50: m(sim.value.p50), p10: m(sim.value.p10), p90: m(sim.value.p90), spent: m(sim.spent.mean), profit: Math.round(sim.profit * 100), full: Math.round(sim.full * 100) }))}</small>` : '';
-    verdict = `<div class="verdict ${good && (!lottery || sim) ? 'good' : 'bad'}">${good
-      ? vHead('good', esc(sim ? t('Craft: on average ≈ {gain} more than selling as is; better in {pct}% of simulated runs', { gain: m(gain), pct: Math.round(sim.profit * 100) }) : t('Craft: ≈ {gain} more than selling as is', { gain: m(gain) })))
-      : vHead('bad', esc(t('Selling as is is better')))}${plain}${simNote}${lottery ? `<small>${esc(gambleNote)}</small>` : ''}${hitNote || (risky ? `<small>${esc(t('Removing a modifier can hit a good one — the cost may grow'))}</small>` : '')}</div>`;
+    const plain = sim ? hlNums(t('On average the craft adds ≈ {add} to the price and costs ≈ {cost} in currency', { add: moneyIn(add, pu), cost: moneyIn(sim.spent.mean, pu) })) : '';
+    const simNote = sim ? hlNums(t('Simulated {n} crafts: the item ends up ≈ {p50} (10–90%: {p10}–{p90}), currency ≈ {spent} on average; better than selling now in {profit}%, the full goal in {full}%',
+      { n: sim.runs, p50: m(sim.value.p50), p10: m(sim.value.p10), p90: m(sim.value.p90), spent: m(sim.spent.mean), profit: Math.round(sim.profit * 100), full: Math.round(sim.full * 100) })) : '';
+    const notes = [simNote, lottery ? esc(gambleNote) : '', hitNote || (risky ? esc(t('Removing a modifier can hit a good one — the cost may grow')) : '')];
+    if (good && sim) {
+      // Wins on average but loses in most runs: a gamble, said in amber — a green «Craft» at 11% read as «do it».
+      const gamble = sim.profit < GAMBLE_BELOW;
+      v = { tone: gamble ? 'lot' : 'good', head: gamble ? 'Gamble: +{gain} on average' : 'Craft: +{gain} on average', vars: { gain: m(gain) },
+        sub: esc(t(gamble ? 'better than selling in only {pct}% of runs' : 'better than selling in {pct}% of runs', { pct: Math.round(sim.profit * 100) })),
+        notes: [plain, ...notes] };
+    } else if (good) {
+      v = { tone: lottery ? 'lot' : 'good', head: 'Craft: ≈ {gain} more than selling as is', vars: { gain: m(gain) }, notes };
+      fold = lottery;
+    } else {
+      v = { tone: 'bad', head: 'Selling as is is better', sub: plain, notes };
+      fold = true;
+    }
   } else if (goalValue === undefined && now != null && spend >= Math.max(1, 20 * now)) {
     // The goal is still being priced, but the currency alone dwarfs the item: say it now, not after the search.
-    verdict = `<div class="verdict">${esc(t('Currency ≈ {cost} — {n}× what the item sells for now ({now})', { cost: m(spend), n: fmt(Math.round(spend / now)), now: m(now) }))}</div>`;
+    v = { tone: 'info', headText: t('Currency ≈ {cost} — {n}× what the item sells for now ({now})', { cost: m(spend), n: fmt(Math.round(spend / now)), now: m(now) }) };
   } else if (now == null) {
-    verdict = `<div class="verdict">${esc(t(state.estThin ? 'Too few listings like this item to price it — the verdict needs its price' : 'Price this item on the Price tab first'))}</div>`;
+    v = { tone: 'info', headText: t(state.estThin ? 'Too few listings like this item to price it — the verdict needs its price' : 'Price this item on the Price tab first') };
   }
-  // Headline and its one reason stay; the simulation, the gamble and hit notes go under «why».
-  verdictBad = verdict.startsWith('<div class="verdict bad">');
-  verdict = verdict.replace(/(<small[^>]*>[\s\S]*?<\/small>)((?:<small[^>]*>[\s\S]*?<\/small>)+)(<\/div>)$/, (m, first, rest, end) => `${first}<details class="vmore"><summary>${esc(t('why'))}</summary>${rest}</details>${end}`);
-  return `${rows.join('')}${verdict}`;
+  verdictBad = fold;
+  const notes = v ? (v.notes || []).filter(Boolean) : [];
+  const verdict = v ? `<div class="verdict ${v.tone}">${vHead(v.tone, esc(v.headText || t(v.head, v.vars)))}${v.sub ? `<small>${v.sub}</small>` : ''}</div>` : '';
+  // The numbers the decision rests on, under the verdict: the item now → the goal (the currency it costs). The left number
+  // drops its unit when both share it («299 → 800 div»); «?» — a price not known, «…» — still being priced.
+  const bare = (x) => { const s = m(x); return u && s.endsWith(` ${u}`) ? esc(s.slice(0, -u.length - 1)) : moneyHtml(s); };
+  const goalText = goalValue === undefined ? '…' : goalValue == null ? (goalThin ? `${mh(goalThin.value)}?` : '?') : (goalBasis === 'partial' ? '≥ ' : '') + mh(goalValue);
+  const goalTitle = goalValue != null && goalBasis !== 'exact' ? t(goalBasis === 'similar' ? 'No exact matches — priced by similar items: the added modifiers required, the rest at their tier floor' : 'No similar items either — priced by items with only the most valuable added modifier: the real goal is worth more')
+    : goalThin ? `${t('Too few listings to price the goal — one or two prices can be anything')} · ${t('{n} listings', { n: goalThin.n })}` : '';
+  const cost = tiny(spend) ? '< 1 ex' : `${lottery && !sim ? `${esc(t('from'))} ` : ''}${mh(spend)}`;
+  const nums = `<div class="pl-nums"><span${goalTitle ? ` title="${esc(goalTitle)}"` : ''}><b>${now != null ? bare(now) : '?'} → ${goalText}</b> <span class="pl-cost${costBad ? ' bad' : ''}">(${esc(t('cost'))} ${cost})</span></span>`
+    + `${notes.length ? `<button class="link vwhy${whyOpen ? ' open' : ''}" data-act="vwhy">${esc(t('why'))}</button>` : ''}</div>`;
+  const why = notes.length ? `<div class="vwhy-body"${whyOpen ? '' : ' hidden'}>${notes.map((n) => `<small>${n}</small>`).join('')}</div>` : '';
+  return verdict + nums + why;
 }
 
 // Price of the item with these mods added (and the plan's removals done): exact matches, then similar ones, then
@@ -774,6 +802,7 @@ async function computeGoal(g) {
     variantPicked = !!keepSession;
     planAnyway = !!keepSession;
     variantsItem = state;
+    typedHead = null;
   }
   variants = null;
   try {
@@ -932,6 +961,7 @@ function refreshPlan() {
   // Steps too: the cost of hitting a needed mod depends on the goal price.
   const ol = document.querySelector('#craft .plan-box .plan-steps');
   if (ol) ol.outerHTML = planHtml(plan);
+  typeVerdict();
   fit();
 }
 
@@ -947,6 +977,47 @@ function planVariants(g) {
   }
   return out;
 }
+
+// ---- the verdict headline types itself out once it settles ----
+// Only a new headline, only with the prices final (a draft redraws on every price that arrives), not after a variant click
+// (switching back and forth would wait for the text each time — typeQuiet). The full line is laid out from the start, the
+// untyped rest transparent, so nothing reflows; a number appears whole — «+2» on the way to «+23» would be a wrong number.
+let typedHead = null; // the headline last shown — reset for a new item
+let typeQuiet = false;
+function typeVerdict() {
+  const el = document.querySelector('#craft .verdict-box .verdict .vh');
+  const quiet = typeQuiet;
+  typeQuiet = false;
+  if (!el || planPricing) return;
+  const text = el.textContent;
+  if (text === typedHead) return;
+  typedHead = text;
+  if (quiet || calm.matches) return;
+  const chunks = text.match(/[+−≈]?\s?\d[\d.,\u00a0\u202f]*(?:\s?(?:div|chaos|ex)\b)?|[\s\S]/g) || [text];
+  const dur = Math.min(420, chunks.length * 14);
+  const t0 = performance.now();
+  const step = (now) => {
+    if (!el.isConnected) return;
+    const n = Math.min(chunks.length, Math.ceil(((now - t0) / dur) * chunks.length));
+    if (n >= chunks.length) { el.textContent = text; return; }
+    const shown = chunks.slice(0, n).join('');
+    el.innerHTML = `<span class="tw">${esc(shown)}</span><span class="tw-rest">${esc(text.slice(shown.length))}</span>`;
+    requestAnimationFrame(step);
+  };
+  el.innerHTML = `<span class="tw"></span><span class="tw-rest">${esc(text)}</span>`;
+  requestAnimationFrame(step);
+}
+
+// «why» under the verdict: shown and hidden in place (a redraw would retype nothing, but needn't rebuild the steps).
+document.addEventListener('click', (e) => {
+  const b = e.target.closest('[data-act="vwhy"]');
+  if (!b) return;
+  whyOpen = !whyOpen;
+  b.classList.toggle('open', whyOpen);
+  const body = b.closest('.verdict-box') && b.closest('.verdict-box').querySelector('.vwhy-body');
+  if (body) body.hidden = !whyOpen;
+  fit();
+});
 
 // The verdict's 2000-run simulation, redone only when its inputs change: the verdict is redrawn on every price that
 // arrives, on variant clicks and on language change — and a fresh random run would make the numbers jitter each time.
@@ -979,37 +1050,60 @@ function variantEarn(v) {
   if (value == null || now == null) return { value, spend, lottery, unknownOdds, gain: null };
   if (!v.sim || v.sim.value !== value || v.sim.now !== now) {
     const sim = PlanCost.create(() => ({ prices: craftPrices, goalValue: value, est: now })).simulate(v.plan, { keep: craftGoal ? craftGoal.keep.length : 0 }, 800);
-    v.sim = { value, now, gain: sim ? sim.value.mean - now - sim.spent.mean : value - now - spend, expected: !!sim };
+    v.sim = { value, now, gain: sim ? sim.value.mean - now - sim.spent.mean : value - now - spend, expected: !!sim, profit: sim ? sim.profit : null };
   }
-  return { value, spend, lottery, unknownOdds, gain: v.sim.gain, expected: v.sim.expected };
+  return { value, spend, lottery, unknownOdds, gain: v.sim.gain, expected: v.sim.expected, profit: v.sim.profit };
 }
 
 // Under half an exalted (approx() picks the unit where the number is ≥ 1, so a number below 0.5 is in ex): shown as nothing.
 const tiny = (div) => parseFloat(money(div).replace(/,/g, '')) < 0.5;
 
+// A variant's tone, the verdict's colour as a dot by its name: good — beats selling as is in at least half the runs;
+// lot — wins on average but loses in most runs; bad — loses on average. Nothing for a gain that rounds to nothing.
+function earnTone({ gain, profit, lottery, expected }) {
+  if (gain == null || tiny(Math.abs(gain))) return '';
+  if (gain < 0) return 'bad';
+  return (profit != null ? profit < GAMBLE_BELOW : lottery && !expected) ? 'lot' : 'good';
+}
+
+// The variants switch: a row of equal cells under «Plan» — the name (and its tone dot) over its one number. Its own row,
+// not beside «Plan»: three variants with their sums, in Russian, did not fit there.
 function variantsHtml() {
-  if (!variants || planBusy()) return '';
-  // No variant has a gain to show (no goal or item price): the cards would be columns of dashes — a compact switch.
-  if (variants.every((v) => variantEarn(v).gain == null)) {
-    return `<div class="variants mini">${variants.map((v) => { const { spend, lottery } = variantEarn(v); return `<button class="variant mini${v.key === planVariant ? ' on' : ''}" data-act="variant" data-v="${v.key}">${esc(t(VARIANT_NAME[v.key]))} <small>${tiny(spend) ? '< 1 ex' : `${lottery ? `${esc(t('from'))} ` : ''}${moneyHtml(approx(spend))}`}</small></button>`; }).join('')}</div>`;
+  if (!variants) return '';
+  const cell = (v, body, tone = '', title = '') => `<button class="variant${v.key === planVariant ? ' on' : ''}" data-act="variant" data-v="${v.key}"${title ? ` title="${esc(title)}"` : ''}>`
+    + `<span class="vn">${esc(t(VARIANT_NAME[v.key]))}${tone ? `<i class="vdot ${tone}"></i>` : ''}</span><small>${body}</small></button>`;
+  // While the variants are priced: the switch is there with placeholders, so the card keeps its height when the numbers land.
+  if (planBusy()) return `<div class="variants busy">${variants.map((v) => cell(v, '<span class="sk" data-w="50px"></span>')).join('')}</div>`;
+  const rows = variants.map((v) => ({ v, ...variantEarn(v) }));
+  // No variant has a gain (no goal or item price): each cell says what it costs — labelled, so «12 div» doesn't read as a gain.
+  if (rows.every((r) => r.gain == null)) {
+    const u = unitFor(rows.map((r) => r.spend));
+    return `<div class="variants">${rows.map(({ v, spend, lottery }) => cell(v, tiny(spend) ? '< 1 ex'
+      : `<span class="vc">${esc(t(lottery ? 'cost from' : 'cost'))}</span> ${moneyHtml(moneyIn(spend, u))}`)).join('')}</div>${getsHtml()}`;
   }
   // Every variant loses against selling as is: nothing to choose — the verdict says so, the switch would only add numbers.
-  const rows = variants.map((v) => ({ v, ...variantEarn(v) }));
   if (rows.every((r) => r.gain != null && (r.gain <= 0 || tiny(r.gain)))) return '';
-  // A switch: the name and the one number that tells the variants apart — what each earns over selling as is, in one unit
-  // (the costs are in the line under the verdict).
+  // What each earns over selling as is, in one unit; the sign carries plus or minus, the dot carries the colour (a red
+  // «−1 ex» in a cell was louder than the chosen one).
   const u = unitFor(rows.map((r) => (r.gain != null ? Math.abs(r.gain) : null)));
-  const cards = rows.map(({ v, value, lottery, unknownOdds, gain, expected }) => {
-    const zero = gain != null && tiny(Math.abs(gain)); // rounds to nothing — no sign, no colour
-    const earn = value === undefined ? '…' : gain == null ? '—' : zero ? '≈ 0'
-      : `<span class="${gain > 0 ? 'good' : 'bad'}">${lottery && !expected && gain > 0 ? `${esc(t('up to'))} ` : ''}${gain > 0 ? '+' : '−'}${moneyHtml(moneyIn(Math.abs(gain), u))}</span>`;
-    return `<button class="variant mini${v.key === planVariant ? ' on' : ''}" data-act="variant" data-v="${v.key}"${lottery ? ` title="${esc(t(unknownOdds ? 'A key modifier has unknown odds — this is a gamble' : 'A step is a single attempt: a miss stays on the item — this is a gamble'))}"` : ''}>${esc(t(VARIANT_NAME[v.key]))} <small>${earn}</small></button>`;
+  const cells = rows.map((r) => {
+    const { v, value, lottery, unknownOdds, gain, expected } = r;
+    const earn = value === undefined ? '…' : gain == null ? '—' : tiny(Math.abs(gain)) ? '≈ 0'
+      : `${lottery && !expected && gain > 0 ? `${esc(t('up to'))} ` : ''}${gain > 0 ? '+' : '−'}${moneyHtml(moneyIn(Math.abs(gain), u))}`;
+    return cell(v, earn, value === undefined ? '' : earnTone(r),
+      lottery ? t(unknownOdds ? 'A key modifier has unknown odds — this is a gamble' : 'A step is a single attempt: a miss stays on the item — this is a gamble') : '');
   }).join('');
+  return `<div class="variants">${cells}</div>${getsHtml()}`;
+}
+
+// What the chosen variant adds, then what it leaves out of the ideal, struck through — two groups: one line when they fit,
+// else the struck ones wrap whole to the next line (mixed, the line between taken and left got lost at the wrap).
+function getsHtml() {
   const v = curVariant();
   const ideal = variants.find((x) => x.key === 'ideal');
-  const left = v && v.key !== 'ideal' ? ideal.adds.filter((a) => !v.adds.includes(a)) : [];
-  const gets = left.length ? `<div class="v-gets">${esc(t('Gets'))} ${v.adds.map((a) => `<b>${esc(a.text)}</b>`).join(', ')} · ${esc(t('leaves out'))} ${left.map((a) => `<span>${esc(a.text)}</span>`).join(', ')}</div>` : '';
-  return `<div class="variants mini">${cards}</div>${gets}`;
+  const left = v && ideal && v.key !== 'ideal' ? ideal.adds.filter((a) => !v.adds.includes(a)) : [];
+  if (!left.length) return '';
+  return `<div class="v-gets"><span>${v.adds.map((a) => `<b>${esc(a.text)}</b>`).join('')}</span><span>${left.map((a) => `<s>${esc(a.text)}</s>`).join('')}</span></div>`;
 }
 
 // ---- step-by-step crafting: item and goal remembered; each new copy of the same item shows what happened and what's next ----
@@ -1439,7 +1533,7 @@ function renderCraft(r) {
     top.push(`<div class="craft-sec plan-box"><div class="k">${t('Plan')}${inSession ? '' : ` <button class="link session-btn" data-act="session" title="${esc(t('Do a step, check the item again with the hotkey — the window stays open and shows what you got and the next step'))}">▶ ${esc(t('Craft step by step'))}</button>`}</div><div class="variants-box">${variantsHtml()}</div><div class="verdict-box">${verdictHtml(curVariant() ? curVariant().plan : r.goal.plan)}</div><div class="bases-box">${basesHtml(curVariant() ? curVariant().plan : r.goal.plan)}</div>
       ${planHtml(curVariant() ? curVariant().plan : r.goal.plan)}<details class="why"><summary>${t('Why this plan')}</summary>${goalHtml(r.goal, r.theme || [], r.themeBuilds)}</details></div>`);
   } else {
-    top.push(`<div class="craft-sec plan-box"><div class="verdict">${esc(t('No clear upgrade for this item — selling as is is the simple choice'))}</div></div>`);
+    top.push(`<div class="craft-sec plan-box"><div class="verdict info">${vHead('info', esc(t('No clear upgrade for this item — selling as is is the simple choice')))}</div></div>`);
     if (r.gamble) top.push(gambleHtml(r.gamble, true)); // nothing to improve: risky finish in view
   }
   const parts = [];
