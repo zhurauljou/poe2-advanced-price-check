@@ -240,8 +240,13 @@ async function advise(item, demandMods, cached, { priceKeys = [] } = {}) {
       && canRoll(m, [...tags, ...hasInf, ...own])).map((m) => m.required_level);
     return fam.includes(mod.required_level) && fam.length > 1 ? [...new Set(fam)].sort((x, y) => y - x).indexOf(mod.required_level) + 1 : null;
   };
-  const mine = item.affixes.map((a) => { const mod = findMod(a, onBase); return { ...a, tier: jewel ? null : a.tier || tierOf(mod), mod }; });
-  const present = new Set(mine.flatMap((a) => (a.mod ? a.mod.groups || [] : [])));
+  // Tier strength: the very measure the price search uses (tierShare, the matched tier's range), so the plan and the price
+  // agree on which mod is weak.
+  const shareOf = (mod, tier) => {
+    const r = mod && !jewel && mod.lines.length === 1 && String(mod.text).match(/\((-?[\d.]+)-(-?[\d.]+)\)/);
+    return r ? tierShare(item.baseType, mod.lines[0], tier, { lo: +r[1], hi: +r[2] }) : null;
+  };
+  const mine = item.affixes.map((a) => { const mod = findMod(a, onBase); const tier = jewel ? null : a.tier || tierOf(mod); return { ...a, tier, mod, share: shareOf(mod, tier) }; });  const present = new Set(mine.flatMap((a) => (a.mod ? a.mod.groups || [] : [])));
 
   // How many slots: a rare has 3+3 (jewels 2+2 — 4 mods total), a magic item 1+1;
   // "-1 Suffix Modifier allowed" etc. — an adjustment.
@@ -634,7 +639,7 @@ async function advise(item, demandMods, cached, { priceKeys = [] } = {}) {
     const priceKey = new Set(priceKeys.map(keyLine));
     const scored = mine.filter((a) => a.mod && a.tag !== 'fractured' && !a.mod.lines.some((l) => priceKey.has(keyLine(l)))).map((a) => {
       const pct = Math.max(0, ...a.mod.lines.map((l) => want.get(l) || 0));
-      return { ...a, pct, score: pct * tierFactor(a.tier || null) };
+      return { ...a, pct, score: pct * tierFactor(a.tier || null, a.share) };
     }).filter((a) => a.pct < KEY_PCT && !(a.tier && a.tier <= 2 && !a.mod.lines.every((l) => isWeak(l)) && a.pct >= WANT_PCT)).sort((a, b) => a.score - b.score);
     const weak = scored[0];
     if (!weak) { if (!tierUps.length) sections.push({ kind: 'keep' }); }
@@ -985,7 +990,7 @@ function planGoal(mine, candidates, max, want, magic, magicFree = [], itemClass 
   const known = want.size > 0; // demand is loaded — check the slot rule against it
   const keyOf = (lines) => lines.some((l) => boosts(l) || (isKey(itemClass, l) && (!known || (want.get(l) || 0) >= WANT_PCT)));
   // Tier quality — same scale as mod importance in search (weights.tierFactor), so the goal and the price do not disagree.
-  const value = (pct, tier) => pct * tierFactor(tier || null);
+  const value = (pct, tier, share = null) => pct * tierFactor(tier || null, share);
   // A hybrid with a junk half ("Light Radius / Mana Regeneration") is worth more than an empty slot, but less than a pure mod.
   const worth = (c) => value(c.pct, 2) * (keyOf(c.text.split(' / ')) ? KEY_BONUS : 1) * (c.text.split(' / ').some((l) => isWeak(l) && !((want.get(l) || 0) >= WANT_PCT)) ? 0.6 : 1);
   // Skill levels of different kinds serve different builds: Spell and Projectile levels on one amulet — one of them is
@@ -1023,7 +1028,7 @@ function planGoal(mine, candidates, max, want, magic, magicFree = [], itemClass 
       // A non-key desecrated mod holds the only desecrate slot; it can be removed for sure (Omen of Light) and
       // a 1-of-3–6 choice revealed in its place for the wanted mod — so it is held at half strength.
       const desSlot = a.tag === 'desecrated' ? 0.5 : 1;
-      return { kind: 'cur', a, pct, v: locked ? Infinity : value(pct, a.tier) * KEEP_BONUS * desSlot * (a.mod && keyOf(a.mod.lines) ? KEY_BONUS : 1) };
+      return { kind: 'cur', a, pct, v: locked ? Infinity : value(pct, a.tier, a.share) * KEEP_BONUS * desSlot * (a.mod && keyOf(a.mod.lines) ? KEY_BONUS : 1) };
     });
     const cand = pool.filter((c) => c.side === side).map((c) => ({ kind: 'add', c, pct: c.pct, v: worth(c) }));
     const chosen = over ? cur : [...cur, ...cand].sort((x, y) => y.v - x.v).slice(0, max[side]);
@@ -1312,6 +1317,7 @@ function rollsOn(baseType, template) {
 // The family is the one whose tier number `tier` (the game's «Tier: N», T1 the highest on the base) has exactly our range:
 // one line of text is shared by several families (a desecrated «Unholy» 39–42% Energy Shield beside the regular one up to
 // 100%). No such family (a hybrid's line, an unknown mod) — null, the tier number decides as before.
+// Each family is tried with and without its essence-only tiers: which of the two the game numbers is not known.
 const laddersCache = new Map(); // base|line → [[{ lo, hi }] best first] — one-line families that roll on the base
 craftData.onReset(() => laddersCache.clear());
 function tierShare(baseType, template, tier, range) {
@@ -1328,9 +1334,15 @@ function tierShare(baseType, template, tier, range) {
       if (!r) continue;
       const key = `${m.domain}|${m.type}`;
       if (!byType.has(key)) byType.set(key, []);
-      byType.get(key).push({ level: m.required_level, lo: +r[1], hi: +r[2] });
+      byType.get(key).push({ level: m.required_level, lo: +r[1], hi: +r[2], ess: !!m.is_essence_only });
     }
-    laddersCache.set(k, [...byType.values()].map((l) => l.sort((a, b) => b.level - a.level)));
+    const ladders = [];
+    for (const l of byType.values()) {
+      l.sort((a, b) => b.level - a.level);
+      ladders.push(l);
+      if (l.some((x) => x.ess)) ladders.push(l.filter((x) => !x.ess));
+    }
+    laddersCache.set(k, ladders);
   }
   const ladder = laddersCache.get(k).find((l) => l[tier - 1] && l[tier - 1].lo === range.lo && l[tier - 1].hi === range.hi);
   return ladder ? Math.min(1, range.hi / ladder[0].hi) : null;
