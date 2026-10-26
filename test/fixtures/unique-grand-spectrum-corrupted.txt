@@ -1,0 +1,20 @@
+Item Class: Jewels
+Rarity: Unique
+Grand Spectrum
+Sapphire
+--------
+Limited to: 3
+--------
+Item Level: 80
+--------
+{ Corruption Enhancement — Elemental, Cold, Resistance }
++5(5-10)% to Cold Resistance
+--------
+{ Unique Modifier — Elemental, Fire, Cold, Lightning, Resistance }
++6% to all Elemental Resistances per socketed Grand Spectrum
+--------
+Skin like steel tempered by bright flames.
+--------
+Place into an allocated Jewel Socket on the Passive Skill Tree. Right click to remove from the Socket.
+--------
+Corrupted

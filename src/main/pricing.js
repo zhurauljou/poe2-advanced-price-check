@@ -340,7 +340,8 @@ function prepare(item, demand, rollsOn) {
     const unwanted = item.rarity === 'Unique' && m.tag === 'desecrated' && demandPct.size > 0 && (dp == null || dp < 10);
     const infRune = m.tag === 'rune' && /^Can roll \w+ modifiers$/.test(m.text || '');
     const uniqueRandom = item.rarity === 'Unique' && m.tag === 'desecrated' && !!m.statId && !unwanted;
-    const rolls = item.rarity === 'Unique' && (m.tag === 'explicit' || m.tag === 'desecrated') && !unwanted && !!m.statId && !option && !!m.range && m.range.hi > m.range.lo && m.range.hi > 0;
+    // A corruption enhancement on a unique jewel (enchant, «+5(5-10)% to Cold Resistance») rolls too and is priced the same way.
+    const rolls = item.rarity === 'Unique' && (m.tag === 'explicit' || m.tag === 'desecrated' || m.tag === 'enchant') && !unwanted && !!m.statId && !option && !!m.range && m.range.hi > m.range.lo && m.range.hi > 0;
     return {
       statId: m.statId,
       text: m.text,

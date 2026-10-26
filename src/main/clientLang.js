@@ -39,6 +39,7 @@ const LANGS = {
       const side = /префикс/i.test(k) ? 'Prefix Modifier' : /суффикс/i.test(k) ? 'Suffix Modifier' : null;
       const pre = /очерн/i.test(k) ? 'Desecrated ' : /расколот/i.test(k) ? 'Fractured ' : /ремесл/i.test(k) ? 'Crafted ' : '';
       if (side) return pre + side;
+      if (/улучшени/i.test(k) && /осквернени/i.test(k)) return 'Corruption Enhancement';
       if (/осквернени/i.test(k)) return 'Corrupted Implicit Modifier';
       if (/собственное/i.test(k)) return 'Implicit Modifier';
       if (/уникальное/i.test(k)) return 'Unique Modifier';

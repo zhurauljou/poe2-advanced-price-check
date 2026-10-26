@@ -24,6 +24,8 @@ function headerInfo(h) {
   let tag = 'explicit';
   if (/^Implicit/.test(kind)) tag = 'implicit';
   else if (/^Enhancement/.test(kind)) tag = 'enchant'; // anoint: "Allocates Dominion"
+  // A Vaal Orb outcome on a jewel («+5(5-10)% to Cold Resistance» on Grand Spectrum) — trade keeps it in the enchant group.
+  else if (/^Corruption Enhancement/.test(kind)) tag = 'enchant';
   else if (/^Corrupted/.test(kind)) tag = 'corrupted'; // implicit from a Vaal Orb
   else if (/^Crafted/.test(kind)) tag = 'crafted';
   else if (/^Desecrated/.test(kind)) tag = 'desecrated';
@@ -35,7 +37,7 @@ function headerInfo(h) {
   // Affix side and name — for crafting advice (free slots, which mod takes what).
   const side = /Prefix/.test(kind) ? 'prefix' : /Suffix/.test(kind) ? 'suffix' : null;
   const name = (kind.match(/"([^"]+)"/) || [])[1] || null;
-  return { tag, tier: t ? +t[1] : null, boost: b ? +b[1] : 0, side, name };
+  return { tag, tier: t ? +t[1] : null, boost: b ? +b[1] : 0, side, name, corruption: /^Corruption/.test(kind) };
 }
 
 // Quality boost, rounded down — as in the game: 3 × 1.4 = 4.2 → 4, 19 × 1.4 = 26.6 → 26.
@@ -215,7 +217,8 @@ function parseItem(text) {
         const range = tierRange(raw, head ? head.boost : 0);
         const tr = raw.replace(/ — Unscalable Value$/, '').match(/\S\(([^()]*[A-Za-z][^()]*)\)$/);
         // On jewels "{ Enhancement }" are their own mods ("Allocates …" on Megalomaniac), not an anoint: jewels can't be anointed.
-        const tag = head ? (head.tag === 'enchant' && item.itemClass === 'Jewels' ? 'explicit' : head.tag) : 'explicit';
+        // A «{ Corruption Enhancement }» is not one of them: it is an enchant on trade.
+        const tag = head ? (head.tag === 'enchant' && !head.corruption && item.itemClass === 'Jewels' ? 'explicit' : head.tag) : 'explicit';
         const line = t ? { text: t[1], tag: t[2], tier, range } : { text: l, tag, tier, range };
         // Tablet: "6 uses remaining" is an implicit line, but for search it's the number of uses (a property), not a mod.
         const uses = item.itemClass === 'Tablet' && line.text.match(/^(\d+) uses? remaining$/i);

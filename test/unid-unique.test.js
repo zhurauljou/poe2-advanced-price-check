@@ -1,4 +1,5 @@
-// Unidentified uniques: the game text has only the base, the name comes from the trade list of uniques on that base.
+// Unique jewels: unidentified ones (the game text has only the base, the name comes from the trade list of uniques on that
+// base) and corruption enhancements (enchants on trade).
 const test = require('node:test');
 const assert = require('node:assert');
 const fs = require('fs');
@@ -56,4 +57,14 @@ test('identified unique keeps its own name', { skip }, async () => {
   pricing.nameUnidUnique(it);
   assert.equal(it.name, 'Grand Spectrum');
   assert.equal(it.uniqueOptions, undefined);
+});
+
+test('corrupted Grand Spectrum: «{ Corruption Enhancement }» is searched as an enchant (trade keeps it there), by its roll', { skip }, async () => {
+  await init();
+  const it = parseItem(fs.readFileSync(path.join(__dirname, 'fixtures', 'unique-grand-spectrum-corrupted.txt'), 'utf8'));
+  assert.equal(it.modLines.find((l) => /Cold Resistance/.test(l.text)).tag, 'enchant');
+  const { filters } = pricing.prepare(it, null, () => true);
+  const cold = filters.mods.find((m) => /Cold Resistance/.test(m.text));
+  assert.equal(cold.statId, 'enchant.stat_4220027924');
+  assert.ok(cold.enabled);
 });
