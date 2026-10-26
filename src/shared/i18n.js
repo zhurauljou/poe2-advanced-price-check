@@ -508,7 +508,7 @@
     '+{n} mods': ['+{n} мод', '+{n} мода', '+{n} модов'],
     'No connection to {host} — using saved data': 'Нет связи с {host} — данные из сохранённых',
     'Trade site rate limit': 'Лимит трейда',
-    'Searching again in {n} s': 'Повторим поиск через {n} с',
+    'Searching again automatically': 'Повторим поиск автоматически',
     'Try now': 'Попробовать сейчас',
     'No regeneration': 'Нет регенерации',
     'Less recovery': 'Меньше восстановления',

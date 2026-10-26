@@ -289,6 +289,27 @@ function untilHtml(key, until) {
   const [a, b] = t(key, { n: '\u0001' }).split('\u0001');
   return `${esc(a)}<span data-until="${until}"></span>${esc(b || '')}`;
 }
+// A countdown ring: the arc wears away clockwise from 12 o'clock over the whole wait, a 10% track stays behind it, the
+// seconds count down inside. The window's CSP allows no style attributes: the arc starts where the wait is (an SVG
+// attribute — a redraw mid-wait doesn't flash a full ring) and tick() sets it going (one animation, no script per frame).
+// then — data-then of the countdown (what runs at zero).
+const RING_C = 175.93; // 2π × 28, the arc's length
+function ringHtml(start, until, then = '') {
+  const total = Math.max(1, until - start);
+  const gone = Math.min(1, Math.max(0, (Date.now() - start) / total));
+  return `<div class="ring">
+    <svg width="64" height="64" viewBox="0 0 64 64" aria-hidden="true"><circle class="trk" cx="32" cy="32" r="28"/><circle class="arc" cx="32" cy="32" r="28" transform="rotate(-90 32 32)" stroke-dashoffset="${-RING_C * gone}" data-start="${start}" data-end="${until}"/></svg>
+    <span class="rn"${then ? ` data-then="${then}"` : ''} data-until="${until}">${Math.max(0, Math.ceil((until - Date.now()) / 1000))}</span></div>`;
+}
+function armRings() {
+  for (const a of document.querySelectorAll('.ring .arc[data-start]')) {
+    const start = Number(a.dataset.start), end = Number(a.dataset.end), total = Math.max(1, end - start);
+    a.removeAttribute('data-start');
+    // Reduced motion: the arc steps once a second, with the number.
+    a.animate([{ strokeDashoffset: 0 }, { strokeDashoffset: -RING_C }], { duration: total, delay: start - Date.now(), fill: 'forwards',
+      easing: stillMotion.matches ? `steps(${Math.ceil(total / 1000)})` : 'linear' });
+  }
+}
 function waitStatus(until) {
   const s = $('status');
   s.hidden = false;
@@ -297,6 +318,7 @@ function waitStatus(until) {
   tick();
 }
 function tick() {
+  armRings();
   for (const el of document.querySelectorAll('[data-until]')) {
     const left = Math.ceil((Number(el.dataset.until) - Date.now()) / 1000);
     el.textContent = Math.max(0, left);

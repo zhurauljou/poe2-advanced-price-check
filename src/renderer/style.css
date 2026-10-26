@@ -516,6 +516,15 @@ body.upd-page { height: auto; }
 /* Empty state: an icon, what happened and what can be done. */
 .void { display: flex; flex-direction: column; align-items: center; gap: 4px; padding: 10px 12px 6px; text-align: center; }
 .void .vi { font-size: var(--t-20); line-height: 1; color: var(--bronze); opacity: .8; }
+/* Countdown ring (ringHtml, core.js): the arc wears away clockwise, a 10% track stays; the seconds inside. */
+.void .vi:has(.ring) { opacity: 1; margin-bottom: 4px; }
+.ring { position: relative; width: 64px; height: 64px; }
+.ring svg { display: block; }
+.ring circle { fill: none; stroke: var(--gold); stroke-width: 4; }
+.ring .trk { stroke-opacity: .1; }
+.ring .arc { stroke-dasharray: 175.93; } /* worn away by armRings (core.js) */
+.ring .rn { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center;
+            font: 700 var(--t-20)/1 var(--body); color: var(--cream); font-variant-numeric: tabular-nums; }
 .void .vt { color: var(--cream); font-weight: 700; }
 .void .vd { color: var(--muted); font-size: var(--fs-s); }
 .void .va { display: flex; gap: 8px; margin-top: 6px; }

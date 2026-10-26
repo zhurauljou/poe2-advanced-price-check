@@ -328,12 +328,11 @@ async function runSearch(relax = false) {
       const ms = await window.pc.limitWait().catch(() => 0);
       if (seq !== searchSeq) return;
       if (ms > 0 && ms < 30 * 60e3) {
-        const until = Date.now() + ms;
-        const msg = esc(errText(e));
+        const start = Date.now(), until = start + ms;
+        // One timer, the ring: the error's own «wait 36 s» next to «again in 30 s» were two numbers for one wait.
         heroRender = () => {
-          $('hero').innerHTML = voidState('⏳', t('Trade site rate limit'),
-            `${msg}<br>${untilHtml('Searching again in {n} s', until).replace('<span data-until', `<span data-then="search:${seq}" data-until`)}`,
-            [['retry', t('Try now')]]);
+          $('hero').innerHTML = voidState(ringHtml(start, until, `search:${seq}`), t('Trade site rate limit'),
+            esc(t('Searching again automatically')), [['retry', t('Try now')]]);
         };
         heroRender();
         tick();
