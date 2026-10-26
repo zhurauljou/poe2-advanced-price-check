@@ -264,7 +264,7 @@ function renderTradeHero(r) {
   // Listing age: a stale cheap listing (unsold for a week+) inflates the picture, nobody buys at that price.
   // If there are enough fresh (≤ 3 days) listings, the estimate uses them; otherwise all, but with lower reliability.
   // edge = how much stronger a listing is than your item (▲ minus ▼ by mods): notably stronger (≥ 2) mustn't pull the estimate up.
-  const priced = r.listings.filter((l) => l.divine != null).map((l) => { const c = cmpCounts(l); return { div: l.divine * k, age: ageDays(l.indexed), edge: c.better - c.worse }; })
+  const priced = r.listings.filter((l) => l.divine != null).map((l) => { const c = cmpCounts(l); return { div: l.divine * k, age: ageDays(l.indexed), edge: c.better - c.worse, dominates: c.better > 0 && !c.worse }; })
     .sort((a, b) => a.div - b.div);
   const stronger = (l) => l.edge >= STRONGER;
   // Most cheap listings are stronger than your item: estimate from those that aren't; if none, from the cheapest.
@@ -273,7 +273,10 @@ function renderTradeHero(r) {
   const fresh = pool.filter((l) => l.age <= 3);
   const basis = mostlyStronger && pool.length < 2 ? [priced[0].div] : fresh.length >= 3 ? fresh.map((l) => l.div) : pool.map((l) => l.div);
   const head = basis.slice(0, 5);
-  const est = mid(head);
+  // A listing better in some mod and worse in none caps the price: nobody pays more for a weaker copy. Without it, setting
+  // the stronger ones aside left the dearer equal listings (Grand Spectrum +5%: four +7% at 5–8 div, estimate 12).
+  const dominant = priced.find((l) => l.dominates);
+  const est = dominant ? Math.min(mid(head), dominant.div) : mid(head);
   const median = mid(divs);
   const ageInfo = ageSummary(priced, fresh.length >= 3 && fresh.length < priced.length);
   // A callout, not a text line; the "more ▲ than ▼" reasoning goes to the tooltip.
