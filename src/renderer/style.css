@@ -961,9 +961,6 @@ body.wide .craft-cols > .more-ways > summary { pointer-events: none; }
 .mod .meta .dem { font-size: var(--fs-s); }
 .mod .meta .rng { font-size: var(--fs-xs); }
 .mod .maxroll { margin-left: 0; padding: 0; background: none; border: 0; color: var(--gold); }
-/* max: hidden until wanted — on hover, focus or when set (its slot stays, so the row doesn't jump). */
-.mod .range-in input.max.empty { opacity: 0; }
-.mod:hover .range-in input.max.empty, .mod .range-in input.max:focus { opacity: 1; }
 .mod.off .meta { opacity: .6; }
 
 /* ---- Motion: quiet and short ---- */
@@ -1002,12 +999,9 @@ body.wide .craft-cols > .more-ways > summary { pointer-events: none; }
 .mod .rng { font-size: var(--t-12); }
 .mod .rng.atmax { color: var(--gold); font-weight: 700; }
 .mod.off .m-meta { opacity: .6; }
-/* min and max the same width. With no max anywhere the column is gone and an empty max shows over the tier range on hover. */
-.range-in { position: relative; display: grid; grid-template-columns: 44px; column-gap: 3px; }
-#mods.has-max .range-in { grid-template-columns: 44px 44px; }
-#mods:not(.has-max) .range-in input.max { position: absolute; top: 0; right: calc(100% + 3px); z-index: 1; }
-#mods:not(.has-max) .range-in input.max.empty { display: none; }
-#mods:not(.has-max) .mod:hover .range-in input.max.empty, #mods:not(.has-max) .range-in input.max:focus { display: block; opacity: 1; }
+/* min | max, always both and in that order, as on trade: a max that showed only on hover, left of min over the tier
+   range, read as «max before min». An empty max is dimmed (its placeholder says «max»). */
+.range-in { display: grid; grid-template-columns: 44px 44px; column-gap: 3px; }
 .mod input[type=number], .mod .range-in input.max { width: 44px; }
 /* Under «What drives the price?» the price card is already a framed box: no extra rule above its foot. */
 .th-foot { border-top: 0; padding-top: 0; }

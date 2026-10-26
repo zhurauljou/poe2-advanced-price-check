@@ -58,11 +58,6 @@ function modRow(m, i) {
 // Price currency on trade: any (converted) or only listings in a specific currency.
 const CURRENCIES = [['any', 'Any'], ['divine', 'Divine'], ['chaos', 'Chaos'], ['exalted', 'Exalted']];
 
-// The «max» column exists for every row only while some row has a max: otherwise an empty column on every row took the
-// width from the mod text, and the max field shows over the tier range on hover.
-function syncMaxColumn() {
-  $('mods').classList.toggle('has-max', state.filters.mods.some((m) => !m.inSum && m.max != null && m.max !== ''));
-}
 
 function renderFilters() {
   const box = $('filters');
@@ -87,7 +82,6 @@ function renderFilters() {
         <span class="txt">${esc(t('Without: {mod}', { mod: x.text }))} <span class="dem hot">🔥 ${esc(t('{pct}% builds', { pct: fmt(x.pct) }))}</span></span></label></div>`));
   if (f.hiddenFixed) rows.push(`<div class="muted small center">${esc(t('{n} fixed modifiers hidden — every copy has them', { n: f.hiddenFixed }))}</div>`);
   $('mods').innerHTML = rows.join('');
-  syncMaxColumn();
   // Defence/DPS, levels and sockets are picked right in the tooltip under the header — here, price currency and "online".
   $('misc').innerHTML = `
     <div class="seg" title="${t('Which currency listings to search')}">${CURRENCIES.map(([id, label]) =>
