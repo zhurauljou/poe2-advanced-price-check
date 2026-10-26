@@ -12,7 +12,8 @@ function meter(m) {
   return `<span class="imp i${n}${m.key ? ' key' : ''}" title="${title}"><i></i><i></i><i></i></span>`;
 }
 
-// Mod row — in even columns, like the in-game tooltip: [checkbox][importance][tier][text · category][min].
+// Mod row — in even columns, like the in-game tooltip: [importance][tier][text · category][min | max]. The whole row is the
+// toggle (a hidden checkbox inside the label): an enabled mod in its own colour, a disabled one at half strength.
 // Category (desecrated, rune…) goes after the text so tags of different widths don't shift the mod itself.
 // Tier range and roll quality: "36–40", a near-max roll gets a gold max mark.
 function rollInfo(m) {
@@ -29,7 +30,7 @@ const openSums = new Set();
 function modRow(m, i) {
   if (!m.statId) {
     return `<div class="mod nomatch" title="${t('This modifier has no trade site filter')}">
-      <label><span class="cb"></span><span class="imp"></span><span class="tcol">?</span><span class="txt">${esc(m.text)}</span></label></div>`;
+      <label><span class="imp"></span><span class="tcol">?</span><span class="txt">${esc(m.text)}</span></label></div>`;
   }
   const tier = m.tag === 'pseudo' ? `<span class="tcol sigma" title="${t('Total from all modifiers')}">Σ</span>`
     : `<span class="tcol">${m.tier ? `<span class="tag tier${m.tier <= 2 ? ' top' : ''}">T${m.tier}</span>` : ''}</span>`;
@@ -47,7 +48,7 @@ function modRow(m, i) {
   const cut = text.search(/\S+\s*$/);
   const body = kind && cut > 0 ? `${esc(text.slice(0, cut))}<span class="glue">${esc(text.slice(cut))}${kind}</span>` : esc(text) + kind;
   // One fixed cell on the right (🔥 and the tier range) and fixed-width bounds: every row keeps the same grid.
-  return `<div class="mod t-${esc(m.tag)}${m.enabled ? '' : ' off'}" data-i="${i}">
+  return `<div class="mod t-${esc(m.tag)}${m.enabled ? '' : ' off'}" data-i="${i}" title="${esc(t(m.enabled ? 'Click to search without this modifier' : 'Click to search with this modifier'))}">
       <label><input type="checkbox" data-k="enabled"${m.enabled ? ' checked' : ''}>${meter(m) || '<span class="imp"></span>'}${tier}
         <span class="txt"${from}>${body}${m.merged ? `<span class="sum-v"> = ${fmt(m.value)}</span>` : ''}${driveChip(i)}</span>
         <span class="m-meta">${fire}${rollInfo(m)}</span></label>

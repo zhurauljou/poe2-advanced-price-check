@@ -41,6 +41,8 @@
     'Searching this unique only — click to search any unique on this base': 'Ищем только этот уник — клик: любой уник на этой базе',
     'Click to search this unique only': 'Клик: искать только этот уник',
     'Double corruption': 'Двойное осквернение',
+    'Click to search without this modifier': 'Клик — искать без этого мода',
+    'Click to search with this modifier': 'Клик — искать с этим модом',
     'Corruption': 'Осквернение',
     'The item becomes unmodifiable. Omen of Corruption (always a change) is not obtainable this league.': 'Вещь больше нельзя изменять. Omen of Corruption (всегда изменение) в этой лиге не достать.',
     'A corrupted copy of your item with this enchant': 'Такая же осквернённая вещь с этим энчантом',

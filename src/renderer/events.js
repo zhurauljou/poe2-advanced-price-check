@@ -150,6 +150,7 @@ $('mods').addEventListener('input', (e) => {
   if (e.target.dataset.k === 'enabled') {
     m.enabled = e.target.checked;
     row.classList.toggle('off', !m.enabled);
+    row.title = t(m.enabled ? 'Click to search without this modifier' : 'Click to search with this modifier');
     if (m.option) renderFilters(); // recompute "Match ≥ N of M"
   } else if (e.target.dataset.k === 'min') {
     m.min = e.target.value === '' ? null : Number(e.target.value);
