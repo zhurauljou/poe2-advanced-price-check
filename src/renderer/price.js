@@ -123,9 +123,13 @@ document.addEventListener('click', (e) => {
   if (act === 'elements') loadElements(searchSeq, true);
   if (act === 'session') { startSession(); window.pc.pin(true); craftFor = null; loadCraft(); }
   if (act === 'steps') toggleSteps(b.closest('.plan-steps'));
-  if (act === 'variant') { planVariant = b.dataset.v; variantPicked = true; typeQuiet = true; refreshPlan(); }
+  if (act === 'variant') { planVariant = b.dataset.v; variantPicked = true; typeQuiet = true; refreshPlan(true); }
   if (act === 'plandraft') { planDraft = true; refreshPlan(); }
-  if (act === 'plananyway') { planAnyway = !planAnyway; refreshPlan(); }
+  if (act === 'plananyway') {
+    // Shown: the steps reveal one by one; hidden: they fade out first, then fold to the link.
+    if (planAnyway) conceal(shownSteps(), () => { planAnyway = false; refreshPlan(); });
+    else { planAnyway = true; refreshPlan(); revealSteps(); }
+  }
   if (act === 'bases') findBases();
   if (act === 'bases-open') window.pc.openUrl(b.dataset.url);
   if (act === 'session-stop') { craftSession = null; window.pc.pin(userPinned); $('pinBtn').classList.toggle('on', userPinned); craftFor = null; loadCraft(); }

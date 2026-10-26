@@ -995,9 +995,13 @@ body.wide .craft-cols > .more-ways > summary { pointer-events: none; }
 .th-price .big.preview { opacity: .78; }
 .th-price .pv-note { margin-top: 2px; font-size: var(--fs-xs); color: var(--note); }
 .th-price .big { transition: opacity .2s; }
+/* The active tab: its underline and notch come in with it, not out of nowhere (the rest of the motion — motion.js). */
+.tabs button { transition: background .12s, color .12s, box-shadow .14s; }
+.tabs button.on::after { animation: notch-in .18s cubic-bezier(.2, .7, .2, 1); }
+@keyframes notch-in { from { opacity: 0; transform: scaleX(.3); } }
 @media (prefers-reduced-motion: reduce) {
-  .lots.enter .lot, .th-price .pdelta { animation: none; }
-  .th-price .big { transition: none; }
+  .lots.enter .lot, .th-price .pdelta, .tabs button.on::after { animation: none; }
+  .th-price .big, .tabs button { transition: none; }
 }
 /* The corner «beta» mark: at the 12 px floor it ran into the open-slots badge; the craft tab says «Beta» at its foot. */
 .tabs .beta { display: none; }

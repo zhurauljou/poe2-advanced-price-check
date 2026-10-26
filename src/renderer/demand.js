@@ -115,6 +115,7 @@ function demandList(key, title, rows) {
 }
 
 function setTab(name) {
+  const was = document.body.dataset.tab;
   document.querySelectorAll('#tabs button').forEach((b) => b.classList.toggle('on', b.dataset.tab === name));
   $('tab-price').hidden = name !== 'price';
   $('tab-demand').hidden = name !== 'demand';
@@ -123,6 +124,7 @@ function setTab(name) {
   // Enter searches on the Price tab only (events.js): its hint in the footer goes with it.
   document.querySelectorAll('.keys .k-enter').forEach((e) => { e.hidden = name !== 'price'; });
   if (name === 'craft') loadCraft();
+  if (was && was !== name) swapIn($(`tab-${name}`));
   fit();
 }
 

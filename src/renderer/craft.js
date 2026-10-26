@@ -418,10 +418,14 @@ try { stepsOpen = localStorage.getItem('planStepsOpen') === '1'; } catch { /* st
 function toggleSteps(box) {
   stepsOpen = !stepsOpen;
   try { localStorage.setItem('planStepsOpen', stepsOpen ? '1' : '0'); } catch { /* not remembered — fine */ }
-  box.classList.toggle('open', stepsOpen);
   const b = box.querySelector('.steps-toggle');
-  if (b) b.textContent = stepsLabel(+box.dataset.n);
-  fit();
+  const rest = [...box.querySelectorAll('ol.plan > li')].slice(STEPS_SHOWN);
+  const apply = () => {
+    box.classList.toggle('open', stepsOpen);
+    if (b) b.textContent = stepsLabel(+box.dataset.n);
+    fit();
+  };
+  if (stepsOpen) { apply(); reveal(rest, { stagger: true }); } else conceal(rest, apply);
 }
 const stepsLabel = (n) => (stepsOpen ? `− ${t('Collapse')}` : `+ ${t('Show all {n} steps', { n })}`);
 
@@ -953,13 +957,16 @@ async function findBases() {
   refreshPlan();
 }
 
-function refreshPlan() {
+// swap — the player switched what the plan shows (a variant): the verdict and the steps fade in anew. Without it (a
+// price arrived) only what changed moves: the steps reveal once the pricing spinner gives way, a new «now → goal» glows.
+function refreshPlan(swap = false) {
   const g = craftGoal;
   if (!g) return;
   const plan = curVariant() ? curVariant().plan : g.plan;
   const vb = document.querySelector('#craft .variants-box');
   if (vb) vb.innerHTML = variantsHtml();
   const box = document.querySelector('#craft .verdict-box');
+  const numsWas = box && box.querySelector('.pl-nums b') ? box.querySelector('.pl-nums b').textContent : null;
   if (box) box.innerHTML = verdictHtml(plan);
   const bb = document.querySelector('#craft .bases-box');
   if (bb) bb.innerHTML = basesHtml(plan);
@@ -967,10 +974,20 @@ function refreshPlan() {
   if (wn) wn.innerHTML = whyNotesHtml();
   // Steps too: the cost of hitting a needed mod depends on the goal price.
   const ol = document.querySelector('#craft .plan-box .plan-steps');
+  const wasPending = !!ol && ol.classList.contains('pending');
   if (ol) ol.outerHTML = planHtml(plan);
+  const nums = box && box.querySelector('.pl-nums b');
+  if (swap) { swapIn(box); swapIn(document.querySelector('#craft .plan-box .plan-steps')); }
+  else {
+    if (wasPending) { swapIn(box); revealSteps(); }
+    if (nums && numsWas != null && nums.textContent !== numsWas) flash(nums);
+  }
   typeVerdict();
   fit();
 }
+// The plan's visible steps, one after another (the folded tail of a long plan stays out).
+const shownSteps = () => [...document.querySelectorAll('#craft .plan-box ol.plan > li')].filter((li) => li.getClientRects().length);
+function revealSteps() { reveal(shownSteps(), { stagger: true }); }
 
 
 const { planSpend } = planner;
