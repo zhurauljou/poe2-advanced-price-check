@@ -654,6 +654,7 @@ body:not(.scrolls) .head::before, body:not(.scrolls) .head::after, body:not(.scr
 .brow .rank { font: 400 var(--fs-xs) var(--body); color: var(--muted); }
 .bwhat .theme { color: var(--g-mod); font-weight: normal; }
 .bwhat:has(.theme) { white-space: normal; } /* demand theme — wraps rather than gets truncated */
+.brow.theme-row .bname { white-space: normal; } /* two radius mods truncated to the same «… Minions have #% increased …» */
 
 /* ---- Craft: places as circles, "sell or craft", step-by-step plan, the rest collapsed ---- */
 .slots { display: flex; justify-content: center; gap: 18px; flex-wrap: wrap; margin: 2px 0 6px; font-size: var(--fs-s); color: var(--label); }

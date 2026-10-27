@@ -81,10 +81,17 @@ function renderDemand(d) {
   // Top 10 + all mods of your item, even outside the top (with rank): a key mod of a narrow theme (+minion levels)
   // may not make the class's overall top, but for buyers with that theme it's the main one.
   const TOP = 10;
-  // Theme mods are by definition at 100% for such builds — they say nothing in the list.
+  // Theme mods are by definition at 100% for such builds — no rank or share, but listed first as yours with a «theme» mark:
+  // hidden, a Time-Lost jewel's own radius mods vanished and the look-alike rows below read as «yours not counted».
   const themeSet = new Set((d.themed || []).map((x) => x.toLowerCase()));
-  const all = d.mods.filter((r) => !themeSet.has(r.name.toLowerCase())).map((r, i) => ({ ...r, rank: i + 1, mine: mine.has(ninjaTemplate(r.name)) }));
-  const modRows = all.filter((r) => r.rank <= TOP || r.mine);
+  const themeRows = d.mods.filter((r) => themeSet.has(r.name.toLowerCase())).map((r) => ({ ...r, mine: true, theme: true }));
+  // A Time-Lost radius mod and the plain jewel mod with the same words are different mods on poe.ninja: «Minions have #%
+  // increased Critical Damage Bonus» there is worn on the same builds' regular jewels.
+  const RADIUS = /^(notable|small) passive skills in radius also grant /;
+  const plainOfMine = new Set([...mine].filter((x) => RADIUS.test(x)).map((x) => x.replace(RADIUS, '')));
+  const all = d.mods.filter((r) => !themeSet.has(r.name.toLowerCase())).map((r, i) => ({ ...r, rank: i + 1, mine: mine.has(ninjaTemplate(r.name)),
+    alike: plainOfMine.has(ninjaTemplate(r.name)) }));
+  const modRows = [...themeRows, ...all.filter((r) => r.rank <= TOP || r.mine)];
   const hits = all.filter((r) => r.mine && r.rank <= TOP).length;
   // Your base below the top is listed too, with its rank — «base #15» in the line above had no row to point at.
   const baseRows = d.bases.map((r, i) => ({ ...r, rank: i + 1, mine: r.name === item.baseType })).filter((r) => r.rank <= TOP || r.mine);
@@ -109,8 +116,8 @@ function demandList(key, title, rows) {
   const hidden = rows.filter((r, i) => i >= DEMAND_SHOWN && !r.mine).length;
   const open = openDemand.has(key);
   return `<div class="dcol${open ? ' all' : ''}"><div class="k">${title}</div>${rows.map((r, i) => `
-    <div class="brow ${heat(r.pct)}${r.mine ? ' mine' : ''}${i >= DEMAND_SHOWN && !r.mine ? ' more' : ''}"${r.mine ? ` title="${t('Your item has this')}"` : ''}><span class="bname">${r.mine ? '✓ ' : ''}${esc(r.name)}${r.rank > 10 || (r.mine && r.rank) ? ` <span class="rank">#${r.rank}</span>` : ''}</span><span class="bpct">${hot(r.pct)}${fmt(r.pct)}%</span>
-      <span class="bbar"><i data-w="${Math.min(100, r.pct)}%"></i></span></div>`).join('')}
+    <div class="brow ${r.theme ? 'theme-row' : heat(r.pct)}${r.mine ? ' mine' : ''}${i >= DEMAND_SHOWN && !r.mine ? ' more' : ''}"${r.theme ? ` title="${t('Your item has this — demand is counted among builds wearing it, so every one of them has it')}"` : r.mine ? ` title="${t('Your item has this')}"` : r.alike ? ` title="${t('Not your mod: the same words without «Passive Skills in Radius also grant» — a regular jewel mod, worn on these builds\' other jewels')}"` : ''}><span class="bname">${r.mine ? '✓ ' : ''}${esc(r.name)}${r.alike ? ` <span class="rank">${t('other jewels')}</span>` : ''}${!r.theme && (r.rank > 10 || (r.mine && r.rank)) ? ` <span class="rank">#${r.rank}</span>` : ''}</span><span class="bpct">${r.theme ? `<span class="rank">${t('theme')}</span>` : `${hot(r.pct)}${fmt(r.pct)}%`}</span>
+      <span class="bbar"><i data-w="${r.theme ? 0 : Math.min(100, r.pct)}%"></i></span></div>`).join('')}
     ${hidden ? `<button class="link bmore" data-dmore="${key}">${open ? t('Show fewer') : t('Show all {n}', { n: rows.length })}</button>` : ''}</div>`;
 }
 
