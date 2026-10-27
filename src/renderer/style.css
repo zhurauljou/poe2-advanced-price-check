@@ -986,6 +986,11 @@ body.wide .craft-cols > .more-ways > summary { pointer-events: none; }
 .mod .kind.implicit { --c: var(--g-mod); } .mod .kind.crafted { --c: var(--g-crafted); } .mod .kind.enchant { --c: var(--g-enchant); }
 .mod .kind.rune { --c: var(--g-rune); } .mod .kind.desecrated { --c: var(--g-desecrated); } .mod .kind.fractured { --c: var(--g-fractured); }
 .mod .kind.corrupted { --c: var(--g-corrupted); }
+/* «fractured» on a rare's mod is a switch: dotted when it searches any form, lit with 🔒 when only fractured. */
+.mod .kind.lockable { cursor: pointer; text-decoration: underline dotted; text-underline-offset: 2px; }
+.mod .kind.lockable:hover { opacity: 1; }
+.mod .kind.lockable.on { opacity: 1; text-decoration: none; padding: 0 4px; border-radius: 3px; border: 1px solid var(--g-fractured);
+  background: color-mix(in srgb, var(--g-fractured) 18%, transparent); }
 .mod .meta { flex: none; display: inline-flex; align-items: center; gap: 5px; margin-left: 6px; }
 .mod .meta:empty { display: none; }
 .mod .meta .dem { font-size: var(--fs-s); }

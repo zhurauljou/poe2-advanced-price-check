@@ -223,6 +223,8 @@
     'Most worn bases': 'Самые носимые базы',
     'Most common modifiers': 'Самые частые моды',
     'Your item has this': 'Есть на вашей вещи',
+    'Only items where this modifier is fractured too. Click: any form': 'Только вещи, где этот мод тоже фрактурный. Клик: в любом виде',
+    'Searched in any form. Click: only items where this modifier is fractured too (a base sold for further crafting)': 'Ищется в любом виде. Клик: только вещи, где этот мод тоже фрактурный (для продажи под докрафт)',
     'Your item has this — demand is counted among builds wearing it, so every one of them has it': 'Есть на вашей вещи — спрос считается среди билдов именно с ним, поэтому он есть у всех',
     'theme': 'тема',
     'other jewels': 'другие самоцветы',

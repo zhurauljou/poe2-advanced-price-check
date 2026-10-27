@@ -476,7 +476,8 @@ function buildQuery(item, f) {
     if (m.min != null && m.min !== '') v.min = Number(m.min);
     // «+# to Level of all … Skills»: +1 changes the price many times over — search exactly our value, not "and higher".
     if (m.max != null && m.max !== '') v.max = Number(m.max);
-    return { id: anyForm(item, m.statId), value: v };
+    // fracturedOnly — the window's 🔒 on a fractured mod: only items where this mod is fractured too (a base sold for further crafting).
+    return { id: m.fracturedOnly ? m.statId : anyForm(item, m.statId), value: v };
   };
   const regular = f.mods.filter((m) => m.enabled && m.statId && !m.option);
   const minor = f.flex ? regular.filter(isMinor) : [];

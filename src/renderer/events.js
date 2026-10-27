@@ -128,6 +128,17 @@ window.pc.onStatus((s) => {
 
 // ---- filter changes ----
 $('mods').addEventListener('click', (e) => {
+  // The «fractured» word on a mod: only-fractured on / off. It sits in the row's label — without preventDefault the click
+  // would also toggle the mod's checkbox.
+  const lock = e.target.closest('[data-lock]');
+  if (lock) {
+    e.preventDefault();
+    const m = state.filters.mods[+lock.closest('.mod').dataset.i];
+    m.fracturedOnly = !m.fracturedOnly;
+    markDirty();
+    renderFilters();
+    return;
+  }
   const t = e.target.closest('.sum-toggle');
   if (!t) return;
   const id = t.dataset.sum;

@@ -44,7 +44,13 @@ function modRow(m, i) {
   const text = m.tag === 'pseudo' ? m.text.replace(/^Σ /, '') : m.text;
   // The kind (fractured, crafted…) as a quiet word in its colour, glued to the mod's last word: alone it wrapped onto a
   // line of its own.
-  const kind = m.tag !== 'explicit' && m.tag !== 'pseudo' ? ` <span class="kind ${esc(m.tag)}">${esc(t(m.tag))}</span>` : '';
+  // A rare's fractured mod is searched in any form; the word itself switches to «only fractured» (🔒) — for a base sold for
+  // further crafting, where the locked mod is what is paid for.
+  const lock = m.tag === 'fractured' && state.item.rarity !== 'Unique';
+  const kind = m.tag !== 'explicit' && m.tag !== 'pseudo'
+    ? ` <span class="kind ${esc(m.tag)}${lock ? ` lockable${m.fracturedOnly ? ' on' : ''}" data-lock="1" title="${esc(t(m.fracturedOnly
+      ? 'Only items where this modifier is fractured too. Click: any form'
+      : 'Searched in any form. Click: only items where this modifier is fractured too (a base sold for further crafting)'))}` : ''}">${lock && m.fracturedOnly ? '🔒 ' : ''}${esc(t(m.tag))}</span>` : '';
   const cut = text.search(/\S+\s*$/);
   const body = kind && cut > 0 ? `${esc(text.slice(0, cut))}<span class="glue">${esc(text.slice(cut))}${kind}</span>` : esc(text) + kind;
   // One fixed cell on the right (🔥 and the tier range) and fixed-width bounds: every row keeps the same grid.
