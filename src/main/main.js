@@ -317,8 +317,19 @@ async function priceCheck(text, refresh = false, historyId = null) {
     demand = await Promise.race([q, new Promise((r) => setTimeout(() => r(null), 4000))]);
   }
   lastItem = item;
-  const prepared = pricing.prepare(item, demand, (tpl) => craft.rollsOn(item.baseType, tpl),
+  const prepare = (d) => pricing.prepare(item, d, (tpl) => craft.rollsOn(item.baseType, tpl),
     (tpl, tier, range) => craft.tierShare(item.baseType, tpl, tier, range));
+  let prepared = prepare(demand);
+  // Its theme known, the demand among builds wearing such an item — the one the Demand tab and the craft plan show. Across
+  // all Time-Lost Sapphire builds «Effect of Notable Passives» is 15% and was off; among minion-crit ones it is 33%. The
+  // class demand above is already loaded, so this costs ~0.1 s (cached after); late — the class demand stays.
+  const theme = demand && ['Rare', 'Magic'].includes(item.rarity) ? themeMods(prepared.filters.mods, item.itemClass) : [];
+  if (theme.length) {
+    const q = categoryDemand({ league, itemClass: item.itemClass, rarity: 'Rare', limit: 80, minLevel: demandLevel(), ...demandScope(item, theme) },
+      api.fetchBuffer).catch((e) => { log('themed demand', e.message); return null; });
+    const themed = await Promise.race([q, new Promise((r) => setTimeout(() => r(null), 1000))]);
+    if (themed && themed.themed && themed.themed.length) prepared = prepare(themed);
+  }
   // Search toggles — as the user chose last time.
   const sd = settings.get();
   if (typeof sd.searchOnline === 'boolean') prepared.filters.online = sd.searchOnline;
@@ -329,7 +340,9 @@ async function priceCheck(text, refresh = false, historyId = null) {
   if (band) Object.assign(il, { min: band.min, max: band.max, next: band.next });
   // Item theme for crafting advice: the mods that define its archetype (src/main/weights.js themeMods) — not just the ones
   // the price search enabled (local ES on gloves is folded into the property, which left «Rarity + Dexterity» as the theme).
-  lastThemeMods = themeMods(prepared.filters.mods, item.itemClass);
+  // The theme the demand was narrowed by: recomputed from the re-prepared mods it could shift, and the Demand tab and the
+  // craft plan would then count among other builds than the price did.
+  lastThemeMods = theme.length ? theme : themeMods(prepared.filters.mods, item.itemClass);
   lastPriceKeys = prepared.filters.mods.filter((m) => m.key && m.tag !== 'pseudo' && m.template).map((m) => m.template);
   // Item level and quality too: every white base of a type shares name and base, so «Last check» showed another base's price.
   const entry = { name: item.name, baseType: item.baseType, rarity: item.rarity, league, ilvl: item.ilvl || null, quality: item.quality || 0 };
