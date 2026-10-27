@@ -37,6 +37,7 @@ contextBridge.exposeInMainWorld('pc', {
   onLeague: (cb) => ipcRenderer.on('league', (_e, l) => cb(l)),
   elementVariants: (item, filters) => ipcRenderer.invoke('element-variants', item, filters),
   pin: (on) => ipcRenderer.invoke('pin', on),
+  focusSelf: () => ipcRenderer.invoke('focus-overlay'),
   setWide: (on) => ipcRenderer.invoke('set-wide', on),
   fit: (height, wide) => ipcRenderer.invoke('fit', height, wide),
   // competitor card in a side window

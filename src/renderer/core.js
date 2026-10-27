@@ -237,6 +237,8 @@ function sbarSoon() {
   requestAnimationFrame(() => { sbarQueued = false; updateSbar(true); });
 }
 document.body.addEventListener('scroll', sbarSoon, { passive: true });
+// The first wheel over the window while the game has focus: take the focus, or scrolling stutters ('focus-overlay', main.js).
+document.addEventListener('wheel', () => { if (!document.hasFocus()) window.pc.focusSelf(); }, { passive: true });
 window.addEventListener('resize', () => updateSbar(false));
 document.addEventListener('mousemove', (e) => { if (e.clientX > window.innerWidth - 16) sbarSoon(); }, { passive: true });
 sbar.addEventListener('pointerdown', (e) => {

@@ -800,6 +800,10 @@ app.whenReady().then(singleInstance).then((ok) => {
   handle('history-open', FROM.overlay, (_e, id) => { const h = history.get(id); return h ? priceCheck(h.text, true, h.id) : null; });
   handle('history-price', FROM.overlay, (_e, id, est) => history.setPrice(id, est));
   handle('pin', FROM.overlay, (_e, on) => { pinned = !!on; syncEsc(); });
+  // Scrolling the overlay while the game has focus: Windows keeps a background window behind the foreground game for CPU and
+  // GPU time, and scrolling stutters until a click. The wheel over the overlay is input to it, so it may take the focus
+  // then — the same as a click (a click back into the game hides it).
+  handle('focus-overlay', FROM.overlay, () => { if (win && win.isVisible() && !win.isFocused()) win.focus(); });
   handle('set-wide', FROM.overlay, (_e, on) => { settings.set({ wideWindow: on ? 'on' : 'off' }); });
   handle('compare-show', FROM.overlay, (_e, html, y) => {
     if (typeof html !== 'string' || !Number.isFinite(y)) return;
