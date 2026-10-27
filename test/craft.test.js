@@ -798,6 +798,10 @@ test('a fractured mod is searched in any form: the fractured id finds only items
   const ids = pricing.buildQuery(p.item, p.filters).query.stats.flatMap((g) => g.filters.map((x) => x.id));
   assert.ok(ids.includes(effect.statId.replace(/^fractured\./, 'explicit.')), `searched by the explicit id: ${ids.join(', ')}`);
   assert.ok(!ids.some((id) => id.startsWith('fractured.')), 'no fractured id in the query');
+  // The crafted radius upgrade is a variant («…|3», the count group) — searched in any form too: a fractured one exists.
+  const radius = mod(p.filters, /Upgrades Radius to Very Large/);
+  assert.ok(radius.enabled && radius.option && radius.statId.startsWith('crafted.'), radius.statId);
+  assert.ok(ids.includes(radius.statId.replace(/^crafted\./, 'explicit.')), `radius in any form: ${ids.join(', ')}`);
   // 🔒 in the window («fractured» clicked): a base sold for crafting — only items where this mod is fractured too.
   effect.fracturedOnly = true;
   const locked = pricing.buildQuery(p.item, p.filters).query.stats.flatMap((g) => g.filters.map((x) => x.id));

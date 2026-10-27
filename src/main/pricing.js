@@ -467,7 +467,8 @@ function buildQuery(item, f) {
     const min = Math.min(options.length, f.optionMin || options.length);
     // For a timeless jewel the seed is an exact number (min = max), for other variants — "at least".
     const val = (m) => (m.min == null ? {} : { value: TIMELESS.test(m.statId) ? { min: m.min, max: m.min } : { min: Number(m.min) } });
-    query.stats.push({ type: 'count', value: { min }, filters: options.map((m) => ({ id: m.statId, ...val(m) })) });
+    // In any form like the other mods (a fractured «Upgrades Radius to Very Large» exists beside the crafted one); a unique's ids stay.
+    query.stats.push({ type: 'count', value: { min }, filters: options.map((m) => ({ id: m.fracturedOnly ? m.statId : anyForm(item, m.statId), ...val(m) })) });
   }
   // Minor mods (not important and not sums), when three or more — in an "any N−1 of N" group: finds items
   // missing one such mod with the rest no worse. Trade doesn't accept a weighted sum without logging in.
