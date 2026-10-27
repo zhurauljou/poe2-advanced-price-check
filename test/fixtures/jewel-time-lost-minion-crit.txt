@@ -1,0 +1,24 @@
+Item Class: Jewels
+Rarity: Rare
+Brood Joy
+Time-Lost Sapphire
+--------
+Quality (Minion Modifiers): +20% (augmented)
+Radius: Very Large
+--------
+Item Level: 80
+--------
+{ Prefix Modifier "Focusing" (Tier: 1) — Energy Shield }
+Notable Passive Skills in Radius also grant 24(15-25)% increased Energy Shield from Equipped Focus
+{ Crafted Prefix Modifier "" }
+Upgrades Radius to Very Large — Unscalable Value
+{ Fractured Suffix Modifier "of Supremacy" (Tier: 1) }
+21(15-25)% increased Effect of Notable Passive Skills in Radius — Unscalable Value
+{ Suffix Modifier "of Gripping" (Tier: 1) — Damage, Minion, Critical — 20% Increased }
+Notable Passive Skills in Radius also grant Minions have 12(6-12)% increased Critical Damage Bonus
+{ Desecrated Suffix Modifier "of Marshalling" (Tier: 1) — Minion, Critical — 20% Increased }
+Notable Passive Skills in Radius also grant Minions have 9(5-10)% increased Critical Hit Chance
+--------
+Place into an allocated Jewel Socket on the Passive Skill Tree. Right click to remove from the Socket.
+--------
+Fractured Item

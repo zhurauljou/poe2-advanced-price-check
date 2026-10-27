@@ -425,10 +425,11 @@ const TIMELESS = /stat_3418580811\|/;
 
 // Trade's explicit filter also matches the same mod desecrated or crafted (checked on trade: explicit ∧ desecrated finds
 // exactly what desecrated alone does). The desecrated id alone finds only items whose mod came from desecration too — 3
-// listings instead of 5 on a minion sceptre: a rare's desecrated or crafted mod is searched in any form. A unique keeps
-// its desecrated id: there it is the random mod, a different good.
+// listings instead of 5 on a minion sceptre: a rare's desecrated or crafted mod is searched in any form. A fractured one too:
+// the fractured id found 10 Brood Joys, the explicit one 21 (PoE Overlay's list among them) — whether the mod is locked is
+// the «Fractured Item» toggle's business. A unique keeps its desecrated id: there it is the random mod, a different good.
 function anyForm(item, statId) {
-  const m = item.rarity !== 'Unique' && /^(desecrated|crafted)\.(.+)$/.exec(statId || '');
+  const m = item.rarity !== 'Unique' && /^(desecrated|crafted|fractured)\.(.+)$/.exec(statId || '');
   if (!m) return statId;
   const explicit = `explicit.${m[2]}`;
   return stats.variantsOf(statId).includes(explicit) ? explicit : statId;

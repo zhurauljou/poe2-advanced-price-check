@@ -785,3 +785,17 @@ test('minion ring: Genesis Tree mods without a tier in the header get it from th
   assert.equal(tier(/critical damage bonus/), 2);
   assert.equal(tier(/critical hit chance/), 3);
 });
+
+test('a fractured mod is searched in any form: the fractured id finds only items where it is fractured too', { skip }, async () => {
+  // Player's Brood Joy (2026-10-27): «Effect of Notable Passive Skills in Radius» fractured — the fractured id found 10
+  // listings, the explicit one 21, PoE Overlay's 700 / 800 / 1,400 among them.
+  await init();
+  const it = parseItem(fs.readFileSync(path.join(__dirname, 'fixtures', 'jewel-time-lost-minion-crit.txt'), 'utf8'));
+  const p = pricing.prepare(it, null, () => true);
+  const effect = mod(p.filters, /Effect of Notable Passive Skills in Radius/);
+  effect.enabled = true;
+  assert.ok(effect.statId.startsWith('fractured.'), effect.statId);
+  const ids = pricing.buildQuery(p.item, p.filters).query.stats.flatMap((g) => g.filters.map((x) => x.id));
+  assert.ok(ids.includes(effect.statId.replace(/^fractured\./, 'explicit.')), `searched by the explicit id: ${ids.join(', ')}`);
+  assert.ok(!ids.some((id) => id.startsWith('fractured.')), 'no fractured id in the query');
+});
